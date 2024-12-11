@@ -1,15 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
+import telebot
+from telegram import Update
 from config import get_settings
-from user_reg_and_prof_mngmnt.router import start_cmd
+from user_reg_and_prof_mngmnt.router import launch_app
+
 
 # initialize fastapi app
 app = FastAPI(title="Bored Tap Coin API")
 
 # initialize telegram bot application
 BotToken = get_settings().bot_token
-BotApplication = ApplicationBuilder().token(BotToken).build()
+bot = telebot.TeleBot(BotToken)
 
 origins = [
     "http://127.0.0.1:5173",
@@ -25,12 +27,26 @@ app.add_middleware(
 )
 
 # app.include_router(url_shortener)
-start_handler = CommandHandler('start', start_cmd)
+# start_handler = CommandHandler('start', start_cmd)
 
 # add handlers to bot application
-BotApplication.add_handler(start_handler)
+...
 
 
-@app.get("/")
-async def home():
-    return {"msg": "Welcome to Bored Tap :)"}
+@app.post('/webhook', response_model=None)
+async def webhook_handler(update: Update):
+    # Process the update here
+    if update.message:
+        text = update.message.text
+        chat_id = update.message.chat.id
+        bot.send_message(chat_id=chat_id, text=f"You said: {text}")
+        launch_app(message=update.message)
+    # elif update.callback_query:
+    #     call = update.callback_query
+    #     # Handle callback query
+    #     bot.answer_callback_query(call.id, f"You clicked {call.data}")
+    print(update)
+    # return {'message': 'Webhook received'}
+
+# set webhook url
+# bot.set_webhook(url=f"{get_settings().base_url}/webhook")
