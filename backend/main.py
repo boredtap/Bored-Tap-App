@@ -33,8 +33,8 @@ app.add_middleware(
 ...
 
 
-@app.post('/webhook', response_model=None)
-async def webhook_handler(update: Update):
+@app.post('/webhook')
+async def webhook_handler(update: dict):
     # Process the update here
     if update.message:
         text = update.message.text
@@ -49,4 +49,4 @@ async def webhook_handler(update: Update):
     # return {'message': 'Webhook received'}
 
 # set webhook url
-# bot.set_webhook(url=f"{get_settings().base_url}/webhook")
+bot.set_webhook(url=f"{get_settings().base_url}/webhook")
