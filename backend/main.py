@@ -34,7 +34,7 @@ app.add_middleware(
 
 
 @app.post('/webhook')
-async def webhook_handler(update: dict):
+async def webhook_handler(update):
     # Process the update here
     if update.message:
         text = update.message.text
