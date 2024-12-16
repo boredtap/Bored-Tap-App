@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from config import get_settings
+from user_reg_and_prof_mngmnt.router import userApp
 
 
 # initialize fastapi app
@@ -19,7 +20,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# app.include_router(url_shortener)
+app.include_router(userApp, tags="User Profile and Management")
 
 @app.post('/')
 async def home():
