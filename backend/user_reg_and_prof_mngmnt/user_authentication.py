@@ -63,6 +63,17 @@ def authenticate_user(telegram_user_id: str, username: str) -> BasicProfile:
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    """
+    Create a JSON Web Token (JWT) for user authentication.
+
+    Args:
+        data (dict): The data to encode within the JWT, typically containing user information.
+        expires_delta (timedelta | None, optional): The time duration for which the token is valid.
+            If not provided, a default duration of 365 days is used.
+
+    Returns:
+        str: The encoded JWT as a string.
+    """
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -75,6 +86,18 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return encoded_jwt
 
 def authorize_url(token: Annotated[str, Depends(oauth2_scheme)]):
+    """
+    Authorize a user by validating a JWT token and extracting the username.
+
+    Args:
+        token (Annotated[str, Depends(oauth2_scheme)]): The JWT token to be validated.
+
+    Returns:
+        str: The username extracted from the token if validation is successful.
+
+    Raises:
+        HTTPException: If the token is invalid or the username is not found.
+    """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
