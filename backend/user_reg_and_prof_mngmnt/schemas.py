@@ -10,9 +10,9 @@ class TokenData(BaseModel):
 
 class BasicProfile(BaseModel):
     telegram_user_id: str
-    username: str
+    username: str | None
     firstname: str | None
     image_url: str = Field(..., title="Image URL")
-    level: int
-    total_coins: int
+    level: int = 0
+    total_coins: int = 0
 

@@ -20,7 +20,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(userApp, tags="User Profile and Management")
+app.include_router(userApp)
 
 @app.post('/')
 async def home():

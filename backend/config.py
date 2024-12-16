@@ -4,8 +4,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     env_name: str = "Local Environment"
-    secret_key: str
-    algorithm: str
+    secret_key: str = ""
+    algorithm: str = ""
     bot_token: str = ""
     supabase_url: str = ""
     supabase_key: str = ""

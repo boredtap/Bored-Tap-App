@@ -5,7 +5,10 @@ from jwt.exceptions import InvalidTokenError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from config import get_settings
-from user_reg_and_prof_mngmnt.dependencies import get_user
+from user_reg_and_prof_mngmnt.schemas import BasicProfile
+from postgrest.base_request_builder import APIResponse
+from database_connection import supabase
+
 
 
 SECRET_KEY = get_settings().secret_key
@@ -15,10 +18,43 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/signin")
 
 
-def authenticate_user(telegram_user_id: str, username: str):
-    '''
-        Checks if user is in database and returns basic user data else returns None
-    '''
+def get_user(telegram_user_id: str) -> BasicProfile:
+    """
+    Retrieve a user's basic profile from the database using their Telegram user ID.
+
+    Args:
+        telegram_user_id (str): The Telegram user ID of the user to retrieve.
+
+    Returns:
+        BasicProfile: The basic profile of the user if found, otherwise None.
+    """
+    user: APIResponse = supabase.table("users")\
+    .select().eq("telegram_user_id", telegram_user_id).execute()
+
+    if user.data:
+        fetched_user = user.data[0]
+        user_data = BasicProfile(
+            telegram_user_id=fetched_user.get("telegram_user_id"),
+            username=fetched_user.get("username"),
+            firstname=fetched_user.get("firstname"),
+            image_url=fetched_user.get("image_url"),
+            level=fetched_user.get("level"),
+            total_coins=fetched_user.get("total_coins")
+        )
+        return user_data
+    return None
+
+def authenticate_user(telegram_user_id: str, username: str) -> BasicProfile:
+    """
+    Authenticate a user by checking if they exist in the database.
+
+    Args:
+        telegram_user_id (str): The Telegram user ID of the user to authenticate.
+        username (str): The username of the user to authenticate.
+
+    Returns:
+        BasicProfile: The basic profile of the user if authenticated, otherwise False.
+    """
     user = get_user(telegram_user_id)
     if not user:
         return False

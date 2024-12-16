@@ -1,4 +1,4 @@
-from .config import get_settings
+from config import get_settings
 from supabase import create_client, Client
 
 supabase_url: str = get_settings().supabase_url
