@@ -53,11 +53,11 @@ def authenticate_user(telegram_user_id: str, username: str) -> BasicProfile:
         username (str): The username of the user to authenticate.
 
     Returns:
-        BasicProfile: The basic profile of the user if authenticated, otherwise False.
+        BasicProfile: The basic profile of the user if authenticated, otherwise None.
     """
     user = get_user(telegram_user_id)
     if not user:
-        return False
+        return None
 
     return user
 
@@ -107,7 +107,7 @@ def authorize_url(token: Annotated[str, Depends(oauth2_scheme)]):
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         telegram_user_id: str = payload.get("telegram_user_id")
         username: str = payload.get("username")
-        if username is None:
+        if telegram_user_id is None:
             raise credentials_exception
         return username
     except InvalidTokenError:
