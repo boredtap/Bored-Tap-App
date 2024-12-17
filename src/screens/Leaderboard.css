@@ -1,0 +1,136 @@
+/* General Screen Styling */
+.leaderboard-screen {
+    background-color: #000;
+    color: #fff;
+    min-height: 100vh;
+    padding: 80px 16px 16px;
+    font-family: "Roboto", sans-serif;
+    position: relative;
+  }
+  
+  /* Header Section */
+  .leaderboard-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .leaderboard-icon {
+    width: 100px;
+    height: 100px;
+  }
+  
+  /* Pagination */
+  .pagination {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+  }
+  
+  .pagination-tab {
+    font-size: 16px;
+    cursor: pointer;
+    color: #fff;
+    position: relative;
+  }
+  
+  .pagination-tab.active::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background-color: #fff;
+    bottom: -4px;
+    left: 0;
+  }
+  
+  /* Leaderboard Cards */
+  .leaderboard-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .leaderboard-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-radius: 8px;
+    background-color: #414141;
+  }
+  
+  .transparent-card {
+    background-color: transparent;
+  }
+  
+  .leaderboard-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .leaderboard-logo {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .leaderboard-info {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .leaderboard-title {
+    font-size: 14px;
+    color: #fff;
+  }
+  
+  .leaderboard-title .level {
+    color: orange;
+  }
+  
+  .leaderboard-value {
+    font-size: 12px;
+    color: #d9d9d9;
+  }
+  
+  .leaderboard-right {
+    display: flex;
+    align-items: center;
+  }
+  
+  .leaderboard-right-icon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .position-number {
+    font-size: 14px;
+    color: #fff;
+  }
+  
+  /* Floating Card */
+  .floating-card {
+    position: fixed;
+    bottom: 80px;
+    width: calc(100% - 32px);
+    background-color: #ffffff;
+    color: #000;
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+    font-family: "Roboto", sans-serif;
+  }
+  
+  .black-text {
+    color: #000 !important;
+  }
+  
+  .gray-text {
+    color: #d9d9d9 !important;
+  }
+  

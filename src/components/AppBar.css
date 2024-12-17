@@ -1,0 +1,79 @@
+/* General AppBar Styling */
+.app-bar {
+  background-color: #000; /* Black background */
+  color: #fff; /* White content */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 30px 20px; /* Default padding */
+  max-width: 100%; /* Prevent overflow */
+  box-sizing: border-box;
+  position: fixed; /* Make it stick to the top */
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000; /* Ensure it's above other elements */
+  height: var(--app-bar-height, 80px); /* Adjustable height using CSS variable */
+}
+
+/* Left Section: Back Icon and Title */
+.app-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.app-bar-title {
+  font-weight: bold;
+  font-size: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Truncate long titles */
+}
+
+/* Right Section: Dropdown and More Icons */
+.app-bar-right {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Icon Buttons */
+.app-bar-icon {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 20px; /* Icon size */
+  cursor: pointer;
+}
+
+/* Media Queries for Responsiveness */
+@media (max-width: 768px) {
+  .app-bar {
+    padding: 25px 16px; /* Slightly smaller padding for smaller screens */
+  }
+
+  .app-bar-title {
+    font-size: 14px; /* Smaller font size */
+  }
+
+  .app-bar-icon {
+    font-size: 18px; /* Smaller icon size */
+  }
+}
+
+@media (max-width: 480px) {
+  .app-bar {
+    padding: 20px 12px; /* Minimal padding for very small screens */
+  }
+
+  .app-bar-title {
+    font-size: 12px;
+  }
+
+  .app-bar-icon {
+    font-size: 16px;
+  }
+}

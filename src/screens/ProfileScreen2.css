@@ -1,0 +1,102 @@
+/* Profile Screen Styling */
+.profile-screen2 {
+    background-color: #000; /* Full-screen black background */
+    color: #fff; /* White content */
+    min-height: 100vh; /* Full viewport height */
+    padding: 100px 20px 20px; /* Padding to offset AppBar */
+    text-align: center;
+}
+
+/* Profile Picture */
+.profile-picture {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin: 0 auto;
+    overflow: hidden; /* Ensures image fits within the circle */
+}
+
+.profile-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensures the image scales appropriately */
+}
+
+/* Username and Level */
+.profile-username {
+    margin-top: 16px;
+    font-size: 18px;
+    font-weight: bold;
+    font-family: 'Roboto', sans-serif;
+}
+
+.profile-level {
+    font-size: 14px;
+    color: #F9B54C; /* Level color */
+    margin-bottom: 24px;
+    font-family: 'Roboto', sans-serif;
+}
+
+/* Data Cards */
+.profile-data-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 24px; /* Spacing between cards */
+}
+
+.profile-data-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #414141; /* Card background */
+    padding: 16px;
+    border-radius: 8px;
+}
+
+.profile-data-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.profile-icon img {
+    width: 24px; /* Icon size */
+    height: 24px;
+}
+
+.profile-label {
+    font-size: 16px;
+    font-family: 'Roboto', sans-serif;
+}
+
+.profile-data-right {
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+    font-family: 'Roboto', sans-serif;
+    text-align: left; /* Ensures text aligns to the right */
+    margin-left: auto; /* Pushes the value to the far right inside the card */
+    display: flex;
+    align-items: center; /* Vertically centers content within the card */
+    width: 24px; /* Icon size */
+    height: 24px;
+}
+
+
+/* Links */
+.profile-links {
+    margin-top: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.profile-links a {
+    color: #B2B2B2; /* Clickable link color */
+    text-decoration: underline; /* Underline for indication */
+    font-family: 'Roboto', sans-serif;
+}
+
+.profile-links a:hover {
+    text-decoration: underline;
+}
