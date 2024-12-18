@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordBearer
 from config import get_settings
 from user_reg_and_prof_mngmnt.schemas import BasicProfile
 from postgrest.base_request_builder import APIResponse
-from database_connection import supabase
+from database_connection import get_user_by_id, supabase
 
 
 
@@ -17,32 +17,6 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/signin")
 
-
-def get_user(telegram_user_id: str) -> BasicProfile:
-    """
-    Retrieve a user's basic profile from the database using their Telegram user ID.
-
-    Args:
-        telegram_user_id (str): The Telegram user ID of the user to retrieve.
-
-    Returns:
-        BasicProfile: The basic profile of the user if found, otherwise None.
-    """
-    user: APIResponse = supabase.table("users")\
-    .select().eq("telegram_user_id", telegram_user_id).execute()
-
-    if user.data:
-        fetched_user = user.data[0]
-        user_data = BasicProfile(
-            telegram_user_id=fetched_user.get("telegram_user_id"),
-            username=fetched_user.get("username"),
-            firstname=fetched_user.get("firstname"),
-            image_url=fetched_user.get("image_url"),
-            level=fetched_user.get("level"),
-            total_coins=fetched_user.get("total_coins")
-        )
-        return user_data
-    return None
 
 def authenticate_user(telegram_user_id: str, username: str) -> BasicProfile:
     """
@@ -55,7 +29,7 @@ def authenticate_user(telegram_user_id: str, username: str) -> BasicProfile:
     Returns:
         BasicProfile: The basic profile of the user if authenticated, otherwise None.
     """
-    user = get_user(telegram_user_id)
+    user = get_user_by_id(telegram_user_id)
     if not user:
         return None
 
@@ -85,7 +59,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-def authorize_url(token: Annotated[str, Depends(oauth2_scheme)]):
+def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     """
     Authorize a user by validating a JWT token and extracting the username.
 
@@ -112,3 +86,6 @@ def authorize_url(token: Annotated[str, Depends(oauth2_scheme)]):
         return username
     except InvalidTokenError:
         raise credentials_exception
+
+async def authorize_user(current_user: Annotated[BasicProfile, Depends(get_current_user)]):
+    pass

@@ -2,20 +2,20 @@ from datetime import timedelta
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from user_reg_and_prof_mngmnt.dependencies import get_user
 from user_reg_and_prof_mngmnt.user_authentication import (
     ACCESS_TOKEN_EXPIRE_MINUTES, 
-    authenticate_user, 
-    get_user,
+    authenticate_user,
     create_access_token)
 from . schemas import Token, Signup, BasicProfile
-from database_connection import supabase
+from database_connection import insert_new_user, supabase
 
 
 userApp = APIRouter()
 
 
 @userApp.post("/sign-up", tags=["Registration"])
-async def sign_up(user: Signup):
+async def sign_up(user: Signup) -> BasicProfile:
     # check if telegram_user_id already exists in database
     existing_user = get_user(user.telegram_user_id)
     if existing_user:
@@ -30,10 +30,7 @@ async def sign_up(user: Signup):
     )
 
     # insert new user in database
-    supabase.table("users").insert({
-        "telegram_user_id": new_user.telegram_user_id,
-        "username": new_user.username
-    }).execute()
+    insert_new_user(new_user)
 
     return new_user
 

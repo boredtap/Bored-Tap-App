@@ -12,12 +12,12 @@ class TokenData(BaseModel):
 class Signup(BaseModel):
     telegram_user_id: str
     username: str
+    # invite_code: str | None
 
 class BasicProfile(BaseModel):
     telegram_user_id: str
-    username: str | None
-    firstname: str | None
-    image_url: AnyHttpUrl | None
+    username: str | None = None
+    firstname: str | None = None
+    image_url: AnyHttpUrl | None = None
     level: int = 0
     total_coins: int = 0
-
