@@ -1,0 +1,102 @@
+.top-clan-screen {
+    background-color: #000;
+    color: #fff;
+    min-height: 100vh;
+    padding: 80px 16px;
+    font-family: "Roboto", sans-serif;
+  }
+  
+  .top-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .top-clan-icon {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .top-clan-title {
+    font-size: 24px;
+    font-weight: 500;
+    text-align: center;
+    margin-top: 10px;
+  }
+  
+  .clans-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .clan-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    border-radius: 8px;
+    background-color: #414141;
+  }
+  
+  .highlighted-card {
+    background-color: #414141;
+  }
+  
+  .plain-card {
+    background-color: transparent;
+  }
+  
+  .clan-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .clan-icon {
+    width: 40px;
+    height: 40px;
+    
+  }
+  
+  .clan-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .clan-name {
+    font-size: 14px;
+    font-weight: bold;
+  }
+  
+  .clan-coins {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: #aaa;
+  }
+  
+  .coin-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 5px;
+  }
+  
+  .clan-right {
+    display: flex;
+    align-items: center;
+  }
+  
+  .rank-icon {
+    width: 24px;
+    height: 24px;
+    align-items: flex-end;
+  }
+  
+  .rank-text {
+    font-size: 16px;
+    font-weight: bold;
+  }
+  

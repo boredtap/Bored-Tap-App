@@ -1,14 +1,27 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaEllipsisV, FaChevronDown } from "react-icons/fa";
 import "./AppBar.css";
 
 const AppBar = ({
   title,
-  onBackClick = () => console.log("Back button clicked"),
   onMoreClick = () => console.log("More button clicked"),
-  onDropdownClick = () => console.log("Dropdown clicked"),
   height = "80px",
 }) => {
+  const navigate = useNavigate();
+
+  const handleBackClick = () => {
+    navigate(-1); // Navigate to the previous screen
+  };
+
+  const handleDropdownClick = () => {
+    if (window.Telegram && window.Telegram.WebApp) {
+      window.Telegram.WebApp.close(); // Minimize the app using Telegram WebApp API
+    } else {
+      console.log("Minimizing the app...");
+    }
+  };
+
   return (
     <div
       className="app-bar"
@@ -16,7 +29,7 @@ const AppBar = ({
     >
       {/* Left Section */}
       <div className="app-bar-left">
-        <button className="app-bar-icon" onClick={onBackClick}>
+        <button className="app-bar-icon" onClick={handleBackClick}>
           <FaArrowLeft />
         </button>
         <span className="app-bar-title">{title}</span>
@@ -24,7 +37,7 @@ const AppBar = ({
 
       {/* Right Section */}
       <div className="app-bar-right">
-        <button className="app-bar-icon" onClick={onDropdownClick}>
+        <button className="app-bar-icon" onClick={handleDropdownClick}>
           <FaChevronDown />
         </button>
         <button className="app-bar-icon" onClick={onMoreClick}>
