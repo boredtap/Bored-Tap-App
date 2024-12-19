@@ -18,7 +18,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/signin")
 
 
-def authenticate_user(telegram_user_id: str, username: str) -> BasicProfile:
+def authenticate_user(telegram_user_id: str) -> BasicProfile:
     """
     Authenticate a user by checking if they exist in the database.
 

@@ -14,7 +14,7 @@ from database_connection import insert_new_user, supabase
 userApp = APIRouter()
 
 
-@userApp.post("/sign-up", tags=["Registration"])
+@userApp.post("/sign-up", tags=["Registration/Authentication"])
 async def sign_up(user: Signup) -> BasicProfile:
     # check if telegram_user_id already exists in database
     existing_user = get_user(user.telegram_user_id)
@@ -50,8 +50,7 @@ async def sign_in(
     Returns:
         Token: Access token with username and telegram_user_id data.
     """
-
-    user = authenticate_user(form_data.username, form_data.password)
+    user = authenticate_user(form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
