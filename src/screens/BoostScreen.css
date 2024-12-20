@@ -1,0 +1,278 @@
+/* General Styles */
+.boost-screen {
+    background-color: #000;
+    color: #fff;
+    min-height: 100vh;
+    padding: 80px 16px;
+    font-family: "Roboto", sans-serif;
+    position: relative;
+  }
+  
+  /* Total Taps Section */
+  .total-taps-section {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  
+  .total-taps-text {
+    font-size: 16px;
+  }
+  
+  .total-taps-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .taps-icon {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .total-taps-value {
+    font-size: 36px;
+    font-weight: bold;
+    margin: 0;
+  }
+  
+  .bt-boost-info {
+    font-size: 14px;
+    color: #c2bfbf;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  
+  /* Daily Boosters Section */
+  .daily-boosters-section {
+    margin-bottom: 30px;
+  }
+  
+  .daily-boosters-title {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  
+  .daily-boosters-container {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .booster-frame {
+    background-color: #414141;
+    border-radius: 8px;
+    padding: 10px;
+    flex: 1;
+    margin: 0 5px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .booster-icon {
+    width: 30px;
+    height: 30px;
+    margin-right: 10px;
+  }
+  
+  .booster-info .booster-title {
+    font-size: 14px;
+    font-weight: bold;
+  }
+  
+  .booster-info .booster-value {
+    font-size: 12px;
+    color: #aaa;
+  }
+  
+  /* Extra Boosters Section */
+  .extra-boosters-section {
+    margin-bottom: 30px;
+  }
+  
+  .extra-boosters-title {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  
+  .extra-boosters-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .extra-booster-card {
+    background-color: #414141;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .booster-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .booster-icon-large {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .value-icon-small {
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+  }
+  
+  .booster-stats {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  .booster-stats .booster-value {
+    font-size: 12px;
+  }
+  
+  .booster-level {
+    font-size: 12px;
+    color: orange;
+  }
+  
+
+  .action-icon {
+    width: 30px;
+    height: 30px;
+    margin-left: auto; /* Push the icon to the far right */
+    align-self: center;
+  }
+  
+
+  /* Overlay */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .overlay-card {
+    background: #1D1D1D;
+    width: 90%;
+    max-width: 500px;
+    padding: 20px;
+    border-radius: 16px;
+    text-align: center;
+    position: relative;
+  }
+  
+  .overlay-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .overlay-icon {
+    width: 100px;
+    height: 100px;
+    margin: 20px auto;
+  }
+  
+  .overlay-header h2 {
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    margin-top: 0;
+    margin-bottom: 20px;
+  }
+
+  .overlay-close {
+    position: absolute;
+    top: 24px; /* Adjust the vertical position */
+    right: 20px; /* Adjust the horizontal position */
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: white;
+    cursor: pointer;
+    z-index: 10;
+  }
+
+  /* Modified Division Line Spacing */
+.division-line {
+    margin-top: 4px; /* Increased spacing from the title */
+    margin-bottom: 10px; /* Adjusted spacing below the division line */
+    border: 0.5px solid #2F2F2F;
+    width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  
+  .overlay-description {
+    font-size: 16px;
+    color: #e0e0e0;
+    margin-bottom: 10px;
+  }
+  
+  .overlay-subtext {
+    font-size: 14px;
+    color: #999999;
+    margin-bottom: 30px;
+  }
+  
+  .overlay-value-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .value-icon-large {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .overlay-value {
+    font-size: 28px;
+    font-weight: bold;
+    color: white;
+  }
+  
+  .overlay-level {
+    font-size: 18px;
+    color: orange;
+  }
+  
+  .overlay-cta {
+    background: white;
+    color: black;
+    width: 100%;
+    padding: 15px 0;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 20px;
+    display: block;
+  }
+  
+  .overlay-cta:disabled {
+    background: #ccc;
+    color: #666;
+    cursor: not-allowed;
+  }
+  
+  

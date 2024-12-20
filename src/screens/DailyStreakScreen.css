@@ -1,0 +1,136 @@
+.daily-streak-screen {
+  background-color: #000;
+  color: #fff;
+  min-height: 100vh;
+  padding: 80px 16px 16px;
+  font-family: "Roboto", sans-serif;
+  position: relative;
+}
+
+/* Top Section */
+.streak-header {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.streak-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto;
+  display: block;
+}
+
+.streak-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+.streak-subtitle {
+  font-size: 16px;
+  color: #c2bfbf;
+}
+
+/* Rewards Section */
+.daily-rewards {
+  margin: 20px;
+}
+
+.daily-rewards-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.rewards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 8px;
+  justify-items: center;
+  margin: 0 10px; /* Responsive margin */
+}
+
+.reward-frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  width: 80px;
+  height: 120px;
+  box-sizing: border-box;
+  cursor: pointer;
+
+  /* Default inactive styles */
+  background-color: #414141;
+  color: #ffffff;
+}
+
+.reward-frame.active {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.reward-frame.claimed {
+  background-color: #414141; /* Keep inactive look after claiming */
+  color: #ffffff;
+}
+
+.reward-frame .frame-icon {
+  width: 24px;
+  height: 24px;
+  margin: 5px 0;
+}
+
+.frame-day {
+  font-weight: bold;
+  margin-bottom: 5px;
+  font-size: 12px;
+}
+
+.frame-reward {
+  font-size: 12px;
+}
+
+/* Rewards Note */
+.rewards-note {
+  margin-top: 15px;
+  font-size: 14px;
+  text-align: center;
+  color: #aaa;
+}
+
+/* CTA Button */
+.cta-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  
+  bottom: 60px;
+  width: 100%;
+}
+
+.cta-button {
+  width: 100%;
+  max-width: 360px;
+  height: 54px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+}
+
+.cta-button.active {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.cta-button.inactive {
+  background-color: #414141;
+  color: #aaa;
+  cursor: not-allowed;
+}

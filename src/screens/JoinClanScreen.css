@@ -1,0 +1,120 @@
+/* General */
+.join-clan-screen {
+    background-color: #000;
+    color: #fff;
+    min-height: 100vh;
+    padding: 80px 16px;
+    font-family: "Roboto", sans-serif;
+    position: relative;
+  }
+  
+  /* Find a Clan Section */
+  .find-clan-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+  }
+  
+  .find-clan-title {
+    font-size: 24px;
+    font-weight: 500;
+  }
+  
+  .search-container {
+    background-color: #414141;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+  }
+  
+  .search-icon {
+    width: 24px;
+    height: 24px;
+  }
+  
+  /* Search Bar */
+  .search-bar {
+    display: flex;
+    align-items: center;
+    background-color: #414141;
+    border: 1px solid #fff;
+    border-radius: 25px;
+    padding: 8px;
+    width: 100%;
+  }
+  
+  .search-bar-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+  }
+  
+  .search-input {
+    background-color: transparent;
+    border: none;
+    color: #fff;
+    width: 100%;
+    font-size: 16px;
+    outline: none;
+  }
+  
+  /* Clan Cards */
+  .clan-cards {
+    margin-top: 20px;
+  }
+  
+  .clan-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    margin-bottom: 10px;
+    background-color: #000;
+  }
+  
+  .clan-card-left {
+    display: flex;
+    align-items: center;
+  }
+  
+  .clan-card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+  }
+  
+  .clan-card-details {
+    margin-left: 10px;
+  }
+  
+  .clan-card-name {
+    font-size: 16px;
+    font-weight: bold;
+  }
+  
+  .clan-card-stats {
+    display: flex;
+    align-items: center;
+    margin-top: 4px;
+  }
+  
+  .members-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 5px;
+  }
+  
+  .clan-card-members {
+    font-size: 14px;
+    color: #fff;
+  }
+  
+  .join-icon {
+    width: 24px;
+    height: 24px;
+  }
+  
