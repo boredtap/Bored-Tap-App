@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordBearer
 from config import get_settings
 from user_reg_and_prof_mngmnt.schemas import BasicProfile
 from postgrest.base_request_builder import APIResponse
-from database_connection import get_user_by_id, supabase
+from user_reg_and_prof_mngmnt.dependencies import get_user_by_id
 
 
 

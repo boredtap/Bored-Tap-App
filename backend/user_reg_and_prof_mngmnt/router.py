@@ -2,13 +2,13 @@ from datetime import timedelta
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from user_reg_and_prof_mngmnt.dependencies import get_user
+from user_reg_and_prof_mngmnt.dependencies import get_user_by_id
 from user_reg_and_prof_mngmnt.user_authentication import (
     ACCESS_TOKEN_EXPIRE_MINUTES, 
     authenticate_user,
     create_access_token)
 from . schemas import Token, Signup, BasicProfile
-from database_connection import insert_new_user, supabase
+from user_reg_and_prof_mngmnt.dependencies import insert_new_user
 
 
 userApp = APIRouter()
@@ -17,7 +17,7 @@ userApp = APIRouter()
 @userApp.post("/sign-up", tags=["Registration/Authentication"])
 async def sign_up(user: Signup) -> BasicProfile:
     # check if telegram_user_id already exists in database
-    existing_user = get_user(user.telegram_user_id)
+    existing_user = get_user_by_id(user.telegram_user_id)
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -27,6 +27,7 @@ async def sign_up(user: Signup) -> BasicProfile:
     new_user = BasicProfile(
         telegram_user_id=user.telegram_user_id,
         username=user.username,
+        image_url=user.image_url
     )
 
     # insert new user in database
