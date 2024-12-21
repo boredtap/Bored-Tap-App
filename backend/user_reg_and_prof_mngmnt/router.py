@@ -36,7 +36,7 @@ async def sign_up(user: Signup) -> BasicProfile:
     return new_user
 
 
-@userApp.post("/signin", tags=["Authentication"])
+@userApp.post("/signin", tags=["Registration/Authentication"])
 async def sign_in(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ) -> Token:
