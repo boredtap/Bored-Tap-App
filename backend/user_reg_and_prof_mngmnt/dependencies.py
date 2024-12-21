@@ -1,3 +1,4 @@
+from pydantic import AnyHttpUrl
 from user_reg_and_prof_mngmnt.schemas import BasicProfile
 from postgrest.base_request_builder import APIResponse
 from database_connection import get_db
@@ -7,7 +8,16 @@ db = get_db()
 user_collection = db['users']
 
 def get_user_by_id(telegram_user_id: str) -> BasicProfile:
-    user = user_collection.find_one({"telegram_user_id": "123456789"})
+    """
+    Retrieve a user by their telegram user ID.
+
+    Args:
+        telegram_user_id (str): The telegram user ID of the user to retrieve.
+
+    Returns:
+        BasicProfile: The user data if found, otherwise None.
+    """
+    user = user_collection.find_one({"telegram_user_id": telegram_user_id})
 
     if user:
         user_data = BasicProfile(
@@ -26,3 +36,19 @@ def get_user_by_id(telegram_user_id: str) -> BasicProfile:
 def insert_new_user(new_user: BasicProfile):
     user_collection.insert_one(new_user.model_dump())
 
+
+def serialize_any_http_url(url: AnyHttpUrl):
+  """
+  Serializes a pydantic AnyHttpUrl object into a string.
+
+  Args:
+    url: The AnyHttpUrl object to serialize.
+
+  Returns:
+    The URL as a string.
+  """
+  if isinstance(url, AnyHttpUrl):
+    return str(url)
+  else:
+    return url
+ 

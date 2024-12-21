@@ -17,11 +17,11 @@ class Signup(BaseModel):
 
 class BasicProfile(BaseModel):
     telegram_user_id: str
-    username: str
+    username: str | None = None
     firstname: str | None = None
-    image_url: AnyHttpUrl
-    level: int = 0
-    total_coins: int = 0
+    image_url: AnyHttpUrl | str
+    level: int | None = None
+    total_coins: int | None = None
 
 class UpdateProfile(BasicProfile):
     user_id: str
