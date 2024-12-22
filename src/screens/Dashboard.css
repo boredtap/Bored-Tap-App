@@ -153,10 +153,15 @@
   .big-tap-icon img {
     width: 250px;
     height: 250px;
-    margin: 0 auto; /* Center horizontally */
-    display: block; /* Ensures block-level centering */
-    margin-top: 24px;
+    margin: 0 auto;
+    display: block;
+    transition: transform 0.3s ease-in-out;
   }
+  
+  .big-tap-icon.tap-animation img {
+    transform: rotateX(15deg) rotateY(15deg) scale(1.0);
+  }
+  
   
   .electric-boost-section {
     display: flex;

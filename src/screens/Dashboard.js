@@ -25,45 +25,42 @@ const Dashboard = () => {
   useEffect(() => {
     if (window.Telegram && window.Telegram.WebApp) {
       const user = window.Telegram.WebApp.initDataUnsafe.user;
+  
       if (user) {
         const telegramInfo = {
           id: user.id,
-          username: user.username || "User",
+          username: user.username || `User${user.id}`,
           photoUrl: user.photo_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
         };
+  
         setTelegramData(telegramInfo);
-
-        // Send Telegram data to backend for storage
-        fetch("/api/users/store-telegram-data", {
+  
+        // Send user data to backend for validation
+        fetch("https://bored-tap-api.onrender.com/api/users/store-telegram-data", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(telegramInfo),
         })
           .then((res) => res.json())
           .then((data) => {
-            console.log("Telegram data synced with backend:", data);
+            if (data.success) {
+              console.log("User authenticated");
+            } else {
+              console.error("Authentication failed:", data.message);
+            }
           })
-          .catch((err) => {
-            console.error("Failed to sync Telegram data with backend:", err);
-          });
+          .catch((err) => console.error("Error syncing Telegram data:", err));
+      } else {
+        console.error("Telegram user data not available");
       }
     }
-
-    // Sync level and streak from backend
-    fetch("/api/user/data")
-      .then((res) => res.json())
-      .then((data) => {
-        setLevel(data.level || 1); // Default to Level 1
-        setCurrentStreak(data.streak || 0);
-        setTotalTaps(data.totalTaps || 0);
-      })
-      .catch((err) => console.error("Failed to fetch user data:", err));
   }, []);
 
   // Handle tapping on the big logo
-  const handleTap = () => {
-    setTotalTaps((prev) => prev + 1);
-    setElectricBoost((prev) => (prev > 0 ? prev - 1 : prev));
+  const handleTap = (event) => {
+    const fingersCount = event.touches?.length || 1; // Count fingers on tap
+    setTotalTaps((prev) => prev + fingersCount);
+    setElectricBoost((prev) => (prev > 0 ? prev - fingersCount : prev));
 
     // Show tap animation
     setTapAnimation(true);
@@ -73,7 +70,7 @@ const Dashboard = () => {
     fetch("/api/user/tap", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ telegramId: telegramData.id, taps: 1 }),
+      body: JSON.stringify({ telegramId: telegramData.id, taps: fingersCount }),
     }).catch((err) => console.error("Failed to sync tap:", err));
   };
 
@@ -174,7 +171,11 @@ const Dashboard = () => {
           />
           <span>{totalTaps}</span>
         </div>
-        <div className={`big-tap-icon ${tapAnimation ? "tap-animation" : ""}`} onClick={handleTap}>
+        <div
+          className={`big-tap-icon ${tapAnimation ? "tap-animation" : ""}`}
+          onTouchStart={handleTap} // Detect multi-finger touch
+          onClick={handleTap} // Fallback for single clicks
+        >
           <img
             className="tap-logo-big"
             src={`${process.env.PUBLIC_URL}/logo.png`}
