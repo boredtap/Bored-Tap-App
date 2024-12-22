@@ -2,7 +2,6 @@ from datetime import timedelta
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import AnyHttpUrl
 from user_reg_and_prof_mngmnt.dependencies import get_user_by_id, serialize_any_http_url
 from user_reg_and_prof_mngmnt.user_authentication import (
     ACCESS_TOKEN_EXPIRE_MINUTES, 
@@ -17,6 +16,18 @@ userApp = APIRouter()
 
 @userApp.post("/sign-up", tags=["Registration/Authentication"])
 async def sign_up(user: Signup) -> BasicProfile:
+    """
+    Sign up a new user and return the user data.
+
+    Args:
+        user (Signup): The user data to sign up, containing the telegram user ID, username and image URL.
+
+    Returns:
+        BasicProfile: The user data if sign up is successful.
+
+    Raises:
+        HTTPException: If the telegram user ID already exists in the database with status code 400.
+    """
     # check if telegram_user_id already exists in database
     existing_user = get_user_by_id(user.telegram_user_id)
     if existing_user:

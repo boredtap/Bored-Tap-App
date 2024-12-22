@@ -59,3 +59,9 @@ async def update_coins(telegram_user_id: Annotated[str, Depends(oauth2_scheme)])
 @app.get('/{telegram_user_id}/user_data', tags=["Global Routes"])
 async def get_user_data(telegram_user_id: Annotated[str, Depends(oauth2_scheme)]) -> BasicProfile:
     return {"message": f"User data successfully retrieved for {telegram_user_id}"}
+
+
+# update user level
+@app.post('/{telegram_user_id}/update-level', tags=["Global Routes"])
+async def update_level(telegram_user_id: Annotated[str, Depends(oauth2_scheme)]):
+    return {"message": f"Level successfully updated for {telegram_user_id}"}

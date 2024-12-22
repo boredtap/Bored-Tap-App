@@ -15,6 +15,11 @@ class Signup(BaseModel):
     image_url: AnyHttpUrl
     # invite_code: str | None
 
+
+class UpdateLevel(BaseModel):
+    telegram_user_id: str
+    level: int
+
 class BasicProfile(BaseModel):
     telegram_user_id: str
     username: str | None = None
@@ -24,5 +29,4 @@ class BasicProfile(BaseModel):
     total_coins: int | None = None
 
 class UpdateProfile(BasicProfile):
-    user_id: str
-
+    pass
