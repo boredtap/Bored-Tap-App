@@ -14,10 +14,10 @@ const Dashboard = () => {
     username: "User",
     photoUrl: "",
   });
-  const [currentStreak, setCurrentStreak] = useState(0);
+  const [currentStreak, /*setCurrentStreak*/] = useState(0);
   const [totalTaps, setTotalTaps] = useState(0);
   const [electricBoost, setElectricBoost] = useState(1000);
-  const [level, setLevel] = useState(1);
+  const [level, /*setLevel*/] = useState(1);
   const [tapAnimation, setTapAnimation] = useState(false);
   const [boostAnimation, setBoostAnimation] = useState(false);
 

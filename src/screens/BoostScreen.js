@@ -84,7 +84,7 @@ const BoostScreen = () => {
   const renderOverlay = () => {
     if (!activeOverlay) return null;
   
-    const { title, description, subText, valueIcon, value, level, ctaText, altCTA } = activeOverlay;
+    const { title, description, subText, /*valueIcon,*/ value, level, ctaText, altCTA } = activeOverlay;
   
     const isDisabled = altCTA && value === "Insufficient Funds";
   

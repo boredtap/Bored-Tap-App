@@ -28,7 +28,7 @@ const RewardFrame = ({ day, reward, isActive, isClaimed, onClick }) => {
 };
 
 const DailyStreakScreen = () => {
-  const [currentDay, setCurrentDay] = useState(1); // Current active day
+  const [currentDay, /*setCurrentDay*/] = useState(1); // Current active day
   const [claimedDays, setClaimedDays] = useState([]); // Track claimed days
 
   const rewards = [
