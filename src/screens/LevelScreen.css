@@ -1,0 +1,126 @@
+/* Level Screen Styling */
+.level-screen {
+    background-color: #000;
+    color: #fff;
+    min-height: 100vh;
+    padding: 100px 20px 20px;
+    font-family: "Roboto", sans-serif;
+  }
+  
+  /* Level Header */
+  .level-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .level-icon {
+    width: 119px;
+    height: 95px;
+  }
+  
+  .level-text {
+    color: orange;
+    font-size: 16px;
+    margin-top: 8px;
+  }
+  
+  /* Progress Info */
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+  
+  .next-level {
+    color: #fff;
+  }
+  
+  .coin-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  
+  .coin-icon {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .coin-text {
+    color: #fff;
+  }
+  
+  /* Loading Bar */
+  .loading-bar {
+    background-color: #414141;
+    height: 10px;
+    width: 100%;
+    border-radius: 5px;
+    margin-bottom: 20px;
+  }
+  
+  .loader {
+    background-color: #d9d9d9;
+    height: 100%;
+    border-radius: 5px;
+  }
+  
+  /* Level Data Cards */
+  .level-data-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: scroll;
+    max-height: 80vh;
+    padding-bottom: 20px;
+  }
+  
+  .level-data-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-radius: 8px;
+  }
+  
+  .level-data-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .level-card-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .level-info {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .level-label {
+    font-size: 16px;
+  }
+  
+  .level-small-icon {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+  }
+  
+  .small-coin-icon {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .level-data-right {
+    font-size: 16px;
+    font-weight: bold;
+  }
+  
