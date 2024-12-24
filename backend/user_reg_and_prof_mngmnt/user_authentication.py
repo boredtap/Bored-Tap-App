@@ -6,7 +6,6 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from config import get_settings
 from user_reg_and_prof_mngmnt.schemas import BasicProfile
-from postgrest.base_request_builder import APIResponse
 from user_reg_and_prof_mngmnt.dependencies import get_user_by_id
 
 
@@ -83,7 +82,7 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         username: str = payload.get("username")
         if telegram_user_id is None:
             raise credentials_exception
-        return username
+        return telegram_user_id
     except InvalidTokenError:
         raise credentials_exception
 

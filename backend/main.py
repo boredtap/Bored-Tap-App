@@ -1,10 +1,13 @@
 from fastapi import FastAPI, Request, Response, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from config import get_settings
+from dependencies import get_user_profile, update_coins_in_db
+from user_reg_and_prof_mngmnt.dependencies import get_user_by_id
 from user_reg_and_prof_mngmnt.router import userApp
-from user_reg_and_prof_mngmnt.user_authentication import oauth2_scheme
+from earn.router import earnApp
+from user_reg_and_prof_mngmnt.user_authentication import get_current_user, oauth2_scheme
 from typing import Annotated
-from user_reg_and_prof_mngmnt.schemas import BasicProfile
+from user_reg_and_prof_mngmnt.schemas import BasicProfile, UserProfile
 
 
 tags_metadata = [
@@ -14,7 +17,11 @@ tags_metadata = [
     },
     {
         "name": "Registration/Authentication",
-        "description": "These routes are used for user registration and authentication."
+        "description": "These routes are for user registration and authentication."
+    },
+    {
+        "name": "Earn features",
+        "description": "These routes are for earn action buttons on the earn tab of dashboard."
     }
 ]
 
@@ -24,8 +31,8 @@ tags_metadata = [
 # initialize fastapi app
 app = FastAPI(
     title="Bored Tap Coin API",
-    description="API for Bored Tap Coin", 
-    version="1.0.0", 
+    description="API for Bored Tap Coin",
+    version="1.0.0",
     openapi_tags=tags_metadata
 )
 
@@ -43,6 +50,7 @@ app.add_middleware(
 )
 
 app.include_router(userApp)
+app.include_router(earnApp)
 
 @app.get('/', tags=["Global Routes"])
 async def home():
@@ -50,18 +58,37 @@ async def home():
 
 
 # update user coins tapped
-@app.post('/{telegram_user_id}/coins', tags=["Global Routes"])
-async def update_coins(telegram_user_id: Annotated[str, Depends(oauth2_scheme)]):
-    return {"message": f"Coins successfully retrieved for {telegram_user_id}"}
+@app.post('/coins', tags=["Global Routes"])
+async def update_coins(telegram_user_id: Annotated[str, Depends(get_current_user)], coins: int):
+    """Update coins gannered from different activities in database
+
+    Args:
+        telegram_user_id (Annotated[str, Depends): gets the telegram id of signed-in users
+        coins (int): total coins accumulated by user
+
+    Returns:
+        _type_: int
+    """
+    update_coins_in_db(telegram_user_id, coins)
+    return {"message": f"User coins updated successfully"}
 
 
 # get user data
-@app.get('/{telegram_user_id}/user_data', tags=["Global Routes"])
-async def get_user_data(telegram_user_id: Annotated[str, Depends(oauth2_scheme)]) -> BasicProfile:
-    return {"message": f"User data successfully retrieved for {telegram_user_id}"}
+@app.get('/user/profile', tags=["Global Routes"], response_model=UserProfile)
+async def get_user_data(telegram_user_id: Annotated[str, Depends(get_current_user)]) -> UserProfile:
+    """Get full user profile information
+
+    Args:
+        telegram_user_id (Annotated[str, Depends): _description_
+
+    Returns:
+        UserProfile: user profile information
+    """
+    user = get_user_profile(telegram_user_id)
+    return user
 
 
 # update user level
-@app.post('/{telegram_user_id}/update-level', tags=["Global Routes"])
-async def update_level(telegram_user_id: Annotated[str, Depends(oauth2_scheme)]):
+@app.post('/update-level', tags=["Global Routes"])
+async def update_level(telegram_user_id: Annotated[str, Depends(get_current_user)]):
     return {"message": f"Level successfully updated for {telegram_user_id}"}

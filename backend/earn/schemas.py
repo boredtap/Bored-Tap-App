@@ -1,10 +1,8 @@
-from datetime import date
+from datetime import datetime
 from pydantic import BaseModel
 
 
 class StreakData(BaseModel):
-    telegram_user_id: str
-    last_action_date: date
-    current_streak: int
-    longest_streak: int
-    
+    current_streak: int = 0
+    longest_streak: int = 0
+    last_action_date: datetime | None = None

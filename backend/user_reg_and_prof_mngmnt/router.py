@@ -7,7 +7,7 @@ from user_reg_and_prof_mngmnt.user_authentication import (
     ACCESS_TOKEN_EXPIRE_MINUTES, 
     authenticate_user,
     create_access_token)
-from . schemas import Token, Signup, BasicProfile
+from . schemas import Token, Signup, BasicProfile, UserProfile
 from user_reg_and_prof_mngmnt.dependencies import insert_new_user
 
 
@@ -35,17 +35,22 @@ async def sign_up(user: Signup) -> BasicProfile:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User already exists"
         )
+    
     # else create new user
-    new_user = BasicProfile(
+    full_profile = UserProfile(
+        telegram_user_id=user.telegram_user_id,
+        username=user.username,
+        image_url=serialize_any_http_url(url=user.image_url),
+    )
+
+    # insert new user in database
+    insert_new_user(full_profile)
+
+    return BasicProfile(
         telegram_user_id=user.telegram_user_id,
         username=user.username,
         image_url=serialize_any_http_url(url=user.image_url)
     )
-
-    # insert new user in database
-    insert_new_user(new_user)
-
-    return new_user
 
 
 @userApp.post("/signin", tags=["Registration/Authentication"])
