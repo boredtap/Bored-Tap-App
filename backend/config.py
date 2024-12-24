@@ -4,10 +4,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     env_name: str = "Local Environment"
+    base_url: str = "http://localhost:8000"
+    secret_key: str = ""
+    algorithm: str = ""
     bot_token: str = ""
+    mongodb_connection_string: str = ""
     supabase_url: str = ""
     supabase_key: str = ""
-    base_url: str = "http://localhost:8000"
 
     model_config = SettingsConfigDict(env_file=".env")
 

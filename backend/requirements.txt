@@ -5,6 +5,7 @@ annotated-types==0.7.0
 anyio==4.7.0
 attrs==24.2.0
 certifi==2024.8.30
+charset-normalizer==3.4.0
 click==8.1.7
 colorama==0.4.6
 deprecation==2.1.0
@@ -34,12 +35,16 @@ pydantic==2.10.3
 pydantic-settings==2.6.1
 pydantic_core==2.27.1
 Pygments==2.18.0
+PyJWT==2.10.1
+pymongo==4.10.1
+pyTelegramBotAPI==4.25.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 python-multipart==0.0.19
 python-telegram-bot==21.9
 PyYAML==6.0.2
 realtime==2.0.6
+requests==2.32.3
 rich==13.9.4
 rich-toolkit==0.12.0
 shellingham==1.5.4
@@ -49,8 +54,10 @@ starlette==0.41.3
 storage3==0.9.0
 supabase==2.10.0
 supafunc==0.7.0
+telebot==0.0.5
 typer==0.15.1
 typing_extensions==4.12.2
+urllib3==2.2.3
 uvicorn==0.32.1
 watchfiles==1.0.0
 websockets==13.1
