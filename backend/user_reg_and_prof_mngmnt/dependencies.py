@@ -1,11 +1,7 @@
 from pydantic import AnyHttpUrl
 from user_reg_and_prof_mngmnt.schemas import BasicProfile
-from postgrest.base_request_builder import APIResponse
-from database_connection import get_db
+from database_connection import user_collection
 
-
-db = get_db()
-user_collection = db['users']
 
 def get_user_by_id(telegram_user_id: str) -> BasicProfile:
     """
@@ -20,7 +16,7 @@ def get_user_by_id(telegram_user_id: str) -> BasicProfile:
     user = user_collection.find_one({"telegram_user_id": telegram_user_id})
 
     if user:
-        user_data = BasicProfile(
+        user_data: dict = BasicProfile(
             telegram_user_id=user.get("telegram_user_id", None),
             username=user.get("username", None),
             firstname=user.get("firstname", None),

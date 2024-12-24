@@ -1,4 +1,5 @@
 from pydantic import BaseModel, AnyHttpUrl
+from earn.schemas import StreakData
 
 
 class Token(BaseModel):
@@ -25,8 +26,11 @@ class BasicProfile(BaseModel):
     username: str | None = None
     firstname: str | None = None
     image_url: AnyHttpUrl | str
-    level: int | None = None
-    total_coins: int | None = None
+    total_coins: int | None = 0
+    level: int | None = 1
 
-class UpdateProfile(BasicProfile):
+class UserProfile(
+        StreakData,
+        BasicProfile
+    ):
     pass

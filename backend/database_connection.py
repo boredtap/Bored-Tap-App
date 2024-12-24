@@ -19,3 +19,6 @@ def get_db():
     except Exception as e:
         print(f"Error connecting to MongoDB: {e}")
         raise e
+
+db = get_db()
+user_collection = db['users']
