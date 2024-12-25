@@ -8,7 +8,6 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     telegram_user_id: str
-    username: str
 
 class Signup(BaseModel):
     telegram_user_id: str
@@ -17,8 +16,9 @@ class Signup(BaseModel):
     # invite_code: str | None
 
 
-class UpdateLevel(BaseModel):
+class Update(BaseModel):
     telegram_user_id: str
+    total_coins: int
     level: int
 
 class BasicProfile(BaseModel):
