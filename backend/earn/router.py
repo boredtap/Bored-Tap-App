@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Annotated
 from fastapi import APIRouter, Depends
-from dependencies import update_coins_in_db
+from .dependencies import reward_user, update_coins_in_db
 from earn.schemas import StreakData
 from user_reg_and_prof_mngmnt.user_authentication import get_current_user, oauth2_scheme
 from earn.dependencies import get_current_streak, init_restart_streak, update_streak_in_db
@@ -23,11 +23,15 @@ async def perform_streak(telegram_user_id: Annotated[str, Depends(get_current_us
     streak = get_current_streak(telegram_user_id)
     current_date = datetime.today()
     one_day = timedelta(1)
+    daily_reward_amount = 500
 
     if not streak.last_action_date:
-        # initialize user streaks
+        # initialize user streaks if no streak record exists
         init_restart_streak(current_date, streak)
-        update_coins_in_db(telegram_user_id, 500)
+
+        # reward user for streak completion
+        reward = reward_user(telegram_user_id, streak.current_streak, daily_reward_amount)
+        update_coins_in_db(telegram_user_id, reward)
 
         # update user streak
         update_streak_in_db(telegram_user_id, streak)
@@ -63,7 +67,7 @@ async def perform_streak(telegram_user_id: Annotated[str, Depends(get_current_us
     )
 
 
-@earnApp.get("/get-streak-status", tags=["Earn features"])
+@earnApp.get("/streak/status", tags=["Earn features"])
 async def get_streak_status(telegram_user_id: Annotated[str, Depends(get_current_user)]):
     streak = get_current_streak(telegram_user_id)
     return StreakData(

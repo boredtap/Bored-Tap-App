@@ -3,9 +3,9 @@ from typing import Annotated
 import jwt
 from jwt.exceptions import InvalidTokenError
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 from config import get_settings
-from user_reg_and_prof_mngmnt.schemas import BasicProfile
+from user_reg_and_prof_mngmnt.schemas import BasicProfile, TokenData
 from user_reg_and_prof_mngmnt.dependencies import get_user_by_id
 
 
@@ -14,7 +14,13 @@ SECRET_KEY = get_settings().secret_key
 ALGORITHM = get_settings().algorithm
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/signin")
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="/signin",
+    # scopes={
+    #     "me": "read information about the current user only",
+    #     "superuser": "read and write full access"
+    # }
+)
 
 
 def authenticate_user(telegram_user_id: str) -> BasicProfile:
@@ -58,7 +64,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     """
     Authorize a user by validating a JWT token and extracting the username.
 
@@ -71,18 +77,25 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     Raises:
         HTTPException: If the token is invalid or the username is not found.
     """
+    # if security_scopes.scopes:
+    #     authenticate_value = f'Bearer scope="{security_scopes.scope_str}"'
+    # else:
+    #     authenticate_value="Bearer"
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload: dict = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         telegram_user_id: str = payload.get("telegram_user_id")
-        username: str = payload.get("username")
+        # username: str = payload.get("username")
         if telegram_user_id is None:
             raise credentials_exception
-        return telegram_user_id
+        # token_scopes = payload.get("scopes", [])
+        token_data = TokenData(telegram_user_id=telegram_user_id)
+        return token_data.telegram_user_id
     except InvalidTokenError:
         raise credentials_exception
 

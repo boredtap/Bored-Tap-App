@@ -1,5 +1,5 @@
 from datetime import datetime
-from earn.schemas import StreakData
+from earn.schemas import StreakData, Update
 from database_connection import user_collection
 
 
@@ -32,6 +32,30 @@ def update_streak_in_db(telegram_user_id: str, streak: StreakData):
     }
     user_collection.update_one(query_filter, update_operation)
     return 
+
+# user reward for successful streaks
+def reward_user(telegram_user_id: str, current_streak: int, daily_reward_amount: int) -> Update:
+    user: dict = user_collection.find_one({'telegram_user_id': telegram_user_id})
+    if user:
+        daily_reward = current_streak * daily_reward_amount
+        total_coins = user.get('total_coins')
+        total_coins += daily_reward
+    reward = Update(
+        telegram_user_id=telegram_user_id,
+        total_coins=total_coins
+    )
+    return reward
+
+
+
+# update user coins in db
+def update_coins_in_db(telegram_user_id: str, reward: Update):
+    query_filter = {'telegram_user_id': telegram_user_id}
+    update_operation = {'$set':
+        {'total_coins': reward.total_coins}
+    }
+    user_collection.update_one(query_filter, update_operation)
+    return
 
 def init_restart_streak(current_date: datetime, streak: StreakData):
     """
