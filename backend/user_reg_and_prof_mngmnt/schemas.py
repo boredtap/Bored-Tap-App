@@ -8,7 +8,6 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     telegram_user_id: str
-    username: str
 
 class Signup(BaseModel):
     telegram_user_id: str
