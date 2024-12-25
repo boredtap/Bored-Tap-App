@@ -1,0 +1,133 @@
+/* Reward Screen Styling */
+.reward-screen {
+  background-color: #000;
+  color: #fff;
+  min-height: 100vh;
+  padding: 80px 16px 16px;
+  font-family: "Roboto", sans-serif;
+}
+
+/* Total Taps Section */
+.total-taps {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.taps-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.taps-logo {
+  width: 30px;
+  height: 30px;
+}
+
+.taps-number {
+  font-size: 36px;
+  font-weight: bold;
+}
+
+.task-link {
+  font-size: 14px;
+  color: #00bfff;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: space-evenly;
+  margin-bottom: 20px;
+}
+
+.pagination-tab {
+  font-size: 16px;
+  cursor: pointer;
+  color: #fff;
+}
+
+.pagination-tab.active::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background-color: #fff;
+  bottom: -4px;
+  left: 0;
+}
+
+/* Reward Cards */
+.reward-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reward-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #414141;
+}
+
+.reward-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.reward-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10%;
+}
+
+.reward-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.reward-title {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.reward-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.small-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.reward-cta {
+  padding: 8px 16px;
+  border-radius: 25px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.reward-share-icon {
+  padding: 8px 16px;
+  border-radius: 25px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.share-icon {
+  width: 20px;
+  height: 20px;
+}

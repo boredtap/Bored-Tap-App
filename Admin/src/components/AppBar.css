@@ -1,0 +1,143 @@
+.app-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed;
+    top: 0;
+    left: 196px; /* Starts after NavigationPanel with 20px spacing */
+    right: 0;
+    height: 96px;
+    background-color: #202022;
+    color: #fff;
+    padding: 0 20px;
+    z-index: 1000;
+    border-radius: 0 0 8px 8px; /* Radius only for the bottom two corners */
+}
+
+  
+  .left-section {
+    display: flex;
+    align-items: center;
+  }
+  
+  .title-and-time {
+    display: flex;
+    align-items: center;
+    gap: 64px; /* Spacing between title and time/date */
+  }
+  
+  .screen-name {
+    font-size: 20px;
+    font-weight: bold;
+    color: orange;
+  }
+  
+  .time-date {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+  }
+  
+  .time {
+    font-size: 30px;
+    font-weight: bold;
+  }
+  
+  .date {
+    font-size: 12px;
+    color: #ccc;
+  }
+  
+  .middle-section {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .search-bar {
+    display: flex;
+    align-items: center;
+    background-color: #19191A;
+    width: 520px;
+    height: 48px;
+    border-radius: 8px;
+    padding-left: 10px; /* Add padding to create space for the icon */
+  }
+  
+  .search-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+    
+  }
+  
+  .search-input {
+    flex-grow: 1;
+    height: 100%;
+    border: none;
+    background: none;
+    color: #fff;
+    font-size: 16px;
+    outline: none;
+    padding-right: 10px; /* Ensure input text is not flush with the right edge */
+  }
+  
+
+  
+  .right-section {
+    display: flex;
+    align-items: center;
+  }
+  
+  .notification-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 40px;
+  }
+  
+  .profile {
+    display: flex;
+    align-items: center;
+  }
+  
+  .profile-picture {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 10px;
+  }
+  
+  .profile-info {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+  }
+  
+  .username {
+    font-size: 16px;
+    font-weight: bold;
+  }
+  
+  .role {
+    font-size: 12px;
+    color: orange;
+  }
+  
+  @media screen and (max-width: 768px) {
+    .app-bar {
+      left: 0; /* For smaller screens, no gap from NavigationPanel */
+      flex-direction: column;
+      height: auto;
+      padding: 10px;
+    }
+  
+    .title-and-time {
+      gap: 10px; /* Reduce spacing on smaller screens */
+    }
+  
+    .search-bar {
+      width: 100%;
+    }
+  }
+  

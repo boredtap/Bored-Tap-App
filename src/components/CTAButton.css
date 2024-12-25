@@ -1,0 +1,36 @@
+/* CTA Button Container */
+.cta-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin: 20px 0;
+  }
+  
+  /* General CTA Button Style */
+  .cta-button {
+    width: 100%;
+    max-width: 360px;
+    height: 54px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  /* Active State */
+  .cta-button.active {
+    background-color: #ffffff;
+    color: #000000;
+  }
+  
+  /* Inactive State */
+  .cta-button.inactive {
+    background-color: #414141;
+    color: #aaa;
+    cursor: not-allowed;
+  }
+  

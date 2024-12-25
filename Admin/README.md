@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-# Bored-Tap
-Bored Tap aims to offer a fun and engaging mobile app where  users can earn cryptocurrency rewards through screen-tapping actions, completing tasks, and participating in challenges.
-=======
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
@@ -72,4 +68,3 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
->>>>>>> 3c48b37 (Initial commit for frontend)
