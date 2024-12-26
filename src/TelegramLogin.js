@@ -6,7 +6,6 @@ const TelegramLogin = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Ensure Telegram WebApp is available
     if (!window.Telegram || !window.Telegram.WebApp) {
       console.error("Telegram WebApp is not available.");
       setLoading(false);
@@ -18,30 +17,30 @@ const TelegramLogin = () => {
     const user = initData.user || null;
 
     if (!user || !user.id) {
-      console.error("Telegram user data is not available.", initData);
+      console.error("Telegram user data is not available:", initData);
       setLoading(false);
       return;
     }
 
-    // Log full Telegram init data for debugging
     console.log("Telegram Init Data:", initData);
 
-    // Register user with backend
-    const registerUser = async () => {
-      const payload = {
-        telegram_user_id: user.id,
-        username: user.username || "",
-        image_url: user.photo_url || "",
-      };
+    const payload = {
+      telegram_user_id: user.id,
+      username: user.username || "",
+      image_url: user.photo_url || "",
+    };
 
+    console.log("Payload:", payload);
+
+    const registerUser = async () => {
       try {
         const response = await fetch("https://bored-tap-api.onrender.com/sign-up", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
+
+        console.log("API Response Status:", response.status);
 
         if (!response.ok) {
           const errorText = await response.text();
@@ -50,8 +49,6 @@ const TelegramLogin = () => {
 
         const data = await response.json();
         console.log("Registration Success:", data);
-
-        // Navigate to splash screen
         navigate("/splash-screen");
       } catch (error) {
         console.error("Registration Failed:", error);
