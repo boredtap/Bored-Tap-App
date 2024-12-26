@@ -6,15 +6,21 @@ const TelegramLogin = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Ensure Telegram WebApp is loaded
     if (window.Telegram && window.Telegram.WebApp) {
       const tg = window.Telegram.WebApp;
+      console.log("Telegram WebApp Initialized:", tg); // Debugging: Log Telegram WebApp
+
       const user = tg.initDataUnsafe?.user;
 
-      if (!user) {
-        console.error("Telegram WebApp user data is not available.");
+      // Validate user data
+      if (!user || !user.id) {
+        console.error("User data is missing or invalid:", tg.initDataUnsafe);
         setLoading(false);
         return;
       }
+
+      console.log("User Data Retrieved from Telegram:", user); // Debugging: Log user data
 
       const registerUser = async (user) => {
         const payload = {
@@ -23,7 +29,7 @@ const TelegramLogin = () => {
           image_url: user.photo_url,
         };
 
-        console.log("Payload:", payload); // Debugging
+        console.log("Sending Payload to API:", payload); // Debugging: Log payload
 
         try {
           const response = await fetch("https://bored-tap-api.onrender.com/sign-up", {
@@ -34,15 +40,19 @@ const TelegramLogin = () => {
             body: JSON.stringify(payload),
           });
 
+          console.log("API Response:", response); // Debugging: Log response
+
           if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            console.error("API Request Failed:", response.status, response.statusText);
+            throw new Error(`API Request Failed: ${response.status}`);
           }
 
           const data = await response.json();
-          console.log("Fetch Success:", data); // Debugging
+          console.log("User Successfully Registered:", data); // Debugging: Log response data
+
           navigate("/splash-screen");
         } catch (error) {
-          console.error("Registration Failed:", error);
+          console.error("Error During Registration:", error); // Debugging: Log errors
         } finally {
           setLoading(false);
         }
