@@ -6,63 +6,62 @@ const TelegramLogin = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!window.Telegram || !window.Telegram.WebApp) {
-      console.error("Telegram WebApp is not available.");
-      setLoading(false);
-      return;
-    }
+    if (window.Telegram && window.Telegram.WebApp) {
+      const tg = window.Telegram.WebApp;
+      const user = tg.initDataUnsafe?.user;
 
-    const tg = window.Telegram.WebApp;
-    const initData = tg.initDataUnsafe || {};
-    const user = initData.user || null;
-
-    if (!user || !user.id) {
-      console.error("Telegram user data is not available:", initData);
-      setLoading(false);
-      return;
-    }
-
-    console.log("Telegram Init Data:", initData);
-
-    const payload = {
-      telegram_user_id: user.id,
-      username: user.username || "",
-      image_url: user.photo_url || "",
-    };
-
-    console.log("Payload:", payload);
-
-    const registerUser = async () => {
-      try {
-        const response = await fetch("https://bored-tap-api.onrender.com/sign-up", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        console.log("API Response Status:", response.status);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`HTTP error! Status: ${response.status}, Response: ${errorText}`);
-        }
-
-        const data = await response.json();
-        console.log("Registration Success:", data);
-        navigate("/splash-screen");
-      } catch (error) {
-        console.error("Registration Failed:", error);
-      } finally {
+      if (!user) {
+        console.error("Telegram WebApp user data is not available.");
         setLoading(false);
+        return;
       }
-    };
 
-    registerUser();
+      const registerUser = async (user) => {
+        const payload = {
+          telegram_user_id: user.id,
+          username: user.username,
+          image_url: user.photo_url,
+        };
+
+        console.log("Payload:", payload); // Debugging
+
+        try {
+          const response = await fetch("https://bored-tap-api.onrender.com/sign-up", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          console.log("Fetch Success:", data); // Debugging
+          navigate("/splash-screen");
+        } catch (error) {
+          console.error("Registration Failed:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      registerUser(user);
+    } else {
+      console.error("Telegram WebApp is not initialized.");
+      setLoading(false);
+    }
   }, [navigate]);
 
   return (
     <div>
-      {loading ? <p>Connecting with Telegram...</p> : <p>Failed to connect. Check logs for details.</p>}
+      {loading ? (
+        <h1>Connecting with Telegram...</h1>
+      ) : (
+        <h1>Failed to connect. Please try again.</h1>
+      )}
     </div>
   );
 };
