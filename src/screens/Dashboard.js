@@ -10,9 +10,9 @@ const Dashboard = () => {
 
   // States
   const [telegramData, setTelegramData] = useState({
-    id: "",
+    telegram_user_id: "",
     username: "User",
-    photoUrl: "",
+    image_url: "",
   });
   const [currentStreak, /*setCurrentStreak*/] = useState(0);
   const [totalTaps, setTotalTaps] = useState(0);
@@ -28,9 +28,9 @@ const Dashboard = () => {
   
       if (user) {
         const telegramInfo = {
-          id: user.id,
+          telegram_user_id: user.id,
           username: user.username || `User${user.id}`,
-          photoUrl: user.photo_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
+          image_url: user.photo_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
         };
   
         setTelegramData(telegramInfo);

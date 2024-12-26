@@ -13,14 +13,12 @@ const TelegramLogin = () => {
 
       const registerUser = async (user) => {
         const formData = new FormData();
-        formData.append("telegram_id", user.id);
-        formData.append("first_name", user.first_name);
-        formData.append("last_name", user.last_name);
+        formData.append("telegram_user_id", user.id);
         formData.append("username", user.username);
-        formData.append("referral_id", referral_id);
+        formData.append("image_url", user.photo_url);
 
         try {
-          const response = await fetch("/register_user/", {
+          const response = await fetch("https://bored-tap-api.onrender.com/sign-up", {
             method: "POST",
             body: formData,
           });
