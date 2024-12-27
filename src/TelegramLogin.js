@@ -27,6 +27,7 @@ const TelegramLogin = () => {
           telegram_user_id: user.id,
           username: user.username,
           image_url: user.photo_url,
+          referral_id: user.referral_id,
         };
 
         console.log("Sending Payload to API:", payload); // Debugging: Log payload

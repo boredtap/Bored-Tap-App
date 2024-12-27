@@ -36,7 +36,7 @@ const Dashboard = () => {
         setTelegramData(telegramInfo);
   
         // Send user data to backend for validation
-        fetch("https://bored-tap-api.onrender.com/api/users/store-telegram-data", {
+        fetch("https://bored-tap-api.onrender.com/sign-up", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(telegramInfo),

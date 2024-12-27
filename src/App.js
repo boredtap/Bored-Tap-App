@@ -24,8 +24,8 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<TelegramLogin />} />
-        <Route path="/splash-screen" element={<SplashScreen />} />
+        {/* <Route path="/" element={<TelegramLogin />} /> */}
+        <Route path="/" element={<SplashScreen />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/telegram-login" element={<TelegramLogin />} />
         <Route path="/profile-screen" element={<ProfileScreen />} />
