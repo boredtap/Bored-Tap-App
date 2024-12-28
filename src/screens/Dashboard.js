@@ -215,7 +215,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import AppBar from "../components/AppBar";
+// import AppBar from "../components/AppBar";
 import Navigation from "../components/Navigation";
 import "./Dashboard.css";
 
