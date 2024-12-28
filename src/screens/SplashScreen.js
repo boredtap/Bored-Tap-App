@@ -11,7 +11,6 @@ const SplashScreen = () => {
   useEffect(() => {
     const initializeTelegram = async () => {
       try {
-        // Check if Telegram WebApp is available
         if (!window.Telegram?.WebApp) {
           throw new Error("Telegram WebApp not initialized");
         }
@@ -23,14 +22,12 @@ const SplashScreen = () => {
           throw new Error("User data is missing or invalid");
         }
 
-        // Prepare payload exactly as per API requirements
         const payload = {
-          telegram_user_id: String(userData.id), // Convert to string as per API
+          telegram_user_id: String(userData.id),
           username: userData.username || `User${userData.id}`,
           image_url: userData.photo_url || "",
         };
 
-        // Make API call
         const response = await fetch("https://bored-tap-api.onrender.com/sign-up", {
           method: "POST",
           headers: {
@@ -44,11 +41,9 @@ const SplashScreen = () => {
           throw new Error(`Registration failed: ${response.status}`);
         }
 
-        const data = await response.json();
-        
-        // Store minimal required user data
+        // Store user data and proceed regardless of response content
         localStorage.setItem("telegramUser", JSON.stringify(payload));
-
+        
         // Navigate to dashboard
         navigate("/dashboard");
       } catch (err) {
