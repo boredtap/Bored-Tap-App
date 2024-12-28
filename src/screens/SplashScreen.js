@@ -7,6 +7,7 @@ const SplashScreen = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     const initializeTelegram = async () => {
@@ -28,34 +29,60 @@ const SplashScreen = () => {
           image_url: userData.photo_url || "",
         };
 
-        const response = await fetch("https://bored-tap-api.onrender.com/sign-up", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "accept": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-        if (!response.ok) {
-          throw new Error(`Registration failed: ${response.status}`);
+        try {
+          const response = await fetch("https://bored-tap-api.onrender.com/sign-up", {
+            method: "POST",
+            signal: controller.signal,
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          clearTimeout(timeoutId);
+
+          if (!response.ok) {
+            throw new Error(`Registration failed: ${response.status}`);
+          }
+
+          localStorage.setItem("telegramUser", JSON.stringify(payload));
+          navigate("/dashboard");
+        } catch (fetchError) {
+          if (fetchError.name === 'AbortError') {
+            throw new Error('Request timed out');
+          }
+          throw fetchError;
         }
 
-        // Store user data and proceed regardless of response content
-        localStorage.setItem("telegramUser", JSON.stringify(payload));
-        
-        // Navigate to dashboard
-        navigate("/dashboard");
       } catch (err) {
         console.error("Initialization error:", err);
         setError(err.message);
+        
+        // Retry logic
+        if (retryCount < 3) {
+          setTimeout(() => {
+            setRetryCount(prev => prev + 1);
+            setError(null);
+            setLoading(true);
+          }, 2000); // Wait 2 seconds before retrying
+        }
       } finally {
         setLoading(false);
       }
     };
 
     initializeTelegram();
-  }, [navigate]);
+  }, [navigate, retryCount]);
+
+  const handleRetry = () => {
+    setError(null);
+    setLoading(true);
+    setRetryCount(0);
+  };
 
   return (
     <div className="splash-container">
@@ -70,8 +97,16 @@ const SplashScreen = () => {
           className="splash-logo"
         />
         <span className="splash-text">
-          {loading ? "Authenticating..." : error || "Welcome to BoredTap"}
+          {loading ? "Authenticating..." : error ? `Error: ${error}` : "Welcome to BoredTap"}
         </span>
+        {error && retryCount >= 3 && (
+          <button 
+            onClick={handleRetry}
+            className="retry-button"
+          >
+            Retry
+          </button>
+        )}
       </div>
     </div>
   );
