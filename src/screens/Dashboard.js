@@ -315,7 +315,7 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      <AppBar title="Dashboard" />
+      {/* <AppBar title="Dashboard" /> */}
       
       <div className="profile-streak-section">
         <div className="profile-section" onClick={() => navigate("/profile-screen")}>
