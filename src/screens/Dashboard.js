@@ -7,13 +7,50 @@ import "../components/Navigation.css";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-
-  // States
   const [telegramData, setTelegramData] = useState({
     telegram_user_id: "",
-    username: "User",
+    username: "",
     image_url: "",
   });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const initializeDashboard = async () => {
+      try {
+        // Get stored user data
+        const storedUser = localStorage.getItem("telegramUser");
+        if (!storedUser) {
+          navigate("/");
+          return;
+        }
+
+        const userData = JSON.parse(storedUser);
+        setTelegramData(userData);
+
+        // Initialize Telegram WebApp if available
+        if (window.Telegram?.WebApp) {
+          window.Telegram.WebApp.expand();
+        }
+
+        setLoading(false);
+      } catch (error) {
+        console.error("Dashboard initialization error:", error);
+        navigate("/");
+      }
+    };
+
+    initializeDashboard();
+  }, [navigate]);
+
+  if (loading) {
+    return <div className="loading">Loading...</div>;
+  }
+  // // States
+  // const [telegramData, setTelegramData] = useState({
+  //   telegram_user_id: "",
+  //   username: "User",
+  //   image_url: "",
+  // });
   const [currentStreak, /*setCurrentStreak*/] = useState(0);
   const [totalTaps, setTotalTaps] = useState(0);
   const [electricBoost, setElectricBoost] = useState(1000);
@@ -108,12 +145,12 @@ const Dashboard = () => {
             onClick={() => navigate("/profile-screen")} // Navigate to Profile Screen on click
           >
             <img
-              src={telegramData.photoUrl}
-              alt="Profile"
-              className="profile-picture"
-            />
+            src={telegramData?.photo_url || `${process.env.PUBLIC_URL}/profile-picture.png`}
+            alt="Profile"
+            className="profile-picture"
+          />
             <div className="profile-info">
-              <span className="profile-username">{telegramData.username}</span>
+            <span className="profile-username">{telegramData.username}</span>
               <span className="profile-level">Lvl {level}</span>
             </div>
           </div>
