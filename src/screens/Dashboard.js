@@ -1,51 +1,49 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-// import AppBar from "../components/AppBar";
 import Navigation from "../components/Navigation";
 import "./Dashboard.css";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  
-  // Move all useState hooks to the top level
+
   const [telegramData, setTelegramData] = useState({
     telegram_user_id: "",
     username: "User",
     image_url: "",
   });
-  
-  // Using const for values that won't change in this version
-  const currentStreak = 0;  // Will be implemented with backend integration
-  const level = 1;  // Will be implemented with backend integration
-  
+
+  const currentStreak = 0;
+  const level = 1;
+
   const [totalTaps, setTotalTaps] = useState(0);
   const [electricBoost, setElectricBoost] = useState(1000);
   const [tapAnimation, setTapAnimation] = useState(false);
-  const [boostAnimation, setBoostAnimation] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Initialization effect
   useEffect(() => {
     const initializeDashboard = async () => {
       try {
         if (window.Telegram?.WebApp) {
           const user = window.Telegram.WebApp.initDataUnsafe.user;
-          
+
           if (user) {
             const telegramInfo = {
               telegram_user_id: user.id,
               username: user.username || `User${user.id}`,
-              image_url: user.photo_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
+              image_url:
+                user.photo_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
             };
 
             setTelegramData(telegramInfo);
 
-            // Send user data to backend for validation
-            const response = await fetch("https://bored-tap-api.onrender.com/sign-up", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(telegramInfo),
-            });
+            const response = await fetch(
+              "https://bored-tap-api.onrender.com/sign-up",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(telegramInfo),
+              }
+            );
 
             const data = await response.json();
             if (data.success) {
@@ -67,16 +65,23 @@ const Dashboard = () => {
     initializeDashboard();
   }, []);
 
-  // Handle tap effect
   const handleTap = (event) => {
     const fingersCount = event.touches?.length || 1;
+
     setTotalTaps((prev) => prev + fingersCount);
     setElectricBoost((prev) => (prev > 0 ? prev - fingersCount : prev));
+
     setTapAnimation(true);
-    setTimeout(() => setTapAnimation(false), 500);
+    playTapSound();
+    setTimeout(() => setTapAnimation(false), 300);
   };
 
-  // Electric boost recharge effect
+  const playTapSound = () => {
+    const audio = new Audio(`${process.env.PUBLIC_URL}/tap.mp3`);
+    audio.volume = 0.4; // Set a comfortable volume
+    audio.play().catch((err) => console.error("Audio playback error:", err));
+  };
+
   useEffect(() => {
     if (electricBoost === 0) {
       const rechargeInterval = setInterval(() => {
@@ -86,24 +91,17 @@ const Dashboard = () => {
     }
   }, [electricBoost]);
 
-  // Boost animation effect
-  useEffect(() => {
-    if (boostAnimation) {
-      const timer = setTimeout(() => setBoostAnimation(false), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [boostAnimation]);
-
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
 
   return (
     <div className="dashboard-container">
-      {/* <AppBar title="Dashboard" /> */}
-      
       <div className="profile-streak-section">
-        <div className="profile-section" onClick={() => navigate("/profile-screen")}>
+        <div
+          className="profile-section"
+          onClick={() => navigate("/profile-screen")}
+        >
           <img
             src={telegramData.image_url}
             alt="Profile"
@@ -115,7 +113,10 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="streak-section" onClick={() => navigate("/daily-streak-screen")}>
+        <div
+          className="streak-section"
+          onClick={() => navigate("/daily-streak-screen")}
+        >
           <img
             src={`${process.env.PUBLIC_URL}/streak.png`}
             alt="Streak Icon"
@@ -128,7 +129,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Rest of the component remains the same */}
       <div className="frames-section">
         {[
           { name: "Rewards", icon: "reward.png", path: "/reward-screen" },
@@ -171,12 +171,12 @@ const Dashboard = () => {
             src={`${process.env.PUBLIC_URL}/logo.png`}
             alt="Big Tap Icon"
           />
-          {tapAnimation && <div className="tap-bonus">+1</div>}
+          <div className="tap-bonus">+1</div>
         </div>
       </div>
 
       <div className="electric-boost-section">
-        <div className={`electric-value ${boostAnimation ? "boost-animation" : ""}`}>
+        <div className="electric-value">
           <img
             src={`${process.env.PUBLIC_URL}/electric-icon.png`}
             alt="Electric Icon"
