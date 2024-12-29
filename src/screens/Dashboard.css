@@ -157,11 +157,11 @@
     height: 250px;
     margin: 0 auto;
     display: block;
-    transition: transform 0.3s ease-in-out;
+    transition: transform 0.2s ease-in-out;
   }
   
   .big-tap-icon.tap-animation img {
-    transform: rotateX(4deg) rotateY(4deg) scale(1.0);
+    transform: rotateX(10deg) rotateY(10deg) scale(1.0);
   }
   
   
@@ -217,17 +217,47 @@
     animation: float-up 0.5s ease-out forwards;
     text-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
   }
+
+  /* Floating "+1" Animation */
+.tap-effect {
+  position: absolute;
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+  animation: float-up 1s ease-out forwards, fade-out 1s ease-out forwards;
+  pointer-events: none;
+  z-index: 10;
+}
   
-  @keyframes float-up {
-    0% {
-      transform: translate(-50%, 0) scale(1);
-      opacity: 1;
-    }
-    100% {
-      transform: translate(-50%, -50px) scale(.5);
-      opacity: 0;
-    }
+@keyframes float-up {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
   }
+  100% {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+}
+
+/* Big Tap Icon Animation */
+.big-tap-icon {
+  position: relative;
+  cursor: pointer;
+  animation: tap-scale 0.2s ease-in-out;
+}
+
+@keyframes tap-scale {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
 
 /* Boost Animation */
 .boost-animation {
@@ -245,6 +275,7 @@
     transform: scale(1);
   }
 }
+
 /* Floating Tap Animation */
 .tap-effect {
   position: absolute;
