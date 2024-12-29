@@ -3,7 +3,7 @@
   color: #fff;
   min-height: 100vh;
   padding: 80px 16px;
-  margin-top: 16px;
+  padding-top: 0px;
   font-family: "Roboto", sans-serif;
   position: relative;
   display: flex;
