@@ -8,7 +8,7 @@
   max-width: 100%;
   box-sizing: border-box;
   position: fixed; /* Fixed to the top */
-  top: 0;
+  top: 16px;
   left: 0;
   right: 0;
   z-index: 1000;
@@ -25,7 +25,7 @@
 
 .app-bar-title {
   font-weight: bold;
-  font-size: 20px;
+  font-size: 24px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis; /* Truncate long titles */
@@ -33,7 +33,7 @@
 
 /* Main content below AppBar */
 .main-content {
-  margin-top: var(--app-bar-height, 80px); /* Space below AppBar */
+  margin-top: var(--app-bar-height, 40px); /* Space below AppBar */
 }
 
 /* Media Queries for Responsiveness */

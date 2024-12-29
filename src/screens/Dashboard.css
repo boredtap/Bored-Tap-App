@@ -151,8 +151,8 @@
   }
   
   .big-tap-icon img {
-    width: 200px;
-    height: 200px;
+    width: 250px;
+    height: 250px;
     margin: 0 auto;
     display: block;
     transition: transform 0.3s ease-in-out;
@@ -167,7 +167,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 16px;
+    margin-top: 8px;
   }
   
   .electric-value {
@@ -203,7 +203,7 @@
     height: 24px;
     object-fit: contain; /* Ensures proper scaling */
   }
-  
+
   /* Tap Animation */
   .tap-bonus {
     position: absolute;
