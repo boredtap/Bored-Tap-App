@@ -1,12 +1,15 @@
 from datetime import datetime, timedelta
 from typing import Annotated
+from httpx import get
 import jwt
 from jwt.exceptions import InvalidTokenError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 from config import get_settings
-from user_reg_and_prof_mngmnt.schemas import BasicProfile, TokenData
-from user_reg_and_prof_mngmnt.dependencies import get_user_by_id
+from earn.schemas import StreakData
+from database_connection import user_collection
+from user_reg_and_prof_mngmnt.schemas import BasicProfile, Invites, Signup, TokenData, UserProfile
+from user_reg_and_prof_mngmnt.dependencies import get_user_by_id, insert_new_user, serialize_any_http_url
 
 
 
@@ -99,5 +102,48 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     except InvalidTokenError:
         raise credentials_exception
 
-async def authorize_user(current_user: Annotated[BasicProfile, Depends(get_current_user)]):
-    pass
+def validate_referral_code(referral_code: str):
+    inviter = authenticate_user(referral_code)
+    if inviter:
+        return True
+
+
+def reward_inviter_and_invitee(inviter_id: str, invitee_id: str, reward: int):
+    inviter = {'telegram_user_id': inviter_id}
+    invitee = {'telegram_user_id': invitee_id}
+
+    update_operation = {'$inc':
+        {'total_coins': reward}
+    }
+
+    user_collection.update_one(inviter, update_operation)
+    user_collection.update_one(invitee, update_operation)
+
+
+def create_invited_user(invited: Signup):
+    invited_user = UserProfile(
+        telegram_user_id=invited.telegram_user_id,
+        username=invited.username,
+        image_url=serialize_any_http_url(invited.image_url),
+        total_coins=0,
+        level=1,
+    )
+    return invited_user
+
+
+def add_invitee_to_inviter_list(inviter_id: str, invitee_id: str):
+    inviter = {'telegram_user_id': inviter_id}
+    invitee = get_user_by_id(invitee_id)
+
+    invitee_info = Invites(
+        telegram_user_id=invitee.telegram_user_id,
+        username=invitee.username,
+        level=invitee.level,
+        total_coins=invitee.total_coins
+    )
+
+    update_operation = {'$push':
+        {'invite': invitee_info.model_dump()}
+    }
+
+    user_collection.update_one(inviter, update_operation)
