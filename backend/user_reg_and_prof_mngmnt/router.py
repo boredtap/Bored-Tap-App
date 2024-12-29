@@ -4,9 +4,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from user_reg_and_prof_mngmnt.dependencies import get_user_by_id, serialize_any_http_url
 from user_reg_and_prof_mngmnt.user_authentication import (
-    ACCESS_TOKEN_EXPIRE_MINUTES, 
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    add_invitee_to_inviter_list, 
     authenticate_user,
-    create_access_token)
+    create_access_token,
+    create_invited_user,
+    reward_inviter_and_invitee,
+    validate_referral_code)
 from . schemas import Token, Signup, BasicProfile, UserProfile
 from user_reg_and_prof_mngmnt.dependencies import insert_new_user
 
@@ -15,7 +19,7 @@ userApp = APIRouter()
 
 
 @userApp.post("/sign-up", tags=["Registration/Authentication"])
-async def sign_up(user: Signup) -> BasicProfile:
+async def sign_up(user: Signup, referral_code: str | None = None) -> BasicProfile:
     """
     Sign up a new user and return the user data.
 
@@ -36,6 +40,18 @@ async def sign_up(user: Signup) -> BasicProfile:
             detail="User already exists"
         )
     
+    if referral_code and validate_referral_code(referral_code):
+        invited_user = create_invited_user(invited=user)
+        insert_new_user(invited_user)
+        reward_inviter_and_invitee(inviter_id=referral_code, invitee_id=user.telegram_user_id, reward=100)
+        add_invitee_to_inviter_list(inviter_id=referral_code, invitee_id=user.telegram_user_id)
+
+        return BasicProfile(
+        telegram_user_id=user.telegram_user_id,
+        username=user.username,
+        image_url=serialize_any_http_url(url=user.image_url)
+    )
+
     # else create new user
     full_profile = UserProfile(
         telegram_user_id=user.telegram_user_id,
