@@ -3,6 +3,7 @@
   color: #fff;
   min-height: 100vh;
   padding: 80px 16px;
+  margin-top: 16px;
   font-family: "Roboto", sans-serif;
   position: relative;
   display: flex;
@@ -43,7 +44,8 @@
 
 .profile-username {
   font-size: 12px; /* Adjust text size for username */
-  font-weight: bold;
+  color: white;
+  /* font-weight: bold; */
 }
 
 .profile-level {
@@ -222,7 +224,7 @@
       opacity: 1;
     }
     100% {
-      transform: translate(-50%, -50px) scale(1.2);
+      transform: translate(-50%, -50px) scale(.5);
       opacity: 0;
     }
   }
