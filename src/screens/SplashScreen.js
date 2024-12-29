@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AppBar from "../components/AppBar";
 import "./SplashScreen.css";
 
 const SplashScreen = () => {
@@ -133,7 +132,6 @@ const SplashScreen = () => {
 
   return (
     <div className="splash-container">
-      <AppBar title="Welcome" />
       <div className="splash-content">
         <img
           src={`${process.env.PUBLIC_URL}/logo.png`}

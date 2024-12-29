@@ -1,5 +1,4 @@
 import React from "react";
-import AppBar from "../components/AppBar";
 import Navigation from "../components/Navigation";
 import "./ProfileScreen.css";
 
@@ -26,13 +25,6 @@ const ProfileScreen = () => {
 
   return (
     <div className="profile-screen">
-      {/* AppBar */}
-      <AppBar
-        title="Profile"
-        onBackClick={handleBackClick}
-        onMoreClick={handleMoreClick}
-        onDropdownClick={handleDropdownClick}
-      />
 
       {/* Profile Body */}
       <div className="profile-body">

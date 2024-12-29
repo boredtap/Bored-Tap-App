@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import AppBar from "../components/AppBar";
 import Navigation from "../components/Navigation";
 import "./Leaderboard.css";
 
@@ -57,12 +56,6 @@ const Leaderboard = () => {
 
   return (
     <div className="leaderboard-screen">
-      {/* AppBar */}
-      <AppBar
-        title="Leaderboard"
-        onBackClick={handleBackClick}
-        onMoreClick={handleMoreClick}
-      />
 
       {/* Header Section */}
       <div className="leaderboard-header">

@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import AppBar from "../components/AppBar";
 import Navigation from "../components/Navigation";
 import "./WalletScreen.css";
 
@@ -13,8 +12,6 @@ const WalletScreen = () => {
 
   return (
     <div className="wallet-screen">
-      {/* AppBar */}
-      <AppBar title="Wallet Screen" />
 
       <div className="wallet-content">
         {/* Top Centralized Image */}

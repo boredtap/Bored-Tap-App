@@ -1,5 +1,4 @@
 import React from "react";
-import AppBar from "../components/AppBar";
 import Navigation from "../components/Navigation";
 import "./LevelScreen.css";
 
@@ -31,13 +30,6 @@ const LevelScreen = () => {
 
   return (
     <div className="level-screen">
-      {/* AppBar */}
-      <AppBar
-        title="Level Progress"
-        onBackClick={handleBackClick}
-        onMoreClick={handleMoreClick}
-        onDropdownClick={handleDropdownClick}
-      />
 
       {/* Centralized Level Icon */}
       <div className="level-header">

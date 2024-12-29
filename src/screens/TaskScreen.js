@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import AppBar from "../components/AppBar";
 import Navigation from "../components/Navigation";
 import "./TaskScreen.css";
 
@@ -57,12 +56,6 @@ const TaskScreen = () => {
 
   return (
     <div className="task-screen">
-      {/* AppBar */}
-      <AppBar
-        title="Tasks"
-        onBackClick={handleBackClick}
-        onMoreClick={handleMoreClick}
-      />
 
       {/* Body */}
       <div className="task-body">

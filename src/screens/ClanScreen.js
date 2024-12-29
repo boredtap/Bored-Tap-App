@@ -1,5 +1,4 @@
 import React from "react";
-import AppBar from "../components/AppBar";
 import Navigation from "../components/Navigation";
 import "./ClanScreen.css";
 
@@ -12,8 +11,6 @@ const ClanScreen = () => {
 
   return (
     <div className="clan-screen">
-      {/* AppBar */}
-      <AppBar title="Clan" />
 
       {/* Centralized Top Section */}
       <div className="clan-header">

@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import AppBar from "../components/AppBar";
 import Navigation from "../components/Navigation";
 import "./InviteScreen.css";
 
@@ -24,7 +23,6 @@ const InviteScreen = () => {
   return (
     <div className="invite-screen">
       {/* AppBar */}
-      <AppBar title="Invite Friends" />
 
       {/* Centralized Top Section */}
       <div className="invite-header">

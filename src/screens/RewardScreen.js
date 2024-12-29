@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import AppBar from "../components/AppBar";
 import Navigation from "../components/Navigation";
 import "./RewardScreen.css";
 
@@ -69,8 +68,6 @@ const RewardScreen = () => {
 
   return (
     <div className="reward-screen">
-      {/* AppBar */}
-      <AppBar title="Rewards" />
 
       {/* Body */}
       <div className="reward-body">
