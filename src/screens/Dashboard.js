@@ -22,15 +22,14 @@ const Dashboard = () => {
   const [electricBoost, setElectricBoost] = useState(1000);
   const [tapAnimations, setTapAnimations] = useState([]);
   const [boostAnimation, setBoostAnimation] = useState(false);
-  const [boostMultiplier, setBoostMultiplier] = useState(1);
   const [loading, setLoading] = useState(true);
   
+  // Refs for tracking tap updates
   const lastTapTime = useRef(Date.now());
   const pendingTaps = useRef(0);
   const authToken = localStorage.getItem("accessToken");
-  const boostTimeoutRef = useRef(null);
 
-  // Initialize dashboard
+  // Initialize dashboard with user data and authentication
   useEffect(() => {
     const initializeDashboard = async () => {
       try {
@@ -43,6 +42,7 @@ const Dashboard = () => {
         const userData = JSON.parse(storedUser);
         setTelegramData(userData);
 
+        // Fetch user's current tap count from backend
         const response = await fetch("https://bored-tap-api.onrender.com/user/stats", {
           headers: {
             "Authorization": `Bearer ${authToken}`,
@@ -54,7 +54,6 @@ const Dashboard = () => {
           const data = await response.json();
           setTotalTaps(data.total_taps || 0);
           setElectricBoost(data.electric_boost || 1000);
-          setBoostMultiplier(data.boost_multiplier || 1);
         }
       } catch (err) {
         console.error("Error initializing dashboard:", err);
@@ -66,7 +65,7 @@ const Dashboard = () => {
     initializeDashboard();
   }, [navigate, authToken]);
 
-  // Update taps to backend
+  // Debounced function to update taps to backend
   const updateTapsToBackend = debounce(async (newTotalTaps) => {
     try {
       await fetch("https://bored-tap-api.onrender.com/update-taps", {
@@ -85,20 +84,20 @@ const Dashboard = () => {
     }
   }, 3000);
 
-  // Handle tap with multi-touch and boost
+  // Handle tap with multi-touch support
   const handleTap = (event) => {
     event.preventDefault();
     const touches = event.touches?.length || 1;
     const currentTime = Date.now();
     
+    // Play tap sound
     play();
 
     // Create animations for each touch
     const newAnimations = Array(touches).fill().map((_, index) => ({
       id: `${currentTime}-${index}`,
       x: event.touches ? event.touches[index].clientX : event.clientX,
-      y: event.touches ? event.touches[index].clientY : event.clientY,
-      value: boostMultiplier // Show boosted value in animation
+      y: event.touches ? event.touches[index].clientY : event.clientY
     }));
 
     setTapAnimations(prev => [...prev, ...newAnimations]);
@@ -108,13 +107,10 @@ const Dashboard = () => {
       setTapAnimations(prev => prev.filter(anim => !newAnimations.includes(anim)));
     }, 500);
 
-    // Calculate tap value with boost
-    const tapValue = touches * boostMultiplier;
-
     // Update taps and electric boost
-    setTotalTaps(prev => prev + tapValue);
+    setTotalTaps(prev => prev + touches);
     setElectricBoost(prev => Math.max(0, prev - touches));
-    pendingTaps.current += tapValue;
+    pendingTaps.current += touches;
     lastTapTime.current = currentTime;
 
     // Update backend if enough time has passed
@@ -124,60 +120,13 @@ const Dashboard = () => {
     }
   };
 
-  // Handle boost activation
-  const handleBoost = async () => {
-    if (electricBoost >= 100) { // Require minimum electric boost to activate
-      setBoostAnimation(true);
-      setBoostMultiplier(2); // Double the tap value
-      
-      // Reduce electric boost
-      setElectricBoost(prev => Math.max(0, prev - 100));
-
-      // Clear existing timeout
-      if (boostTimeoutRef.current) {
-        clearTimeout(boostTimeoutRef.current);
-      }
-
-      // Reset boost after 30 seconds
-      boostTimeoutRef.current = setTimeout(() => {
-        setBoostMultiplier(1);
-        setBoostAnimation(false);
-      }, 30000);
-
-      try {
-        // Update boost status in backend
-        await fetch("https://bored-tap-api.onrender.com/update-boost", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${authToken}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            telegram_user_id: telegramData.telegram_user_id,
-            electric_boost: electricBoost - 100,
-            boost_multiplier: 2
-          })
-        });
-      } catch (err) {
-        console.error("Error updating boost:", err);
-      }
-    }
-  };
-
-  // Electric boost recharge
+  // Electric boost recharge effect
   useEffect(() => {
     const rechargeInterval = setInterval(() => {
       setElectricBoost(1000);
-      setBoostAnimation(true);
-      setTimeout(() => setBoostAnimation(false), 1000);
     }, 60 * 60 * 1000); // 1 hour
 
-    return () => {
-      clearInterval(rechargeInterval);
-      if (boostTimeoutRef.current) {
-        clearTimeout(boostTimeoutRef.current);
-      }
-    };
+    return () => clearInterval(rechargeInterval);
   }, []);
 
   if (loading) {
@@ -186,7 +135,6 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      {/* Profile and Streak Section */}
       <div className="profile-streak-section">
         <div className="profile-section" onClick={() => navigate("/profile-screen")}>
           <img
@@ -213,7 +161,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Frames Section */}
       <div className="frames-section">
         {[
           { name: "Rewards", icon: "reward.png", path: "/reward-screen" },
@@ -236,7 +183,6 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Taps Section */}
       <div className="total-taps-section">
         <p className="total-taps-text">Your Total Taps:</p>
         <div className="total-taps-count">
@@ -264,16 +210,16 @@ const Dashboard = () => {
               style={{
                 left: animation.x,
                 top: animation.y,
-                position: 'absolute'
+                position: 'absolute',
+                animation: 'tapAnimation 0.5s ease-out'
               }}
             >
-              +{animation.value}
+              +1
             </div>
           ))}
         </div>
       </div>
 
-      {/* Electric Boost Section */}
       <div className="electric-boost-section">
         <div className={`electric-value ${boostAnimation ? "boost-animation" : ""}`}>
           <img
@@ -283,17 +229,13 @@ const Dashboard = () => {
           />
           <span>{electricBoost}/1000</span>
         </div>
-        <button 
-          className={`boost-btn ${boostMultiplier > 1 ? 'active' : ''}`}
-          onClick={handleBoost}
-          disabled={electricBoost < 100}
-        >
+        <button className="boost-btn" onClick={() => navigate("/boost-screen")}>
           <img
             src={`${process.env.PUBLIC_URL}/boostx2.png`}
             alt="Boost Icon"
             className="boost-icon"
           />
-          {boostMultiplier > 1 ? 'Boosted!' : 'Boost'}
+          Boost
         </button>
       </div>
 
