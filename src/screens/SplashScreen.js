@@ -133,7 +133,7 @@ const SplashScreen = () => {
 
   return (
     <div className="splash-container">
-      <AppBar title="BoredTap" />
+      <AppBar title="Welcome" />
       <div className="splash-content">
         <img
           src={`${process.env.PUBLIC_URL}/logo.png`}

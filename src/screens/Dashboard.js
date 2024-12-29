@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-// import AppBar from "../components/AppBar";
+import AppBar from "../components/AppBar";
 import Navigation from "../components/Navigation";
 import "./Dashboard.css";
 
@@ -100,7 +100,7 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      {/* <AppBar title="Dashboard" /> */}
+      <AppBar title="Dashboard" />
       
       <div className="profile-streak-section">
         <div className="profile-section" onClick={() => navigate("/profile-screen")}>

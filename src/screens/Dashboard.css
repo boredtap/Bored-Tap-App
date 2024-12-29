@@ -29,8 +29,8 @@
 }
 
 .profile-section img {
-  width: 40px; /* Fixed size for profile picture */
-  height: 40px;
+  width: 30px; /* Fixed size for profile picture */
+  height: 30px;
   border-radius: 50%; /* Circular profile picture */
   object-fit: cover; /* Ensures the image fits without distortion */
 }
@@ -42,7 +42,7 @@
 }
 
 .profile-username {
-  font-size: 14px; /* Adjust text size for username */
+  font-size: 12px; /* Adjust text size for username */
   font-weight: bold;
 }
 
@@ -92,7 +92,7 @@
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 4px;
-    margin-bottom: 10px;
+    margin-bottom: 4px;
   }
   
   .frame {
@@ -127,7 +127,7 @@
   
   .total-taps-section {
     text-align: center;
-    margin-top: 40px;
+    margin-top: 16px;
     gap: 8px; /* Customizable vertical spacing */
   }
   
@@ -151,8 +151,8 @@
   }
   
   .big-tap-icon img {
-    width: 250px;
-    height: 250px;
+    width: 200px;
+    height: 200px;
     margin: 0 auto;
     display: block;
     transition: transform 0.3s ease-in-out;
@@ -167,7 +167,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 32px;
+    margin-top: 16px;
   }
   
   .electric-value {
@@ -203,27 +203,29 @@
     height: 24px;
     object-fit: contain; /* Ensures proper scaling */
   }
+  
   /* Tap Animation */
-.tap-bonus {
-  position: absolute;
-  top: -20px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: #fff;
-  font-size: 24px;
-  animation: pop-up 0.5s ease-out forwards;
-}
-
-@keyframes pop-up {
-  0% {
-    opacity: 1;
-    transform: translate(-50%, 0);
+  .tap-bonus {
+    position: absolute;
+    color: #fff;
+    font-size: 24px;
+    font-weight: bold;
+    pointer-events: none;
+    z-index: 10;
+    animation: float-up 0.5s ease-out forwards;
+    text-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
   }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -50px);
+  
+  @keyframes float-up {
+    0% {
+      transform: translate(-50%, 0) scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(-50%, -50px) scale(1.2);
+      opacity: 0;
+    }
   }
-}
 
 /* Boost Animation */
 .boost-animation {
