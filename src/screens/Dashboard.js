@@ -7,7 +7,7 @@ import "./Dashboard.css";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [play] = useSound(`${process.env.PUBLIC_URL}/tap-sound.mp3`, { volume: 0.5 });
+  const [play] = useSound(`${process.env.PUBLIC_URL}/tap-sound.mp3`, { volume: 3.0 });
   
   const [telegramData, setTelegramData] = useState({
     telegram_user_id: "",
