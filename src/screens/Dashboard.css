@@ -161,7 +161,7 @@
   }
   
   .big-tap-icon.tap-animation img {
-    transform: rotateX(4deg) rotateY(4deg) scale(0.5);
+    transform: rotateX(4deg) rotateY(4deg) scale(2.0);
   }
   
   
