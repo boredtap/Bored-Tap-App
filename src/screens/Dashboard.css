@@ -157,11 +157,11 @@
     height: 250px;
     margin: 0 auto;
     display: block;
-    transition: transform 0.1s ease-in-out;
+    transition: transform 0.3s ease-in-out;
   }
   
   .big-tap-icon.tap-animation img {
-    transform: rotateX(4deg) rotateY(4deg) scale(2.0);
+    transform: rotateX(4deg) rotateY(4deg) scale(1.0);
   }
   
   
@@ -250,7 +250,7 @@
   position: absolute;
   font-size: 18px;
   color: #fff;
-  font-weight: medium;
+  font-weight: bold;
   animation: float-up 1s ease-out forwards, fade-out 1s ease-out forwards;
   pointer-events: none;
 }
