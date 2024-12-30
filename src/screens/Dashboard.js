@@ -22,12 +22,13 @@ const Dashboard = () => {
   const [boostAnimation, setBoostAnimation] = useState(false);
   const [loading, setLoading] = useState(true);
   const [tapEffects, setTapEffects] = useState([]); // Tracks "+1" animations
+
+  // Ref for managing backend updates and electric recharge
   const tapCountSinceLastUpdate = useRef(0); // Tracks taps for backend updates
-  const rechargeTimeout = useRef(null); // Tracks electric recharge timeout
+  const updateBackendTimeout = useRef(null); // Timeout for backend updates
+  const rechargeTimeout = useRef(null); // Timeout for electric boost recharge
 
-  // Backend update timer
-  const updateBackendTimeout = useRef(null);
-
+  // Initialization effect
   useEffect(() => {
     const initializeDashboard = async () => {
       try {
@@ -78,13 +79,13 @@ const Dashboard = () => {
   // Handle tap effect with multi-touch and location responsiveness
   const handleTap = (event) => {
     if (electricBoost === 0) {
-      return; // Prevent further taps if electric boost is depleted
+      return; // Stop tapping if electric boost is depleted
     }
 
     const fingersCount = event.touches?.length || 1;
     setTotalTaps((prev) => prev + fingersCount);
     setElectricBoost((prev) => (prev > 0 ? prev - fingersCount : prev));
-    tapCountSinceLastUpdate.current += fingersCount; // Track taps since the last backend update
+    tapCountSinceLastUpdate.current += fingersCount; // Track taps for backend updates
 
     // Get tap position relative to the screen
     const tapX = event.touches?.[0]?.clientX || event.clientX;
@@ -112,12 +113,12 @@ const Dashboard = () => {
     if (updateBackendTimeout.current) {
       clearTimeout(updateBackendTimeout.current);
     }
-    updateBackendTimeout.current = setTimeout(updateBackend, 3000); // Update backend after 3 seconds
+    updateBackendTimeout.current = setTimeout(updateBackend, 3000); // Update backend every 3 seconds
   };
 
   const playTapSound = () => {
     const audio = new Audio(`${process.env.PUBLIC_URL}/tap.mp3`);
-    audio.volume = 0.2;
+    audio.volume = 0.3;
     audio.play().catch((err) => console.error("Audio playback error:", err));
   };
 
@@ -171,7 +172,6 @@ const Dashboard = () => {
     <div className="dashboard-container">
       {/* Profile and Streak Section */}
       <div className="profile-streak-section">
-        {/* Profile Section */}
         <div
           className="profile-section"
           onClick={() => navigate("/profile-screen")}
@@ -186,7 +186,7 @@ const Dashboard = () => {
             <span className="profile-level">Lvl {level}</span>
           </div>
         </div>
-        {/* Streak Section */}
+
         <div
           className="streak-section"
           onClick={() => navigate("/daily-streak-screen")}
@@ -201,6 +201,28 @@ const Dashboard = () => {
             <span className="streak-days">Day {currentStreak}</span>
           </div>
         </div>
+      </div>
+
+      {/* Frames Section */}
+      <div className="frames-section">
+        {[{ name: "Rewards", icon: "reward.png", path: "/reward-screen" },
+          { name: "Challenge", icon: "challenge.png", path: "/challenge-screen" },
+          { name: "Clan", icon: "clan.png", path: "/clan-screen" },
+          { name: "Leaderboard", icon: "leaderboard.png", path: "/leaderboard-screen" },
+        ].map((frame, index) => (
+          <div
+            className="frame"
+            key={index}
+            onClick={() => navigate(frame.path)}
+          >
+            <img
+              src={`${process.env.PUBLIC_URL}/${frame.icon}`}
+              alt={`${frame.name} Icon`}
+              className="frame-icon"
+            />
+            <span>{frame.name}</span>
+          </div>
+        ))}
       </div>
 
       {/* Total Taps Section */}
@@ -225,6 +247,7 @@ const Dashboard = () => {
             alt="Big Tap Icon"
           />
         </div>
+
         {/* Render floating "+1" effects */}
         {tapEffects.map((effect) => (
           <div
