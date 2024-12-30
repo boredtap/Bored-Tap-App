@@ -1,15 +1,17 @@
 from datetime import datetime, timedelta
+import logging
 from typing import Annotated
 from fastapi import APIRouter, Depends
-from .dependencies import reward_user, update_coins_in_db
+from .dependencies import broken_streak_reset, calculate_time_difference, increment_streak_and_coin, init_streak
 from earn.schemas import StreakData
-from user_reg_and_prof_mngmnt.user_authentication import get_current_user, oauth2_scheme
-from earn.dependencies import get_current_streak, init_restart_streak, update_streak_in_db
+from user_reg_and_prof_mngmnt.user_authentication import get_current_user
+from earn.dependencies import get_current_streak
 
 
+logging.basicConfig(level=logging.INFO)
 earnApp = APIRouter()
 
-@earnApp.post("/perform-streak", tags=["Earn features"], response_model=StreakData)
+@earnApp.post("/perform-streak", tags=["Earn features"])
 async def perform_streak(telegram_user_id: Annotated[str, Depends(get_current_user)]):
     """
     Updates the current and longest streaks of a user based on their activity.
@@ -20,51 +22,70 @@ async def perform_streak(telegram_user_id: Annotated[str, Depends(get_current_us
     Returns:
         tuple[int, int]: A tuple containing the updated current streak and the longest streak.
     """
-    streak = get_current_streak(telegram_user_id)
+    old_streak = get_current_streak(telegram_user_id)
+    logging.info(f"Old streak: {old_streak.model_dump()}")
+
     current_date = datetime.today()
-    one_day = timedelta(1)
+    one_day = timedelta(hours=24)
     daily_reward_amount = 500
+    time_difference = calculate_time_difference(current_date, old_streak.last_action_date)
 
-    if not streak.last_action_date:
+    if not old_streak.last_action_date:
         # initialize user streaks if no streak record exists
-        init_restart_streak(current_date, streak)
-
-        # reward user for streak completion
-        reward = reward_user(telegram_user_id, streak.current_streak, daily_reward_amount)
-        update_coins_in_db(telegram_user_id, reward)
-
-        # update user streak
-        update_streak_in_db(telegram_user_id, streak)
-
-        return StreakData(
-            current_streak=streak.current_streak,
-            longest_streak=streak.longest_streak,
-            last_action_date=streak.last_action_date
+        logging.info('No streak record found: streak will be initialized')
+        init_streak_data = StreakData(
+            current_streak=1,
+            longest_streak=1,
+            last_action_date=current_date
         )
 
-    time_difference = current_date.date() - streak.last_action_date.date()
+        init_streak(telegram_user_id, init_streak_data, daily_reward_amount)
+        logging.info(f"Initialized streak: {init_streak_data.model_dump()}")
 
-    if time_difference <= one_day and current_date.date() != streak.last_action_date.date():
+        return init_streak_data
+
+    if one_day <= time_difference <= timedelta(hours=25) and current_date.date() != old_streak.last_action_date.date():
         # Streak continues
-        streak.current_streak += 1      # Increment current streak by 1 for each successful day
-        longest_streak = max(streak.current_streak, streak.longest_streak)
-        streak.longest_streak = longest_streak
-        streak.last_action_date = current_date
-        update_coins_in_db(telegram_user_id, 500)
+        # Increment:- streak: 1, total_coins: daily_reward_amount
+        # set:- last_action_date: current_date, longest_streak: max(old_streak, current_streak)
 
-    elif time_difference > one_day:
+        logging.info('Streak continues if:', {'time_difference': 'gte 23 hours but lte 25 hours'})
+        
+        new_streak = StreakData(
+            current_streak=old_streak.current_streak + 1,
+            longest_streak=max(old_streak.longest_streak, old_streak.current_streak + 1),
+            last_action_date=current_date
+        )
+
+        increment_streak_and_coin(telegram_user_id, daily_reward_amount, new_streak)
+        logging.info({
+            "Time difference (hrs)": time_difference.total_seconds() / 3600,
+            "New streak": new_streak.model_dump()
+        })
+
+        return new_streak
+
+    elif time_difference > timedelta(hours=25):
         # broken streak, restart user streak
-        init_restart_streak(current_date, streak)
-        update_coins_in_db(telegram_user_id, 500)
-    
-    # update user streak
-    update_streak_in_db(telegram_user_id, streak)
+        logging.info('Broken streak, if: time difference is gt 25 hours')
+        reset_streak = StreakData(
+            current_streak=1,
+            longest_streak=old_streak.longest_streak,
+            last_action_date=current_date
+        )
 
-    return StreakData(
-        current_streak=streak.current_streak,
-        longest_streak=streak.longest_streak,
-        last_action_date=streak.last_action_date
-    )
+        broken_streak_reset(telegram_user_id, reset_streak, daily_reward_amount)
+        logging.info({
+            "Time difference (hrs)": time_difference.total_seconds() / 3600,
+            "Reset streak": reset_streak.model_dump()
+        })
+
+        return reset_streak
+    
+    return {
+        "message": "Streak not updated",
+        "Countdown": "check again in 24 hrs"
+    }
 
 
 @earnApp.get("/streak/status", tags=["Earn features"])
