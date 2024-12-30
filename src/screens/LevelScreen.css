@@ -1,12 +1,16 @@
 /* Level Screen Styling */
 .level-screen {
-    background-color: #000;
-    color: #fff;
-    min-height: 100vh;
-    padding-top: 0px;
-    padding: 100px 20px 20px;
-    font-family: "Roboto", sans-serif;
-  }
+  background-color: #000;
+  color: #fff;
+  min-height: 100vh;
+  padding: 80px 16px;
+  padding-top: 0px;
+  font-family: "Roboto", sans-serif;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
   
   /* Level Header */
   .level-header {

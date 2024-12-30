@@ -2,9 +2,13 @@
   background-color: #000;
   color: #fff;
   min-height: 100vh;
-  padding-top: 0px;
   padding: 80px 16px;
+  padding-top: 0px;
   font-family: "Roboto", sans-serif;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
 .clan-icon-section {
