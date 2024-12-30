@@ -9,13 +9,6 @@ const Leaderboard = () => {
     setActiveTab(tab);
   };
 
-  const handleBackClick = () => {
-    console.log("Navigating back from Leaderboard Screen...");
-  };
-
-  const handleMoreClick = () => {
-    console.log("Opening more options...");
-  };
 
   const LeaderboardData = {
     Daily: [

@@ -3,18 +3,7 @@ import Navigation from "../components/Navigation";
 import "./ProfileScreen.css";
 
 const ProfileScreen = () => {
-  const handleBackClick = () => {
-    console.log("Navigating back from Profile Screen...");
-  };
-
-  const handleMoreClick = () => {
-    console.log("Opening more options...");
-  };
-
-  const handleDropdownClick = () => {
-    console.log("Opening dropdown menu...");
-  };
-
+  
   const profileData = [
     { icon: `${process.env.PUBLIC_URL}/wallet-icon.png`, label: "Total Coin", value: "500" },
     { icon: `${process.env.PUBLIC_URL}/tasks-icon.png`, label: "Completed Task", value: "104" },

@@ -3,17 +3,6 @@ import Navigation from "../components/Navigation";
 import "./LevelScreen.css";
 
 const LevelScreen = () => {
-  const handleBackClick = () => {
-    console.log("Navigating back from Level Screen...");
-  };
-
-  const handleMoreClick = () => {
-    console.log("Opening more options...");
-  };
-
-  const handleDropdownClick = () => {
-    console.log("Opening dropdown menu...");
-  };
 
   const levelData = [
     { label: "Novice", value: "0", icon: `${process.env.PUBLIC_URL}/level-icon.png`, smallIcon: `${process.env.PUBLIC_URL}/logo.png`, cardNumber: 1 },

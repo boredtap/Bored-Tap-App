@@ -9,14 +9,6 @@ const TaskScreen = () => {
     setActiveTab(tab);
   };
 
-  const handleBackClick = () => {
-    console.log("Navigating back from Task Screen...");
-  };
-
-  const handleMoreClick = () => {
-    console.log("Opening more options...");
-  };
-
   const handleLinkClick = () => {
     console.log("Navigating to 'How tasks work'...");
   };
