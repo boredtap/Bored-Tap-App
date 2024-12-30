@@ -1,5 +1,5 @@
 .splash-container {
-    background-color: #ff0000;
+    background-color: #000;
     display: flex;
     flex-direction: column; /* Default to column for mobile responsiveness */
     justify-content: center;
