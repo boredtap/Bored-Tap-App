@@ -21,79 +21,66 @@ const SplashScreen = () => {
           throw new Error("User data is missing or invalid");
         }
 
-        // First try to sign in with existing credentials
-        try {
-          const signInResponse = await fetch("https://bored-tap-api.onrender.com/signin", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-              "accept": "application/json"
-            },
-            body: new URLSearchParams({
-              grant_type: "password",
-              username: userData.username || `User${userData.id}`,
-              password: String(userData.id), // Using telegram_user_id as password
-              scope: "",
-              client_id: "string",
-              client_secret: "string"
-            })
-          });
+        const username = userData.username || `User${userData.id}`;
+        const telegramUserId = String(userData.id);
+        const imageUrl = userData.photo_url || "";
 
-          if (signInResponse.ok) {
-            // Existing user - process login
-            const authData = await signInResponse.json();
-            localStorage.setItem("accessToken", authData.access_token);
-            localStorage.setItem("tokenType", authData.token_type);
-            
-            // Store user data
-            const userInfo = {
-              telegram_user_id: String(userData.id),
-              username: userData.username || `User${userData.id}`,
-              image_url: userData.photo_url || "",
-            };
-            localStorage.setItem("telegramUser", JSON.stringify(userInfo));
-            
-            navigate("/dashboard");
-            return;
-          }
-        } catch (signInError) {
-          console.log("Sign-in failed, attempting registration:", signInError);
+        // First try to sign in
+        const signInResponse = await fetch("https://bored-tap-api.onrender.com/signin", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "accept": "application/json",
+          },
+          body: new URLSearchParams({
+            grant_type: "password",
+            username,
+            password: telegramUserId, // Using Telegram ID as password
+            scope: "",
+            client_id: "string",
+            client_secret: "string",
+          }),
+        });
+
+        if (signInResponse.ok) {
+          const authData = await signInResponse.json();
+          handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl });
+          return;
         }
 
-        // If sign-in failed, try to register as new user
+        // If sign-in fails, register the user
         const signUpResponse = await fetch("https://bored-tap-api.onrender.com/sign-up", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
           },
           body: JSON.stringify({
-            telegram_user_id: String(userData.id),
-            username: userData.username || `User${userData.id}`,
-            image_url: userData.photo_url || "",
-            password: String(userData.id) // Using telegram_user_id as password
+            telegram_user_id: telegramUserId,
+            username,
+            image_url: imageUrl,
           }),
         });
 
         if (!signUpResponse.ok) {
-          throw new Error(`Registration failed: ${signUpResponse.statusText}`);
+          throw new Error("Registration failed");
         }
 
-        // After successful registration, attempt sign-in
+        // Sign in after successful registration
         const signInAfterRegResponse = await fetch("https://bored-tap-api.onrender.com/signin", {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
-            "accept": "application/json"
+            "accept": "application/json",
           },
           body: new URLSearchParams({
             grant_type: "password",
-            username: userData.username || `User${userData.id}`,
-            password: String(userData.id),
+            username,
+            password: telegramUserId,
             scope: "",
             client_id: "string",
-            client_secret: "string"
-          })
+            client_secret: "string",
+          }),
         });
 
         if (!signInAfterRegResponse.ok) {
@@ -101,24 +88,20 @@ const SplashScreen = () => {
         }
 
         const authData = await signInAfterRegResponse.json();
-        localStorage.setItem("accessToken", authData.access_token);
-        localStorage.setItem("tokenType", authData.token_type);
-
-        // Store user data
-        const userInfo = {
-          telegram_user_id: String(userData.id),
-          username: userData.username || `User${userData.id}`,
-          image_url: userData.photo_url || "",
-        };
-        localStorage.setItem("telegramUser", JSON.stringify(userInfo));
-
-        navigate("/dashboard");
+        handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl });
       } catch (err) {
         console.error("Authentication error:", err);
         setError(err.message);
       } finally {
         setLoading(false);
       }
+    };
+
+    const handleSuccessfulAuth = (authData, userInfo) => {
+      localStorage.setItem("accessToken", authData.access_token);
+      localStorage.setItem("tokenType", authData.token_type);
+      localStorage.setItem("telegramUser", JSON.stringify(userInfo));
+      navigate("/dashboard");
     };
 
     initializeAuth();
@@ -152,6 +135,7 @@ const SplashScreen = () => {
 };
 
 export default SplashScreen;
+
 
 
 
