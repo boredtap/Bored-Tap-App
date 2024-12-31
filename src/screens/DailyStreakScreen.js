@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import AppBar from "../components/AppBar";
 import Navigation from "../components/Navigation";
 import CTAButton from "../components/CTAButton"; // Import reusable component
 import "./DailyStreakScreen.css";
@@ -50,7 +49,6 @@ const DailyStreakScreen = () => {
 
   return (
     <div className="daily-streak-screen">
-      <AppBar title="Daily Streak" />
 
       {/* Top Section */}
       <div className="streak-header">

@@ -1,11 +1,17 @@
 /* Profile Screen Styling */
 .profile-screen2 {
-    background-color: #000; /* Full-screen black background */
-    color: #fff; /* White content */
-    min-height: 100vh; /* Full viewport height */
-    padding: 100px 20px 20px; /* Padding to offset AppBar */
+    background-color: #000;
+    color: #fff;
+    min-height: 100vh;
+    padding: 80px 16px;
+    padding-top: 8px;
+    font-family: "Roboto", sans-serif;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
     text-align: center;
-}
+  }
 
 /* Profile Picture */
 .profile-picture {

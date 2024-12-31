@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import AppBar from "../components/AppBar";
 import Navigation from "../components/Navigation";
 import "./BoostScreen.css";
 
@@ -114,8 +113,6 @@ const BoostScreen = () => {
   };
   return (
     <div className="boost-screen">
-      {/* AppBar */}
-      <AppBar title="Boost Screen" />
 
       {/* Total Taps Section */}
       <div className="total-taps-section">

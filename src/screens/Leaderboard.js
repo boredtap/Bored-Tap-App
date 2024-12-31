@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import AppBar from "../components/AppBar";
 import Navigation from "../components/Navigation";
 import "./Leaderboard.css";
 
@@ -10,13 +9,6 @@ const Leaderboard = () => {
     setActiveTab(tab);
   };
 
-  const handleBackClick = () => {
-    console.log("Navigating back from Leaderboard Screen...");
-  };
-
-  const handleMoreClick = () => {
-    console.log("Opening more options...");
-  };
 
   const LeaderboardData = {
     Daily: [
@@ -57,12 +49,6 @@ const Leaderboard = () => {
 
   return (
     <div className="leaderboard-screen">
-      {/* AppBar */}
-      <AppBar
-        title="Leaderboard"
-        onBackClick={handleBackClick}
-        onMoreClick={handleMoreClick}
-      />
 
       {/* Header Section */}
       <div className="leaderboard-header">
