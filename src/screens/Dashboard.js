@@ -1,3 +1,4 @@
+// Dashboard.js
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
@@ -13,78 +14,96 @@ const Dashboard = () => {
     image_url: "",
   });
 
+  const currentStreak = 0; // Will be implemented with backend integration
+  const level = 1; // Will be implemented with backend integration
+
   const [totalTaps, setTotalTaps] = useState(0);
   const [electricBoost, setElectricBoost] = useState(1000);
   const [tapAnimation, setTapAnimation] = useState(false);
-  const [boostAnimation, setBoostAnimation] = useState(false); // Handles boost animation
+  const [boostAnimation, setBoostAnimation] = useState(false);
   const [loading, setLoading] = useState(true);
   const [tapEffects, setTapEffects] = useState([]); // Tracks "+1" animations
 
+  // Ref for managing backend updates and electric recharge
   const tapCountSinceLastUpdate = useRef(0); // Tracks taps for backend updates
   const updateBackendTimeout = useRef(null); // Timeout for backend updates
   const rechargeTimeout = useRef(null); // Timeout for electric boost recharge
 
-  // Initialization effect: fetch user data and total taps
+  // Initialization effect
   useEffect(() => {
     const initializeDashboard = async () => {
-      const token = localStorage.getItem("accessToken");
-      const storedUser = JSON.parse(localStorage.getItem("telegramUser"));
-
-      if (!token || !storedUser) {
-        navigate("/splash");
-        return;
-      }
-
-      setTelegramData(storedUser);
-
       try {
-        const response = await fetch("https://bored-tap-api.onrender.com/user/profile", {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        if (window.Telegram?.WebApp) {
+          const user = window.Telegram.WebApp.initDataUnsafe.user;
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch user data");
+          if (user) {
+            const telegramInfo = {
+              telegram_user_id: user.id,
+              username: user.username || `User${user.id}`,
+              image_url:
+                user.photo_url ||
+                `${process.env.PUBLIC_URL}/profile-picture.png`,
+            };
+
+            setTelegramData(telegramInfo);
+
+            // Send user data to backend for validation
+            const response = await fetch(
+              "https://bored-tap-api.onrender.com/user/profile",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(telegramInfo),
+              }
+            );
+
+            const data = await response.json();
+            if (data.success) {
+              console.log("User authenticated");
+            } else {
+              console.error("Authentication failed:", data.message);
+            }
+          } else {
+            console.error("Telegram user data not available");
+          }
         }
-
-        const data = await response.json();
-        setTotalTaps(data.total_taps || 0);
       } catch (err) {
-        console.error("Error fetching user data:", err);
+        console.error("Error syncing Telegram data:", err);
       } finally {
         setLoading(false);
       }
     };
 
     initializeDashboard();
-  }, [navigate]);
+  }, []);
 
-  // Handle tapping events
+  // Handle tap effect with multi-touch and location responsiveness
   const handleTap = (event) => {
-    if (electricBoost === 0) return; // Stop tapping if electric boost is depleted
+    if (electricBoost === 0) {
+      return; // Stop tapping if electric boost is depleted
+    }
 
     const fingersCount = event.touches?.length || 1;
     setTotalTaps((prev) => prev + fingersCount);
-    setElectricBoost((prev) => Math.max(prev - fingersCount, 0));
+    setElectricBoost((prev) => (prev > 0 ? prev - fingersCount : prev));
     tapCountSinceLastUpdate.current += fingersCount; // Track taps for backend updates
 
-    // Display tap animation
+    // Get tap position relative to the screen
     const tapX = event.touches?.[0]?.clientX || event.clientX;
     const tapY = event.touches?.[0]?.clientY || event.clientY;
+
+    // Create floating "+1" effect at the tap position
     const newTapEffect = { id: Date.now(), x: tapX, y: tapY, count: fingersCount };
     setTapEffects((prevEffects) => [...prevEffects, newTapEffect]);
 
     playTapSound();
 
+    // Start animation
     setTapAnimation(true);
-    setBoostAnimation(true); // Start boost animation
-    setTimeout(() => {
-      setTapAnimation(false);
-      setBoostAnimation(false); // Stop boost animation
-    }, 500);
+    setBoostAnimation(true);
+    setTimeout(() => setTapAnimation(false), 500);
 
+    // Remove "+1" effect after animation
     setTimeout(() => {
       setTapEffects((prevEffects) =>
         prevEffects.filter((effect) => effect.id !== newTapEffect.id)
@@ -95,7 +114,7 @@ const Dashboard = () => {
     if (updateBackendTimeout.current) {
       clearTimeout(updateBackendTimeout.current);
     }
-    updateBackendTimeout.current = setTimeout(updateBackend, 3000);
+    updateBackendTimeout.current = setTimeout(updateBackend, 3000); // Update backend every 3 seconds
   };
 
   const playTapSound = () => {
@@ -104,42 +123,39 @@ const Dashboard = () => {
     audio.play().catch((err) => console.error("Audio playback error:", err));
   };
 
-  // Update backend with accumulated taps
+  // Update backend with total taps every 3 seconds
   const updateBackend = async () => {
-    if (tapCountSinceLastUpdate.current <= 0) return;
+    if (tapCountSinceLastUpdate.current > 0) {
+      try {
+        const response = await fetch(
+          `https://bored-tap-api.onrender.com/update-coins?coins=${tapCountSinceLastUpdate.current}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
 
-    const token = localStorage.getItem("accessToken");
-    try {
-      const response = await fetch(
-        `https://bored-tap-api.onrender.com/update-coins?coins=${tapCountSinceLastUpdate.current}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+        const data = await response.json();
+        if (response.ok) {
+          console.log("Backend updated successfully:", data);
+        } else {
+          console.error("Failed to update backend:", data.detail);
         }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to update backend with taps");
+      } catch (err) {
+        console.error("Error updating backend:", err);
+      } finally {
+        tapCountSinceLastUpdate.current = 0; // Reset tap count after updating
       }
-
-      console.log("Taps updated successfully");
-    } catch (err) {
-      console.error("Error updating backend:", err);
-    } finally {
-      tapCountSinceLastUpdate.current = 0;
     }
   };
 
-  // Recharge electric boost after 1 hour if depleted
+  // Recharge electric boost after 1 hour
   useEffect(() => {
     if (electricBoost === 0) {
       rechargeTimeout.current = setTimeout(() => {
-        setElectricBoost(1000);
+        setElectricBoost(1000); // Recharge electric boost to full
         console.log("Electric boost recharged to 1000/1000");
-      }, 60 * 60 * 1000);
+      }, 60 * 60 * 1000); // 1 hour
     }
 
     return () => {
@@ -162,13 +178,13 @@ const Dashboard = () => {
           onClick={() => navigate("/profile-screen")}
         >
           <img
-            src={telegramData.photo_url}
+            src={telegramData.image_url}
             alt="Profile"
             className="profile-picture"
           />
           <div className="profile-info">
             <span className="profile-username">{telegramData.username}</span>
-            <span className="profile-level">Lvl {telegramData.level || 1}</span>
+            <span className="profile-level">Lvl {level}</span>
           </div>
         </div>
 
@@ -183,15 +199,14 @@ const Dashboard = () => {
           />
           <div className="streak-info">
             <span className="streak-text">Current Streak</span>
-            <span className="streak-days">{telegramData.currentStreak || 0} Days</span>
+            <span className="streak-days">Day {currentStreak}</span>
           </div>
         </div>
       </div>
 
       {/* Frames Section */}
       <div className="frames-section">
-        {[
-          { name: "Rewards", icon: "reward.png", path: "/reward-screen" },
+        {[{ name: "Rewards", icon: "reward.png", path: "/reward-screen" },
           { name: "Challenge", icon: "challenge.png", path: "/challenge-screen" },
           { name: "Clan", icon: "clan.png", path: "/clan-screen" },
           { name: "Leaderboard", icon: "leaderboard.png", path: "/leaderboard-screen" },
