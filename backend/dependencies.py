@@ -15,6 +15,7 @@ user_levels = {
     9: 500000000,
     10: 1000000000
 }
+referral_url_prefix = "https://t.me/Bored_Tap_Bot?start="
 
 
 # update user coins in db
@@ -126,6 +127,7 @@ def get_user_profile(telegram_user_id: str) -> UserProfile:
             image_url=user.get('image_url'),
             total_coins=user.get('total_coins'),
             level=user.get('level'),
+            referral_url=referral_url_prefix + telegram_user_id,
             streak=user.get('streak'),
             invite=user.get('invite')
         )

@@ -80,25 +80,6 @@ async def update_coins(telegram_user_id: Annotated[str, Depends(get_current_user
     return {"message": "Coins not updated"}
 
 
-# # update user level
-# @app.post('/update-level', tags=["Global Routes"])
-# async def update_level(telegram_user_id: Annotated[str, Depends(get_current_user)], level: int):
-#     """Update user level
-
-#     Args:
-#         telegram_user_id (Annotated[str, Depends): gets the telegram id of signed-in users
-#         coins (int): total coins accumulated by user
-
-#     Returns:
-#         _type_: int
-#     """
-#     user = get_user_by_id(telegram_user_id)
-#     user.level += level
-
-
-#     update_level_in_db(telegram_user_id, user)
-#     return user
-
 
 # get user data
 @app.get('/user/profile', tags=["Global Routes"], response_model=UserProfile)

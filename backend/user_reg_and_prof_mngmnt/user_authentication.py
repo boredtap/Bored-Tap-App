@@ -9,7 +9,7 @@ from config import get_settings
 from earn.schemas import StreakData
 from database_connection import user_collection
 from user_reg_and_prof_mngmnt.schemas import BasicProfile, Invites, Signup, TokenData, UserProfile
-from user_reg_and_prof_mngmnt.dependencies import get_user_by_id, insert_new_user, serialize_any_http_url
+from user_reg_and_prof_mngmnt.dependencies import get_user_by_id, insert_new_user, serialize_any_http_url, referral_url_prefix
 
 
 
@@ -127,6 +127,7 @@ def create_invited_user(invited: Signup):
         image_url=serialize_any_http_url(invited.image_url),
         total_coins=0,
         level=1,
+        referral_url=referral_url_prefix + invited.telegram_user_id
     )
     return invited_user
 
