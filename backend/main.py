@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from dependencies import get_user_profile, update_coins_in_db,get_user_by_id, update_level_in_db
+from dependencies import get_user_profile, update_coins_in_db,get_user_by_id
 from user_reg_and_prof_mngmnt.router import userApp
 from earn.router import earnApp
 from user_reg_and_prof_mngmnt.user_authentication import get_current_user
@@ -59,7 +59,7 @@ async def home():
 # update user coins tapped
 @app.post('/update-coins', tags=["Global Routes"])
 async def update_coins(telegram_user_id: Annotated[str, Depends(get_current_user)], coins: int):
-    """Update coins gannered from different activities in database
+    """Update coins gannered from different activities to database
 
     Args:
         telegram_user_id (Annotated[str, Depends): gets the telegram id of signed-in users
@@ -68,31 +68,36 @@ async def update_coins(telegram_user_id: Annotated[str, Depends(get_current_user
     Returns:
         _type_: int
     """
+    result = update_coins_in_db(telegram_user_id, coins)
     user = get_user_by_id(telegram_user_id)
-    user.total_coins += coins
-
-    update_coins_in_db(telegram_user_id, user)
-    return user
-
-
-# update user level
-@app.post('/update-level', tags=["Global Routes"])
-async def update_level(telegram_user_id: Annotated[str, Depends(get_current_user)], level: int):
-    """Update user level
-
-    Args:
-        telegram_user_id (Annotated[str, Depends): gets the telegram id of signed-in users
-        coins (int): total coins accumulated by user
-
-    Returns:
-        _type_: int
-    """
-    user = get_user_by_id(telegram_user_id)
-    user.level += level
+    if result:
+        return {
+            "message": "Coins updated successfully",
+            "current coins": user.total_coins,
+            "current level": user.level
+        }
+    
+    return {"message": "Coins not updated"}
 
 
-    update_level_in_db(telegram_user_id, user)
-    return user
+# # update user level
+# @app.post('/update-level', tags=["Global Routes"])
+# async def update_level(telegram_user_id: Annotated[str, Depends(get_current_user)], level: int):
+#     """Update user level
+
+#     Args:
+#         telegram_user_id (Annotated[str, Depends): gets the telegram id of signed-in users
+#         coins (int): total coins accumulated by user
+
+#     Returns:
+#         _type_: int
+#     """
+#     user = get_user_by_id(telegram_user_id)
+#     user.level += level
+
+
+#     update_level_in_db(telegram_user_id, user)
+#     return user
 
 
 # get user data
