@@ -23,6 +23,8 @@ const Dashboard = () => {
   const [boostAnimation, setBoostAnimation] = useState(false);
   const [loading, setLoading] = useState(true);
   const [tapEffects, setTapEffects] = useState([]); // Tracks "+1" animations
+  const [profile, setProfile] = useState(null);
+  const [error, setError] = useState(null);
 
   // Ref for managing backend updates and electric recharge
   const tapCountSinceLastUpdate = useRef(0); // Tracks taps for backend updates
@@ -77,6 +79,45 @@ const Dashboard = () => {
     initializeDashboard();
   }, []);
 
+  // Fetch profile data from the backend
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const token = localStorage.getItem("accessToken");
+
+      if (!token) {
+        navigate("/splash"); // Redirect to splash screen if no token is found
+        return;
+      }
+
+      try {
+        const response = await fetch("https://bored-tap-api.onrender.com/user/profile", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error("Unauthorized. Please log in again.");
+          }
+          throw new Error("Failed to fetch profile data.");
+        }
+
+        const data = await response.json();
+        setProfile(data); // Set profile data into state
+      } catch (err) {
+        setError(err.message); // Set error message
+        console.error("Error fetching profile:", err);
+      } finally {
+        setLoading(false); // Stop loading once the data is fetched
+      }
+    };
+
+    fetchProfile();
+  }, [navigate]);
+
   // Handle tap effect with multi-touch and location responsiveness
   const handleTap = (event) => {
     if (electricBoost === 0) {
@@ -127,11 +168,15 @@ const Dashboard = () => {
   const updateBackend = async () => {
     if (tapCountSinceLastUpdate.current > 0) {
       try {
+        const token = localStorage.getItem("accessToken");
         const response = await fetch(
           `https://bored-tap-api.onrender.com/update-coins?coins=${tapCountSinceLastUpdate.current}`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
           }
         );
 
