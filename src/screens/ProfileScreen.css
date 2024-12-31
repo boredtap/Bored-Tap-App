@@ -47,7 +47,7 @@
 .profile-data-cards {
     display: flex;
     flex-direction: column;
-    gap: 24px; /* Spacing between cards */
+    gap: 12px; /* Spacing between cards */
 }
 
 .profile-data-card {
