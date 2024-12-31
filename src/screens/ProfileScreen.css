@@ -50,7 +50,7 @@
   
   .profile-data-card {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-evenly;
     align-items: center;
     background-color: #414141; /* Card background */
     padding: 12px; /* Slightly reduced padding */
@@ -75,8 +75,7 @@
   
   .profile-data-right {
     font-size: 12px; /* Reduced font size */
-    font-weight: medium;
-    color: #fff;
+    color: orange;
     text-align: left;
   }
   

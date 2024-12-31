@@ -65,7 +65,7 @@ const ProfileScreen = () => {
 
   // Profile data cards with respective labels and values
   const profileData = [
-    
+    { icon: `${process.env.PUBLIC_URL}/logo.png`, label: "Total Coin", value: profile?.total_coins || "0" },
     { icon: `${process.env.PUBLIC_URL}/task.png`, label: "Completed Task", value: profile?.completed_tasks || "0" },
     { icon: `${process.env.PUBLIC_URL}/leaderboard12-icon.png`, label: "Rank", value: profile?.rank || "N/A" },
     { icon: `${process.env.PUBLIC_URL}/invite.png`, label: "Invited Friends", value: profile?.invited_friends || "0" },
