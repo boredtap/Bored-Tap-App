@@ -1,135 +1,147 @@
 /* Task Screen Styling */
 .task-screen {
-    background-color: #000;
-    color: #fff;
-    min-height: 100vh;
-    padding: 80px 16px 16px;
-    font-family: "Roboto", sans-serif;
-  }
-  
-  /* Total Taps Section */
-  .total-taps {
-    text-align: center;
-    margin-bottom: 24px;
-  }
-  
-  .total-taps p {
-    font-size: 16px;
-    margin: 0;
-    color: #d9d9d9;
-  }
-  
-  .taps-display {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin: 12px 0;
-  }
-  
-  .taps-logo {
-    width: 30px;
-    height: 30px;
-  }
-  
-  .taps-number {
-    font-size: 36px;
-    font-weight: bold;
-  }
-  
-  .tap-rewards {
-    font-size: 14px;
-    color: #d9d9d9;
-  }
-  
-  .how-tasks-work {
-    font-size: 14px;
-    color: #d9d9d9;
-    cursor: pointer;
-    text-decoration: underline;
-  }
-  
-  /* Pagination */
-  .pagination {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    padding-bottom: 8px;
-  }
-  
-  .pagination-tab {
-    font-size: 16px;
-    cursor: pointer;
-    color: #fff;
-  }
-  
-  .pagination-tab.active {
-    position: relative;
-  }
-  
-  .pagination-tab.active::after {
-    content: "";
-    position: absolute;
-    width: 100%;
-    height: 2px;
-    background-color: #fff;
-    bottom: -4px;
-    left: 0;
-  }
-  
-  /* Task Cards */
-  .task-cards {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .task-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px;
-    border-radius: 8px;
-    background-color: #414141;
-  }
-  
-  .task-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  
-  .task-logo {
-    width: 40px;
-    height: 40px;
-  }
-  
-  .task-info {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .task-title {
-    font-size: 14px;
-  }
-  
-  .task-value {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 12px;
-  }
-  
-  .small-logo {
-    width: 16px;
-    height: 16px;
-  }
-  
-  .task-cta {
-    padding: 8px 16px;
-    border-radius: 25px;
-    border: none;
-    font-size: 14px;
-    cursor: pointer;
-  }
-  
+  background-color: #000;
+  color: #fff;
+  min-height: 100vh;
+  padding: 80px 16px;
+  padding-top: 0px;
+  font-family: "Roboto", sans-serif;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* Total Taps Section */
+.total-taps {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.total-taps p {
+  font-size: 16px;
+  margin: 0;
+  color: #d9d9d9;
+}
+
+.taps-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.taps-logo {
+  width: 30px;
+  height: 30px;
+}
+
+.taps-number {
+  font-size: 36px;
+  font-weight: bold;
+}
+
+.tap-rewards {
+  font-size: 14px;
+  color: #d9d9d9;
+}
+
+.how-tasks-work {
+  font-size: 14px;
+  color: #d9d9d9;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 8px;
+}
+
+.pagination-tab {
+  font-size: 16px;
+  cursor: pointer;
+  color: #fff;
+}
+
+.pagination-tab.active {
+  position: relative;
+}
+
+.pagination-tab.active::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background-color: #fff;
+  bottom: -4px;
+  left: 0;
+}
+
+/* Task Cards */
+.task-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.task-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #414141;
+}
+
+.task-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.task-logo {
+  width: 40px;
+  height: 40px;
+}
+
+.task-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.task-title {
+  font-size: 14px;
+}
+
+.task-value {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.small-logo {
+  width: 16px;
+  height: 16px;
+}
+
+.task-cta {
+  padding: 8px 16px;
+  border-radius: 25px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.no-tasks {
+  color: #d9d9d9;
+  text-align: center;
+  margin-top: 16px;
+}

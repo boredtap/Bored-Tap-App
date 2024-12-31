@@ -1,20 +1,8 @@
 import React from "react";
-import AppBar from "../components/AppBar";
 import Navigation from "../components/Navigation";
 import "./ProfileScreen2.css";
 
 const ProfileScreen2 = () => {
-  const handleBackClick = () => {
-    console.log("Navigating back from Profile Screen...");
-  };
-
-  const handleMoreClick = () => {
-    console.log("Opening more options...");
-  };
-
-  const handleDropdownClick = () => {
-    console.log("Opening dropdown menu...");
-  };
 
   const profileData = [
     { icon: `${process.env.PUBLIC_URL}/wallet-icon.png`, label: "Total Coin", value: "500" },
@@ -26,14 +14,6 @@ const ProfileScreen2 = () => {
 
   return (
     <div className="profile-screen2">
-      {/* AppBar */}
-      <AppBar
-        title="Profile 2"
-        onBackClick={handleBackClick}
-        onMoreClick={handleMoreClick}
-        onDropdownClick={handleDropdownClick}
-      />
-
       {/* Profile Body */}
       <div className="profile-body">
         {/* Profile Picture */}

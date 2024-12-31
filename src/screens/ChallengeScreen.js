@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import AppBar from "../components/AppBar";
 import Navigation from "../components/Navigation";
 import "./ChallengeScreen.css";
 
@@ -85,8 +84,6 @@ const ChallengeScreen = () => {
 
   return (
     <div className="challenge-screen">
-      {/* AppBar */}
-      <AppBar title="Challenges" />
 
       {/* Body */}
       <div className="challenge-body">

@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import AppBar from "../components/AppBar";
 import Navigation from "../components/Navigation";
 import "./JoinClanScreen.css";
 
@@ -21,8 +20,6 @@ const JoinClanScreen = () => {
 
   return (
     <div className="join-clan-screen">
-      {/* AppBar */}
-      <AppBar title="Clan" />
 
       {/* Find a Clan Section */}
       <div className="find-clan-section">
