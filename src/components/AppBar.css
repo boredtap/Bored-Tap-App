@@ -4,54 +4,36 @@
   color: #fff; /* White content */
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 16px 20px; /* Reduced padding for better space utilization */
   max-width: 100%;
   box-sizing: border-box;
   position: fixed; /* Fixed to the top */
-  top: 0;
+  top: 0px;
   left: 0;
   right: 0;
   z-index: 1000;
-  height: var(--app-bar-height, 80px); /* Adjustable height using CSS variable */
+  height: var(--app-bar-height, 40px); /* Adjustable height using CSS variable */
 }
 
-/* Left Section: Back Icon and Title */
+/* Left Section: Title */
 .app-bar-left {
   display: flex;
   align-items: center;
-  gap: 8px;
   flex: 1;
   overflow: hidden;
 }
 
 .app-bar-title {
   font-weight: bold;
-  font-size: 20px;
+  font-size: 24px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis; /* Truncate long titles */
 }
 
-/* Right Section: Dropdown and More Icons */
-.app-bar-right {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-/* Icon Buttons */
-.app-bar-icon {
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 20px; /* Icon size */
-  cursor: pointer;
-}
-
 /* Main content below AppBar */
 .main-content {
-  margin-top: var(--app-bar-height, 80px); /* Space below AppBar */
+  margin-top: var(--app-bar-height, 40px); /* Space below AppBar */
 }
 
 /* Media Queries for Responsiveness */
@@ -63,10 +45,6 @@
   .app-bar-title {
     font-size: 16px; /* Smaller font size */
   }
-
-  .app-bar-icon {
-    font-size: 18px; /* Smaller icon size */
-  }
 }
 
 @media (max-width: 480px) {
@@ -76,9 +54,5 @@
 
   .app-bar-title {
     font-size: 14px;
-  }
-
-  .app-bar-icon {
-    font-size: 16px;
   }
 }
