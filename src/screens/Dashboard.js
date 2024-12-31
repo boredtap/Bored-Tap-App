@@ -38,7 +38,7 @@ const Dashboard = () => {
       setTelegramData(storedUser);
 
       try {
-        const response = await fetch("https://bored-tap-api.onrender.com/user-data", {
+        const response = await fetch("https://bored-tap-api.onrender.com/user/profile", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -162,7 +162,7 @@ const Dashboard = () => {
           onClick={() => navigate("/profile-screen")}
         >
           <img
-            src={telegramData.image_url}
+            src={telegramData.photo_url}
             alt="Profile"
             className="profile-picture"
           />
