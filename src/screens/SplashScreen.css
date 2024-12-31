@@ -1,4 +1,4 @@
-/*.splash-container {
+.splash-container {
     background-color: #000;
     display: flex;
     flex-direction: column; 
@@ -26,9 +26,9 @@
     font-size: 24px;
     font-weight: bold;
   }
-  */
+  
 
-  /* src/screens/SplashScreen.css */
+ /* src/screens/SplashScreen.css
 .splash-container {
   display: flex;
   justify-content: center;
@@ -75,4 +75,4 @@
 .welcome-text {
   color: #007bff;
   font-weight: bold;
-}
+}*/

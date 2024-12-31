@@ -1,157 +1,157 @@
-// import React, { useEffect, useState } from "react";
-// import { useNavigate } from "react-router-dom";
-// import "./SplashScreen.css";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "./SplashScreen.css";
 
-// const SplashScreen = () => {
-//   const navigate = useNavigate();
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState(null);
+const SplashScreen = () => {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-//   useEffect(() => {
-//     const initializeAuth = async () => {
-//       try {
-//         if (!window.Telegram?.WebApp) {
-//           throw new Error("Telegram WebApp not initialized");
-//         }
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        if (!window.Telegram?.WebApp) {
+          throw new Error("Telegram WebApp not initialized");
+        }
 
-//         const webApp = window.Telegram.WebApp;
-//         const userData = webApp.initDataUnsafe?.user;
+        const webApp = window.Telegram.WebApp;
+        const userData = webApp.initDataUnsafe?.user;
 
-//         if (!userData || !userData.id) {
-//           throw new Error("User data is missing or invalid");
-//         }
+        if (!userData || !userData.id) {
+          throw new Error("User data is missing or invalid");
+        }
 
-//         // First try to sign in with existing credentials
-//         try {
-//           const signInResponse = await fetch("https://bored-tap-api.onrender.com/signin", {
-//             method: "POST",
-//             headers: {
-//               "Content-Type": "application/x-www-form-urlencoded",
-//               "accept": "application/json"
-//             },
-//             body: new URLSearchParams({
-//               grant_type: "password",
-//               username: userData.username || `User${userData.id}`,
-//               password: String(userData.id), // Using telegram_user_id as password
-//               scope: "",
-//               client_id: "string",
-//               client_secret: "string"
-//             })
-//           });
+        // First try to sign in with existing credentials
+        try {
+          const signInResponse = await fetch("https://bored-tap-api.onrender.com/signin", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+              "accept": "application/json"
+            },
+            body: new URLSearchParams({
+              grant_type: "password",
+              username: userData.username || `User${userData.id}`,
+              password: String(userData.id), // Using telegram_user_id as password
+              scope: "",
+              client_id: "string",
+              client_secret: "string"
+            })
+          });
 
-//           if (signInResponse.ok) {
-//             // Existing user - process login
-//             const authData = await signInResponse.json();
-//             localStorage.setItem("accessToken", authData.access_token);
-//             localStorage.setItem("tokenType", authData.token_type);
+          if (signInResponse.ok) {
+            // Existing user - process login
+            const authData = await signInResponse.json();
+            localStorage.setItem("accessToken", authData.access_token);
+            localStorage.setItem("tokenType", authData.token_type);
             
-//             // Store user data
-//             const userInfo = {
-//               telegram_user_id: String(userData.id),
-//               username: userData.username || `User${userData.id}`,
-//               image_url: userData.photo_url || "",
-//             };
-//             localStorage.setItem("telegramUser", JSON.stringify(userInfo));
+            // Store user data
+            const userInfo = {
+              telegram_user_id: String(userData.id),
+              username: userData.username || `User${userData.id}`,
+              image_url: userData.photo_url || "",
+            };
+            localStorage.setItem("telegramUser", JSON.stringify(userInfo));
             
-//             navigate("/dashboard");
-//             return;
-//           }
-//         } catch (signInError) {
-//           console.log("Sign-in failed, attempting registration:", signInError);
-//         }
+            navigate("/dashboard");
+            return;
+          }
+        } catch (signInError) {
+          console.log("Sign-in failed, attempting registration:", signInError);
+        }
 
-//         // If sign-in failed, try to register as new user
-//         const signUpResponse = await fetch("https://bored-tap-api.onrender.com/sign-up", {
-//           method: "POST",
-//           headers: {
-//             "Content-Type": "application/json",
-//             "accept": "application/json"
-//           },
-//           body: JSON.stringify({
-//             telegram_user_id: String(userData.id),
-//             username: userData.username || `User${userData.id}`,
-//             image_url: userData.photo_url || "",
-//             password: String(userData.id) // Using telegram_user_id as password
-//           }),
-//         });
+        // If sign-in failed, try to register as new user
+        const signUpResponse = await fetch("https://bored-tap-api.onrender.com/sign-up", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "accept": "application/json"
+          },
+          body: JSON.stringify({
+            telegram_user_id: String(userData.id),
+            username: userData.username || `User${userData.id}`,
+            image_url: userData.photo_url || "",
+            password: String(userData.id) // Using telegram_user_id as password
+          }),
+        });
 
-//         if (!signUpResponse.ok) {
-//           throw new Error(`Registration failed: ${signUpResponse.statusText}`);
-//         }
+        if (!signUpResponse.ok) {
+          throw new Error(`Registration failed: ${signUpResponse.statusText}`);
+        }
 
-//         // After successful registration, attempt sign-in
-//         const signInAfterRegResponse = await fetch("https://bored-tap-api.onrender.com/signin", {
-//           method: "POST",
-//           headers: {
-//             "Content-Type": "application/x-www-form-urlencoded",
-//             "accept": "application/json"
-//           },
-//           body: new URLSearchParams({
-//             grant_type: "password",
-//             username: userData.username || `User${userData.id}`,
-//             password: String(userData.id),
-//             scope: "",
-//             client_id: "string",
-//             client_secret: "string"
-//           })
-//         });
+        // After successful registration, attempt sign-in
+        const signInAfterRegResponse = await fetch("https://bored-tap-api.onrender.com/signin", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "accept": "application/json"
+          },
+          body: new URLSearchParams({
+            grant_type: "password",
+            username: userData.username || `User${userData.id}`,
+            password: String(userData.id),
+            scope: "",
+            client_id: "string",
+            client_secret: "string"
+          })
+        });
 
-//         if (!signInAfterRegResponse.ok) {
-//           throw new Error("Failed to sign in after registration");
-//         }
+        if (!signInAfterRegResponse.ok) {
+          throw new Error("Failed to sign in after registration");
+        }
 
-//         const authData = await signInAfterRegResponse.json();
-//         localStorage.setItem("accessToken", authData.access_token);
-//         localStorage.setItem("tokenType", authData.token_type);
+        const authData = await signInAfterRegResponse.json();
+        localStorage.setItem("accessToken", authData.access_token);
+        localStorage.setItem("tokenType", authData.token_type);
 
-//         // Store user data
-//         const userInfo = {
-//           telegram_user_id: String(userData.id),
-//           username: userData.username || `User${userData.id}`,
-//           image_url: userData.photo_url || "",
-//         };
-//         localStorage.setItem("telegramUser", JSON.stringify(userInfo));
+        // Store user data
+        const userInfo = {
+          telegram_user_id: String(userData.id),
+          username: userData.username || `User${userData.id}`,
+          image_url: userData.photo_url || "",
+        };
+        localStorage.setItem("telegramUser", JSON.stringify(userInfo));
 
-//         navigate("/dashboard");
-//       } catch (err) {
-//         console.error("Authentication error:", err);
-//         setError(err.message);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
+        navigate("/dashboard");
+      } catch (err) {
+        console.error("Authentication error:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-//     initializeAuth();
-//   }, [navigate]);
+    initializeAuth();
+  }, [navigate]);
 
-//   const handleRetry = () => {
-//     setError(null);
-//     setLoading(true);
-//     window.location.reload();
-//   };
+  const handleRetry = () => {
+    setError(null);
+    setLoading(true);
+    window.location.reload();
+  };
 
-//   return (
-//     <div className="splash-container">
-//       <div className="splash-content">
-//         <img
-//           src={`${process.env.PUBLIC_URL}/logo.png`}
-//           alt="Bored Tap Logo"
-//           className="splash-logo"
-//         />
-//         <span className="splash-text">
-//           {loading ? "Authenticating..." : error ? `Error: ${error}` : "Welcome to BoredTap"}
-//         </span>
-//         {error && (
-//           <button onClick={handleRetry} className="retry-button">
-//             Retry
-//           </button>
-//         )}
-//       </div>
-//     </div>
-//   );
-// };
+  return (
+    <div className="splash-container">
+      <div className="splash-content">
+        <img
+          src={`${process.env.PUBLIC_URL}/logo.png`}
+          alt="Bored Tap Logo"
+          className="splash-logo"
+        />
+        <span className="splash-text">
+          {loading ? "Authenticating..." : error ? `Error: ${error}` : "Welcome to BoredTap"}
+        </span>
+        {error && (
+          <button onClick={handleRetry} className="retry-button">
+            Retry
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
 
-// export default SplashScreen;
+export default SplashScreen;
 
 
 
@@ -252,68 +252,68 @@
 // };
 
 // export default SplashScreen;
-// src/screens/SplashScreen.js
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { isAuthenticated, getTelegramUser } from '../services/authService';
-import './SplashScreen.css';
+// // src/screens/SplashScreen.js
+// import React, { useEffect, useState } from 'react';
+// import { useNavigate } from 'react-router-dom';
+// import { isAuthenticated, getTelegramUser } from '../services/authService';
+// import './SplashScreen.css';
 
-const SplashScreen = () => {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+// const SplashScreen = () => {
+//   const navigate = useNavigate();
+//   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const checkAuthAndInitialize = async () => {
-      try {
-        // Check if user is authenticated
-        if (!isAuthenticated()) {
-          navigate('/auth');
-          return;
-        }
+//   useEffect(() => {
+//     const checkAuthAndInitialize = async () => {
+//       try {
+//         // Check if user is authenticated
+//         if (!isAuthenticated()) {
+//           navigate('/auth');
+//           return;
+//         }
 
-        // Get user data
-        const userData = getTelegramUser();
-        if (!userData) {
-          navigate('/auth');
-          return;
-        }
+//         // Get user data
+//         const userData = getTelegramUser();
+//         if (!userData) {
+//           navigate('/auth');
+//           return;
+//         }
 
-        // Add any additional initialization logic here
-        // For example, fetching user preferences, game state, etc.
+//         // Add any additional initialization logic here
+//         // For example, fetching user preferences, game state, etc.
         
-        // Simulate loading time for splash screen
-        setTimeout(() => {
-          setLoading(false);
-          navigate('/dashboard');
-        }, 2000); // 2 seconds delay for splash screen
+//         // Simulate loading time for splash screen
+//         setTimeout(() => {
+//           setLoading(false);
+//           navigate('/dashboard');
+//         }, 2000); // 2 seconds delay for splash screen
 
-      } catch (error) {
-        console.error('Splash screen initialization error:', error);
-        navigate('/auth');
-      }
-    };
+//       } catch (error) {
+//         console.error('Splash screen initialization error:', error);
+//         navigate('/auth');
+//       }
+//     };
 
-    checkAuthAndInitialize();
-  }, [navigate]);
+//     checkAuthAndInitialize();
+//   }, [navigate]);
 
-  return (
-    <div className="splash-container">
-      <div className="splash-content">
-        <img
-          src={`${process.env.PUBLIC_URL}/logo.png`}
-          alt="Bored Tap Logo"
-          className="splash-logo animated"
-        />
-        <div className="splash-message">
-          {loading ? (
-            <div className="loading-text">Loading your game...</div>
-          ) : (
-            <div className="welcome-text">Welcome to BoredTap!</div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
+//   return (
+//     <div className="splash-container">
+//       <div className="splash-content">
+//         <img
+//           src={`${process.env.PUBLIC_URL}/logo.png`}
+//           alt="Bored Tap Logo"
+//           className="splash-logo animated"
+//         />
+//         <div className="splash-message">
+//           {loading ? (
+//             <div className="loading-text">Loading your game...</div>
+//           ) : (
+//             <div className="welcome-text">Welcome to BoredTap!</div>
+//           )}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
 
-export default SplashScreen;
+// export default SplashScreen;

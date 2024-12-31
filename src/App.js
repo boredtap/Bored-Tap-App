@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import AuthScreen from "./screens/AuthScreen";
+// import AuthScreen from "./screens/AuthScreen";
 import SplashScreen from "./screens/SplashScreen";
 import Dashboard from "./screens/Dashboard";
 import TelegramLogin from "./TelegramLogin";
@@ -27,9 +27,9 @@ const App = () => {
     <Router>
       <Routes>
         {/* <Route path="/" element={<TelegramLogin />} /> */}
-        <Route path="/" element={<AuthScreen />} />
-        <Route path="/auth" element={<AuthScreen />} />
-        <Route path="/splash" element={<SplashScreen />} />
+        {/* <Route path="/" element={<AuthScreen />} />
+        <Route path="/auth" element={<AuthScreen />} /> */}
+        <Route path="/" element={<SplashScreen />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/telegram-login" element={<TelegramLogin />} />
         <Route path="/profile-screen" element={<ProfileScreen />} />
