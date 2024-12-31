@@ -75,9 +75,9 @@
   
   .profile-data-right {
     font-size: 12px; /* Reduced font size */
-    font-weight: bold;
+    font-weight: medium;
     color: #fff;
-    text-align: right;
+    text-align: left;
   }
   
   /* Links */
