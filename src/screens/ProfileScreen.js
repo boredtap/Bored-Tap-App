@@ -62,12 +62,12 @@ const ProfileScreen = () => {
   }
 
   const profileData = [
-    { icon: `${process.env.PUBLIC_URL}/wallet-icon.png`, label: "Total Coin", value: profile?.total_coins || "0" },
-    { icon: `${process.env.PUBLIC_URL}/tasks-icon.png`, label: "Completed Task", value: profile?.completed_tasks || "0" },
-    { icon: `${process.env.PUBLIC_URL}/rank-icon.png`, label: "Rank", value: profile?.rank || "N/A" },
-    { icon: `${process.env.PUBLIC_URL}/invite-icon.png`, label: "Invited Friends", value: profile?.invited_friends || "0" },
+    { icon: `${process.env.PUBLIC_URL}/logo.png`, label: "Total Coin", value: profile?.total_coins || "0" },
+    { icon: `${process.env.PUBLIC_URL}/tasks.png`, label: "Completed Task", value: profile?.completed_tasks || "0" },
+    { icon: `${process.env.PUBLIC_URL}/leaderboard.png`, label: "Rank", value: profile?.rank || "N/A" },
+    { icon: `${process.env.PUBLIC_URL}/invite.png`, label: "Invited Friends", value: profile?.invited_friends || "0" },
     { icon: `${process.env.PUBLIC_URL}/level.png`, label: "Level", value: `Lv ${profile?.level || "1"}` },
-    { icon: `${process.env.PUBLIC_URL}/wallet-icon.png`, label: "Connect Wallet", value: <img src={`${process.env.PUBLIC_URL}/plus-icon.png`} alt="Add Wallet" /> },
+    { icon: `${process.env.PUBLIC_URL}/wallet.png`, label: "Connect Wallet", value: <img src={`${process.env.PUBLIC_URL}/plus-icon.png`} alt="Add Wallet" /> },
   ];
 
   return (
