@@ -1,24 +1,24 @@
-.splash-container {
+/*.splash-container {
     background-color: #000;
     display: flex;
-    flex-direction: column; /* Default to column for mobile responsiveness */
+    flex-direction: column; 
     justify-content: center;
-    padding-top: 0px; /* Adjust padding considering AppBar space */
+    padding-top: 0px; 
     align-items: center;
-    height:100vh; /* Adjust height considering AppBar space */
+    height:100vh; 
   }
   
   .splash-content {
     display: flex;
-    flex-direction: row; /* Align logo and text horizontally */
+    flex-direction: row; 
     align-items: center;
-    gap: 10px; /* Add space between logo and text */
+    gap: 10px; 
   }
   
   .splash-logo {
-    width: 80px; /* Adjust the logo size */
+    width: 80px; 
     height: 80px;
-    object-fit: contain; /* Maintain aspect ratio */
+    object-fit: contain; 
   }
   
   .splash-text {
@@ -26,4 +26,53 @@
     font-size: 24px;
     font-weight: bold;
   }
-  
+  */
+
+  /* src/screens/SplashScreen.css */
+.splash-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #000;
+}
+
+.splash-content {
+  text-align: center;
+}
+
+.splash-logo {
+  width: 150px;
+  height: 150px;
+}
+
+.splash-logo.animated {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.splash-message {
+  margin-top: 2rem;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.loading-text {
+  color: #666;
+}
+
+.welcome-text {
+  color: #007bff;
+  font-weight: bold;
+}
