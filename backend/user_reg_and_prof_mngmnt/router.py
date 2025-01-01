@@ -2,7 +2,7 @@ from datetime import timedelta
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from user_reg_and_prof_mngmnt.dependencies import get_user_by_id, serialize_any_http_url
+from user_reg_and_prof_mngmnt.dependencies import get_user_by_id, serialize_any_http_url, referral_url_prefix
 from user_reg_and_prof_mngmnt.user_authentication import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     add_invitee_to_inviter_list, 
@@ -49,7 +49,8 @@ async def sign_up(user: Signup, referral_code: str | None = None) -> BasicProfil
         return BasicProfile(
         telegram_user_id=user.telegram_user_id,
         username=user.username,
-        image_url=serialize_any_http_url(url=user.image_url)
+        image_url=serialize_any_http_url(url=user.image_url),
+        referral_url=referral_url_prefix + user.telegram_user_id
     )
 
     # else create new user
@@ -57,6 +58,7 @@ async def sign_up(user: Signup, referral_code: str | None = None) -> BasicProfil
         telegram_user_id=user.telegram_user_id,
         username=user.username,
         image_url=serialize_any_http_url(url=user.image_url),
+        referral_url=referral_url_prefix + user.telegram_user_id
     )
 
     # insert new user in database
@@ -65,7 +67,8 @@ async def sign_up(user: Signup, referral_code: str | None = None) -> BasicProfil
     return BasicProfile(
         telegram_user_id=user.telegram_user_id,
         username=user.username,
-        image_url=serialize_any_http_url(url=user.image_url)
+        image_url=serialize_any_http_url(url=user.image_url),
+        referral_url=referral_url_prefix + user.telegram_user_id
     )
 
 

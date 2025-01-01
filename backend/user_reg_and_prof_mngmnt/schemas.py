@@ -1,3 +1,4 @@
+from typing import Any
 from pydantic import BaseModel, AnyHttpUrl, Field
 from earn.schemas import StreakData
 
@@ -69,6 +70,7 @@ class BasicProfile(BaseModel):
     image_url: AnyHttpUrl | str
     total_coins: int | None = 0
     level: int | None = 1
+    referral_url: str | None = None
 
 class UserProfile(
         BasicProfile

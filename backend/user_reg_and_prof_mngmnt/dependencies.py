@@ -22,7 +22,8 @@ def get_user_by_id(telegram_user_id: str) -> BasicProfile:
             firstname=user.get("firstname", None),
             image_url=user.get("image_url", None),
             level=user.get("level", None),
-            total_coins=user.get("total_coins", None)
+            total_coins=user.get("total_coins", None),
+            referral_url=user.get("referral_url", None)
         )
         return user_data
     return None
@@ -47,4 +48,5 @@ def serialize_any_http_url(url: AnyHttpUrl):
     return str(url)
   else:
     return url
- 
+
+referral_url_prefix = "https://t.me/Bored_Tap_Bot?start="

@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dependencies import get_user_profile, update_coins_in_db,get_user_by_id
 from user_reg_and_prof_mngmnt.router import userApp
 from earn.router import earnApp
+from invite.router import inviteApp
 from user_reg_and_prof_mngmnt.user_authentication import get_current_user
 from typing import Annotated
 from user_reg_and_prof_mngmnt.schemas import UserProfile
@@ -50,6 +51,7 @@ app.add_middleware(
 
 app.include_router(userApp)
 app.include_router(earnApp)
+app.include_router(inviteApp)
 
 @app.get('/', tags=["Global Routes"])
 async def home():
@@ -79,25 +81,6 @@ async def update_coins(telegram_user_id: Annotated[str, Depends(get_current_user
     
     return {"message": "Coins not updated"}
 
-
-# # update user level
-# @app.post('/update-level', tags=["Global Routes"])
-# async def update_level(telegram_user_id: Annotated[str, Depends(get_current_user)], level: int):
-#     """Update user level
-
-#     Args:
-#         telegram_user_id (Annotated[str, Depends): gets the telegram id of signed-in users
-#         coins (int): total coins accumulated by user
-
-#     Returns:
-#         _type_: int
-#     """
-#     user = get_user_by_id(telegram_user_id)
-#     user.level += level
-
-
-#     update_level_in_db(telegram_user_id, user)
-#     return user
 
 
 # get user data
