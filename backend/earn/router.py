@@ -28,7 +28,6 @@ async def perform_streak(telegram_user_id: Annotated[str, Depends(get_current_us
     current_date = datetime.today()
     one_day = timedelta(hours=24)
     daily_reward_amount = 500
-    time_difference = calculate_time_difference(current_date, old_streak.last_action_date)
 
     if not old_streak.last_action_date:
         # initialize user streaks if no streak record exists
@@ -44,6 +43,7 @@ async def perform_streak(telegram_user_id: Annotated[str, Depends(get_current_us
 
         return init_streak_data
 
+    time_difference = calculate_time_difference(current_date, old_streak.last_action_date)
     if one_day <= time_difference <= timedelta(hours=25) and current_date.date() != old_streak.last_action_date.date():
         # Streak continues
         # Increment:- streak: 1, total_coins: daily_reward_amount
@@ -84,7 +84,7 @@ async def perform_streak(telegram_user_id: Annotated[str, Depends(get_current_us
     
     return {
         "message": "Streak not updated",
-        "Countdown": "check again in 24 hrs"
+        "Countdown": f"check again by this time: {old_streak.last_action_date.strftime("%I:%M %p")} tomorrow"
     }
 
 
