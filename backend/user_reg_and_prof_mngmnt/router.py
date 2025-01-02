@@ -2,12 +2,16 @@ from datetime import timedelta
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from user_reg_and_prof_mngmnt.dependencies import get_user_by_id, serialize_any_http_url, referral_url_prefix
+from user_reg_and_prof_mngmnt.dependencies import (
+    get_user_by_id,
+    insert_new_invite_ref,
+    serialize_any_http_url,
+    referral_url_prefix)
 from user_reg_and_prof_mngmnt.user_authentication import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
-    add_invitee_to_inviter_list, 
     authenticate_user,
     create_access_token,
+    create_invite_ref,
     create_invited_user,
     reward_inviter_and_invitee,
     validate_referral_code)
@@ -42,9 +46,12 @@ async def sign_up(user: Signup, referral_code: str | None = None) -> BasicProfil
     
     if referral_code and validate_referral_code(referral_code):
         invited_user = create_invited_user(invited=user)
+        new_invite_ref = create_invite_ref(inviter_id=referral_code, ref=user)
         insert_new_user(invited_user)
+        if new_invite_ref:
+            insert_new_invite_ref(new_invite_ref)
         reward_inviter_and_invitee(inviter_id=referral_code, invitee_id=user.telegram_user_id, reward=100)
-        add_invitee_to_inviter_list(inviter_id=referral_code, invitee_id=user.telegram_user_id)
+        # add_invitee_to_inviter_list(inviter_id=referral_code, invitee_id=user.telegram_user_id)
 
         return BasicProfile(
         telegram_user_id=user.telegram_user_id,
@@ -101,6 +108,3 @@ async def sign_in(
         }, expires_delta=access_token_expires
     )
     return Token(access_token=access_token, token_type="bearer")
-
-
-# @userApp.put("/{username}/update-profile")

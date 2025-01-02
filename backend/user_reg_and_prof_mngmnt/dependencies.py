@@ -1,6 +1,6 @@
 from pydantic import AnyHttpUrl
-from user_reg_and_prof_mngmnt.schemas import BasicProfile
-from database_connection import user_collection
+from user_reg_and_prof_mngmnt.schemas import BasicProfile, Invites
+from database_connection import user_collection, invites_ref
 
 
 def get_user_by_id(telegram_user_id: str) -> BasicProfile:
@@ -32,6 +32,9 @@ def get_user_by_id(telegram_user_id: str) -> BasicProfile:
 # insert new user in database
 def insert_new_user(new_user: BasicProfile):
     user_collection.insert_one(new_user.model_dump())
+
+def insert_new_invite_ref(new_invite_ref: Invites):
+    invites_ref.insert_one(new_invite_ref.model_dump())
 
 
 def serialize_any_http_url(url: AnyHttpUrl):
