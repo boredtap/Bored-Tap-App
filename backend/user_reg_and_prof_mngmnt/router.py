@@ -57,6 +57,7 @@ async def sign_up(user: Signup, referral_code: str | None = None) -> BasicProfil
         telegram_user_id=user.telegram_user_id,
         username=user.username,
         image_url=serialize_any_http_url(url=user.image_url),
+        total_coins=100,
         referral_url=referral_url_prefix + user.telegram_user_id
     )
 

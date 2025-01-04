@@ -155,21 +155,3 @@ def create_invite_ref(inviter_id: str, ref = Signup):
         {'invitees': ref.telegram_user_id}
     }
     invites_ref.update_one(inviter, update_operation)
-
-
-def add_invitee_to_inviter_list(inviter_id: str, invitee_id: str):
-    inviter = {'telegram_user_id': inviter_id}
-    invitee = get_user_by_id(invitee_id)
-
-    invitee_info = Invites(
-        telegram_user_id=invitee.telegram_user_id,
-        username=invitee.username,
-        level=invitee.level,
-        total_coins=invitee.total_coins
-    )
-
-    update_operation = {'$push':
-        {'invite': invitee_info.model_dump()}
-    }
-
-    user_collection.update_one(inviter, update_operation)

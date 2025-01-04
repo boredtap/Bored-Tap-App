@@ -21,6 +21,10 @@ tags_metadata = [
     {
         "name": "Earn features",
         "description": "These routes are for earn action buttons on the earn tab of dashboard."
+    },
+    {
+        "name": "Invite features",
+        "description": "These routes are for invite action buttons on the invite tab of dashboard."
     }
 ]
 
