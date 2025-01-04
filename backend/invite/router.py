@@ -1,7 +1,6 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
-import telegram
 from user_reg_and_prof_mngmnt.dependencies import get_user_by_id
 from invite.dependencies import generate_qr_code
 from user_reg_and_prof_mngmnt.user_authentication import get_current_user

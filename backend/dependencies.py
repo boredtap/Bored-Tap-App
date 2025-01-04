@@ -1,5 +1,5 @@
-from database_connection import user_collection
-from user_reg_and_prof_mngmnt.schemas import Update, UserProfile
+from database_connection import user_collection, invites_ref
+from user_reg_and_prof_mngmnt.schemas import InviteeData, Update, UserProfile
 
 
 user_levels = {
@@ -51,14 +51,6 @@ def update_coins_in_db(telegram_user_id: str, coins: int):
         'level_update_result': level_update_result
     }
 
-# # update level in db
-# def update_level_in_db(telegram_user_id: str, update: Update):
-#     query_filter = {'telegram_user_id': telegram_user_id}
-#     coin_update_operation = {'$set':
-#         {'level': update.level}
-#     }
-#     user_collection.update_one(query_filter, coin_update_operation)
-#     return
 
 def get_user_by_id(telegram_user_id: str) -> Update:
     """
@@ -118,6 +110,21 @@ def get_user_profile(telegram_user_id: str) -> UserProfile:
         UserProfile: The user data if found, otherwise None.
     """
     user: dict = user_collection.find_one({"telegram_user_id": telegram_user_id})
+    user_invitees_ref = invites_ref.find_one({'inviter_telegram_id': telegram_user_id})
+    invitees: list[InviteeData] = []
+    
+
+    if user_invitees_ref:
+        invitees_ref: list[str] = user_invitees_ref["invitees"]
+
+        for id in invitees_ref:
+            invitee = user_collection.find_one({"telegram_user_id": id})
+            invitee_data = InviteeData(
+                username=invitee.get("username"),
+                level=invitee.get("level"),
+                total_coins=invitee.get("total_coins")
+            )
+            invitees.append(invitee_data)
 
     if user:
         user_data = UserProfile(
@@ -129,7 +136,7 @@ def get_user_profile(telegram_user_id: str) -> UserProfile:
             level=user.get('level'),
             referral_url=referral_url_prefix + telegram_user_id,
             streak=user.get('streak'),
-            invite=user.get('invite')
+            invite=invitees
         )
         return user_data
     return None

@@ -1,4 +1,3 @@
-from typing import Any
 from pydantic import BaseModel, AnyHttpUrl, Field
 from earn.schemas import StreakData
 
@@ -50,7 +49,7 @@ class Update(BaseModel):
     total_coins: int
     level: int
 
-class Invites(BaseModel):
+class InviteeData(BaseModel):
     """
     Invites model for storing user invite information.
 
@@ -58,10 +57,13 @@ class Invites(BaseModel):
         telegram_user_id (str): The Telegram user ID.
         invitee (str | None): The invitee's username, if any.
     """
-    telegram_user_id: str
     username: str | None = None
     level: int | None = 1
     total_coins: int | None = 0
+
+class Invites(BaseModel):
+    inviter_telegram_id: str
+    invitees: list[str]
 
 class BasicProfile(BaseModel):
     telegram_user_id: str
@@ -76,5 +78,5 @@ class UserProfile(
         BasicProfile
     ):
     streak: StreakData = Field(default_factory=StreakData)
-    invite: list[Invites] | None = []
+    invite: list[InviteeData] | None = {}
 

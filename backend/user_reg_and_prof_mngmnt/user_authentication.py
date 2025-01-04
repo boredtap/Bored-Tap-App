@@ -1,15 +1,13 @@
 from datetime import datetime, timedelta
 from typing import Annotated
-from httpx import get
 import jwt
 from jwt.exceptions import InvalidTokenError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 from config import get_settings
-from earn.schemas import StreakData
-from database_connection import user_collection
+from database_connection import user_collection, invites_ref
 from user_reg_and_prof_mngmnt.schemas import BasicProfile, Invites, Signup, TokenData, UserProfile
-from user_reg_and_prof_mngmnt.dependencies import get_user_by_id, insert_new_user, serialize_any_http_url, referral_url_prefix
+from user_reg_and_prof_mngmnt.dependencies import get_user_by_id, serialize_any_http_url, referral_url_prefix
 
 
 
@@ -130,6 +128,33 @@ def create_invited_user(invited: Signup):
         referral_url=referral_url_prefix + invited.telegram_user_id
     )
     return invited_user
+
+def create_invite_ref(inviter_id: str, ref = Signup):
+    """
+    Creates or updates an invite reference for a given inviter.
+    If the inviter does not have any existing invites, a new invite reference is created.
+    If the inviter already has invites, the new invitee is added to the existing invite reference.
+    Args:
+        inviter_id (str): The Telegram ID of the inviter.
+        ref (Signup): An instance of the Signup class containing the invitee's information.
+    Returns:
+        Invites: A new invite reference if the inviter does not have any existing invites.
+    """
+
+    first_invite = invites_ref.find_one({'inviter_telegram_id': inviter_id})
+
+    if not first_invite:
+        invite_ref = Invites(
+            inviter_telegram_id=inviter_id,
+            invitees=[ref.telegram_user_id]
+        )
+        return invite_ref
+    
+    inviter = {'inviter_telegram_id': inviter_id}
+    update_operation = {'$push':
+        {'invitees': ref.telegram_user_id}
+    }
+    invites_ref.update_one(inviter, update_operation)
 
 
 def add_invitee_to_inviter_list(inviter_id: str, invitee_id: str):

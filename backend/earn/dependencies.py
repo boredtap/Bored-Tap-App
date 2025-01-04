@@ -41,6 +41,15 @@ def init_streak(telegram_user_id: str, init_streak: StreakData, daily_reward_amo
 
 
 def calculate_time_difference(current_date: datetime, last_action_date: datetime):
+    """
+    Calculate the time difference between two datetime objects in hours.
+    Args:
+        current_date (datetime): The current date and time.
+        last_action_date (datetime): The date and time of the last action.
+    Returns:
+        timedelta: A timedelta object representing the difference in hours.
+    """
+
     past_hours = current_date - last_action_date
     past_hours = past_hours.total_seconds() / 3600
     return timedelta(hours=int(past_hours))

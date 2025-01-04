@@ -22,3 +22,4 @@ def get_db():
 
 db = get_db()
 user_collection = db['users']
+invites_ref = db['invites_ref']
