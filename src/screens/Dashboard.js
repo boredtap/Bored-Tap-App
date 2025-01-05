@@ -119,7 +119,7 @@ const Dashboard = () => {
 
   const playTapSound = () => {
     const audio = new Audio(`${process.env.PUBLIC_URL}/tap.mp3`);
-    audio.volume = 0.3;
+    audio.volume = 0.5;
     audio.play().catch((err) => console.error("Audio playback error:", err));
   };
 
@@ -160,9 +160,11 @@ const Dashboard = () => {
   useEffect(() => {
     if (electricBoost === 0) {
       rechargeTimeout.current = setTimeout(() => {
-        setElectricBoost(1000);
+        setElectricBoost(1000); // Recharge to full
         console.log("Electric boost recharged to 1000/1000");
       }, 60 * 60 * 1000); // 1 hour
+    } else if (rechargeTimeout.current) {
+      clearTimeout(rechargeTimeout.current); // Clear any existing recharge timer if boost is not zero
     }
 
     return () => {
@@ -182,7 +184,6 @@ const Dashboard = () => {
 
   // Destructure profile data for use in rendering
   const { level = 1, streak: { current_streak: currentStreak = 0 } = {} } = profile || {};
-
 
   return (
     <div className="dashboard-container">
