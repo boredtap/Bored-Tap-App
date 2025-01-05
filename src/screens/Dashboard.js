@@ -174,6 +174,14 @@ const Dashboard = () => {
     };
   }, [electricBoost]);
 
+  useEffect(() => {
+    return () => {
+      if (rechargeTimeout.current) {
+        clearTimeout(rechargeTimeout.current);
+      }
+    };
+  }, []);
+
   if (error) {
     return <div className="error">{error}</div>;
   }
