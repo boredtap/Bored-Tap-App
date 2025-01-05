@@ -42,10 +42,10 @@
   }
   
   /* Data Cards */
-  .profile-data-cards {
+  .profile-data-cards { 
     display: flex;
     flex-direction: column;
-    gap: 8px; /* Spacing between cards */
+    
   }
   
   .profile-data-card {
@@ -55,6 +55,7 @@
     background-color: #414141; /* Card background */
     padding: 12px; /* Slightly reduced padding */
     border-radius: 8px;
+    gap: 8px; /* Spacing between cards */
     cursor: pointer; /* Indicate clickable cards */
   }
   
