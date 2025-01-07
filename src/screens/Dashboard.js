@@ -22,6 +22,7 @@ const Dashboard = () => {
   const [boostAnimation, setBoostAnimation] = useState(false);
   const [loading, setLoading] = useState(true);
   const [tapEffects, setTapEffects] = useState([]);
+  const [currentStreak, setCurrentStreak] = useState(0); // Moved up here for correct state management
 
   // Refs for managing backend updates and electric recharge
   const tapCountSinceLastUpdate = useRef(0);
@@ -80,6 +81,7 @@ const Dashboard = () => {
         const data = await response.json();
         setProfile(data);
         setTotalTaps(data.total_coins); // Set total taps from backend
+        setCurrentStreak(data.streak.current_streak || 0); // Directly update currentStreak
       } catch (err) {
         setError(err.message);
         console.error("Error fetching profile:", err);
@@ -191,7 +193,7 @@ const Dashboard = () => {
   }
 
   // Destructure profile data for use in rendering
-  const { level = 1, streak: { current_streak: currentStreak = 0 } = {} } = profile || {};
+  const { level = 1 } = profile || {};
 
   return (
     <div className="dashboard-container">
@@ -212,15 +214,8 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div
-          className="streak-section"
-          onClick={() => navigate("/daily-streak-screen")}
-        >
-          <img
-            src={`${process.env.PUBLIC_URL}/streak.png`}
-            alt="Streak Icon"
-            className="streak-icon"
-          />
+        <div className="streak-section" onClick={() => navigate("/daily-streak-screen")}>
+          <img src={`${process.env.PUBLIC_URL}/streak.png`} alt="Streak Icon" className="streak-icon" />
           <div className="streak-info">
             <span className="streak-text">Current Streak</span>
             <span className="streak-days">Day {currentStreak}</span>

@@ -17,9 +17,9 @@
   margin: 20px 0;
 }
 
-.streak-icon {
-  width: 80px;
-  height: 80px;
+.streak-icon-big {
+  width: 120px;  /* Increased size */
+  height: 120px; /* Increased size */
   margin: 0 auto;
   display: block;
 }
@@ -48,10 +48,10 @@
 
 .rewards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(4, minmax(60px, 1fr)); /* 4 cards in a row */
+  gap: 5px; /* Reduced spacing */
   justify-items: center;
-  margin: 0 -24px; /* Responsive margin */
+  margin: 0 -5px; /* Responsive margin */
 }
 
 .reward-frame {
@@ -62,8 +62,8 @@
   padding: 10px;
   border-radius: 8px;
   text-align: center;
-  width: 80px;
-  height: 120px;
+  width: 70px;
+  height: 100px;
   box-sizing: border-box;
   cursor: pointer;
   gap: 8px;
