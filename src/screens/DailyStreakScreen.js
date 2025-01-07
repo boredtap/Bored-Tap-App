@@ -46,11 +46,9 @@ const DailyStreakScreen = () => {
         });
         if (!response.ok) throw new Error("Failed to fetch profile");
         const data = await response.json();
-        // Use 'data' to update 'profile'
         setProfile(data);
         setCurrentDay(data.streak.current_streak + 1); // +1 to show the next day as active
         setClaimedDays(data.streak.claimed_days || []);
-        // Log to console to ensure data is used
         console.log("Profile data:", data);
       } catch (err) {
         console.error("Error fetching profile:", err);
@@ -82,9 +80,12 @@ const DailyStreakScreen = () => {
           },
           body: JSON.stringify({ day: currentDay }),
         });
-        if (!response.ok) throw new Error("Failed to claim reward");
+        if (!response.ok) {
+          // If the response isn't OK, log the problem but don't throw an error to keep the UI functional
+          console.error("Failed to claim reward:", await response.text());
+          return;
+        }
         const data = await response.json();
-        // Use data to update local state
         setClaimedDays([...claimedDays, currentDay]);
         setProfile(prev => ({
           ...prev,
@@ -95,18 +96,13 @@ const DailyStreakScreen = () => {
             claimed_days: [...(prev.streak.claimed_days || []), currentDay]
           },
         }));
-        // Log to console to ensure data is used
         console.log("Claim response:", data);
-        // Example usage of profile for demonstration
         console.log("Current profile after claim:", profile);
       } catch (err) {
         console.error("Error claiming reward:", err);
       }
     }
   };
-
-  // Example usage of profile in rendering, if applicable
-  const displayProfileInfo = profile ? `Level: ${profile.level}, Coins: ${profile.total_coins}` : "Loading profile...";
 
   return (
     <div className="daily-streak-screen">
@@ -120,11 +116,6 @@ const DailyStreakScreen = () => {
         />
         <p className="streak-title">Streak Calendar</p>
         <p className="streak-subtitle">Claim your daily bonuses!</p>
-      </div>
-
-      {/* Added profile information display */}
-      <div className="profile-info-display">
-        <p>{displayProfileInfo}</p>
       </div>
 
       {/* Daily Rewards Section */}
