@@ -248,6 +248,9 @@ const Leaderboard = () => {
       </div>
 
       {/* Leaderboard Cards */}
+      {currentLeaderboard.length === 0 ? (
+      <p className="no-leaderboard">No leaderboard entries available yet.</p>
+    ) : (
       <div className="leaderboard-cards">
         {currentLeaderboard.map((entry, index) => (
           <div
@@ -293,6 +296,7 @@ const Leaderboard = () => {
           </div>
         ))}
       </div>
+    )}
 
       {/* Floating Card */}
       {currentUser && (
