@@ -60,13 +60,13 @@
   align-items: center;
   justify-content: center;
   padding: 10px;
-  border-radius: 8px;
+  border-radius: 4px;
   text-align: center;
   width: 70px;
   height: 100px;
   box-sizing: border-box;
   cursor: pointer;
-  gap: 12px;
+  gap: 8px;
 
   /* Default inactive styles */
   background-color: #414141;
@@ -79,7 +79,7 @@
 }
 
 .reward-frame.claimed {
-  background-color: #414141; /* Keep inactive look after claiming */
+  background-color: #838181; /* Keep inactive look after claiming */
   color: #ffffff;
 }
 
