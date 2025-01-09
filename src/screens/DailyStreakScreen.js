@@ -49,7 +49,6 @@ const DailyStreakScreen = () => {
         setProfile(data);
         setCurrentDay(data.streak.current_streak + 1); // +1 to show the next day as active
         setClaimedDays(data.streak.claimed_days || []);
-        console.log("Profile data:", data);
       } catch (err) {
         console.error("Error fetching profile:", err);
       }
@@ -72,32 +71,31 @@ const DailyStreakScreen = () => {
     if (!claimedDays.includes(currentDay)) {
       try {
         const token = localStorage.getItem("accessToken");
-        const response = await fetch("YOUR_CLAIM_REWARD_ENDPOINT", {
+        const response = await fetch("https://bored-tap-api.onrender.com/perform-streak", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ day: currentDay }),
+          body: JSON.stringify({ telegram_user_id: profile.telegram_user_id }),
         });
         if (!response.ok) {
-          // If the response isn't OK, log the problem but don't throw an error to keep the UI functional
           console.error("Failed to claim reward:", await response.text());
           return;
         }
-        const data = await response.json();
+        const streakData = await response.json();
+        // Update local state based on backend response
         setClaimedDays([...claimedDays, currentDay]);
         setProfile(prev => ({
           ...prev,
           total_coins: prev.total_coins + parseInt(rewards[currentDay - 1].reward),
           streak: {
             ...prev.streak,
-            current_streak: currentDay,
+            current_streak: streakData.current_streak,
+            longest_streak: streakData.longest_streak,
             claimed_days: [...(prev.streak.claimed_days || []), currentDay]
           },
         }));
-        console.log("Claim response:", data);
-        console.log("Current profile after claim:", profile);
       } catch (err) {
         console.error("Error claiming reward:", err);
       }

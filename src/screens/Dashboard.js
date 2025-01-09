@@ -61,7 +61,7 @@ const Dashboard = () => {
         navigate("/splash"); 
         return;
       }
-
+  
       try {
         const response = await fetch("https://bored-tap-api.onrender.com/user/profile", {
           method: "GET",
@@ -70,18 +70,18 @@ const Dashboard = () => {
             "Content-Type": "application/json",
           },
         });
-
+  
         if (!response.ok) {
           if (response.status === 401) {
             throw new Error("Unauthorized. Please log in again.");
           }
           throw new Error("Failed to fetch profile data.");
         }
-
+  
         const data = await response.json();
         setProfile(data);
-        setTotalTaps(data.total_coins); // Set total taps from backend
-        setCurrentStreak(data.streak.current_streak || 0); // Directly update currentStreak
+        setTotalTaps(data.total_coins);
+        setCurrentStreak(data.streak.current_streak || 0);
       } catch (err) {
         setError(err.message);
         console.error("Error fetching profile:", err);
@@ -89,7 +89,7 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
-
+  
     fetchProfile();
   }, [navigate]);
 
@@ -116,7 +116,7 @@ const Dashboard = () => {
     setTimeout(() => setTapEffects((prevEffects) => prevEffects.filter(effect => effect.id !== newTapEffect.id)), 1000);
 
     if (updateBackendTimeout.current) clearTimeout(updateBackendTimeout.current);
-    updateBackendTimeout.current = setTimeout(updateBackend, 3000); // Update backend every 3 seconds
+    updateBackendTimeout.current = setTimeout(updateBackend, 2000); // Update backend every 2 seconds
   };
 
   const playTapSound = () => {
@@ -214,7 +214,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="streak-section" onClick={() => navigate("/daily-streak-screen")}>
+          <div className="streak-section" onClick={() => navigate("/daily-streak-screen")}>
           <img src={`${process.env.PUBLIC_URL}/streak.png`} alt="Streak Icon" className="streak-icon" />
           <div className="streak-info">
             <span className="streak-text">Current Streak</span>
