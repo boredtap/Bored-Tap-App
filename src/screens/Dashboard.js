@@ -81,7 +81,7 @@ const Dashboard = () => {
         const data = await response.json();
         setProfile(data);
         setTotalTaps(data.total_coins);
-        setCurrentStreak(data.streak.current_streak || 0);
+        setCurrentStreak(data.streak.current_streak || 1);
       } catch (err) {
         setError(err.message);
         console.error("Error fetching profile:", err);
