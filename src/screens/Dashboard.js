@@ -121,11 +121,11 @@ const Dashboard = () => {
 
   const playTapSound = () => {
     const audio = new Audio(`${process.env.PUBLIC_URL}/tap.mp3`);
-    audio.volume = 0.5;
+    audio.volume = 0.3;
     audio.play().catch((err) => console.error("Audio playback error:", err));
   };
 
-  // Update backend with total taps every 3 seconds
+  // Update backend with total taps every 2 seconds
   const updateBackend = async () => {
     if (tapCountSinceLastUpdate.current > 0) {
       try {

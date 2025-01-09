@@ -9,7 +9,8 @@ const RewardFrame = ({ day, reward, isActive, isClaimed, onClick }) => {
       className={`reward-frame ${isActive ? "active" : ""} ${
         isClaimed ? "claimed" : ""
       }`}
-      onClick={isActive && !isClaimed ? onClick : null}
+      onClick={isActive && !isClaimed ? onClick : undefined} // Changed to undefined for clarity
+      style={isActive && !isClaimed ? { cursor: 'pointer' } : { cursor: 'not-allowed' }} // Add visual feedback
     >
       <p className="frame-day">{day}</p>
       <img
@@ -71,20 +72,23 @@ const DailyStreakScreen = () => {
     if (!claimedDays.includes(currentDay)) {
       try {
         const token = localStorage.getItem("accessToken");
+        if (!token) {
+          console.error("No access token found");
+          return;
+        }
         const response = await fetch("https://bored-tap-api.onrender.com/perform-streak", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ telegram_user_id: profile.telegram_user_id }),
+          body: JSON.stringify({ telegram_user_id: profile?.telegram_user_id }), // Ensure profile is not null
         });
         if (!response.ok) {
           console.error("Failed to claim reward:", await response.text());
           return;
         }
         const streakData = await response.json();
-        // Update local state based on backend response
         setClaimedDays([...claimedDays, currentDay]);
         setProfile(prev => ({
           ...prev,
@@ -96,6 +100,8 @@ const DailyStreakScreen = () => {
             claimed_days: [...(prev.streak.claimed_days || []), currentDay]
           },
         }));
+        setCurrentDay(prevDay => prevDay + 1); // Move to the next day after claiming
+        console.log("Claim successful:", streakData);
       } catch (err) {
         console.error("Error claiming reward:", err);
       }
