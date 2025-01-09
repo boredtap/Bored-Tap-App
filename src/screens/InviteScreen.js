@@ -118,16 +118,16 @@ import "./InviteScreen.css";
 
 const InviteScreen = () => {
   const [isOverlayVisible, setOverlayVisible] = useState(false);
-  const [friends, setFriends] = useState([]);
+  const [invites, setInvites] = useState([]);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
 
   useEffect(() => {
-    const fetchFriends = async () => {
+    const fetchInvites = async () => {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
 
       try {
-        const response = await fetch("YOUR_FRIENDS_ENDPOINT", {
+        const response = await fetch("https://bored-tap-api.onrender.com/user/profile", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -136,7 +136,7 @@ const InviteScreen = () => {
         });
         if (!response.ok) throw new Error("Failed to fetch friends");
         const data = await response.json();
-        setFriends(data.friends || []);
+        setInvites(data.invites || []);
       } catch (err) {
         console.error("Error fetching friends:", err);
       }
@@ -165,7 +165,7 @@ const InviteScreen = () => {
       }
     };
 
-    fetchFriends();
+    fetchInvites();
     fetchQrCode();
   }, []);
 
@@ -204,9 +204,9 @@ const InviteScreen = () => {
 
       {/* Your Friends Section */}
       <div className="your-friends-section">
-        <p className="friends-title">Your Friends ({friends.length})</p>
-        {friends.map((friend) => (
-          <div className="friend-card" key={friend.id}>
+        <p className="friends-title">Your Friends ({invites.length})</p>
+        {invites.map((invite) => (
+          <div className="friend-card" key={invite.id}>
             <img
               src={`${process.env.PUBLIC_URL}/profile-picture.png`}
               alt="Profile"
@@ -214,7 +214,7 @@ const InviteScreen = () => {
             />
             <div className="friend-details">
               <p className="friend-name">
-                {friend.name} <span className="friend-level">{friend.level}</span>
+                {invite.name} <span className="friend-level">{invite.level}</span>
               </p>
               <div className="friend-icon-value">
                 <img
@@ -222,10 +222,10 @@ const InviteScreen = () => {
                   alt="Icon"
                   className="icon-img"
                 />
-                <span className="icon-value">+{friend.iconValue}</span>
+                <span className="icon-value">+{invite.iconValue}</span>
               </div>
             </div>
-            <p className="friend-bt-value">{friend.btCoin}</p>
+            <p className="friend-bt-value">{invite.btCoin}</p>
           </div>
         ))}
       </div>
