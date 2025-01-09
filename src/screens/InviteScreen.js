@@ -122,51 +122,46 @@ const InviteScreen = () => {
   const [qrCodeUrl, setQrCodeUrl] = useState("");
 
   useEffect(() => {
-    const fetchInvites = async () => {
+    const fetchUserProfileAndQR = async () => {
       const token = localStorage.getItem("accessToken");
-      if (!token) return;
-
-      try {
-        const response = await fetch("https://bored-tap-api.onrender.com/user/profile", {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-        if (!response.ok) throw new Error("Failed to fetch friends");
-        const data = await response.json();
-        setInvites(data.invites || []);
-      } catch (err) {
-        console.error("Error fetching friends:", err);
+      if (!token) {
+        console.error("No access token found");
+        return;
       }
-    };
-
-    const fetchQrCode = async () => {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return;
 
       try {
-        const response = await fetch("https://bored-tap-api.onrender.com/invite-qr-code", {
+        // Fetch user profile which includes invited friends
+        const profileResponse = await fetch("https://bored-tap-api.onrender.com/user/profile", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         });
-        if (response.ok) {
-          const blob = await response.blob();
+        if (!profileResponse.ok) throw new Error("Failed to fetch profile");
+        const profileData = await profileResponse.json();
+        setInvites(profileData.invite || []); // Assuming 'invite' is the field in the profile for friends
+
+        // Fetch QR code
+        const qrResponse = await fetch("https://bored-tap-api.onrender.com/invite-qr-code", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (qrResponse.ok) {
+          const blob = await qrResponse.blob();
           setQrCodeUrl(URL.createObjectURL(blob));
         } else {
-          console.error("Failed to fetch QR code:", await response.text());
+          console.error("Failed to fetch QR code:", await qrResponse.text());
         }
       } catch (err) {
-        console.error("Error fetching QR code:", err);
+        console.error("Error fetching user profile or QR code:", err);
       }
     };
 
-    fetchInvites();
-    fetchQrCode();
+    fetchUserProfileAndQR();
   }, []);
 
   const user = JSON.parse(localStorage.getItem("telegramUser"));
@@ -214,18 +209,19 @@ const InviteScreen = () => {
             />
             <div className="friend-details">
               <p className="friend-name">
-                {invite.name} <span className="friend-level">{invite.level}</span>
+                {invite.username || invite.name} <span className="friend-level">.Lvl {invite.level || "?"}</span>
               </p>
+              {/* Assuming backend provides similar fields for each invite */}
               <div className="friend-icon-value">
                 <img
                   src={`${process.env.PUBLIC_URL}/friends.png`}
                   alt="Icon"
                   className="icon-img"
                 />
-                <span className="icon-value">+{invite.iconValue}</span>
+                <span className="icon-value">+{invite.iconValue || 0}</span>
               </div>
             </div>
-            <p className="friend-bt-value">{invite.btCoin}</p>
+            <p className="friend-bt-value">{invite.total_coins ? `${invite.total_coins} BT` : "0 BT"}</p>
           </div>
         ))}
       </div>
