@@ -153,7 +153,7 @@ const Leaderboard = () => {
   const [activeTab, setActiveTab] = useState("Daily");
   const [leaderboardData, setLeaderboardData] = useState({});
   const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchLeaderboardData = async () => {
@@ -204,9 +204,10 @@ const Leaderboard = () => {
         });
       } catch (err) {
         console.error("Error fetching leaderboard data:", err);
-      } finally {
-        setLoading(false);
-      }
+      } 
+      // finally {
+      //   setLoading(false);
+      // }
     };
 
     fetchLeaderboardData();
@@ -216,9 +217,9 @@ const Leaderboard = () => {
     setActiveTab(tab);
   };
 
-  if (loading) {
-    return <div className="loading">Loading leaderboard...</div>;
-  }
+  // if (loading) {
+  //   return <div className="loading">Loading leaderboard...</div>;
+  // }
 
   const currentLeaderboard = leaderboardData[activeTab] || [];
 

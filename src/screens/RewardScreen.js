@@ -164,7 +164,7 @@ const RewardScreen = () => {
   const [activeTab, setActiveTab] = useState("New Reward");
   const [totalTaps, setTotalTaps] = useState(0);
   const [rewardsData, setRewardsData] = useState({});
-  const [loading, setLoading] = useState(true);
+  // const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserProfileAndRewards = async () => {
@@ -204,9 +204,10 @@ const RewardScreen = () => {
 
       } catch (err) {
         console.error("Error fetching user profile or rewards:", err);
-      } finally {
-        setLoading(false);
-      }
+      } 
+      // finally {
+      //   setLoading(false);
+      // }
     };
 
     fetchUserProfileAndRewards();
@@ -218,9 +219,9 @@ const RewardScreen = () => {
 
   const rewards = rewardsData[activeTab] || []; // Use backend data once available, for now use placeholder
 
-  if (loading) {
-    return <div className="loading">Loading rewards...</div>;
-  }
+  // if (loading) {
+  //   return <div className="loading">Loading rewards...</div>;
+  // }
 
   return (
     <div className="reward-screen">

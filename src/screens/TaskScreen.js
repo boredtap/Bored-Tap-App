@@ -6,7 +6,7 @@ const TaskScreen = () => {
   const [activeTab, setActiveTab] = useState("In-game");
   const [tasksData, setTasksData] = useState({});
   const [totalTaps, setTotalTaps] = useState(0);
-  const [loading, setLoading] = useState(true);
+  // const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchTasksAndTaps = async () => {
@@ -41,9 +41,10 @@ const TaskScreen = () => {
         }
       } catch (err) {
         console.error("Error fetching tasks or taps:", err);
-      } finally {
-        setLoading(false);
-      }
+      } 
+      // finally {
+      //   setLoading(false);
+      // }
     };
 
     fetchTasksAndTaps();
@@ -79,9 +80,9 @@ const TaskScreen = () => {
     }
   };
 
-  if (loading) {
-    return <div className="loading">Loading tasks...</div>;
-  }
+  // if (loading) {
+  //   return <div className="loading">Loading tasks...</div>;
+  // }
 
   const tasks = tasksData[activeTab] || [];
 

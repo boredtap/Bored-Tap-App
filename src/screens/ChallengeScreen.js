@@ -187,7 +187,7 @@ const ChallengeScreen = () => {
   const [activeTab, setActiveTab] = useState("Open Challenges");
   const [totalTaps, setTotalTaps] = useState(0);
   const [challengesData, setChallengesData] = useState({});
-  const [loading, setLoading] = useState(true);
+  // const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -234,9 +234,10 @@ const ChallengeScreen = () => {
         });
       } catch (err) {
         console.error("Error fetching data:", err);
-      } finally {
-        setLoading(false);
-      }
+      } 
+      // finally {
+      //   setLoading(false);
+      // }
     };
 
     fetchData();
@@ -252,9 +253,9 @@ const ChallengeScreen = () => {
 
   const challenges = challengesData[activeTab] || [];
 
-  if (loading) {
-    return <div className="loading">Loading challenges...</div>;
-  }
+  // if (loading) {
+  //   return <div className="loading">Loading challenges...</div>;
+  // }
 
   return (
     <div className="challenge-screen">
