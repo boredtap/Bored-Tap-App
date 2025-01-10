@@ -1,8 +1,10 @@
 from datetime import timedelta
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from telegram import Update
+from telegram.ext import Updater, Dispatch
+from config import get_settings
 from user_reg_and_prof_mngmnt.dependencies import (
     get_user_by_id,
     insert_new_invite_ref,
@@ -21,6 +23,9 @@ from user_reg_and_prof_mngmnt.dependencies import insert_new_user
 
 
 userApp = APIRouter()
+bot_token = get_settings().bot_token
+updater = Updater(token=bot_token, use_context=True)
+dispatcher = updater.dispatcher
 
 
 @userApp.post("/sign-up", tags=["Registration/Authentication"])
@@ -112,18 +117,8 @@ async def sign_in(
 
 
 @userApp.post("/webhook", tags=["Registration/Authentication"])
-async def webhook(update: Update) -> dict:
-    """
-    Webhook handler for telegram bot.
-
-    Args:
-        update (dict): The update data from the telegram bot.
-
-    Returns:
-        dict: The response message.
-    """
-    if update.message:
-        text = update.message.text
-        chat_id = update.message.chat.id
-        bot.send_message(chat_id=chat_id, text=f"You said: {text}")
-    return {"message": "Webhook received"}
+async def webhook(request: Request) -> dict:
+    data = await request.json()
+    update: Update = Update.de_json(data, bot=updater.bot)
+    dispatcher.process_update(update)
+    return {"status": "ok"}
