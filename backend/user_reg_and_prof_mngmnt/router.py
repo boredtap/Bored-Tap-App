@@ -2,6 +2,7 @@ from datetime import timedelta
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from telegram import Update
 from user_reg_and_prof_mngmnt.dependencies import (
     get_user_by_id,
     insert_new_invite_ref,
@@ -108,3 +109,21 @@ async def sign_in(
         }, expires_delta=access_token_expires
     )
     return Token(access_token=access_token, token_type="bearer")
+
+
+@userApp.post("/webhook", tags=["Registration/Authentication"])
+async def webhook(update: Update) -> dict:
+    """
+    Webhook handler for telegram bot.
+
+    Args:
+        update (dict): The update data from the telegram bot.
+
+    Returns:
+        dict: The response message.
+    """
+    if update.message:
+        text = update.message.text
+        chat_id = update.message.chat.id
+        bot.send_message(chat_id=chat_id, text=f"You said: {text}")
+    return {"message": "Webhook received"}
