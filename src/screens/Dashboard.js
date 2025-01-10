@@ -52,6 +52,37 @@ const Dashboard = () => {
     initializeDashboard();
   }, []);
 
+  useEffect(() => {
+    const fetchStreakStatus = async () => {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        console.error("No access token found");
+        return;
+      }
+  
+      try {
+        const response = await fetch("https://bored-tap-api.onrender.com/streak/status", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+  
+        if (!response.ok) {
+          throw new Error("Failed to fetch streak status");
+        }
+  
+        const streakStatus = await response.json();
+        setCurrentStreak(streakStatus.current_streak || 0);
+      } catch (err) {
+        console.error("Error fetching streak status:", err);
+      }
+    };
+  
+    fetchStreakStatus();
+  }, []);
+
   // Fetch profile data from the backend
   useEffect(() => {
     const fetchProfile = async () => {
@@ -208,12 +239,12 @@ const Dashboard = () => {
         </div>
 
         <div className="streak-section" onClick={() => navigate("/daily-streak-screen")}>
-          <img src={`${process.env.PUBLIC_URL}/streak.png`} alt="Streak Icon" className="streak-icon" />
-          <div className="streak-info">
-            <span className="streak-text">Current Streak</span>
-            <span className="streak-days">Day {currentStreak}</span>
-          </div>
+        <img src={`${process.env.PUBLIC_URL}/streak.png`} alt="Streak Icon" className="streak-icon" />
+        <div className="streak-info">
+          <span className="streak-text">Current Streak</span>
+          <span className="streak-days">Day {currentStreak}</span>
         </div>
+      </div>
       </div>
       {/* Frames Section */}
       <div className="frames-section">

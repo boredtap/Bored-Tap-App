@@ -74,47 +74,41 @@ const DailyStreakScreen = () => {
   const handleClaim = async () => {
     if (!claimedDays.includes(currentDay)) {
       try {
-        const rewardValue = parseInt(rewards[currentDay - 1].reward, 10);
-        setClaimedDays([...claimedDays, currentDay]);
-        setLocalTotalCoins(prevCoins => prevCoins + rewardValue); // Update local coin count
-        setProfile(prev => ({
-          ...prev,
-          total_coins: prev.total_coins + rewardValue,
-          streak: {
-            ...prev.streak,
-            current_streak: currentDay,
-            claimed_days: [...(prev.streak.claimed_days || []), currentDay]
-          },
-        }));
-        setCurrentDay(prevDay => prevDay + 1); // Move to the next day after claiming
-        
-        // Update backend with only the reward value
-        await updateStreakToBackend(rewardValue);
-      } catch (err) {
-        console.error("Error handling claim:", err);
-      }
-    }
-  };
-
-  const updateStreakToBackend = async (rewardValue) => {
-    const token = localStorage.getItem("accessToken");
-    try {
-      const response = await fetch(
-        'https://bored-tap-api.onrender.com/update-streak',
-        {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+          console.error("No access token found");
+          return;
+        }
+        const response = await fetch("https://bored-tap-api.onrender.com/perform-streak", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ reward: rewardValue }),
+          body: JSON.stringify({ telegram_user_id: profile?.telegram_user_id }),
+        });
+        if (!response.ok) {
+          throw new Error('Failed to claim reward');
         }
-      );
-      if (!response.ok) {
-        console.error("Failed to update streak:", await response.text());
+        const streakData = await response.json();
+        
+        // Update local state based on backend response
+        setClaimedDays([...claimedDays, currentDay]);
+        setProfile(prev => ({
+          ...prev,
+          total_coins: streakData.total_coins || prev.total_coins, // Assuming this is provided by the backend
+          streak: {
+            ...prev.streak,
+            current_streak: streakData.current_streak,
+            longest_streak: streakData.longest_streak,
+            claimed_days: [...(prev.streak.claimed_days || []), currentDay]
+          },
+        }));
+        setCurrentDay(prevDay => prevDay + 1); // Move to the next day after claiming
+        console.log("Claim successful:", streakData);
+      } catch (err) {
+        console.error("Error claiming reward:", err);
       }
-    } catch (err) {
-      console.error("Error updating streak to backend:", err);
     }
   };
 
