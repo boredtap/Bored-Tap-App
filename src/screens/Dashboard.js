@@ -20,7 +20,6 @@ const Dashboard = () => {
   const [electricBoost, setElectricBoost] = useState(1000);
   const [tapAnimation, setTapAnimation] = useState(false);
   const [boostAnimation, setBoostAnimation] = useState(false);
-  // const [loading, setLoading] = useState(true);
   const [tapEffects, setTapEffects] = useState([]);
   const [currentStreak, setCurrentStreak] = useState(0); // Moved up here for correct state management
 
@@ -86,9 +85,6 @@ const Dashboard = () => {
         setError(err.message);
         console.error("Error fetching profile:", err);
       } 
-      // finally {
-      //   setLoading(false);
-      // }
     };
   
     fetchProfile();
@@ -189,10 +185,6 @@ const Dashboard = () => {
     return <div className="error">{error}</div>;
   }
 
-  // if (loading) {
-  //   return <div className="loading">Loading...</div>;
-  // }
-
   // Destructure profile data for use in rendering
   const { level = 1 } = profile || {};
 
@@ -215,7 +207,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-          <div className="streak-section" onClick={() => navigate("/daily-streak-screen")}>
+        <div className="streak-section" onClick={() => navigate("/daily-streak-screen")}>
           <img src={`${process.env.PUBLIC_URL}/streak.png`} alt="Streak Icon" className="streak-icon" />
           <div className="streak-info">
             <span className="streak-text">Current Streak</span>
@@ -223,7 +215,6 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-
       {/* Frames Section */}
       <div className="frames-section">
         {[{ name: "Rewards", icon: "reward.png", path: "/reward-screen" },
