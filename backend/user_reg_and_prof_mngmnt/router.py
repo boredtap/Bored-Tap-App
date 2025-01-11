@@ -116,9 +116,9 @@ async def sign_in(
     return Token(access_token=access_token, token_type="bearer")
 
 
-@userApp.post("/webhook", tags=["Registration/Authentication"])
-async def webhook(request: Request) -> dict:
-    data = await request.json()
-    update: Update = Update.de_json(data, bot=updater.bot)
-    dispatcher.process_update(update)
-    return {"status": "ok"}
+# @userApp.post("/webhook", tags=["Registration/Authentication"])
+# async def webhook(request: Request) -> dict:
+#     data = await request.json()
+#     update: Update = Update.de_json(data, bot=updater.bot)
+#     dispatcher.process_update(update)
+#     return {"status": "ok"}

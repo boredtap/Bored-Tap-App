@@ -1,18 +1,45 @@
 import telebot
-import telegram
-from telegram.ext import Updater, CommandHandler
 from config import get_settings
+from fastapi import FastAPI, Request
 
 
-# initialize telegram bot application
+
+trial = FastAPI()
+
 BotToken = get_settings().bot_token
 bot = telebot.TeleBot(token=BotToken)
 
-@bot.message_handler(func=lambda message: True)
-def echo_all(message):
-    bot.reply_to(message, message.text)
+@trial.post('/webhook')
+async def webhook(request: Request):
+    update: telebot.types.Update = await request.json()
 
-bot.polling()
+    # update bot with the received data
+    bot.process_new_updates([telebot.types.Update.de_json(update)])
+
+    return {'message': 'Webhook received'}
+
+@bot.message_handler(commands=['start'])
+def start_command(message):
+
+    bot.send_message(
+        message.chat.id, f"run webapp here: https://veenzent.netlify.app"
+    )
+
+
+if __name__ == "__telegram_bot__":
+    import uvicorn
+    uvicorn.run(trial, host="0.0.0.0", port=8000)
+
+
+# initialize telegram bot application
+# BotToken = get_settings().bot_token
+# bot = telebot.TeleBot(token=BotToken)
+
+# @bot.message_handler(func=lambda message: True)
+# def echo_all(message):
+#     bot.reply_to(message, message.text)
+
+# bot.polling()
 
 
 
@@ -50,74 +77,36 @@ bot.polling()
 """
 TELEGRAM BOT
 """
-from decimal import DefaultContext
-from typing import Final
-from telegram import Update, WebAppInfo
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    MessageHandler,
-    filters,
-    ContextTypes
-)
+# from decimal import DefaultContext
+# from typing import Final
+# from telegram import Update, WebAppInfo
+# from telegram.ext import (
+#     Application,
+#     CommandHandler,
+#     MessageHandler,
+#     filters,
+#     ContextTypes
+# )
 
 
-TOKEN: Final = "7684929253:AAHyLYTuFPAu-RKELx2KK-aYhwcmevU7Aaw"
-BOT_USERNAME: Final = "@veenzent_bot"
+# TOKEN: Final = "7684929253:AAHyLYTuFPAu-RKELx2KK-aYhwcmevU7Aaw"
+# BOT_USERNAME: Final = "@veenzent_bot"
 
-# commands
-async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text="Click the button to launch webapp.",
-        reply_markup={
-            "inline_keyboard": [
-                {
-                    "text": "Launch Web App",
-                    "url": "https://veenzent.netlify.app/"
-                }
-            ]
-        }
-    )
-    await update.message.reply_text("Hello! Welcome to Lulu's Fragrance bot.")
-
-# async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# # commands
+# async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     context.bot.send_message(
+#         chat_id=update.effective_chat.id,
+#         text="Click the button to launch webapp.",
+#         reply_markup={
+#             "inline_keyboard": [
+#                 {
+#                     "text": "Launch Web App",
+#                     "url": "https://veenzent.netlify.app/"
+#                 }
+#             ]
+#         }
+#     )
 #     await update.message.reply_text("Hello! Welcome to Lulu's Fragrance bot.")
-
-# async def custom_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     await update.message.reply_text("Hello! Welcome to Lulu's Fragrance bot.")
-
-
-# responses
-# def handle_response(text: str) -> str:
-#     processed: str = text.lower()
-
-#     if 'hello' in processed:
-#         return 'Hey there'
-    
-#     return "I do not understand what you wrote..."
-
-
-# async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     message_type: str = update.message.chat.type
-#     text: str = update.message.text
-
-#     print(f"User ({update.message.chat.id} in {message_type}: {text})")
-
-#     if message_type == 'group':
-#         if BOT_USERNAME in text:
-#             new_text: str = text.replace(BOT_USERNAME, '').strip()
-#             response: str = handle_response(new_text)
-#         else:
-#             return
-#     else:
-#         response:str = handle_response(text)
-
-#     print('Bot', response)
-#     await update.message.reply_text(response)
-
-# async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     print(f"Update {update} caused error {context.error}")
 
 
 # if __name__ == '__main__':
