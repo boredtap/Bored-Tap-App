@@ -1,3 +1,4 @@
+import requests
 import telebot
 from config import get_settings
 from fastapi import FastAPI, Request
@@ -9,9 +10,33 @@ trial = FastAPI()
 BotToken = get_settings().bot_token
 bot = telebot.TeleBot(token=BotToken)
 
-@trial.post('/webhook')
-async def webhook(request: Request):
-    update: telebot.types.Update = await request.json()
+
+def set_webhook(token, url):
+    """
+    Sets the webhook URL for Telegram bot.
+
+    Args:
+        token: The bot's API token.
+        url: The URL to receive updates.
+    """
+
+    data = {'url': url}
+    response = requests.post(f'https://api.telegram.org/bot{token}/setWebhook', json=data)
+
+    if response.status_code == 200:
+        print('Webhook set successfully!')
+    else:
+        print(f'Failed to set webhook. Status code: {response.status_code}')
+        print(response.text)
+
+
+
+
+
+
+@bot.message_handler(func=lambda message: True)
+def echo_all(message):
+    bot.reply_to(message, message.text)
 
     # update bot with the received data
     bot.process_new_updates([telebot.types.Update.de_json(update)])
@@ -92,20 +117,27 @@ TELEGRAM BOT
 # TOKEN: Final = "7684929253:AAHyLYTuFPAu-RKELx2KK-aYhwcmevU7Aaw"
 # BOT_USERNAME: Final = "@veenzent_bot"
 
-# # commands
-# async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     context.bot.send_message(
-#         chat_id=update.effective_chat.id,
-#         text="Click the button to launch webapp.",
-#         reply_markup={
-#             "inline_keyboard": [
-#                 {
-#                     "text": "Launch Web App",
-#                     "url": "https://veenzent.netlify.app/"
-#                 }
-#             ]
-#         }
-#     )
+# set webhook url
+# https://api.telegram.org/bot{my_bot_token}/setWebhook?url={url_to_send_updates_to}
+
+
+# commands
+async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text="Click the button to launch webapp.",
+        reply_markup={
+            "inline_keyboard": [
+                {
+                    "text": "Launch Web App",
+                    "url": "https://veenzent.netlify.app/"
+                }
+            ]
+        }
+    )
+    await update.message.reply_text("Hello! Welcome to Lulu's Fragrance bot.")
+
+# async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #     await update.message.reply_text("Hello! Welcome to Lulu's Fragrance bot.")
 
 
