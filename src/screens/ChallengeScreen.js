@@ -187,7 +187,6 @@ const ChallengeScreen = () => {
   const [activeTab, setActiveTab] = useState("Open Challenges");
   const [totalTaps, setTotalTaps] = useState(0);
   const [challengesData, setChallengesData] = useState({});
-  // const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
