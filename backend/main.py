@@ -4,6 +4,7 @@ from dependencies import get_user_profile, update_coins_in_db,get_user_by_id
 from user_reg_and_prof_mngmnt.router import userApp
 from earn.router import earnApp
 from invite.router import inviteApp
+from telegram_bot import bot_interactions
 from user_reg_and_prof_mngmnt.user_authentication import get_current_user
 from typing import Annotated
 from user_reg_and_prof_mngmnt.schemas import UserProfile
@@ -52,6 +53,7 @@ app.add_middleware(
 app.include_router(userApp)
 app.include_router(earnApp)
 app.include_router(inviteApp)
+app.include_router(bot_interactions)
 
 @app.get('/', tags=["Global Routes"])
 async def home():
