@@ -15,6 +15,7 @@ from user_reg_and_prof_mngmnt.user_authentication import (
     create_invite_ref,
     create_invited_user,
     reward_inviter_and_invitee,
+    add_invitee_to_inviter_list,
     validate_referral_code)
 from . schemas import Token, Signup, BasicProfile, UserProfile
 from user_reg_and_prof_mngmnt.dependencies import insert_new_user
@@ -53,7 +54,7 @@ async def sign_up(user: Signup, referral_code: str | None = None) -> BasicProfil
         if new_invite_ref:
             insert_new_invite_ref(new_invite_ref)
         reward_inviter_and_invitee(inviter_id=referral_code, invitee_id=user.telegram_user_id, reward=100)
-        # add_invitee_to_inviter_list(inviter_id=referral_code, invitee_id=user.telegram_user_id)
+        add_invitee_to_inviter_list(inviter_id=referral_code, invitee_id=user.telegram_user_id)
 
         return BasicProfile(
         telegram_user_id=user.telegram_user_id,

@@ -6,7 +6,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 from config import get_settings
 from database_connection import user_collection, invites_ref
-from user_reg_and_prof_mngmnt.schemas import BasicProfile, Invites, Signup, TokenData, UserProfile
+from user_reg_and_prof_mngmnt.schemas import BasicProfile, InviteeData, Invites, Signup, TokenData, UserProfile
 from user_reg_and_prof_mngmnt.dependencies import get_user_by_id, serialize_any_http_url, referral_url_prefix
 
 
@@ -140,10 +140,10 @@ def create_invite_ref(inviter_id: str, ref = Signup):
     Returns:
         Invites: A new invite reference if the inviter does not have any existing invites.
     """
+    # check if inviter has reference of their invitees in db
+    reference_in_db = invites_ref.find_one({'inviter_telegram_id': inviter_id})
 
-    first_invite = invites_ref.find_one({'inviter_telegram_id': inviter_id})
-
-    if not first_invite:
+    if not reference_in_db:
         invite_ref = Invites(
             inviter_telegram_id=inviter_id,
             invitees=[ref.telegram_user_id]
@@ -155,3 +155,21 @@ def create_invite_ref(inviter_id: str, ref = Signup):
         {'invitees': ref.telegram_user_id}
     }
     invites_ref.update_one(inviter, update_operation)
+
+def add_invitee_to_inviter_list(inviter_id: str, invitee_id: str):
+    inviter = {'telegram_user_id': inviter_id}
+    invitee = get_user_by_id(invitee_id)
+
+    invitee_info = InviteeData(
+        # telegram_user_id=invitee.telegram_user_id,
+        username=invitee.username,
+        level=invitee.level,
+        # level_name=invitee.level_name,
+        total_coins=invitee.total_coins
+    )
+
+    update_operation = {'$push':
+        {'invite': invitee_info.model_dump()}
+    }
+
+    user_collection.update_one(inviter, update_operation)
