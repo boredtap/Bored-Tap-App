@@ -84,7 +84,7 @@ async def perform_streak(telegram_user_id: Annotated[str, Depends(get_current_us
     
     return {
         "message": "Streak not updated",
-        "Countdown": f"check again by this time: {old_streak.last_action_date.strftime("%I:%M %p")} tomorrow"
+        "Countdown": f"check again by this time: {old_streak.last_action_date.strftime('%I:%M %p')} tomorrow"
     }
 
 
