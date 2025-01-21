@@ -1,7 +1,8 @@
 from datetime import timedelta
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
+from config import get_settings
 from user_reg_and_prof_mngmnt.dependencies import (
     get_user_by_id,
     insert_new_invite_ref,
@@ -14,12 +15,14 @@ from user_reg_and_prof_mngmnt.user_authentication import (
     create_invite_ref,
     create_invited_user,
     reward_inviter_and_invitee,
+    add_invitee_to_inviter_list,
     validate_referral_code)
 from . schemas import Token, Signup, BasicProfile, UserProfile
 from user_reg_and_prof_mngmnt.dependencies import insert_new_user
 
 
 userApp = APIRouter()
+bot_token = get_settings().bot_token
 
 
 @userApp.post("/sign-up", tags=["Registration/Authentication"])
@@ -51,7 +54,7 @@ async def sign_up(user: Signup, referral_code: str | None = None) -> BasicProfil
         if new_invite_ref:
             insert_new_invite_ref(new_invite_ref)
         reward_inviter_and_invitee(inviter_id=referral_code, invitee_id=user.telegram_user_id, reward=100)
-        # add_invitee_to_inviter_list(inviter_id=referral_code, invitee_id=user.telegram_user_id)
+        add_invitee_to_inviter_list(inviter_id=referral_code, invitee_id=user.telegram_user_id)
 
         return BasicProfile(
         telegram_user_id=user.telegram_user_id,
@@ -109,3 +112,11 @@ async def sign_in(
         }, expires_delta=access_token_expires
     )
     return Token(access_token=access_token, token_type="bearer")
+
+
+# @userApp.post("/webhook", tags=["Registration/Authentication"])
+# async def webhook(request: Request) -> dict:
+#     data = await request.json()
+#     update: Update = Update.de_json(data, bot=updater.bot)
+#     dispatcher.process_update(update)
+#     return {"status": "ok"}

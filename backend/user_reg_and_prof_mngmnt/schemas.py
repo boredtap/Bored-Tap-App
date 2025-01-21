@@ -59,6 +59,7 @@ class InviteeData(BaseModel):
     """
     username: str | None = None
     level: int | None = 1
+    # level_name: str
     total_coins: int | None = 0
 
 class Invites(BaseModel):
@@ -72,11 +73,12 @@ class BasicProfile(BaseModel):
     image_url: AnyHttpUrl | str
     total_coins: int | None = 0
     level: int | None = 1
+    level_name: str | None = "Novice"
     referral_url: str | None = None
 
 class UserProfile(
         BasicProfile
     ):
     streak: StreakData = Field(default_factory=StreakData)
-    invite: list[InviteeData] | None = {}
+    invite: list[InviteeData] | None = []
 

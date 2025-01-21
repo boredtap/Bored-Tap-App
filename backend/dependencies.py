@@ -2,18 +2,18 @@ from database_connection import user_collection, invites_ref
 from user_reg_and_prof_mngmnt.schemas import InviteeData, Update, UserProfile
 
 
-user_levels = {
+user_levels: dict[int, list] = {
     # level: coins
-    1: 0,
-    2: 5000,
-    3: 25000,
-    4: 100000,
-    5: 500000,
-    6: 1000000,
-    7: 20000000,
-    8: 100000000,
-    9: 500000000,
-    10: 1000000000
+    1: [0, "Novice"],
+    2: [5000, "Explorer"],
+    3: [25000, "Apprentice"],
+    4: [100000, "Warrior"],
+    5: [500000, "Master"],
+    6: [1000000, "Champion"],
+    7: [20000000, "Tactician"],
+    8: [100000000, "Specialist"],
+    9: [500000000, "Conqueror"],
+    10:[1000000000, "Legend"]
 }
 referral_url_prefix = "https://t.me/Bored_Tap_Bot?start="
 
@@ -35,10 +35,16 @@ def update_coins_in_db(telegram_user_id: str, coins: int):
 
     # update level
     new_level = update_level_logic(telegram_user_id)
-
     level_update_operation = {'$set':
         {'level': new_level['level']}
     }
+
+    # update level name
+    level_name_update_operation = {'$set':
+        {'level_name': new_level['level_name']}
+    }
+
+    level_name_update_result = user_collection.update_one(query, level_name_update_operation)
     level_update_result = user_collection.update_one(query, level_update_operation)
 
     if level_update_result.modified_count == 1:
@@ -82,8 +88,9 @@ def update_level_logic(telegram_user_id: str):
         if level != 10:
             next_level = level + 1
             # get user level from their accumulated coins
-            if required_coins <= current_coins < user_levels[next_level]:
+            if required_coins[0] <= current_coins < user_levels[next_level][0]:
                 level_from_table = level
+                level_name = required_coins[1]
                 break
     
     # update level if current level is less than the level from the table
@@ -94,6 +101,7 @@ def update_level_logic(telegram_user_id: str):
 
     return {
         "level": new_level,
+        "level_name": level_name,
         "required Coins": required_coins,
         "current Coins": current_coins
     }
@@ -134,6 +142,7 @@ def get_user_profile(telegram_user_id: str) -> UserProfile:
             image_url=user.get('image_url'),
             total_coins=user.get('total_coins'),
             level=user.get('level'),
+            level_name=user.get('level_name'),
             referral_url=referral_url_prefix + telegram_user_id,
             streak=user.get('streak'),
             invite=invitees
