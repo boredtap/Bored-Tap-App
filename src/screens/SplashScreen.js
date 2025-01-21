@@ -122,7 +122,7 @@ const SplashScreen = () => {
           className="splash-logo"
         />
         <span className="splash-text">
-          {loading ? "Authenticating..." : error ? `Error: ${error}` : "Welcome to BoredTap"}
+          {loading ? "Welcome to BoredTap..." : error ? `Error: ${error}` : "Welcome to BoredTap"}
         </span>
         {error && (
           <button onClick={handleRetry} className="retry-button">

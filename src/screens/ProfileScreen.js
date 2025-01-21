@@ -5,7 +5,7 @@ import "./ProfileScreen.css";
 
 const ProfileScreen = () => {
   const [profile, setProfile] = useState(null); // State to hold profile data
-  const [loading, setLoading] = useState(true); // State to track loading
+  // const [loading, setLoading] = useState(true); // State to track loading
   const [error, setError] = useState(null); // State to handle errors
   const navigate = useNavigate(); // Navigation hook for page redirection
 
@@ -40,18 +40,19 @@ const ProfileScreen = () => {
       } catch (err) {
         setError(err.message); // Set error message
         console.error("Error fetching profile:", err);
-      } finally {
-        setLoading(false); // Stop loading once the data is fetched
-      }
+      } 
+      // finally {
+      //   setLoading(false); // Stop loading once the data is fetched
+      // }
     };
 
     fetchProfile();
   }, [navigate]);
 
   // Show loading indicator if data is still being fetched
-  if (loading) {
-    return <div className="loading">Loading profile...</div>;
-  }
+  // if (loading) {
+  //   return <div className="loading">Loading profile...</div>;
+  // }
 
   // Show error message if there's an issue fetching the data
   if (error) {

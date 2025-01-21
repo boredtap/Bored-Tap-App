@@ -42,7 +42,7 @@
   }
   
   /* Data Cards */
-  .profile-data-cards {
+  .profile-data-cards { 
     display: flex;
     flex-direction: column;
     gap: 8px; /* Spacing between cards */

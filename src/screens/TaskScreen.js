@@ -6,18 +6,32 @@ const TaskScreen = () => {
   const [activeTab, setActiveTab] = useState("In-game");
   const [tasksData, setTasksData] = useState({});
   const [totalTaps, setTotalTaps] = useState(0);
-  const [loading, setLoading] = useState(true);
+  // const [loading, setLoading] = useState(true);
 
-  // Fetch data from the backend
   useEffect(() => {
     const fetchTasksAndTaps = async () => {
       try {
-        // Fetch total taps
-        const tapsResponse = await fetch("https://bored-tap-api.onrender.com/total-taps");
-        const tapsData = await tapsResponse.json();
-        if (tapsResponse.ok) {
-          setTotalTaps(tapsData.totalTaps);
+        // Fetch user profile which includes total taps
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+          console.error("No access token found");
+          return;
         }
+
+        const profileResponse = await fetch("https://bored-tap-api.onrender.com/user/profile", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!profileResponse.ok) {
+          throw new Error(`HTTP error! status: ${profileResponse.status}`);
+        }
+
+        const profileData = await profileResponse.json();
+        setTotalTaps(profileData.total_coins); // Assuming total_coins is the field for total taps in the profile
 
         // Fetch tasks
         const tasksResponse = await fetch("https://bored-tap-api.onrender.com/tasks");
@@ -27,9 +41,10 @@ const TaskScreen = () => {
         }
       } catch (err) {
         console.error("Error fetching tasks or taps:", err);
-      } finally {
-        setLoading(false);
-      }
+      } 
+      // finally {
+      //   setLoading(false);
+      // }
     };
 
     fetchTasksAndTaps();
@@ -45,13 +60,18 @@ const TaskScreen = () => {
 
   const handleClaimClick = async (taskId) => {
     try {
+      const token = localStorage.getItem("accessToken");
       const response = await fetch(`https://bored-tap-api.onrender.com/claim-task/${taskId}`, {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
       const result = await response.json();
       if (response.ok) {
         console.log(`Task claimed successfully: ${result.message}`);
-        // Optionally refresh tasks after claiming
+        // Optionally refresh tasks or taps after claiming
       } else {
         console.error("Error claiming task:", result.message);
       }
@@ -60,17 +80,15 @@ const TaskScreen = () => {
     }
   };
 
-  if (loading) {
-    return <div className="loading">Loading tasks...</div>;
-  }
+  // if (loading) {
+  //   return <div className="loading">Loading tasks...</div>;
+  // }
 
   const tasks = tasksData[activeTab] || [];
 
   return (
     <div className="task-screen">
-      {/* Body */}
       <div className="task-body">
-        {/* Total Taps */}
         <div className="total-taps">
           <p>Your Total Taps:</p>
           <div className="taps-display">
@@ -89,7 +107,6 @@ const TaskScreen = () => {
           </p>
         </div>
 
-        {/* Pagination */}
         <div className="pagination">
           {Object.keys(tasksData).map((tab) => (
             <span
@@ -102,7 +119,6 @@ const TaskScreen = () => {
           ))}
         </div>
 
-        {/* Task Cards */}
         <div className="task-cards">
           {tasks.length > 0 ? (
             tasks.map((task, index) => (
@@ -143,7 +159,6 @@ const TaskScreen = () => {
         </div>
       </div>
 
-      {/* Navigation */}
       <Navigation />
     </div>
   );

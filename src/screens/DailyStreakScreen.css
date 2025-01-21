@@ -17,9 +17,9 @@
   margin: 20px 0;
 }
 
-.streak-icon {
-  width: 80px;
-  height: 80px;
+.streak-icon-big {
+  width: 80px;  /* Increased size */
+  height: 80px; /* Increased size */
   margin: 0 auto;
   display: block;
 }
@@ -48,10 +48,10 @@
 
 .rewards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(4, minmax(60px, 1fr)); /* 4 cards in a row */
+  gap: 8px; /* Reduced spacing */
   justify-items: center;
-  margin: 0 -24px; /* Responsive margin */
+  margin: 0 -5px; /* Responsive margin */
 }
 
 .reward-frame {
@@ -60,10 +60,10 @@
   align-items: center;
   justify-content: center;
   padding: 10px;
-  border-radius: 8px;
+  border-radius: 4px;
   text-align: center;
-  width: 80px;
-  height: 120px;
+  width: 70px;
+  height: 100px;
   box-sizing: border-box;
   cursor: pointer;
   gap: 8px;
@@ -79,7 +79,7 @@
 }
 
 .reward-frame.claimed {
-  background-color: #414141; /* Keep inactive look after claiming */
+  background-color: #838181; /* Keep inactive look after claiming */
   color: #ffffff;
 }
 
@@ -112,7 +112,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  
+  text-align: center;
   bottom: 60px;
   width: 100%;
 }
