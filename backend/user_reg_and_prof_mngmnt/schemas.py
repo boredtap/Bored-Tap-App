@@ -73,6 +73,7 @@ class BasicProfile(BaseModel):
     image_url: AnyHttpUrl | str
     total_coins: int | None = 0
     level: int | None = 1
+    level_name: str | None = "Novice"
     referral_url: str | None = None
 
 class UserProfile(
