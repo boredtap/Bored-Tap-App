@@ -1,92 +1,69 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navigation from "../components/Navigation";
 import "./BoostScreen.css";
 
 const BoostScreen = () => {
   const [activeOverlay, setActiveOverlay] = useState(null);
+  const [totalTaps, setTotalTaps] = useState(0);
+  const [boostersData, setBoostersData] = useState({ dailyBoosters: [], extraBoosters: [] });
 
-  const extraBoosters = [
-    {
-      id: 1,
-      icon: `${process.env.PUBLIC_URL}/boostx2.png`,
-      title: "Boost X2",
-      valueIcon: `${process.env.PUBLIC_URL}/logo.png`,
-      value: "50,000",
-      level: "Level 2",
-      description: "Increase the amount of BT-Coin you can earn per one tap",
-      subText: "+1 per tap for each level",
-      ctaText: "Upgrade",
-      actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`, // Path to right-side icon
-    },
-    {
-      id: 2,
-      icon: `${process.env.PUBLIC_URL}/multiply.png`,
-      title: "Multiplier",
-      valueIcon: `${process.env.PUBLIC_URL}/logo.png`,
-      value: "150,000",
-      level: "Level 3",
-      description: "Increase your power limit, so you can tap more per session",
-      subText: "+500 for each level",
-      ctaText: "Upgrade",
-      actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
-    },
-    {
-      id: 3,
-      icon: `${process.env.PUBLIC_URL}/autobot.png`,
-      title: "Auto-Bot Tapping",
-      valueIcon: `${process.env.PUBLIC_URL}/logo.png`,
-      value: "2,000,000",
-      level: "Level 5",
-      description: "Purchase auto-bot to tap for you while you’re away",
-      subText: "Connect wallet before purchase",
-      ctaText: "Purchase",
-      altCTA: "Connect Wallet",
-      actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
-    },
-    {
-      id: 4,
-      icon: `${process.env.PUBLIC_URL}/electric-icon.png`,
-      title: "Recharge Speed",
-      valueIcon: `${process.env.PUBLIC_URL}/logo.png`,
-      value: "50,000",
-      level: "Level 2",
-      description: "Increase speed of recharge",
-      subText: "+1 per second",
-      ctaText: "Upgrade",
-      altCTA: "Insufficient Funds",
-      actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
-    },
-  ];
-  
+  useEffect(() => {
+    const fetchProfileAndBoosters = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+          console.error("No access token found");
+          return;
+        }
 
-  const dailyBoosters = [
-    {
-      id: 5,
-      icon: `${process.env.PUBLIC_URL}/tapperboost.png`,
-      title: "Tapper Boost",
-      value: "Free",
-      description: "Multiply your tap income by X5 for 20 seconds.",
-      ctaText: "Claim",
-    },
-    {
-      id: 6,
-      icon: `${process.env.PUBLIC_URL}/electric-icon.png`,
-      title: "Full Energy",
-      value: "Free",
-      description: "Fill your energy to 100% instantly 3 times per day",
-      ctaText: "Claim",
-    },
-  ];
+        // Fetch user profile which includes total taps
+        const profileResponse = await fetch("https://bored-tap-api.onrender.com/user/profile", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!profileResponse.ok) {
+          throw new Error(`HTTP error! status: ${profileResponse.status}`);
+        }
+
+        const profileData = await profileResponse.json();
+        setTotalTaps(profileData.total_coins); // Assuming total_coins is the field for total taps in the profile
+
+        // Fetch boosters data
+        const boostersResponse = await fetch("https://bored-tap-api.onrender.com/boosters", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!boostersResponse.ok) {
+          throw new Error(`HTTP error! status: ${boostersResponse.status}`);
+        }
+
+        const boostersData = await boostersResponse.json();
+        setBoostersData(boostersData);
+      } catch (err) {
+        console.error("Error fetching profile or boosters data:", err);
+      }
+    };
+
+    fetchProfileAndBoosters();
+  }, []);
 
   const handleOverlayClose = () => setActiveOverlay(null);
 
   const renderOverlay = () => {
     if (!activeOverlay) return null;
-  
-    const { title, description, subText, /*valueIcon,*/ value, level, ctaText, altCTA } = activeOverlay;
-  
+
+    const { title, description, subText, value, level, ctaText, altCTA } = activeOverlay;
+
     const isDisabled = altCTA && value === "Insufficient Funds";
-  
+
     return (
       <div className="overlay">
         <div className="overlay-card">
@@ -94,7 +71,6 @@ const BoostScreen = () => {
             <h2>{title}</h2>
             <button className="overlay-close" onClick={handleOverlayClose}>✖</button>
           </div>
-          {/* Added a CSS class to adjust division line spacing */}
           <hr className="division-line" />
           <img src={activeOverlay.icon} alt={title} className="overlay-icon" />
           <p className="overlay-description">{description}</p>
@@ -111,6 +87,7 @@ const BoostScreen = () => {
       </div>
     );
   };
+
   return (
     <div className="boost-screen">
 
@@ -123,7 +100,7 @@ const BoostScreen = () => {
             alt="Taps Icon"
             className="taps-icon"
           />
-          <p className="total-taps-value">3,289,198</p>
+          <p className="total-taps-value">{totalTaps.toLocaleString()}</p>
         </div>
         <p className="bt-boost-info">How BT-boosters work?</p>
       </div>
@@ -132,7 +109,7 @@ const BoostScreen = () => {
       <div className="daily-boosters-section">
         <p className="daily-boosters-title">Your daily boosters:</p>
         <div className="daily-boosters-container">
-          {dailyBoosters.map((booster) => (
+          {boostersData.dailyBoosters.map((booster) => (
             <div
               className="booster-frame"
               key={booster.id}
@@ -156,7 +133,7 @@ const BoostScreen = () => {
       <div className="extra-boosters-section">
         <p className="extra-boosters-title">Extra boosters:</p>
         <div className="extra-boosters-container">
-          {extraBoosters.map((booster) => (
+          {boostersData.extraBoosters.map((booster) => (
             <div
               className="extra-booster-card"
               key={booster.id}
