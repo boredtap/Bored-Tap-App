@@ -21,6 +21,7 @@ def get_db():
         raise e
 
 db = get_db()
+admin_collection = db['admins']
 user_collection = db['users']
 invites_ref = db['invites_ref']
 user_coins = db['user_coins']
