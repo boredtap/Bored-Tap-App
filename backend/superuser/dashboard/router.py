@@ -21,7 +21,7 @@ adminDashboard = APIRouter(
 )
 
 
-@adminDashboard.post("/add_admin", deprecated=False)
+@adminDashboard.post("/add_admin", deprecated=True)
 async def add_admin(admin: AddAdmin):
     admin_check = admin_collection.find_one({"username": admin.username})
     if admin_check:
@@ -42,7 +42,7 @@ async def add_admin(admin: AddAdmin):
         "message": "Admin added successfully"
     }
 
-@adminDashboard.post("/signin")
+@adminDashboard.post("/signin", deprecated=True)
 async def sign_in(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     admin = authenticate_admin(form_data.username, form_data.password)
 
