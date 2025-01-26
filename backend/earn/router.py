@@ -44,12 +44,12 @@ async def perform_streak(telegram_user_id: Annotated[str, Depends(get_current_us
         return init_streak_data
 
     time_difference = calculate_time_difference(current_date, old_streak.last_action_date)
-    if one_day <= time_difference <= timedelta(hours=25) and current_date.date() != old_streak.last_action_date.date():
+    if one_day <= time_difference <= timedelta(hours=48) and current_date.date() != old_streak.last_action_date.date():
         # Streak continues
         # Increment:- streak: 1, total_coins: daily_reward_amount
         # set:- last_action_date: current_date, longest_streak: max(old_streak, current_streak)
 
-        logging.info('Streak continues if:', {'time_difference': 'gte 23 hours but lte 25 hours'})
+        logging.info('Streak continues if:', {'time_difference': 'gte 24 hours but lte 48 hours'})
         
         new_streak = StreakData(
             current_streak=old_streak.current_streak + 1,
@@ -65,7 +65,7 @@ async def perform_streak(telegram_user_id: Annotated[str, Depends(get_current_us
 
         return new_streak
 
-    elif time_difference > timedelta(hours=25):
+    elif time_difference > timedelta(hours=48):
         # broken streak, restart user streak
         logging.info('Broken streak, if: time difference is gt 25 hours')
         reset_streak = StreakData(

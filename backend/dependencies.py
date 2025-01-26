@@ -144,6 +144,7 @@ def get_user_profile(telegram_user_id: str) -> UserProfile:
             level=user.get('level'),
             level_name=user.get('level_name'),
             referral_url=referral_url_prefix + telegram_user_id,
+            is_active=user.get('is_active'),
             streak=user.get('streak'),
             invite=invitees
         )

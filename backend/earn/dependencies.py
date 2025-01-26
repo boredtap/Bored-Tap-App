@@ -51,8 +51,7 @@ def calculate_time_difference(current_date: datetime, last_action_date: datetime
     """
 
     past_hours = current_date - last_action_date
-    past_hours = past_hours.total_seconds() / 3600
-    return timedelta(hours=int(past_hours))
+    return past_hours
 
 
 # update user streak and coin in db

@@ -42,7 +42,8 @@ def get_user_by_id(telegram_user_id: str) -> BasicProfile:
             image_url=user.get("image_url", None),
             level=user.get("level", None),
             total_coins=user.get("total_coins", None),
-            referral_url=user.get("referral_url", None)
+            referral_url=user.get("referral_url", None),
+            is_active=user.get("is_active", None)
         )
         return user_data
     return None
@@ -74,3 +75,8 @@ def get_user_invitees(telegram_user_id: str) -> list[Invitee] | list:
             )
             invitees.append(invitee_data)
     return invitees
+
+    """
+    level_name
+    
+    """
