@@ -75,6 +75,7 @@ class BasicProfile(BaseModel):
     level: int | None = 1
     level_name: str | None = "Novice"
     referral_url: str | None = None
+    is_active: bool
 
 class UserProfile(
         BasicProfile

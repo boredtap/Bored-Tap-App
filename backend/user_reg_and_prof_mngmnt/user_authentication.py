@@ -7,6 +7,9 @@ from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 from config import get_settings
 from database_connection import user_collection, invites_ref
 from user_reg_and_prof_mngmnt.schemas import BasicProfile, InviteeData, Invites, Signup, TokenData, UserProfile
+from user_reg_and_prof_mngmnt.models import (
+    UserProfile as UserProfileModel
+)
 from user_reg_and_prof_mngmnt.dependencies import get_user_by_id, serialize_any_http_url, referral_url_prefix
 
 
@@ -58,12 +61,11 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        # a very long expiration time because I don't want users signing in all the time
-        # though very risky but thoughts on it is still in progress
-        expire = datetime.utcnow() + timedelta(days=365)
+        expire = datetime.utcnow() + timedelta(days=3)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     """
@@ -88,17 +90,30 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+    admin_exception = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="route for users only",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
     try:
         payload: dict = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         telegram_user_id: str = payload.get("telegram_user_id")
+        admin_role: str = payload.get("role")
         # username: str = payload.get("username")
-        if telegram_user_id is None:
+
+        if admin_role:
+            raise admin_exception
+
+        if not telegram_user_id:
             raise credentials_exception
         # token_scopes = payload.get("scopes", [])
+        
         token_data = TokenData(telegram_user_id=telegram_user_id)
         return token_data.telegram_user_id
     except InvalidTokenError:
         raise credentials_exception
+
 
 def validate_referral_code(referral_code: str):
     inviter = authenticate_user(referral_code)
@@ -119,13 +134,13 @@ def reward_inviter_and_invitee(inviter_id: str, invitee_id: str, reward: int):
 
 
 def create_invited_user(invited: Signup):
-    invited_user = UserProfile(
+    invited_user = UserProfileModel(
         telegram_user_id=invited.telegram_user_id,
         username=invited.username,
         image_url=serialize_any_http_url(invited.image_url),
         total_coins=0,
         level=1,
-        referral_url=referral_url_prefix + invited.telegram_user_id
+        referral_url=referral_url_prefix + invited.telegram_user_id,
     )
     return invited_user
 
