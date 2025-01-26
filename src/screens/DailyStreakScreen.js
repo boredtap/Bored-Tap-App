@@ -91,7 +91,13 @@ const DailyStreakScreen = () => {
           throw new Error('Failed to claim reward');
         }
         const streakData = await response.json();
-        
+  
+        if (streakData.message === "Streak not updated") {
+          console.log(streakData.Countdown);
+          alert(`Streak not updated. ${streakData.Countdown}`);
+          return;
+        }
+  
         // Update local state based on backend response
         setClaimedDays([...claimedDays, currentDay]);
         setProfile(prev => ({
@@ -154,14 +160,14 @@ const DailyStreakScreen = () => {
       </div>
 
       {/* CTA Button */}
-      <div className="cta-container">
+      <center><div className="cta-container">
         <CTAButton
           isActive={!claimedDays.includes(currentDay)}
           text={claimedDays.includes(currentDay) ? "Come back tomorrow" : "Claim Reward"}
           onClick={handleClaim}
           style={{ textAlign: 'center' }}
         />
-      </div>
+      </div></center>
 
       <Navigation />
     </div>
