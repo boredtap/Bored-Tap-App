@@ -44,8 +44,9 @@ app = FastAPI(
 
 origins = [
     "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
     "https://boredtap.netlify.app",
-    "https://boredtapadmin.netlify.app/"
+    "https://boredtapadmin.netlify.app"
 ]
 
 app.add_middleware(
