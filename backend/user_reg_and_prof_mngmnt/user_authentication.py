@@ -6,6 +6,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 from config import get_settings
 from database_connection import user_collection, invites_ref
+from dependencies import update_coin_stats
 from user_reg_and_prof_mngmnt.schemas import BasicProfile, InviteeData, Invites, Signup, TokenData, UserProfile
 from user_reg_and_prof_mngmnt.models import (
     UserProfile as UserProfileModel
@@ -131,6 +132,10 @@ def reward_inviter_and_invitee(inviter_id: str, invitee_id: str, reward: int):
 
     user_collection.update_one(inviter, update_operation)
     user_collection.update_one(invitee, update_operation)
+
+    # update coin stats of inviter and invitee
+    update_coin_stats(telegram_user_id=inviter_id, coins_tapped=reward)
+    update_coin_stats(telegram_user_id=invitee_id, coins_tapped=reward)
 
 
 def create_invited_user(invited: Signup):
