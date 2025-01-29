@@ -1,4 +1,6 @@
-from database_connection import user_collection, invites_ref
+from datetime import date, datetime
+from models import CoinStats
+from database_connection import user_collection, invites_ref, coin_stats
 from user_reg_and_prof_mngmnt.schemas import InviteeData, Update, UserProfile
 
 
@@ -51,11 +53,52 @@ def update_coins_in_db(telegram_user_id: str, coins: int):
         level_update_result = True
     else:
         level_update_result = False
+    
+    # update coin stats in db
+    coin_stats_result = update_coin_stats(telegram_user_id, coins)
+    print(coin_stats_result)
 
     return {
         'my_result': my_result,
         'level_update_result': level_update_result
     }
+
+def update_coin_stats(telegram_user_id: str, coins_tapped:int):
+    # today's date
+    today = date.today()
+
+    # get current user coin stat
+    user_query = {'telegram_user_id': telegram_user_id}
+    user_stats = coin_stats.find_one(user_query)
+    print(user_stats)
+
+    if user_stats:
+        # user_stats['date'][str(today)]
+        # update coins
+        coin_update_operation = {'$inc':
+            {'date.' + str(today): coins_tapped},
+        }
+
+        my_result = coin_stats.update_one(user_query, coin_update_operation, upsert=True)
+        if my_result.modified_count == 1:
+            my_result = {'status': True, 'message': 'Coin statistics updated successfully'}
+        else:
+            my_result = {'status': False, 'message': 'Failed to update coin statistics'}
+        return my_result
+
+    # create new user coin stat
+    new_user_stats = CoinStats(
+        telegram_user_id=telegram_user_id,
+        date={str(today): coins_tapped}
+    )
+    my_result = coin_stats.insert_one(new_user_stats.model_dump())
+
+    if my_result.inserted_id:
+        my_result = {'status': True, 'message': 'Coin statistics updated successfully'}
+    else:
+        my_result = {'status': False, 'message': 'Failed to update coin'}
+
+    return my_result
 
 
 def get_user_by_id(telegram_user_id: str) -> Update:
