@@ -24,7 +24,7 @@ class TokenData(AdminProfile):
     pass
 
 class NewUserData(BaseModel):
-    telegram_user_id: int
+    telegram_user_id: str
     username: str
     image_url: str
 
