@@ -33,9 +33,14 @@ def get_total_new_users() -> int:
 
     # count db docs matching aggregation
     total_users_today = user_collection.aggregate(pipeline)
-    total_users_today = total_users_today.next()
 
-    return {"total_new_users": total_users_today["user_count"]}
+    # Extract total user from aggregate result
+    try:
+        total_users_today = total_users_today.next()
+    
+        return {"total_new_users": total_users_today["user_count"]}
+    except StopIteration:
+        return {"total_new_users": 0}
 
 
 # ------------------------------------- get overall total coins -------------------------------------
