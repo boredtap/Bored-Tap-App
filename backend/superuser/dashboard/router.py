@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status, Path
 from fastapi.security import OAuth2PasswordRequestForm
 from superuser.dashboard.models import AdminProfile, AdminRoleEnum
-from superuser.dashboard.dependencies import get_new_users, get_overall_total_coins_earned, get_users_level_data, recent_activity_data_for_coins, get_total_new_users, get_total_users
+from superuser.dashboard.dependencies import get_new_users, get_overall_total_coins_earned, get_users_leaderboard, get_users_level_data, recent_activity_data_for_coins, get_total_new_users, get_total_users, recent_activity_data_for_users
 from superuser.dashboard.admin_auth import authenticate_admin, get_current_admin, hash_password
 from superuser.dashboard.schemas import (
     AddAdmin
@@ -92,7 +92,16 @@ async def new_users():
     return total_new_users
 
 
-# ------------------------------------- get recent activity data -------------------------------------
+# ------------------------------------- get users leaderboard -------------------------------------
+@adminDashboard.get("/leaderboard")
+async def leaderboard():
+    leaderboard_data = get_users_leaderboard()
+
+    return leaderboard_data
+
+
+
+# ------------------------------------- get recent activity data for coins -------------------------------------
 @adminDashboard.get("/coins/recent_activity")
 async def coins_recent_activity():
     recent_activity_data = recent_activity_data_for_coins()
@@ -100,8 +109,16 @@ async def coins_recent_activity():
     return recent_activity_data
 
 
+# ------------------------------------- get recent activity data for users -------------------------------------
+@adminDashboard.get("/users/recent_activity")
+async def users_recent_activity():
+    recent_activity_data = recent_activity_data_for_users()
+
+    return recent_activity_data
+
+
 # ------------------------------------- get users data on levels -------------------------------------
-@adminDashboard.get("/levels/data")
+@adminDashboard.get("/levels/chart_data")
 async def levels_data():
     data = get_users_level_data()
 
