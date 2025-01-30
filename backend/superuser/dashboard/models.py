@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel
 
@@ -11,3 +12,4 @@ class AdminProfile(BaseModel):
     hashed_password: str
     role: AdminRoleEnum
     is_admin: bool = True
+    is_active: bool = True

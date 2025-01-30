@@ -1,8 +1,8 @@
 from datetime import datetime, tzinfo, timezone
-from hmac import new
+from pprint import pprint
 from superuser.dashboard.admin_auth import verify_password
-from superuser.dashboard.schemas import AdminProfile as schemasAdminProfile, NewUserData
-from database_connection import user_collection
+from superuser.dashboard.schemas import AdminProfile as schemasAdminProfile, LevelDataInfo, NewUserData, RecentActivityData
+from database_connection import user_collection, coin_stats
 
 
 
@@ -33,9 +33,14 @@ def get_total_new_users() -> int:
 
     # count db docs matching aggregation
     total_users_today = user_collection.aggregate(pipeline)
-    total_users_today = total_users_today.next()
 
-    return {"total_new_users": total_users_today["user_count"]}
+    # Extract total user from aggregate result
+    try:
+        total_users_today = total_users_today.next()
+    
+        return {"total_new_users": total_users_today["user_count"]}
+    except StopIteration:
+        return {"total_new_users": 0}
 
 
 # ------------------------------------- get overall total coins -------------------------------------
@@ -103,11 +108,130 @@ def get_new_users() -> list:
 def get_leaderboard() -> list:
     pass
 
-# get recent activity data
-def get_recent_activity_data() -> dict:
-    pass
+
+# ------------------------------------- get recent activity data for coins -------------------------------------
+def recent_activity_data_for_coins() -> dict:
+    # aggregation to get recent activity data: coins earned monthly
+    pipeline_for_coins_activity = [
+        {
+            '$project': {
+                'yearlyCoins': {
+                    '$map': {
+                        'input': {
+                            '$objectToArray': '$date'
+                        }, 
+                        'as': 'dateItem', 
+                        'in': {
+                            'year': {
+                                '$year': {
+                                    '$dateFromString': {
+                                        'dateString': '$$dateItem.k'
+                                    }
+                                }
+                            },
+                            'month': {
+                                '$month': {
+                                    '$dateFromString': {
+                                        'dateString': '$$dateItem.k'
+                                    }
+                                }
+                            },
+                            'coins': '$$dateItem.v'
+                        }
+                    }
+                }
+            }
+        }, {
+            '$unwind': '$yearlyCoins'
+        }, {
+            '$group': {
+                '_id': {
+                    'year': '$yearlyCoins.year', 
+                    'month': '$yearlyCoins.month'
+                }, 
+                'totalCoins': {
+                    '$sum': '$yearlyCoins.coins'
+                }
+            }
+        }, {
+            '$group': {
+                '_id': '$_id.year', 
+                'monthlyCoins': {
+                    '$push': {
+                        'month': '$_id.month', 
+                        'totalCoins': '$totalCoins'
+                    }
+                }
+            }
+        }
+    ]
+
+    recent_activity_for_coins = coin_stats.aggregate(pipeline_for_coins_activity)
+
+    data: list[RecentActivityData] = []
+    # sample data structure
+    # {
+    #     "year": 2021,
+    #     "data": {
+    #         1: 100,
+    #         2: 200,
+    # }
+
+    for activity in recent_activity_for_coins:
+        # activity schemas
+        # {'_id': 2025, 'monthlyCoins': 
+        #   [
+        #     {'month': 1, 'totalCoins': 1200}, 
+        #     {'month': 2, 'totalCoins': 2000}
+        #   ]
+        # }
+        info = RecentActivityData(
+            year=activity["_id"],
+            data={}
+        )
+
+        for month in activity["monthlyCoins"]:
+            info.data[month["month"]] = month["totalCoins"]
+
+        data.append(info)
+
+    return data
+
 
 # get user level data
 def get_users_level_data() -> dict:
-    # data needed to plot a graph of level_names against the number of users at each level
-    pass
+    # aggregation to get user level data
+    pipeline = [
+        {
+            '$group': {
+                '_id': {
+                    'level': '$level', 
+                    'level_name': '$level_name'
+                }, 
+                'total_users': {
+                    '$sum': 1
+                }
+            }
+        }, {
+            '$project': {
+                '_id': 0, 
+                'level': '$_id.level', 
+                'level_name': '$_id.level_name', 
+                'total_users': 1
+            }
+        }
+    ]
+    
+    data_cursor = user_collection.aggregate(pipeline)
+
+    level_data_list: list[LevelDataInfo] = []
+
+    for data in data_cursor:
+        level_data = LevelDataInfo(
+            level=data["level"],
+            level_name=data["level_name"],
+            total_users=data["total_users"]
+        )
+        level_data_list.append(data)
+
+    return level_data_list

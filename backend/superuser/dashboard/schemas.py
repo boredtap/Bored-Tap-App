@@ -24,10 +24,23 @@ class TokenData(AdminProfile):
     pass
 
 class NewUserData(BaseModel):
-    telegram_user_id: int
+    telegram_user_id: str
     username: str
     image_url: str
 
-class RecentActivity(BaseModel):
-    total_coins: int
+class RecentActivityData(BaseModel):
+    year: int
+    data: dict[int, int]
 
+"""
+year    |            data
+-------------------------------------
+2021    |    {1: 100, 2: 200, 3: 300}
+2022    |    {1: 100, 2: 200, 3: 300}
+"""
+
+
+class LevelDataInfo(BaseModel):
+    level: int
+    level_name: str
+    total_users: int

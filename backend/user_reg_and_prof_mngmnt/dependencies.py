@@ -1,16 +1,7 @@
-from httpx import get
 from pydantic import AnyHttpUrl
 from user_reg_and_prof_mngmnt.schemas import BasicProfile, Invites
 from user_reg_and_prof_mngmnt.models import UserProfile as UserProfileModel
 from database_connection import user_collection, invites_ref
-from telegram import Update, WebAppInfo
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    MessageHandler,
-    filters,
-    ContextTypes
-)
 from config import get_settings
 
 
@@ -69,29 +60,3 @@ def serialize_any_http_url(url: AnyHttpUrl):
 referral_url_prefix = "https://t.me/Bored_Tap_Bot?start="
 
 
-# telegram bot commands
-async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Hello! Welcome to Bored Tap bot.")
-
-async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    print(f"Update {update} caused error {context.error}")
-
-# # response
-# def handle_response(text: str) -> str:
-#     processed: str = text.lower()
-
-#     if 'hello' in processed:
-#         return 'Hey there'
-    
-#     return "I do not understand what you wrote..."
-
-app = Application.builder().token(BOT_TOKEN).build()
-
-# COMMANDS
-app.add_handler(CommandHandler('start', start_command))
-
-# # MESSAGES
-# app.add_handler(MessageHandler(filters.Text, handle_response))
-
-# ERRORS
-app.add_error_handler(error)
