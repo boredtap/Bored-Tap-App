@@ -1,7 +1,8 @@
 from datetime import datetime, tzinfo, timezone
+from logging import info
 from pprint import pprint
 from superuser.dashboard.admin_auth import verify_password
-from superuser.dashboard.schemas import AdminProfile as schemasAdminProfile, LevelDataInfo, NewUserData, RecentActivityData
+from superuser.dashboard.schemas import AdminProfile as schemasAdminProfile, LeaderboardData, LevelDataInfo, NewUserData, RecentActivityData
 from database_connection import user_collection, coin_stats
 
 
@@ -105,8 +106,38 @@ def get_new_users() -> list:
 
 
 # ------------------------------------- get leaderboard ------------------------------------- 
-def get_leaderboard() -> list:
-    pass
+def get_users_leaderboard() -> list:
+    # aggregation to get leaderboard data
+    pipeline = [
+        {
+            '$sort': {
+                'total_coins': -1
+            }
+        }, {
+            '$project': {
+                'username': 1, 
+                'image_url': 1, 
+                'total_coins': 1, 
+                '_id': 0
+            }
+        }
+    ]
+
+    leaderboard_data_cursor = user_collection.aggregate(pipeline)
+
+    # extract data from pipeline result
+    leaderboard_data: list[LeaderboardData] = []
+
+    for data in leaderboard_data_cursor:
+        data = LeaderboardData(
+            username=data["username"],
+            image_url=data["image_url"],
+            total_coins=data["total_coins"]
+        )
+
+        leaderboard_data.append(data)
+    
+    return leaderboard_data
 
 
 # ------------------------------------- get recent activity data for coins -------------------------------------
@@ -198,7 +229,88 @@ def recent_activity_data_for_coins() -> dict:
     return data
 
 
-# get user level data
+# ------------------------------------- get recent activity data for users -------------------------------------
+def recent_activity_data_for_users() -> dict:
+    # aggregation to get total number of users that joined monthly
+    # pipeline = [
+    #     {
+    #         '$group': {
+    #             '_id': {
+    #                 'year': {
+    #                     '$year': '$created_at'
+    #                 }, 
+    #                 'month': {
+    #                     '$month': '$created_at'
+    #                 }
+    #             }, 
+    #             'total_users': {
+    #                 '$sum': 1
+    #             }
+    #         }
+    #     }, {
+    #         '$sort': {
+    #             '_id.year': 1, 
+    #             '_id.month': 1
+    #         }
+    #     }
+    # ]
+
+
+    pipeline = [
+        {
+            '$group': {
+                '_id': {
+                    'year': {
+                        '$year': '$created_at'
+                    }, 
+                    'month': {
+                        '$month': '$created_at'
+                    }
+                }, 
+                'count': {
+                    '$sum': 1
+                }
+            }
+        }, {
+            '$group': {
+                '_id': '$_id.year', 
+                'month_data': {
+                    '$push': {
+                        'k': {
+                            '$toString': '$_id.month'
+                        }, 
+                        'v': '$count'
+                    }
+                }
+            }
+        }, {
+            '$project': {
+                'year': '$_id', 
+                '_id': 0, 
+                'month_data': {
+                    '$arrayToObject': '$month_data'
+                }
+            }
+        }
+    ]
+
+    recent_activity_for_users = user_collection.aggregate(pipeline)
+
+    # extract data from pipeline result
+    data: list[RecentActivityData] = []
+
+    for activity in recent_activity_for_users:
+        info = RecentActivityData(
+            year=activity["year"],
+            data=activity["month_data"]
+        )
+
+        data.append(info)
+    
+    return data
+
+
+# ------------------------------------- get user level data -------------------------------------
 def get_users_level_data() -> dict:
     # aggregation to get user level data
     pipeline = [
