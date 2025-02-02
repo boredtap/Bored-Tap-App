@@ -120,6 +120,18 @@ async def get_task_by_status(status: TaskStatus) -> list[TaskSchemaResponse]:
     return tasks
 
 
+# --------------------------------- DELETE TASK ---------------------------------
+@task_router.delete("/delete_task")
+async def delete_task(task_id: str):
+    deleted_task = delete_task_func(task_id)
+
+    if deleted_task:
+        return {"message": "Task deleted successfully."}
+
+    return {"message": "Task not found/Invalid task id."}
+
+
+
 # --------------------------------- GET TASK BY PARTICIPANTS ---------------------------------
 @task_router.get("/tasks_by_participants", deprecated=True)
 async def get_task_by_participants(participants: TaskParticipants):
@@ -134,18 +146,6 @@ async def get_task_by_date(date_created: str):
 @task_router.get("/get_tasks_by_deadline", deprecated=True)
 async def get_task_by_deadline(deadline: str):
     return {"message": f"Get tasks with deadline {deadline}"}
-
-
-# --------------------------------- DELETE TASK ---------------------------------
-@task_router.delete("/delete_task")
-async def delete_task(task_id: str):
-    deleted_task = delete_task_func(task_id)
-
-    if deleted_task:
-        return {"message": "Task deleted successfully."}
-
-    return {"message": "Task not found/Invalid task id."}
-
 
 # --------------------------------- EXPORT TASKS ---------------------------------
 @task_router.get("/export_tasks", deprecated=True)

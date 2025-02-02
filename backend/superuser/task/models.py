@@ -1,5 +1,6 @@
 from enum import Enum
 from datetime import datetime
+from unittest.mock import Base
 from pydantic import BaseModel
 
 
@@ -39,13 +40,24 @@ class Task(BaseModel):
     task_participants: TaskParticipants | list[TaskParticipants]
     task_reward: int
     task_image: bytes | None
+    completed_users: list[str] = []
     created_at: datetime = datetime.now()
     last_updated: datetime | None = None
     task_deadline: datetime
 
 
-class TaskModelResponse(Task):
+class TaskModelResponse(BaseModel):
     _id: str
+    task_name: str
+    task_type: TaskType
+    task_description: str
+    task_status: TaskStatus
+    task_participants: TaskParticipants | list[TaskParticipants]
+    task_reward: int
+    task_image: bytes | None
+    created_at: datetime = datetime.now()
+    last_updated: datetime | None = None
+    task_deadline: datetime
 
 class UpdateTask(BaseModel):
     task_name: str
