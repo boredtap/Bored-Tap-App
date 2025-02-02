@@ -8,6 +8,7 @@ from invite.router import inviteApp
 from telegram_bot import bot_interactions
 from superuser.dashboard.router import adminDashboard
 from superuser.task.router import task_router
+from tasks.router import taskApp
 from user_reg_and_prof_mngmnt.user_authentication import get_current_user
 from typing import Annotated
 from user_reg_and_prof_mngmnt.schemas import UserProfile
@@ -59,6 +60,7 @@ app.add_middleware(
 
 app.include_router(userApp)
 app.include_router(earnApp)
+app.include_router(taskApp)
 app.include_router(inviteApp)
 app.include_router(bot_interactions)
 app.include_router(adminDashboard)

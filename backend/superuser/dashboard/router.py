@@ -15,7 +15,7 @@ from database_connection import admin_collection
 
 adminDashboard = APIRouter(
     prefix="/admin/dashboard",
-    tags=["Admin Dashboard"],
+    tags=["Admin Panel Dashboard"],
     # responses={404: {"description": "Not found"}},
     dependencies=[Depends(get_current_admin)]
 )
