@@ -7,6 +7,7 @@ from earn.router import earnApp
 from invite.router import inviteApp
 from telegram_bot import bot_interactions
 from superuser.dashboard.router import adminDashboard
+from superuser.task.router import task_router
 from user_reg_and_prof_mngmnt.user_authentication import get_current_user
 from typing import Annotated
 from user_reg_and_prof_mngmnt.schemas import UserProfile
@@ -61,6 +62,7 @@ app.include_router(earnApp)
 app.include_router(inviteApp)
 app.include_router(bot_interactions)
 app.include_router(adminDashboard)
+app.include_router(task_router)
 
 
 @app.get('/', tags=["Global Routes"])
