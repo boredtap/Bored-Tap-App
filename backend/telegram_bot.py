@@ -29,7 +29,7 @@ def set_webhook_url():
             print("Webhook set successfully!")
             break  # Exit loop on success
         except (requests.exceptions.RequestException, telebot.apihelper.ApiException) as e:
-            print(f"Error setting webhook (attempt {attempt+1}/3): {e}")
+            print(f"\nError setting webhook (attempt {attempt+1}/3): \n{e}")
             time.sleep(2**attempt)  # Exponential backoff between retries
 
 set_webhook_url()

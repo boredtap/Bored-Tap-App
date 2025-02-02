@@ -1,6 +1,4 @@
 from datetime import datetime, tzinfo, timezone
-from logging import info
-from pprint import pprint
 from superuser.dashboard.admin_auth import verify_password
 from superuser.dashboard.schemas import AdminProfile as schemasAdminProfile, LeaderboardData, LevelDataInfo, NewUserData, RecentActivityData
 from database_connection import user_collection, coin_stats
@@ -8,13 +6,13 @@ from database_connection import user_collection, coin_stats
 
 
 # ------------------------------------- get total number of users ------------------------------------- 
-def get_total_users() -> int:
+def get_total_users() -> dict[str, int]:
     total_users = user_collection.count_documents({})
     return {"total_users": total_users}
 
 
 # ------------------------------------- get total number of new users -------------------------------------
-def get_total_new_users() -> int:
+def get_total_new_users() -> dict[str, int]:
     # today begins at (00:00:00)
     today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
@@ -45,7 +43,7 @@ def get_total_new_users() -> int:
 
 
 # ------------------------------------- get overall total coins -------------------------------------
-def get_overall_total_coins_earned() -> int:
+def get_overall_total_coins_earned() -> dict[str, int] | dict:
     # Perform aggregation to calculate total coins
     pipeline = [
         {
@@ -231,31 +229,6 @@ def recent_activity_data_for_coins() -> dict:
 
 # ------------------------------------- get recent activity data for users -------------------------------------
 def recent_activity_data_for_users() -> dict:
-    # aggregation to get total number of users that joined monthly
-    # pipeline = [
-    #     {
-    #         '$group': {
-    #             '_id': {
-    #                 'year': {
-    #                     '$year': '$created_at'
-    #                 }, 
-    #                 'month': {
-    #                     '$month': '$created_at'
-    #                 }
-    #             }, 
-    #             'total_users': {
-    #                 '$sum': 1
-    #             }
-    #         }
-    #     }, {
-    #         '$sort': {
-    #             '_id.year': 1, 
-    #             '_id.month': 1
-    #         }
-    #     }
-    # ]
-
-
     pipeline = [
         {
             '$group': {
