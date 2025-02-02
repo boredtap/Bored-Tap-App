@@ -1,6 +1,5 @@
 from io import BytesIO
 from typing import List
-from typing_extensions import deprecated
 from fastapi import APIRouter, Depends, HTTPException, Response
 from superuser.dashboard.admin_auth import get_current_admin
 from superuser.task.models import ExportFormat, TaskParticipants, TaskStatus, TaskType

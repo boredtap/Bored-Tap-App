@@ -1,11 +1,6 @@
 from enum import Enum
 from datetime import datetime
-from tkinter import ACTIVE
-from unittest.mock import Base
-from h11 import PAUSED
 from pydantic import BaseModel
-
-from superuser import task
 
 
 class TaskType(str, Enum):
