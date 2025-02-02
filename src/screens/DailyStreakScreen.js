@@ -110,10 +110,12 @@ const DailyStreakScreen = () => {
             claimed_days: [...(prev.streak.claimed_days || []), currentDay]
           },
         }));
+        setLocalTotalCoins(streakData.total_coins || profile.total_coins); // Update local coin count
         setCurrentDay(prevDay => prevDay + 1); // Move to the next day after claiming
         console.log("Claim successful:", streakData);
       } catch (err) {
         console.error("Error claiming reward:", err);
+        alert("Error claiming reward. Please try again.");
       }
     }
   };
