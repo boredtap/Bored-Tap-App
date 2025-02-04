@@ -3,10 +3,12 @@ import Navigation from "../components/Navigation";
 import "./TaskScreen.css";
 
 const TaskScreen = () => {
-  const [activeTab, setActiveTab] = useState("in-game"); // API expects lowercase
+  const [activeTab, setActiveTab] = useState("in-game"); // Default to in-game
   const [tasksData, setTasksData] = useState([]);
   const [totalTaps, setTotalTaps] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  const taskTabs = ["in-game", "special", "social", "completed"];
 
   useEffect(() => {
     fetchTasksAndTaps(activeTab);
@@ -35,17 +37,19 @@ const TaskScreen = () => {
       const profileData = await profileResponse.json();
       setTotalTaps(profileData.total_coins);
 
-      // Fetch tasks based on the active tab
-      const tasksResponse = await fetch(
-        `https://bored-tap-api.onrender.com/user/tasks/my_tasks?task_type=${taskType}`, 
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      // Fetch tasks based on active tab
+      let url = `https://bored-tap-api.onrender.com/user/tasks/my_tasks?task_type=${taskType}`;
+      if (taskType === "completed") {
+        url = `https://bored-tap-api.onrender.com/user/tasks/my_tasks/completed`;
+      }
+
+      const tasksResponse = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       if (!tasksResponse.ok) throw new Error(`Task fetch failed: ${tasksResponse.status}`);
 
@@ -101,8 +105,9 @@ const TaskScreen = () => {
           <p className="tap-rewards">Earn BT-coin rewards by completing simple tasks</p>
         </div>
 
+        {/* Pagination Tabs */}
         <div className="pagination">
-          {["in-game", "completed"].map((tab) => (
+          {taskTabs.map((tab) => (
             <span
               key={tab}
               className={`pagination-tab ${activeTab === tab ? "active" : ""}`}
@@ -113,6 +118,7 @@ const TaskScreen = () => {
           ))}
         </div>
 
+        {/* Task List */}
         <div className="task-cards">
           {loading ? (
             <p className="loading">Loading tasks...</p>
