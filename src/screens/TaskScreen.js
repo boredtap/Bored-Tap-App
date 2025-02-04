@@ -3,19 +3,19 @@ import Navigation from "../components/Navigation";
 import "./TaskScreen.css";
 
 const TaskScreen = () => {
-  const [activeTab, setActiveTab] = useState("in-game"); // Default to in-game
+  const [activeTab, setActiveTab] = useState("In-Game"); // Default to In-Game
   const [tasksData, setTasksData] = useState([]);
   const [totalTaps, setTotalTaps] = useState(0);
-  const [loading, setLoading] = useState(true);
+  // const [loading, setLoading] = useState(true); // Commented out loading
 
-  const taskTabs = ["in-game", "special", "social", "completed"];
+  const taskTabs = ["In-Game", "Special", "Social", "Completed"];
 
   useEffect(() => {
     fetchTasksAndTaps(activeTab);
   }, [activeTab]);
 
   const fetchTasksAndTaps = async (taskType) => {
-    setLoading(true);
+    // setLoading(true); // Commented out loading
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) {
@@ -38,8 +38,8 @@ const TaskScreen = () => {
       setTotalTaps(profileData.total_coins);
 
       // Fetch tasks based on active tab
-      let url = `https://bored-tap-api.onrender.com/user/tasks/my_tasks?task_type=${taskType}`;
-      if (taskType === "completed") {
+      let url = `https://bored-tap-api.onrender.com/user/tasks/my_tasks?task_type=${taskType.toLowerCase()}`;
+      if (taskType === "Completed") {
         url = `https://bored-tap-api.onrender.com/user/tasks/my_tasks/completed`;
       }
 
@@ -57,9 +57,8 @@ const TaskScreen = () => {
       setTasksData(tasks);
     } catch (err) {
       console.error("Error fetching tasks or taps:", err);
-    } finally {
-      setLoading(false);
     }
+    // finally { setLoading(false); } // Commented out loading
   };
 
   const handleTabClick = (tab) => {
@@ -84,7 +83,7 @@ const TaskScreen = () => {
       const result = await response.json();
       if (response.ok) {
         console.log(`Task claimed successfully: ${result.message}`);
-        fetchTasksAndTaps(activeTab);
+        fetchTasksAndTaps("Completed"); // Refresh completed tasks
       } else {
         console.error("Error claiming task:", result.message);
       }
@@ -94,57 +93,55 @@ const TaskScreen = () => {
   };
 
   return (
-    <div className="task-screen">
-      <div className="task-body">
-        <div className="total-taps">
+    <div className="task-container">
+      <div className="task-wrapper">
+        <div className="task-summary">
           <p>Your Total Taps:</p>
-          <div className="taps-display">
-            <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Logo" className="taps-logo" />
-            <span className="taps-number">{totalTaps.toLocaleString()}</span>
+          <div className="tap-count">
+            <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Logo" className="tap-icon" />
+            <span className="tap-number">{totalTaps.toLocaleString()}</span>
           </div>
-          <p className="tap-rewards">Earn BT-coin rewards by completing simple tasks</p>
+          <p className="tap-info">Earn BT-coin rewards by completing simple tasks</p>
         </div>
 
         {/* Pagination Tabs */}
-        <div className="pagination">
+        <div className="task-tabs">
           {taskTabs.map((tab) => (
             <span
               key={tab}
-              className={`pagination-tab ${activeTab === tab ? "active" : ""}`}
+              className={`task-tab ${activeTab === tab ? "active" : ""}`}
               onClick={() => handleTabClick(tab)}
             >
-              {tab.replace("-", " ").toUpperCase()}
+              {tab}
             </span>
           ))}
         </div>
 
         {/* Task List */}
-        <div className="task-cards">
-          {loading ? (
-            <p className="loading">Loading tasks...</p>
-          ) : tasksData.length > 0 ? (
+        <div className="task-list">
+          {tasksData.length > 0 ? (
             tasksData.map((task, index) => (
-              <div className="task-card" key={index}>
-                <div className="task-left">
+              <div className="task-item" key={index}>
+                <div className="task-details">
                   <img
-                    src={task.task_image || `${process.env.PUBLIC_URL}/logo.png`}
+                    src={task.task_image} // Uses uploaded image
                     alt={task.task_name}
-                    className="task-logo"
+                    className="task-thumbnail"
                   />
-                  <div className="task-info">
-                    <p className="task-title">{task.task_name}</p>
-                    <div className="task-value">
+                  <div className="task-meta">
+                    <p className="task-name">{task.task_name}</p>
+                    <div className="task-reward">
                       <img
-                        src={`${process.env.PUBLIC_URL}/coin-icon.png`}
+                        src={`${process.env.PUBLIC_URL}/logo.png`}
                         alt="Coin Icon"
-                        className="small-logo"
+                        className="coin-icon"
                       />
                       <span>{task.task_reward}</span>
                     </div>
                   </div>
                 </div>
                 <button
-                  className="task-cta"
+                  className="task-action"
                   onClick={() => handleClaimClick(task.id)}
                 >
                   Claim
@@ -152,7 +149,7 @@ const TaskScreen = () => {
               </div>
             ))
           ) : (
-            <p className="no-tasks">No tasks available in this category.</p>
+            <p className="no-task-message">No tasks available in this category.</p>
           )}
         </div>
       </div>
