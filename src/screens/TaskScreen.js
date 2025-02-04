@@ -34,7 +34,7 @@ const TaskScreen = () => {
         setTotalTaps(profileData.total_coins); // Assuming total_coins is the field for total taps in the profile
 
         // Fetch tasks
-        const tasksResponse = await fetch("https://bored-tap-api.onrender.com/tasks");
+        const tasksResponse = await fetch("https://bored-tap-api.onrender.com/my_tasks");
         const tasks = await tasksResponse.json();
         if (tasksResponse.ok) {
           setTasksData(tasks);
@@ -61,7 +61,7 @@ const TaskScreen = () => {
   const handleClaimClick = async (taskId) => {
     try {
       const token = localStorage.getItem("accessToken");
-      const response = await fetch(`https://bored-tap-api.onrender.com/claim-task/${taskId}`, {
+      const response = await fetch(`https://bored-tap-api.onrender.com/my_task/completed`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
