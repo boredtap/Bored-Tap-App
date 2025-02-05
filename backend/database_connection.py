@@ -1,5 +1,6 @@
 from config import get_settings
 from pymongo import MongoClient
+from superuser import task
 from user_reg_and_prof_mngmnt.schemas import BasicProfile
 
 
@@ -21,4 +22,8 @@ def get_db():
         raise e
 
 db = get_db()
+admin_collection = db['admins']
 user_collection = db['users']
+invites_ref = db['invites_ref']
+coin_stats = db['coin_stats']
+task_collection = db['tasks']

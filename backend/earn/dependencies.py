@@ -1,6 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from earn.schemas import StreakData, Update
 from database_connection import user_collection
+from user_reg_and_prof_mngmnt.schemas import UserProfile
 
 
 # get current streak from db
@@ -14,53 +15,62 @@ def get_current_streak(telegram_user_id: str) -> StreakData:
     Returns:
         int: The current streak of the user.
     """
-    user: dict = user_collection.find_one({'telegram_user_id': telegram_user_id})
+    user: UserProfile = user_collection.find_one({'telegram_user_id': telegram_user_id})
+
     if user:
         streak = StreakData(
-                current_streak=user.get("current_streak", 0),
-                longest_streak=user.get("longest_streak", 0),
-                last_action_date=user.get("last_action_date", None)            
+                current_streak=user['streak']["current_streak"],
+                longest_streak=user['streak']["longest_streak"],
+                last_action_date=user['streak']["last_action_date"]            
             )
         return streak
     return None
 
-# update user streak in db
-def update_streak_in_db(telegram_user_id: str, streak: StreakData):
+# initialize user streak
+def init_streak(telegram_user_id: str, init_streak: StreakData, daily_reward_amount: int):
+    """
+    Resets the streak of a user to its initial state.
+    """
+    query = {'telegram_user_id': telegram_user_id}
+    update_operation = {
+        '$set': {'streak': init_streak.model_dump()},
+        '$inc': {'total_coins': daily_reward_amount}
+        }
+    user_collection.update_one(query, update_operation)
+    return
+
+
+def calculate_time_difference(current_date: datetime, last_action_date: datetime):
+    """
+    Calculate the time difference between two datetime objects in hours.
+    Args:
+        current_date (datetime): The current date and time.
+        last_action_date (datetime): The date and time of the last action.
+    Returns:
+        timedelta: A timedelta object representing the difference in hours.
+    """
+
+    past_hours = current_date - last_action_date
+    return past_hours
+
+
+# update user streak and coin in db
+def increment_streak_and_coin(telegram_user_id: str, daily_reward_amount: int,
+                        new_streak: StreakData):
     query_filter = {'telegram_user_id': telegram_user_id}
-    update_operation = {'$set':
-        streak.model_dump()
-    }
-    user_collection.update_one(query_filter, update_operation)
-    return 
-
-# user reward for successful streaks
-def reward_user(telegram_user_id: str, current_streak: int, daily_reward_amount: int) -> Update:
-    user: dict = user_collection.find_one({'telegram_user_id': telegram_user_id})
-    if user:
-        daily_reward = current_streak * daily_reward_amount
-        total_coins = user.get('total_coins')
-        total_coins += daily_reward
-    reward = Update(
-        telegram_user_id=telegram_user_id,
-        total_coins=total_coins
-    )
-    return reward
-
-
-
-# update user coins in db
-def update_coins_in_db(telegram_user_id: str, reward: Update):
-    query_filter = {'telegram_user_id': telegram_user_id}
-    update_operation = {'$set':
-        {'total_coins': reward.total_coins}
+    update_operation = {
+        '$set': {'streak': new_streak.model_dump()},
+        '$inc': {'total_coins': daily_reward_amount},
     }
     user_collection.update_one(query_filter, update_operation)
     return
 
-def init_restart_streak(current_date: datetime, streak: StreakData):
-    """
-    Resets the streak of a user to its initial state.
-    """
-    streak.current_streak = 1      # Set current streak to 1
-    streak.longest_streak = 1
-    streak.last_action_date = current_date
+def broken_streak_reset(telegram_user_id: str, reset_streak: StreakData, daily_reward_amount: int):
+    query_filter = {'telegram_user_id': telegram_user_id}
+    update_operation = {
+        '$set': {'streak': reset_streak.model_dump()},
+        '$inc': {'total_coins': daily_reward_amount},
+    }
+    user_collection.update_one(query_filter, update_operation)
+    return
+
