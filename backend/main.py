@@ -4,11 +4,12 @@ from superuser.dashboard.admin_auth import get_current_admin
 from dependencies import get_user_profile, update_coins_in_db,get_user_by_id
 from user_reg_and_prof_mngmnt.router import userApp
 from earn.router import earnApp
+from tasks.router import taskApp
 from invite.router import inviteApp
 from telegram_bot import bot_interactions
 from superuser.dashboard.router import adminDashboard
 from superuser.task.router import task_router
-from tasks.router import taskApp
+from superuser.leaderboard.router import adminLeaderboard
 from user_reg_and_prof_mngmnt.user_authentication import get_current_user
 from typing import Annotated
 from user_reg_and_prof_mngmnt.schemas import UserProfile
@@ -65,6 +66,7 @@ app.include_router(inviteApp)
 app.include_router(bot_interactions)
 app.include_router(adminDashboard)
 app.include_router(task_router)
+app.include_router(adminLeaderboard)
 
 
 @app.get('/', tags=["Global Routes"])
