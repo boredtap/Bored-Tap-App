@@ -1,30 +1,22 @@
-/* Task Screen Styling */
-.task-screen {
+/* Task Container */
+.task-container {
   background-color: #000;
   color: #fff;
   min-height: 100vh;
-  padding: 80px 16px;
-  padding-top: 0px;
+  padding: 20px;
   font-family: "Roboto", sans-serif;
-  position: relative;
   display: flex;
   flex-direction: column;
   width: 100%;
 }
 
-/* Total Taps Section */
-.total-taps {
+/* Task Summary */
+.task-summary {
   text-align: center;
   margin-bottom: 24px;
 }
 
-.total-taps p {
-  font-size: 16px;
-  margin: 0;
-  color: #d9d9d9;
-}
-
-.taps-display {
+.tap-count {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -32,47 +24,40 @@
   margin: 12px 0;
 }
 
-.taps-logo {
+.tap-icon {
   width: 30px;
   height: 30px;
 }
 
-.taps-number {
+.tap-number {
   font-size: 36px;
   font-weight: bold;
 }
 
-.tap-rewards {
+.tap-info {
   font-size: 14px;
   color: #d9d9d9;
 }
 
-.how-tasks-work {
-  font-size: 14px;
-  color: #d9d9d9;
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-/* Pagination */
-.pagination {
+/* Tabs */
+.task-tabs {
   display: flex;
   justify-content: space-between;
   margin-bottom: 20px;
   padding-bottom: 8px;
 }
 
-.pagination-tab {
+.task-tab {
   font-size: 16px;
   cursor: pointer;
   color: #fff;
 }
 
-.pagination-tab.active {
+.task-tab.active {
   position: relative;
 }
 
-.pagination-tab.active::after {
+.task-tab.active::after {
   content: "";
   position: absolute;
   width: 100%;
@@ -82,8 +67,8 @@
   left: 0;
 }
 
-/* Task Cards */
-.task-cards {
+/* Task List */
+.task-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -91,7 +76,7 @@
   overflow-y: auto;
 }
 
-.task-card {
+.task-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -100,39 +85,39 @@
   background-color: #414141;
 }
 
-.task-left {
+.task-details {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.task-logo {
+.task-thumbnail {
   width: 40px;
   height: 40px;
 }
 
-.task-info {
+.task-meta {
   display: flex;
   flex-direction: column;
 }
 
-.task-title {
+.task-name {
   font-size: 14px;
 }
 
-.task-value {
+.task-reward {
   display: flex;
   align-items: center;
   gap: 4px;
   font-size: 12px;
 }
 
-.small-logo {
+.coin-icon {
   width: 16px;
   height: 16px;
 }
 
-.task-cta {
+.task-action {
   padding: 8px 16px;
   border-radius: 25px;
   border: none;
@@ -140,7 +125,7 @@
   cursor: pointer;
 }
 
-.no-tasks {
+.no-task-message {
   color: #d9d9d9;
   text-align: center;
   margin-top: 16px;
