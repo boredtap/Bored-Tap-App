@@ -6,10 +6,18 @@ from .dependencies import broken_streak_reset, calculate_time_difference, increm
 from earn.schemas import StreakData
 from user_reg_and_prof_mngmnt.user_authentication import get_current_user
 from earn.dependencies import get_current_streak
+from superuser.leaderboard.schemas import LeaderboardType
+from superuser.leaderboard.dependencies import (
+    all_time_leaderboard, daily_leaderboard,
+    weekly_leaderboard, monthly_leaderboard
+)
 
 
 logging.basicConfig(level=logging.INFO)
-earnApp = APIRouter()
+earnApp = APIRouter(
+    tags=["Earn features"],
+    dependencies=[Depends(get_current_user)]
+)
 
 @earnApp.post("/perform-streak", tags=["Earn features"])
 async def perform_streak(telegram_user_id: Annotated[str, Depends(get_current_user)]):
@@ -96,3 +104,20 @@ async def get_streak_status(telegram_user_id: Annotated[str, Depends(get_current
         longest_streak=streak.longest_streak,
         last_action_date=streak.last_action_date
     )
+
+
+@earnApp.get("/user/leaderboard", tags = ["Earn features"])
+def get_leaderboard(category: LeaderboardType):
+    if category == LeaderboardType.ALL_TIME:
+        board_result = all_time_leaderboard()
+
+    if category == LeaderboardType.DAILY:
+        board_result = daily_leaderboard()
+
+    if category == LeaderboardType.WEEKLY:
+        board_result = weekly_leaderboard()
+
+    if category == LeaderboardType.MONTHLY:
+        board_result = monthly_leaderboard()
+    
+    yield board_result
