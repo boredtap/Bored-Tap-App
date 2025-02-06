@@ -9,10 +9,16 @@ class TaskType(str, Enum):
     SPECIAL = "special"
     SOCIAL = "social"
 
+    def __repr__(self) -> str:
+        return self.value
+
 class TaskStatus(str, Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
     PAUSED = "paused"
+
+    def __repr__(self) -> str:
+        return self.value
 
 class TaskParticipants(str, Enum):
     ALL = "all_users"
@@ -27,6 +33,9 @@ class TaskParticipants(str, Enum):
     CONQUEROR = "conqueror"
     LEGEND = "legend"
 
+    def __repr__(self) -> str:
+        return self.value
+
 class ExportFormat(str, Enum):
     CSV = "csv"
     XLSX = "xlsx"
@@ -34,7 +43,7 @@ class ExportFormat(str, Enum):
 
 class Task(BaseModel):
     task_name: str
-    task_type: TaskType
+    task_type: str
     task_description: str
     task_status: TaskStatus
     task_participants: TaskParticipants | list[TaskParticipants]
