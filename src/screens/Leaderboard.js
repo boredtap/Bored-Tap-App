@@ -56,7 +56,7 @@ const Leaderboard = () => {
         setCurrentUser({
           username: userData.username,
           level: userData.level,
-          position: userData.rank, // Assuming 'rank' is included in the profile data (as a number or numeric string)
+          position: userData.rank, // Assuming 'rank' is returned as a numeric or numeric string value
           value: userData.total_coins, // Assuming 'total_coins' represents the BT Coin value
           image_url: userData.image_url, // This field will be provided by the backend
         });
@@ -175,22 +175,30 @@ const Leaderboard = () => {
             </div>
           </div>
           <div className="leaderboard-right">
-            {parseInt(currentUser.position, 10) &&
-            parseInt(currentUser.position, 10) <= 3 ? (
-              <img
-                src={
-                  parseInt(currentUser.position, 10) === 1
-                    ? `${process.env.PUBLIC_URL}/first-icon.png`
-                    : parseInt(currentUser.position, 10) === 2
-                    ? `${process.env.PUBLIC_URL}/second-icon.png`
-                    : `${process.env.PUBLIC_URL}/third-icon.png`
+            {(() => {
+              const rank = parseInt(currentUser.position, 10);
+              if (!isNaN(rank) && rank > 0) {
+                if (rank <= 3) {
+                  return (
+                    <img
+                      src={
+                        rank === 1
+                          ? `${process.env.PUBLIC_URL}/first-icon.png`
+                          : rank === 2
+                          ? `${process.env.PUBLIC_URL}/second-icon.png`
+                          : `${process.env.PUBLIC_URL}/third-icon.png`
+                      }
+                      alt={`Top ${rank} Icon`}
+                      className="leaderboard-right-icon"
+                    />
+                  );
+                } else {
+                  return <span className="position-number black-text">#{rank}</span>;
                 }
-                alt={`Top ${currentUser.position} Icon`}
-                className="leaderboard-right-icon"
-              />
-            ) : (
-              <span className="position-number black-text">#{currentUser.position}</span>
-            )}
+              } else {
+                return <span className="position-number black-text">#N/A</span>;
+              }
+            })()}
           </div>
         </div>
       )}
