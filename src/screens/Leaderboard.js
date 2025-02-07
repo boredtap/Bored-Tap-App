@@ -58,7 +58,7 @@ const Leaderboard = () => {
           level: userData.level,
           position: userData.rank, // Assuming 'rank' is included in the profile data
           value: userData.total_coins, // Assuming 'total_coins' represents the BT Coin value
-          image_url: userData.image_url, // Ensure your backend provides this if available
+          image_url: userData.image_url, // This field will be provided by the backend
         });
       } catch (err) {
         console.error("Error fetching leaderboard data:", err);
@@ -170,9 +170,12 @@ const Leaderboard = () => {
                 {currentUser.username} <span className="level black-text">.Lvl {currentUser.level}</span>
               </p>
               <p className="leaderboard-value black-text">
-                #{currentUser.position}, {currentUser.value} BT Coin
+                {currentUser.value} BT Coin
               </p>
             </div>
+          </div>
+          <div className="leaderboard-right">
+            <span className="position-number black-text">#{currentUser.position}</span>
           </div>
         </div>
       )}
