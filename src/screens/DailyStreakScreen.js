@@ -162,7 +162,7 @@ const DailyStreakScreen = () => {
       </div>
 
       {/* CTA Button */}
-      <center><div className="cta-container">
+      <center><div className="cta-container2">
         <CTAButton
           isActive={!claimedDays.includes(currentDay)}
           text={claimedDays.includes(currentDay) ? "Come back tomorrow" : "Claim Reward"}
