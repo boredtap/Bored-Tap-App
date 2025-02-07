@@ -56,9 +56,10 @@ const Leaderboard = () => {
         setCurrentUser({
           username: userData.username,
           level: userData.level,
-          position: userData.rank, // Assuming 'rank' is returned as a numeric or numeric string value
-          value: userData.total_coins, // Assuming 'total_coins' represents the BT Coin value
-          image_url: userData.image_url, // This field will be provided by the backend
+          position: userData.rank, // This might be empty/invalid; we will use leaderboard index if needed.
+          value: userData.total_coins, // BT Coin value
+          image_url: userData.image_url, // Provided by backend when available
+          telegram_user_id: userData.telegram_user_id, // Must be returned to match with leaderboard entries
         });
       } catch (err) {
         console.error("Error fetching leaderboard data:", err);
@@ -176,8 +177,13 @@ const Leaderboard = () => {
           </div>
           <div className="leaderboard-right">
             {(() => {
-              const rank = parseInt(currentUser.position, 10);
-              if (!isNaN(rank) && rank > 0) {
+              // Try to find the current user in the current leaderboard using telegram_user_id
+              const currentUserIndex = currentLeaderboard.findIndex(
+                (entry) => entry.telegram_user_id === currentUser.telegram_user_id
+              );
+              // If found, use the index (adding 1 for rank) for display
+              const rank = currentUserIndex !== -1 ? currentUserIndex + 1 : null;
+              if (rank) {
                 if (rank <= 3) {
                   return (
                     <img
@@ -196,7 +202,8 @@ const Leaderboard = () => {
                   return <span className="position-number black-text">#{rank}</span>;
                 }
               } else {
-                return <span className="position-number black-text">#N/A</span>;
+                // Fallback: if the user isn't found in the leaderboard, display a default text.
+                return <span className="position-number black-text">#--</span>;
               }
             })()}
           </div>
