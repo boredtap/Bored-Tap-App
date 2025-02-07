@@ -12,6 +12,7 @@ def process_result_from_aggregation(result):
             telegram_user_id=data["telegram_user_id"],
             rank= f"#{rank+1}",
             username=data["username"],
+            image_url=data["image_url"],
             level=data["level"],
             level_name=data["level_name"],
             coins_earned=data["total_coins"],

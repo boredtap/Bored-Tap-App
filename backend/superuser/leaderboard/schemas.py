@@ -34,6 +34,7 @@ class LeaderBoard(BaseModel):
     telegram_user_id: str
     rank: str
     username: str
+    image_url: str
     level: int
     level_name: str
     coins_earned: int
