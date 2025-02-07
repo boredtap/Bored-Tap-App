@@ -56,7 +56,7 @@ const Leaderboard = () => {
         setCurrentUser({
           username: userData.username,
           level: userData.level,
-          position: userData.rank, // Assuming 'rank' is included in the profile data
+          position: userData.rank, // Assuming 'rank' is included in the profile data (as a number or numeric string)
           value: userData.total_coins, // Assuming 'total_coins' represents the BT Coin value
           image_url: userData.image_url, // This field will be provided by the backend
         });
@@ -175,7 +175,22 @@ const Leaderboard = () => {
             </div>
           </div>
           <div className="leaderboard-right">
-            <span className="position-number black-text">#{currentUser.position}</span>
+            {parseInt(currentUser.position, 10) &&
+            parseInt(currentUser.position, 10) <= 3 ? (
+              <img
+                src={
+                  parseInt(currentUser.position, 10) === 1
+                    ? `${process.env.PUBLIC_URL}/first-icon.png`
+                    : parseInt(currentUser.position, 10) === 2
+                    ? `${process.env.PUBLIC_URL}/second-icon.png`
+                    : `${process.env.PUBLIC_URL}/third-icon.png`
+                }
+                alt={`Top ${currentUser.position} Icon`}
+                className="leaderboard-right-icon"
+              />
+            ) : (
+              <span className="position-number black-text">#{currentUser.position}</span>
+            )}
           </div>
         </div>
       )}
