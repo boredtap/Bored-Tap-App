@@ -8,6 +8,7 @@ from tasks.router import taskApp
 from invite.router import inviteApp
 from telegram_bot import bot_interactions
 from superuser.dashboard.router import adminDashboard
+from superuser.reward.router import rewardApp
 from superuser.task.router import task_router
 from superuser.leaderboard.router import adminLeaderboard
 from user_reg_and_prof_mngmnt.user_authentication import get_current_user
@@ -65,6 +66,7 @@ app.include_router(taskApp)
 app.include_router(inviteApp)
 app.include_router(bot_interactions)
 app.include_router(adminDashboard)
+app.include_router(rewardApp)
 app.include_router(task_router)
 app.include_router(adminLeaderboard)
 

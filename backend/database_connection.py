@@ -1,5 +1,5 @@
 from config import get_settings
-from pymongo import MongoClient
+from pymongo import MongoClient, errors
 from superuser import task
 from user_reg_and_prof_mngmnt.schemas import BasicProfile
 
@@ -22,8 +22,25 @@ def get_db():
         raise e
 
 db = get_db()
+
+collection_names = [
+    'admins',
+    'users',
+    'invites_ref',
+    'coin_stats',
+    'tasks',
+    'rewards'
+]
+
+for collection_name in collection_names:
+    try:
+        db.create_collection(collection_name, check_exists=True,)
+    except errors.CollectionInvalid:
+        pass
+
 admin_collection = db['admins']
 user_collection = db['users']
 invites_ref = db['invites_ref']
 coin_stats = db['coin_stats']
 task_collection = db['tasks']
+rewards_collection = db['rewards']
