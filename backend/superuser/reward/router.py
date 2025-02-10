@@ -9,7 +9,8 @@ from superuser.dashboard.admin_auth import get_current_admin
 from superuser.reward.dependencies import (
     create_reward as create_reward_func,
     update_reward as update_reward_func,
-    delete_reward as delete_reward_func
+    delete_reward as delete_reward_func,
+    get_rewards as get_rewards_func
 )
 from superuser.reward.models import RewardsModelResponse
 from superuser.reward.schemas import Beneficiary, CreateReward, Level
@@ -39,9 +40,9 @@ def img_to_binary(img_upload_content):
         raise HTTPException(status_code=400, detail="Invalid image file. Please upload a valid image file.")
 
 # ------------------------------- BYTES TO BINARY ------------------------------ #
-def bytes_to_binary(bytes_data):
-    binary_str = bin(int.from_bytes(bytes_data, "big"))[2:]
-    return binary_str
+# def bytes_to_binary(bytes_data):
+#     binary_str = bin(int.from_bytes(bytes_data, "big"))[2:]
+#     return binary_str
 
 
 # ------------------------------ CREATE REWARD ------------------------------ #
@@ -126,9 +127,9 @@ async def delete_reward(reward_id: str):
 
 
 # ------------------------------ GET ALL REWARDS ------------------------------ #
-@rewardApp.get("/get_rewards", status_code=201, deprecated=True)
+@rewardApp.get("/get_rewards", status_code=201)
 async def get_rewards():
-    pass
+    return get_rewards_func()
 
 
 # ------------------------------ GET REWARD BY STATUS ------------------------------ #

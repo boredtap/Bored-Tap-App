@@ -1,4 +1,5 @@
 from config import get_settings
+from gridfs import GridFS
 from pymongo import MongoClient, errors
 from superuser import task
 from user_reg_and_prof_mngmnt.schemas import BasicProfile
@@ -21,7 +22,23 @@ def get_db():
         print(f"Error connecting to MongoDB: {e}")
         raise e
 
+def get_img_db():
+    """
+
+    """
+    try:
+        # ping the server to check connectivity
+        client.server_info()
+        db = client['bored-tap-images']
+        return db
+    except Exception as e:
+        print(f"Error connecting to MongoDB: {e}")
+        raise e
+
+
 db = get_db()
+img_db = get_img_db()
+fs = GridFS(img_db, collection='images')
 
 collection_names = [
     'admins',

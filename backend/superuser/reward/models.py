@@ -10,7 +10,7 @@ class RewardsModel(BaseModel):
     launch_date: datetime
     status: str
     claim_rate: int
-    reward_image: Binary | str
+    reward_image: Binary
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 

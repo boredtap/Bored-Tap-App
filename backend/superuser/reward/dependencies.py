@@ -77,3 +77,23 @@ def delete_reward(reward_id: str):
         raise Exception("Reward deletion failed.")
 
     return True
+
+
+# ------------------------------- GET REWARDS ------------------------------ #
+def get_rewards():
+    rewards = rewards_collection.find()
+
+    if not rewards:
+        raise Exception("No rewards found.")
+    
+    for reward in rewards:
+        yield RewardsModelResponse(
+            id=str(reward["_id"]),
+            reward_title=reward["reward_title"],
+            reward=reward["reward"],
+            beneficiary=reward["beneficiary"],
+            launch_date=reward["launch_date"],
+            status=reward["status"],
+            claim_rate=reward["claim_rate"],
+            reward_image=reward["reward_image"]
+        )
