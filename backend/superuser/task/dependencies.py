@@ -48,7 +48,7 @@ async def validate_image(task_image: UploadFile):
 
 
 # --------------------------------- CREATE TASK ---------------------------------
-def create_task(task: TaskSchema, image: str | None):
+def create_task(task: TaskSchema):
     created_task = Task(
         task_name=task.task_name,
         task_type=task.task_type,

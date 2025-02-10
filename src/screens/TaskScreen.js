@@ -3,10 +3,10 @@ import Navigation from "../components/Navigation";
 import "./TaskScreen.css";
 
 const TaskScreen = () => {
-  const [activeTab, setActiveTab] = useState("In-Game"); // Default to In-Game
+  const [activeTab, setActiveTab] = useState("In-Game"); 
   const [tasksData, setTasksData] = useState([]);
   const [totalTaps, setTotalTaps] = useState(0);
-  // const [loading, setLoading] = useState(true); // Commented out loading
+  const [loading, setLoading] = useState(true); 
 
   const taskTabs = ["In-Game", "Special", "Social", "Completed"];
 
@@ -15,7 +15,7 @@ const TaskScreen = () => {
   }, [activeTab]);
 
   const fetchTasksAndTaps = async (taskType) => {
-    // setLoading(true); // Commented out loading
+    setLoading(true); 
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) {
@@ -58,7 +58,7 @@ const TaskScreen = () => {
     } catch (err) {
       console.error("Error fetching tasks or taps:", err);
     }
-    // finally { setLoading(false); } // Commented out loading
+    finally { setLoading(false); } 
   };
 
   const handleTabClick = (tab) => {
@@ -118,13 +118,15 @@ const TaskScreen = () => {
         </div>
 
         {/* Task List */}
-        <div className="task-list">
-          {tasksData.length > 0 ? (
-            tasksData.map((task, index) => (
-              <div className="task-item" key={index}>
+          <div className="task-list">
+            {loading ? ( // Show loading state while fetching
+              <p className="loading-message">Fetching tasks...</p>
+            ) : tasksData.length > 0 ? (
+              tasksData.map((task, index) => (
+                <div className="task-item" key={index}>
                 <div className="task-details">
                   <img
-                    src={task.task_image} // Uses uploaded image
+                     src={`data:image/png;base64,${task.task_image}`}
                     alt={task.task_name}
                     className="task-thumbnail"
                   />
