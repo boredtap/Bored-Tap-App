@@ -1,19 +1,25 @@
+from datetime import datetime
 from io import BytesIO
 from PIL import Image
-from bson import Binary
+from bson import Binary, ObjectId
 from fastapi import HTTPException
 from typing import Optional
 from fastapi import APIRouter, Depends
-from h11 import Request
+from fastapi.responses import FileResponse, StreamingResponse
+from h11 import Request, Response
 from superuser.dashboard.admin_auth import get_current_admin
 from superuser.reward.dependencies import (
     create_reward as create_reward_func,
+    verify_beneficiaries,
     update_reward as update_reward_func,
     delete_reward as delete_reward_func,
-    get_rewards as get_rewards_func
+    get_rewards as get_rewards_func,
+    get_reward_image as get_reward_image_func,
+    get_rewards_by_status as get_reward_by_status_func,
+    get_rewards_by_date as get_reward_by_date_func
 )
 from superuser.reward.models import RewardsModelResponse
-from superuser.reward.schemas import Beneficiary, CreateReward, Level
+from superuser.reward.schemas import Beneficiary, CreateReward, Level, Status, UpdateReward
 
 
 
@@ -25,8 +31,8 @@ rewardApp = APIRouter(
 )
 
 
-# ------------------------------ IMG TO BINARY ------------------------------ #
-def img_to_binary(img_upload_content):
+# ------------------------------ VERIFY IMAGE ------------------------------ #
+def verify_image(img_upload_content):
     try:
         img_bytes = BytesIO(img_upload_content)
         img = Image.open(img_bytes)
@@ -34,15 +40,9 @@ def img_to_binary(img_upload_content):
         img.close()
         img_bytes.seek(0)
         img_data = img_bytes.getvalue()
-        binary_img = Binary(img_data)
-        return binary_img
+        return img_data
     except Exception as e:
         raise HTTPException(status_code=400, detail="Invalid image file. Please upload a valid image file.")
-
-# ------------------------------- BYTES TO BINARY ------------------------------ #
-# def bytes_to_binary(bytes_data):
-#     binary_str = bin(int.from_bytes(bytes_data, "big"))[2:]
-#     return binary_str
 
 
 # ------------------------------ CREATE REWARD ------------------------------ #
@@ -51,34 +51,44 @@ async def create_reward(
         clan: list[str] | None = None,
         level: list[str] | None = None,
         specific_users: list[str] | None = None,
-        new_reward = Depends(CreateReward)
+        new_reward: CreateReward = Depends(CreateReward)
     ) -> RewardsModelResponse:
-    if new_reward.reward_image is None:
+    if not new_reward.reward_image:
         raise HTTPException(status_code=400, detail="Please upload a reward image.")
 
     try:
-        image_content = await new_reward.reward_image.read()
-        binary_img = img_to_binary(image_content)
+        image_filename = new_reward.reward_image.filename
+        image_bytes = await new_reward.reward_image.read()
+        image_bytes = verify_image(image_bytes)
+        image_buffer = BytesIO(image_bytes)
+        image_buffer.seek(0)
     except Exception as e:
         raise HTTPException(status_code=400, detail="Invalid image file. Please upload a valid image file.")
 
-    if new_reward.beneficiary == "all_users":
-        new_reward.beneficiary = ["all_users"]
+    verify_beneficiaries(new_reward, clan, level, specific_users)
+    # if new_reward.beneficiary == "all_users":
+    #     new_reward.beneficiary = ["all_users"]
 
-    if new_reward.beneficiary == "level" and len(level) > 0:
-        new_reward.beneficiary = level
+    # if new_reward.beneficiary == "level" and len(level) > 0:
+    #     new_reward.beneficiary = level
     
-    if new_reward.beneficiary == "clan" and len(clan) > 0:
-        new_reward.beneficiary = clan
+    # if new_reward.beneficiary == "clan" and len(clan) > 0:
+    #     new_reward.beneficiary = clan
 
-    if new_reward.beneficiary == "specific_users" and len(specific_users) > 0:
-        new_reward.beneficiary = specific_users
+    # if new_reward.beneficiary == "specific_users" and len(specific_users) > 0:
+    #     new_reward.beneficiary = specific_users
 
-    created_reward = create_reward_func(new_reward, binary_img)
+    created_reward = create_reward_func(new_reward, image_bytes, image_filename)
 
     return created_reward
-    
 
+
+# ------------------------------ REWARD IMAGE URL ------------------------------ #
+@rewardApp.get("/reward_image/{image_id}", status_code=201)
+async def get_reward_image(image_id: str):
+    image = get_reward_image_func(ObjectId(image_id))
+
+    return image
 
 # ------------------------------ UPDATE REWARD ------------------------------ #
 @rewardApp.put("/update_reward", status_code=201)
@@ -87,29 +97,19 @@ async def update_reward(
         clan: list[str] | None = None,
         level: list[str] | None = None,
         specific_users: list[str] | None = None,
-        reward_update = Depends(CreateReward)
+        reward_update: UpdateReward = Depends(UpdateReward)
     ) -> RewardsModelResponse:
     # check incoming upload image type whether it is image or bytes
     try:
+        img_name = reward_update.reward_image.filename
         image_content = await reward_update.reward_image.read()
-        binary_img = img_to_binary(image_content)
+        img_bytes = verify_image(image_content)
     except Exception as e:
         raise HTTPException(status_code=400, detail="Invalid image file. Please upload a valid image file.")
 
-
-    if reward_update.beneficiary == "all_users":
-        reward_update.beneficiary = ["all_users"]
-
-    if reward_update.beneficiary == "level" and len(level) > 0:
-        reward_update.beneficiary = level
-
-    if reward_update.beneficiary == "clan" and len(clan) > 0:
-        reward_update.beneficiary = clan
-
-    if reward_update.beneficiary == "specific_users" and len(specific_users) > 0:
-        reward_update.beneficiary = specific_users
+    verify_beneficiaries(reward_update, clan, level, specific_users)
     
-    updated_reward = update_reward_func(reward_update, binary_img, reward_id)
+    updated_reward = update_reward_func(reward_update, img_bytes, img_name, reward_id)
 
     return updated_reward
 
@@ -133,9 +133,9 @@ async def get_rewards():
 
 
 # ------------------------------ GET REWARD BY STATUS ------------------------------ #
-@rewardApp.get("/get_reward_by_status", status_code=201, deprecated=True)
-async def get_reward_by_status():
-    pass
+@rewardApp.get("/get_reward_by_status", status_code=201)
+async def get_reward_by_status(status: Status):
+    return get_reward_by_status_func(status)
 
 
 # ------------------------------ GET REWARD BY BENEFICARY ------------------------------ #
@@ -145,12 +145,12 @@ async def get_reward_by_beneficiary():
 
 
 # ------------------------------ GET REWARD BY ID ------------------------------ #
-@rewardApp.get("/get_reward_by_id", status_code=201, deprecated=True)
-async def get_reward_by_id():
-    pass
+# @rewardApp.get("/get_reward_by_id", status_code=201, deprecated=True)
+# async def get_reward_by_id():
+#     pass
 
 
 # ------------------------------ GET REWARD BY DATE ------------------------------ #
-@rewardApp.get("/get_reward_by_date", status_code=201, deprecated=True)
-async def get_reward_by_date():
-    pass
+@rewardApp.get("/get_reward_by_date", status_code=201)
+async def get_reward_by_date(date: datetime):
+    return get_reward_by_date_func(date)

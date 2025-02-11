@@ -1,11 +1,37 @@
 import base64
+from datetime import datetime
+from io import BytesIO
+from PIL import Image
 from bson import Binary, ObjectId
+from fastapi.responses import StreamingResponse
 from superuser.reward.models import RewardsModel, RewardsModelResponse
 from superuser.reward.schemas import CreateReward, UpdateReward, Status
-from database_connection import rewards_collection
+from database_connection import rewards_collection, fs
 
 
-def create_reward(reward: CreateReward, reward_image: Binary):
+# ------------------------------- VERIFY BENEFICIARIES ------------------------------ #
+def verify_beneficiaries(
+        new_reward: CreateReward,
+        clan: list[str] | None = None,
+        level: list[str] | None = None,
+        specific_users: list[str] | None = None
+    ):
+    if new_reward.beneficiary == "all_users":
+        new_reward.beneficiary = ["all_users"]
+
+    if new_reward.beneficiary == "level" and len(level) > 0:
+        new_reward.beneficiary = level
+    
+    if new_reward.beneficiary == "clan" and len(clan) > 0:
+        new_reward.beneficiary = clan
+
+    if new_reward.beneficiary == "specific_users" and len(specific_users) > 0:
+        new_reward.beneficiary = specific_users
+
+
+# ------------------------------- CREATE REWARD ------------------------------ #
+def create_reward(reward: CreateReward, reward_image: bytes, image_name: str):
+    image_id = fs.put(reward_image, filename=image_name)
 
     new_reward = RewardsModel(
         reward_title=reward.reward_title,
@@ -14,7 +40,7 @@ def create_reward(reward: CreateReward, reward_image: Binary):
         launch_date=reward.launch_date,
         status=Status.ONGOING,
         claim_rate=0,
-        reward_image=reward_image
+        reward_image_id=str(image_id)
     )
 
     inserted = rewards_collection.insert_one(new_reward.model_dump())
@@ -24,33 +50,44 @@ def create_reward(reward: CreateReward, reward_image: Binary):
 
     # get inserted id
     new_reward_id = inserted.inserted_id
-    new_reward.reward_image = base64.b64encode(new_reward.reward_image).decode('utf-8')  # convert binary to base64
 
-    return RewardsModelResponse(**new_reward.model_dump(), id=str(new_reward_id))
+    image_buffer = BytesIO(reward_image)
+    image_buffer.seek(0)
 
-def update_reward(reward: UpdateReward, reward_image: Binary, reward_id: str):
+    return RewardsModelResponse(
+        id=str(new_reward_id),
+        **new_reward.model_dump()
+    )
+
+
+def get_reward_image(image_id: str):
+    reward_image = fs.get(image_id)
+    image_buffer = BytesIO(reward_image.read())
+    image_buffer.seek(0)
+    return StreamingResponse(image_buffer, media_type="image/jpeg")
+
+def update_reward(reward: UpdateReward, reward_image: bytes, img_name: str, reward_id: str):
 
     # get reward by id
-    reward_data = rewards_collection.find_one({"_id": ObjectId(reward_id)})
+    query_filter = {"_id": ObjectId(reward_id)}
+    reward_data = rewards_collection.find_one(query_filter)
 
     if not reward_data:
         raise Exception("Reward not found.")
 
-    # update reward
-    reward_data["reward_title"] = reward.reward_title
-    reward_data["reward"] = reward.reward
-    reward_data["beneficiary"] = reward.beneficiary
-    reward_data["launch_date"] = reward.launch_date
-    reward_data["reward_image"] = reward_image
+    # delete old image and insert updated image
+    old_img_id = reward_data["reward_image_id"]
+    fs.delete(ObjectId(old_img_id))
 
-    query_filter = {"_id": ObjectId(reward_id)}
+    new_img_id = fs.put(reward_image, filename=img_name)
+
     update_operation = {
         "$set": {
-                "reward_title": reward_data["reward_title"],
-                "reward": reward_data["reward"],
-                "beneficiary": reward_data["beneficiary"],
-                "launch_date": reward_data["launch_date"],
-                "reward_image": reward_data["reward_image"],
+                "reward_title": reward.reward_title,
+                "reward": reward.reward,
+                "beneficiary": reward.beneficiary,
+                "launch_date": reward.launch_date,
+                "reward_image_id": new_img_id,
             }
     }
 
@@ -61,16 +98,32 @@ def update_reward(reward: UpdateReward, reward_image: Binary, reward_id: str):
 
     if not updated.acknowledged:
         raise Exception("Reward update failed.")
-    
-    # convert binary to base64
-    reward_data["reward_image"] = base64.b64encode(reward_data["reward_image"]).decode('utf-8')
 
-    return RewardsModelResponse(**reward_data, id=str(reward_id))
+    return RewardsModelResponse(
+        # **reward, id=str(reward_id)
+        id=str(reward_id),
+        reward_title=reward.reward_title,
+        reward=reward.reward,
+        beneficiary=reward.beneficiary,
+        launch_date=reward.launch_date,
+        status=reward_data["status"],
+        claim_rate=reward_data["claim_rate"],
+        reward_image_id=str(new_img_id)
+    )
 
 
 # ------------------------------- DELETE REWARD ------------------------------ #
 def delete_reward(reward_id: str):
+    reward = rewards_collection.find_one({"_id": ObjectId(reward_id)})
 
+    if not reward:
+        raise Exception("Reward not found.")
+    
+    # delete reward image
+    image_id = reward["reward_image_id"]
+    fs.delete(ObjectId(image_id))
+
+    # delete reward
     deleted = rewards_collection.delete_one({"_id": ObjectId(reward_id)})
 
     if not deleted.acknowledged:
@@ -81,7 +134,7 @@ def delete_reward(reward_id: str):
 
 # ------------------------------- GET REWARDS ------------------------------ #
 def get_rewards():
-    rewards = rewards_collection.find()
+    rewards = rewards_collection.find({})
 
     if not rewards:
         raise Exception("No rewards found.")
@@ -95,5 +148,45 @@ def get_rewards():
             launch_date=reward["launch_date"],
             status=reward["status"],
             claim_rate=reward["claim_rate"],
-            reward_image=reward["reward_image"]
+            reward_image_id=reward["reward_image_id"]
+        )
+
+
+# ------------------------------- GET REWARDS BY STATUS ------------------------------ #
+def get_rewards_by_status(status: str):
+    rewards = rewards_collection.find({"status": status})
+
+    if not rewards:
+        raise Exception("No rewards found.")
+    
+    for reward in rewards:
+        yield RewardsModelResponse(
+            id=str(reward["_id"]),
+            reward_title=reward["reward_title"],
+            reward=reward["reward"],
+            beneficiary=reward["beneficiary"],
+            launch_date=reward["launch_date"],
+            status=reward["status"],
+            claim_rate=reward["claim_rate"],
+            reward_image_id=reward["reward_image_id"]
+        )
+
+
+# ------------------------------- GET REWARDS BY DATE ------------------------------ #
+def get_rewards_by_date(date: datetime):
+    rewards = rewards_collection.find({"launch_date": date})
+
+    if not rewards:
+        raise Exception("No rewards found.")
+    
+    for reward in rewards:
+        yield RewardsModelResponse(
+            id=str(reward["_id"]),
+            reward_title=reward["reward_title"],
+            reward=reward["reward"],
+            beneficiary=reward["beneficiary"],
+            launch_date=reward["launch_date"],
+            status=reward["status"],
+            claim_rate=reward["claim_rate"],
+            reward_image_id=reward["reward_image_id"]
         )
