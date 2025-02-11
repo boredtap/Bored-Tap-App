@@ -33,7 +33,7 @@ const TelegramLogin = () => {
         console.log("Sending Payload to API:", payload); // Debugging: Log payload
 
         try {
-          const response = await fetch("https://bored-tap-api.onrender.com/sign-up", {
+          const response = await fetch("https://bt-coins.onrender.com/sign-up", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

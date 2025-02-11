@@ -26,7 +26,7 @@ const SplashScreen = () => {
         const imageUrl = userData.photo_url || "";
 
         // First try to sign in
-        const signInResponse = await fetch("https://bored-tap-api.onrender.com/signin", {
+        const signInResponse = await fetch("https://bt-coins.onrender.com/signin", {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -49,7 +49,7 @@ const SplashScreen = () => {
         }
 
         // If sign-in fails, register the user
-        const signUpResponse = await fetch("https://bored-tap-api.onrender.com/sign-up", {
+        const signUpResponse = await fetch("https://bt-coins.onrender.com/sign-up", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -67,7 +67,7 @@ const SplashScreen = () => {
         }
 
         // Sign in after successful registration
-        const signInAfterRegResponse = await fetch("https://bored-tap-api.onrender.com/signin", {
+        const signInAfterRegResponse = await fetch("https://bt-coins.onrender.com/signin", {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -176,7 +176,7 @@ export default SplashScreen;
 //         console.log("Sending Payload to API:", payload); // Debugging: Log payload
 
 //         try {
-//           const response = await fetch("https://bored-tap-api.onrender.com/sign-up", {
+//           const response = await fetch("https://bt-coins.onrender.com/sign-up", {
 //             method: "POST",
 //             headers: {
 //               "content-Type": "application/json",

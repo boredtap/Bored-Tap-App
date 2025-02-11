@@ -28,7 +28,7 @@ export const getStoredAuth = () => {
   
   // Authentication API calls
   export const signIn = async (username, password) => {
-    const response = await fetch("https://bored-tap-api.onrender.com/signin", {
+    const response = await fetch("https://bt-coins.onrender.com/signin", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -52,7 +52,7 @@ export const getStoredAuth = () => {
   };
   
   export const signUp = async (userData) => {
-    const response = await fetch("https://bored-tap-api.onrender.com/sign-up", {
+    const response = await fetch("https://bt-coins.onrender.com/sign-up", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

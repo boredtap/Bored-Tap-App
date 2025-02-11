@@ -17,7 +17,7 @@ const BoostScreen = () => {
         }
 
         // Fetch user profile which includes total taps
-        const profileResponse = await fetch("https://bored-tap-api.onrender.com/user/profile", {
+        const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -33,7 +33,7 @@ const BoostScreen = () => {
         setTotalTaps(profileData.total_coins); // Assuming total_coins is the field for total taps in the profile
 
         // Fetch boosters data
-        const boostersResponse = await fetch("https://bored-tap-api.onrender.com/boosters", {
+        const boostersResponse = await fetch("https://bt-coins.onrender.com/boosters", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,

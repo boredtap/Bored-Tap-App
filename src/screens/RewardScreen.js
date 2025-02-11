@@ -176,7 +176,7 @@ const RewardScreen = () => {
         }
 
         // Fetch user profile for total taps
-        const profileResponse = await fetch("https://bored-tap-api.onrender.com/user/profile", {
+        const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,

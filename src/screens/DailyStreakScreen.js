@@ -39,7 +39,7 @@ const DailyStreakScreen = () => {
       if (!token) return;
 
       try {
-        const response = await fetch("https://bored-tap-api.onrender.com/user/profile", {
+        const response = await fetch("https://bt-coins.onrender.com/user/profile", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -79,7 +79,7 @@ const DailyStreakScreen = () => {
           console.error("No access token found");
           return;
         }
-        const response = await fetch("https://bored-tap-api.onrender.com/perform-streak", {
+        const response = await fetch("https://bt-coins.onrender.com/perform-streak", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
