@@ -1,6 +1,11 @@
 from datetime import datetime
-from bson import Binary
+from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict
+
+
+
+class Id(BaseModel):
+    id: str
 
 
 class RewardsModel(BaseModel):
@@ -10,12 +15,8 @@ class RewardsModel(BaseModel):
     launch_date: datetime
     status: str
     claim_rate: int
-    reward_image: Binary | str
+    reward_image_id: str
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-class Id(BaseModel):
-    id: str
 
 class RewardsModelResponse(Id, RewardsModel):
     pass
