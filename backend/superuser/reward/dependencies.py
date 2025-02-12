@@ -1,8 +1,6 @@
-import base64
 from datetime import datetime
 from io import BytesIO
-from PIL import Image
-from bson import Binary, ObjectId
+from bson import ObjectId
 from fastapi.responses import StreamingResponse
 from superuser.reward.models import RewardsModel, RewardsModelResponse
 from superuser.reward.schemas import CreateReward, UpdateReward, Status
@@ -19,14 +17,14 @@ def verify_beneficiaries(
     if new_reward.beneficiary == "all_users":
         new_reward.beneficiary = ["all_users"]
 
-    if new_reward.beneficiary == "level" and len(level) > 0:
-        new_reward.beneficiary = level
-    
+    if new_reward.beneficiary == "level":
+        new_reward.beneficiary = level[0].split(",")
+
     if new_reward.beneficiary == "clan" and len(clan) > 0:
-        new_reward.beneficiary = clan
+        new_reward.beneficiary = clan[0].split(",")
 
     if new_reward.beneficiary == "specific_users" and len(specific_users) > 0:
-        new_reward.beneficiary = specific_users
+        new_reward.beneficiary = specific_users[0].split(",")
 
 
 # ------------------------------- CREATE REWARD ------------------------------ #
@@ -148,6 +146,7 @@ def get_rewards():
             launch_date=reward["launch_date"],
             status=reward["status"],
             claim_rate=reward["claim_rate"],
+            claim_count=reward["claim_count"],
             reward_image_id=reward["reward_image_id"]
         )
 

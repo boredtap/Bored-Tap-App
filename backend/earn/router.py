@@ -6,11 +6,24 @@ from .dependencies import broken_streak_reset, calculate_time_difference, increm
 from earn.schemas import StreakData
 from user_reg_and_prof_mngmnt.user_authentication import get_current_user
 from earn.dependencies import get_current_streak
+
+# ---------------------- imports for leaderboard ---------------------- #
 from superuser.leaderboard.schemas import LeaderboardType
 from superuser.leaderboard.dependencies import (
     all_time_leaderboard, daily_leaderboard,
     weekly_leaderboard, monthly_leaderboard
 )
+
+# ---------------------- imports for reward ---------------------- #
+from reward.dependencies import (
+    my_on_going_rewards,
+    claim_reward as claim_reward_func,
+    my_claimed_rewards
+)
+from superuser.reward.schemas import Status
+
+
+
 
 
 logging.basicConfig(level=logging.INFO)
@@ -19,7 +32,8 @@ earnApp = APIRouter(
     dependencies=[Depends(get_current_user)]
 )
 
-@earnApp.post("/perform-streak", tags=["Earn features"])
+# ------------------------------------- PERFORM STREAK ------------------------------------- #
+@earnApp.post("/perform-streak")
 async def perform_streak(telegram_user_id: Annotated[str, Depends(get_current_user)]):
     """
     Updates the current and longest streaks of a user based on their activity.
@@ -96,7 +110,8 @@ async def perform_streak(telegram_user_id: Annotated[str, Depends(get_current_us
     }
 
 
-@earnApp.get("/streak/status", tags=["Earn features"])
+# ------------------------------------- GET STREAK STATUS ------------------------------------- #
+@earnApp.get("/streak/status")
 async def get_streak_status(telegram_user_id: Annotated[str, Depends(get_current_user)]):
     streak = get_current_streak(telegram_user_id)
     return StreakData(
@@ -106,8 +121,9 @@ async def get_streak_status(telegram_user_id: Annotated[str, Depends(get_current
     )
 
 
-@earnApp.get("/user/leaderboard", tags = ["Earn features"])
-def get_leaderboard(category: LeaderboardType):
+# ------------------------------------- LEADERBOARD ------------------------------------- #
+@earnApp.get("/user/leaderboard")
+async def get_leaderboard(category: LeaderboardType):
     if category == LeaderboardType.ALL_TIME:
         board_result = all_time_leaderboard()
 
@@ -120,4 +136,23 @@ def get_leaderboard(category: LeaderboardType):
     if category == LeaderboardType.MONTHLY:
         board_result = monthly_leaderboard()
     
-    yield board_result
+    return board_result
+
+
+# ------------------------------------- MY REWARDS ------------------------------------- #
+@earnApp.get("/earn/my-rewards")
+async def get_my_rewards(telegram_user_id: Annotated[str, Depends(get_current_user)], status: Status):
+    if status == Status.ONGOING:
+        return my_on_going_rewards(telegram_user_id)
+    
+    return my_claimed_rewards(telegram_user_id)
+
+
+# ------------------------------------- CLAIM REWARD ------------------------------------- #
+@earnApp.get("/earn/my-rewards/{reward_id}/claim")
+async def claim_reward(reward_id: str, telegram_user_id: Annotated[str, Depends(get_current_user)]):
+    claim = claim_reward_func(telegram_user_id, reward_id)
+    if claim:
+        return {"message": "Reward claimed successfully."}
+    
+    return {"message": "Reward not found/Invalid reward id."}
