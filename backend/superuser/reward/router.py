@@ -1,12 +1,9 @@
 from datetime import datetime
 from io import BytesIO
 from PIL import Image
-from bson import Binary, ObjectId
+from bson import ObjectId
 from fastapi import HTTPException
-from typing import Optional
 from fastapi import APIRouter, Depends
-from fastapi.responses import FileResponse, StreamingResponse
-from h11 import Request, Response
 from superuser.dashboard.admin_auth import get_current_admin
 from superuser.reward.dependencies import (
     create_reward as create_reward_func,
@@ -19,7 +16,7 @@ from superuser.reward.dependencies import (
     get_rewards_by_date as get_reward_by_date_func
 )
 from superuser.reward.models import RewardsModelResponse
-from superuser.reward.schemas import Beneficiary, CreateReward, Level, Status, UpdateReward
+from superuser.reward.schemas import CreateReward, Status, UpdateReward
 
 
 
@@ -66,17 +63,6 @@ async def create_reward(
         raise HTTPException(status_code=400, detail="Invalid image file. Please upload a valid image file.")
 
     verify_beneficiaries(new_reward, clan, level, specific_users)
-    # if new_reward.beneficiary == "all_users":
-    #     new_reward.beneficiary = ["all_users"]
-
-    # if new_reward.beneficiary == "level" and len(level) > 0:
-    #     new_reward.beneficiary = level
-    
-    # if new_reward.beneficiary == "clan" and len(clan) > 0:
-    #     new_reward.beneficiary = clan
-
-    # if new_reward.beneficiary == "specific_users" and len(specific_users) > 0:
-    #     new_reward.beneficiary = specific_users
 
     created_reward = create_reward_func(new_reward, image_bytes, image_filename)
 

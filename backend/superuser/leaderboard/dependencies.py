@@ -1,6 +1,4 @@
-from datetime import datetime, timedelta
-
-import telegram
+from datetime import datetime
 from database_connection import user_collection, coin_stats
 from superuser.leaderboard.schemas import Clan, LeaderBoard, LeaderBoardUserProfile, OverallAchievement, TodayAchievement
 

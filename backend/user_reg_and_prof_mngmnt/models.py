@@ -18,3 +18,5 @@ class UserProfile(BaseModel):
     is_admin: bool = False
     is_active: bool = True
     created_at: datetime = datetime.now()
+    clan: list[str] = []
+    claimed_rewards: list[str] = []
