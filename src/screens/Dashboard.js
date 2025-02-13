@@ -61,7 +61,7 @@ const Dashboard = () => {
       }
   
       try {
-        const response = await fetch("https://bored-tap-api.onrender.com/streak/status", {
+        const response = await fetch("https://bt-coins.onrender.com/streak/status", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -93,7 +93,7 @@ const Dashboard = () => {
       }
   
       try {
-        const response = await fetch("https://bored-tap-api.onrender.com/user/profile", {
+        const response = await fetch("https://bt-coins.onrender.com/user/profile", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -159,7 +159,7 @@ const Dashboard = () => {
       try {
         const token = localStorage.getItem("accessToken");
         const response = await fetch(
-          `https://bored-tap-api.onrender.com/update-coins?coins=${tapCountSinceLastUpdate.current}`,
+          `https://bt-coins.onrender.com/update-coins?coins=${tapCountSinceLastUpdate.current}`,
           {
             method: "POST",
             headers: {

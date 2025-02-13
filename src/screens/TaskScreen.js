@@ -24,7 +24,7 @@ const TaskScreen = () => {
       }
 
       // Fetch user profile
-      const profileResponse = await fetch("https://bored-tap-api.onrender.com/user/profile", {
+      const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -38,9 +38,9 @@ const TaskScreen = () => {
       setTotalTaps(profileData.total_coins);
 
       // Fetch tasks based on active tab
-      let url = `https://bored-tap-api.onrender.com/user/tasks/my_tasks?task_type=${taskType.toLowerCase()}`;
+      let url = `https://bt-coins.onrender.com/user/tasks/my_tasks?task_type=${taskType.toLowerCase()}`;
       if (taskType === "Completed") {
-        url = `https://bored-tap-api.onrender.com/user/tasks/my_tasks/completed`;
+        url = `https://bt-coins.onrender.com/user/tasks/my_tasks/completed`;
       }
 
       const tasksResponse = await fetch(url, {
@@ -69,7 +69,7 @@ const TaskScreen = () => {
     try {
       const token = localStorage.getItem("accessToken");
       const response = await fetch(
-        `https://bored-tap-api.onrender.com/user/tasks/my_tasks/completed`, 
+        `https://bt-coins.onrender.com/user/tasks/my_tasks/completed`, 
         {
           method: "POST",
           headers: {

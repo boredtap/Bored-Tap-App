@@ -17,7 +17,7 @@ const InviteScreen = () => {
 
       try {
         // Fetch user profile which includes invited friends
-        const profileResponse = await fetch("https://bored-tap-api.onrender.com/user/profile", {
+        const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -29,7 +29,7 @@ const InviteScreen = () => {
         setInvites(profileData.invite || []); // Assuming 'invite' is the field in the profile for friends
 
         // Fetch QR code
-        const qrResponse = await fetch("https://bored-tap-api.onrender.com/invite-qr-code", {
+        const qrResponse = await fetch("https://bt-coins.onrender.com/invite-qr-code", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,

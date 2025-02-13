@@ -33,7 +33,7 @@ $(document).ready(function () {
 
     // Function to register the user
     async function registerUser(user) {
-        const url = "https://bored-tap-api.onrender.com/sign-up";
+        const url = "https://bt-coins.onrender.com/sign-up";
         const data = {
             telegram_user_id: user.id,
             username: user.username,
@@ -60,7 +60,7 @@ $(document).ready(function () {
     }
     
     // $.ajax({
-    //     url: "https://bored-tap-api.onrender.com/sign-up",
+    //     url: "https://bt-coins.onrender.com/sign-up",
     //     type: "POST",
     //     data: formData,
     //     processData: false,
@@ -103,7 +103,7 @@ $(document).ready(function () {
 // taggg.innerHTML = userData;
 
 // async function fetchData() {
-//     const url = 'https://bored-tap-api.onrender.com/sign-up';
+//     const url = 'https://bt-coins.onrender.com/sign-up';
 //     const data = {
 //       telegram_user_id: "3456789",
 //       username: "test1",

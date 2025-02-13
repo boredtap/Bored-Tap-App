@@ -23,7 +23,7 @@ const Leaderboard = () => {
         for (let period of periods) {
           // Convert "All Time" to "all_time" (others become lowercase)
           const category = period.toLowerCase().replace(" ", "_");
-          const response = await fetch(`https://bored-tap-api.onrender.com/user/leaderboard?category=${category}`, {
+          const response = await fetch(`https://bt-coins.onrender.com/user/leaderboard?category=${category}`, {
             method: "GET",
             headers: {
               Authorization: `Bearer ${token}`,
@@ -42,7 +42,7 @@ const Leaderboard = () => {
         setLeaderboardData(fetchedData);
 
         // Fetch current user data for the floating card
-        const userResponse = await fetch("https://bored-tap-api.onrender.com/user/profile", {
+        const userResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
