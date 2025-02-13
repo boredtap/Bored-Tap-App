@@ -147,7 +147,7 @@ def get_rewards():
             status=reward["status"],
             claim_rate=reward["claim_rate"],
             claim_count=reward["claim_count"],
-            reward_image_id=reward["reward_image_id"]
+            reward_image_id=str(reward["reward_image_id"])
         )
 
 
