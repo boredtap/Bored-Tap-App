@@ -6,7 +6,7 @@ const Leaderboard = () => {
   const [activeTab, setActiveTab] = useState("Daily");
   const [leaderboardData, setLeaderboardData] = useState({});
   const [currentUser, setCurrentUser] = useState(null);
-  // const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchLeaderboardData = async () => {
@@ -17,11 +17,10 @@ const Leaderboard = () => {
       }
 
       try {
-        // Define the periods that match your backend's pagination categories
         const periods = ["Daily", "Weekly", "Monthly", "All Time"];
         const fetchedData = {};
+
         for (let period of periods) {
-          // Convert "All Time" to "all_time" (others become lowercase)
           const category = period.toLowerCase().replace(" ", "_");
           const response = await fetch(`https://bt-coins.onrender.com/user/leaderboard?category=${category}`, {
             method: "GET",
@@ -30,18 +29,22 @@ const Leaderboard = () => {
               "Content-Type": "application/json",
             },
           });
+
           if (!response.ok) {
             throw new Error(`Failed to fetch ${period} leaderboard`);
           }
+
           const data = await response.json();
-          // The backend returns an array containing one array of entries.
-          // We assume the inner array holds the actual leaderboard entries.
-          fetchedData[period] = Array.isArray(data) && data.length > 0 ? data[0] : [];
+          console.log(`Leaderboard data for ${category}:`, data); // Debugging
+
+          // Fix: Use data directly (previously assumed nested arrays)
+          fetchedData[period] = Array.isArray(data) ? data : [];
         }
 
         setLeaderboardData(fetchedData);
+        setLoading(false);
 
-        // Fetch current user data for the floating card
+        // Fetch current user profile
         const userResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
           method: "GET",
           headers: {
@@ -49,24 +52,26 @@ const Leaderboard = () => {
             "Content-Type": "application/json",
           },
         });
+
         if (!userResponse.ok) {
           throw new Error("Failed to fetch user profile");
         }
+
         const userData = await userResponse.json();
+        console.log("Current User Data:", userData); // Debugging
+
         setCurrentUser({
           username: userData.username,
           level: userData.level,
-          position: userData.rank, // This might be empty/invalid; we will use leaderboard index if needed.
-          value: userData.total_coins, // BT Coin value
-          image_url: userData.image_url, // Provided by backend when available
-          telegram_user_id: userData.telegram_user_id, // Must be returned to match with leaderboard entries
+          position: userData.rank || null,
+          value: userData.total_coins || 0,
+          image_url: userData.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
+          telegram_user_id: userData.telegram_user_id,
         });
       } catch (err) {
         console.error("Error fetching leaderboard data:", err);
+        setLoading(false);
       }
-      // finally {
-      //   setLoading(false);
-      // }
     };
 
     fetchLeaderboardData();
@@ -76,9 +81,9 @@ const Leaderboard = () => {
     setActiveTab(tab);
   };
 
-  // if (loading) {
-  //   return <div className="loading">Loading leaderboard...</div>;
-  // }
+  if (loading) {
+    return <div className="loading">Loading leaderboard...</div>;
+  }
 
   const currentLeaderboard = leaderboardData[activeTab] || [];
 
@@ -162,7 +167,7 @@ const Leaderboard = () => {
         <div className="floating-card">
           <div className="leaderboard-left">
             <img
-              src={currentUser.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`}
+              src={currentUser.image_url}
               alt="Profile"
               className="leaderboard-logo"
             />
@@ -177,12 +182,11 @@ const Leaderboard = () => {
           </div>
           <div className="leaderboard-right">
             {(() => {
-              // Try to find the current user in the current leaderboard using telegram_user_id
               const currentUserIndex = currentLeaderboard.findIndex(
                 (entry) => entry.telegram_user_id === currentUser.telegram_user_id
               );
-              // If found, use the index (adding 1 for rank) for display
               const rank = currentUserIndex !== -1 ? currentUserIndex + 1 : null;
+
               if (rank) {
                 if (rank <= 3) {
                   return (
@@ -202,7 +206,6 @@ const Leaderboard = () => {
                   return <span className="position-number black-text">#{rank}</span>;
                 }
               } else {
-                // Fallback: if the user isn't found in the leaderboard, display a default text.
                 return <span className="position-number black-text">#--</span>;
               }
             })()}
