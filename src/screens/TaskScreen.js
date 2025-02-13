@@ -6,7 +6,6 @@ const TaskScreen = () => {
   const [activeTab, setActiveTab] = useState("In-Game"); 
   const [tasksData, setTasksData] = useState([]);
   const [totalTaps, setTotalTaps] = useState(0);
-  const [loading, setLoading] = useState(true); 
 
   const taskTabs = ["In-Game", "Special", "Social", "Completed"];
 
@@ -15,7 +14,6 @@ const TaskScreen = () => {
   }, [activeTab]);
 
   const fetchTasksAndTaps = async (taskType) => {
-    setLoading(true); 
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) {
@@ -58,7 +56,6 @@ const TaskScreen = () => {
     } catch (err) {
       console.error("Error fetching tasks or taps:", err);
     }
-    finally { setLoading(false); } 
   };
 
   const handleTabClick = (tab) => {
@@ -118,17 +115,15 @@ const TaskScreen = () => {
         </div>
 
         {/* Task List */}
-          <div className="task-list">
-            {loading ? ( // Show loading state while fetching
-              <p className="loading-message">Fetching tasks...</p>
-            ) : tasksData.length > 0 ? (
-              tasksData.map((task, index) => (
-                <div className="task-item" key={index}>
+        <div className="task-list">
+          {tasksData.length > 0 ? (
+            tasksData.map((task, index) => (
+              <div className="task-item" key={index}>
                 <div className="task-details">
                   <img
-                     src={`data:image/png;base64,${task.task_image}`}
+                    src={`data:image/png;base64,${task.task_image}`}
                     alt={task.task_name}
-                    className="task-thumbnail"
+                    className="task-thumbnail round-frame"
                   />
                   <div className="task-meta">
                     <p className="task-name">{task.task_name}</p>

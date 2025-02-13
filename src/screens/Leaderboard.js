@@ -6,7 +6,6 @@ const Leaderboard = () => {
   const [activeTab, setActiveTab] = useState("Daily");
   const [leaderboardData, setLeaderboardData] = useState({});
   const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchLeaderboardData = async () => {
@@ -35,14 +34,10 @@ const Leaderboard = () => {
           }
 
           const data = await response.json();
-          console.log(`Leaderboard data for ${category}:`, data); // Debugging
-
-          // Fix: Use data directly (previously assumed nested arrays)
           fetchedData[period] = Array.isArray(data) ? data : [];
         }
 
         setLeaderboardData(fetchedData);
-        setLoading(false);
 
         // Fetch current user profile
         const userResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
@@ -58,8 +53,6 @@ const Leaderboard = () => {
         }
 
         const userData = await userResponse.json();
-        console.log("Current User Data:", userData); // Debugging
-
         setCurrentUser({
           username: userData.username,
           level: userData.level,
@@ -70,7 +63,6 @@ const Leaderboard = () => {
         });
       } catch (err) {
         console.error("Error fetching leaderboard data:", err);
-        setLoading(false);
       }
     };
 
@@ -80,10 +72,6 @@ const Leaderboard = () => {
   const handleTabClick = (tab) => {
     setActiveTab(tab);
   };
-
-  if (loading) {
-    return <div className="loading">Loading leaderboard...</div>;
-  }
 
   const currentLeaderboard = leaderboardData[activeTab] || [];
 
@@ -125,7 +113,7 @@ const Leaderboard = () => {
                 <img
                   src={entry.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`}
                   alt="Profile"
-                  className="leaderboard-logo"
+                  className="leaderboard-logo round-frame"
                 />
                 <div className="leaderboard-info">
                   <p className="leaderboard-title">
@@ -169,7 +157,7 @@ const Leaderboard = () => {
             <img
               src={currentUser.image_url}
               alt="Profile"
-              className="leaderboard-logo"
+              className="leaderboard-logo round-frame"
             />
             <div className="leaderboard-info">
               <p className="leaderboard-title black-text">

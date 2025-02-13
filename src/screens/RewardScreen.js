@@ -167,7 +167,7 @@ const RewardScreen = () => {
                   <button
                     className="reward-cta"
                     style={{
-                      backgroundColor: "#FFA500",
+                      backgroundColor: "orange",
                       color: "white",
                     }}
                     onClick={() => handleClaimReward(reward.reward_id)}
@@ -177,7 +177,7 @@ const RewardScreen = () => {
                 ) : (
                   <div
                     className="reward-share-icon"
-                    style={{ backgroundColor: "#4CAF50" }}
+                    style={{ backgroundColor: "white" }}
                   >
                     <img
                       src={`${process.env.PUBLIC_URL}/share-icon.png`}
