@@ -3,11 +3,11 @@ import Navigation from "../components/Navigation";
 import "./RewardScreen.css";
 
 const RewardScreen = () => {
-  const [activeTab, setActiveTab] = useState("On-Going Reward");
+  const [activeTab, setActiveTab] = useState("on_going"); // Must match backend response
   const [totalTaps, setTotalTaps] = useState(0);
   const [rewardsData, setRewardsData] = useState({
-    "On-Going Reward": [],
-    "Claimed Reward": []
+    on_going: [],
+    claimed: [],
   });
   const [loading, setLoading] = useState(true);
 
@@ -20,7 +20,7 @@ const RewardScreen = () => {
           return;
         }
 
-        // Fetch user profile for total taps
+        // Fetch user profile
         const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
           method: "GET",
           headers: {
@@ -34,21 +34,27 @@ const RewardScreen = () => {
         }
 
         const profileData = await profileResponse.json();
-        setTotalTaps(profileData.total_coins); // Assuming total_coins is the field for total taps in the profile
+        setTotalTaps(profileData.total_coins);
 
         // Fetch rewards for both ongoing and claimed
-        const ongoingRewardsResponse = await fetch("https://bt-coins.onrender.com/earn/my-rewards", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-        const claimedRewardsResponse = await fetch("https://bt-coins.onrender.com/earn/my-rewards?status=claimed", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+        const ongoingRewardsResponse = await fetch(
+          "https://bt-coins.onrender.com/earn/my-rewards?status=on_going",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        const claimedRewardsResponse = await fetch(
+          "https://bt-coins.onrender.com/earn/my-rewards?status=claimed",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
         if (!ongoingRewardsResponse.ok || !claimedRewardsResponse.ok) {
           throw new Error("Failed to fetch rewards data");
@@ -58,8 +64,8 @@ const RewardScreen = () => {
         const claimedRewards = await claimedRewardsResponse.json();
 
         setRewardsData({
-          "On-Going Reward": ongoingRewards,
-          "Claimed Reward": claimedRewards
+          on_going: ongoingRewards,
+          claimed: claimedRewards,
         });
 
       } catch (err) {
@@ -76,7 +82,34 @@ const RewardScreen = () => {
     setActiveTab(tab);
   };
 
-  const rewards = rewardsData[activeTab] || []; // Use backend data
+  const handleClaimReward = async (rewardId) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch(`https://bt-coins.onrender.com/earn/my-rewards/${rewardId}/claim`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        alert("Reward claimed successfully!");
+        setRewardsData((prevData) => ({
+          ...prevData,
+          on_going: prevData.on_going.filter((reward) => reward.reward_id !== rewardId),
+          claimed: [...prevData.claimed, result], // Add claimed reward
+        }));
+      } else {
+        alert(`Failed to claim reward: ${result.message}`);
+      }
+    } catch (err) {
+      console.error("Error claiming reward:", err);
+    }
+  };
+
+  const rewards = rewardsData[activeTab] || [];
 
   if (loading) {
     return <div className="loading">Loading rewards...</div>;
@@ -94,7 +127,7 @@ const RewardScreen = () => {
           <p className="task-link">How BT-boosters work?</p>
         </div>
 
-        {/* Pagination */}
+        {/* Pagination Tabs */}
         <div className="pagination">
           {Object.keys(rewardsData).map((tab) => (
             <span
@@ -102,7 +135,7 @@ const RewardScreen = () => {
               className={`pagination-tab ${activeTab === tab ? "active" : ""}`}
               onClick={() => handleTabClick(tab)}
             >
-              {tab}
+              {tab.replace("_", " ").toUpperCase()}
             </span>
           ))}
         </div>
@@ -110,11 +143,11 @@ const RewardScreen = () => {
         {/* Reward Cards */}
         <div className="reward-cards">
           {rewards.length > 0 ? (
-            rewards.map((reward, index) => (
-              <div className="reward-card" key={reward.id}>  {/*Use unique ID from the server*/}
+            rewards.map((reward) => (
+              <div className="reward-card" key={reward.reward_id}>
                 <div className="reward-left">
                   <img
-                    src={`${process.env.PUBLIC_URL}/${reward.reward_image_id || 'default-reward-icon.png'}`}
+                    src={`https://bt-coins.onrender.com/admin/reward/reward_image/${reward.reward_image_id}`}
                     alt={reward.reward_title}
                     className="reward-icon"
                   />
@@ -128,18 +161,16 @@ const RewardScreen = () => {
                       />
                       <span>Reward: {reward.reward}</span>
                     </div>
-                    <div className="reward-meta">
-                      <span>Beneficiaries: {reward.beneficiary.join(', ')}</span>
-                    </div>
                   </div>
                 </div>
-                {activeTab === "On-Going Reward" ? (
+                {activeTab === "on_going" ? (
                   <button
                     className="reward-cta"
                     style={{
                       backgroundColor: "#FFA500",
                       color: "white",
                     }}
+                    onClick={() => handleClaimReward(reward.reward_id)}
                   >
                     Claim
                   </button>
