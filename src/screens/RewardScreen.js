@@ -84,17 +84,11 @@ const RewardScreen = () => {
 
   return (
     <div className="reward-screen">
-      {/* Body */}
       <div className="reward-body">
-        {/* Total Taps Section */}
         <div className="total-taps">
           <p>Your Total Taps:</p>
           <div className="taps-display">
-            <img
-              src={`${process.env.PUBLIC_URL}/logo.png`}
-              alt="Logo"
-              className="taps-logo"
-            />
+            <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Logo" className="taps-logo" />
             <span className="taps-number">{totalTaps.toLocaleString()}</span>
           </div>
           <p className="task-link">How BT-boosters work?</p>
@@ -117,22 +111,25 @@ const RewardScreen = () => {
         <div className="reward-cards">
           {rewards.length > 0 ? (
             rewards.map((reward, index) => (
-              <div className="reward-card" key={index}>
+              <div className="reward-card" key={reward.id}>  {/*Use unique ID from the server*/}
                 <div className="reward-left">
                   <img
-                    src={`${process.env.PUBLIC_URL}/default-reward-icon.png`} // Default icon path
-                    alt={reward.title || "Reward"}
+                    src={`${process.env.PUBLIC_URL}/${reward.reward_image_id || 'default-reward-icon.png'}`}
+                    alt={reward.reward_title}
                     className="reward-icon"
                   />
                   <div className="reward-info">
-                    <p className="reward-title">{reward.title || "Untitled Reward"}</p>
+                    <p className="reward-title">{reward.reward_title}</p>
                     <div className="reward-meta">
                       <img
                         src={`${process.env.PUBLIC_URL}/logo.png`}
                         alt="Coin Icon"
                         className="small-icon"
                       />
-                      <span>{reward.description || "No description available"}</span>
+                      <span>Reward: {reward.reward}</span>
+                    </div>
+                    <div className="reward-meta">
+                      <span>Beneficiaries: {reward.beneficiary.join(', ')}</span>
                     </div>
                   </div>
                 </div>
@@ -140,7 +137,7 @@ const RewardScreen = () => {
                   <button
                     className="reward-cta"
                     style={{
-                      backgroundColor: "#FFA500", // Example color, adjust as needed
+                      backgroundColor: "#FFA500",
                       color: "white",
                     }}
                   >
@@ -149,10 +146,10 @@ const RewardScreen = () => {
                 ) : (
                   <div
                     className="reward-share-icon"
-                    style={{ backgroundColor: "#4CAF50" }} // Example color, adjust as needed
+                    style={{ backgroundColor: "#4CAF50" }}
                   >
                     <img
-                      src={`${process.env.PUBLIC_URL}/share-icon.png`} // Assuming you have a share icon
+                      src={`${process.env.PUBLIC_URL}/share-icon.png`}
                       alt="Share Icon"
                       className="share-icon"
                     />
@@ -166,7 +163,6 @@ const RewardScreen = () => {
         </div>
       </div>
 
-      {/* Navigation */}
       <Navigation />
     </div>
   );
