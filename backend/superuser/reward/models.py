@@ -11,7 +11,7 @@ class RewardsModel(BaseModel):
     beneficiary: list[str]
     launch_date: datetime
     status: str
-    claim_count: int
+    claim_count: int = 0
     claim_rate: int
     reward_image_id: str
 
