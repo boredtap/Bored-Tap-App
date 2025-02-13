@@ -3,11 +3,11 @@ import Navigation from "../components/Navigation";
 import "./RewardScreen.css";
 
 const RewardScreen = () => {
-  const [activeTab, setActiveTab] = useState("On-Going Reward");
+  const [activeTab, setActiveTab] = useState("On-Going"); // Updated tab name
   const [totalTaps, setTotalTaps] = useState(0);
   const [rewardsData, setRewardsData] = useState({
-    "On-Going Reward": [],
-    "Claimed Reward": []
+    on_going: [],
+    claimed: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -34,10 +34,10 @@ const RewardScreen = () => {
         }
 
         const profileData = await profileResponse.json();
-        setTotalTaps(profileData.total_coins); // Assuming total_coins is the field for total taps in the profile
+        setTotalTaps(profileData.total_coins); // Assuming total_coins holds the tap count
 
         // Fetch rewards for both ongoing and claimed
-        const ongoingRewardsResponse = await fetch("https://bt-coins.onrender.com/earn/my-rewards", {
+        const ongoingRewardsResponse = await fetch("https://bt-coins.onrender.com/earn/my-rewards?status=on_going", {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -58,8 +58,8 @@ const RewardScreen = () => {
         const claimedRewards = await claimedRewardsResponse.json();
 
         setRewardsData({
-          "On-Going Reward": ongoingRewards,
-          "Claimed Reward": claimedRewards
+          on_going: ongoingRewards,
+          claimed: claimedRewards
         });
 
       } catch (err) {
@@ -76,7 +76,7 @@ const RewardScreen = () => {
     setActiveTab(tab);
   };
 
-  const rewards = rewardsData[activeTab] || []; // Use backend data
+  const rewards = rewardsData[activeTab.toLowerCase().replace(" ", "_")] || []; // Ensure tab names match API
 
   if (loading) {
     return <div className="loading">Loading rewards...</div>;
@@ -94,7 +94,7 @@ const RewardScreen = () => {
           <p className="task-link">How BT-boosters work?</p>
         </div>
 
-        {/* Pagination */}
+        {/* Pagination Tabs */}
         <div className="pagination">
           {Object.keys(rewardsData).map((tab) => (
             <span
@@ -102,7 +102,7 @@ const RewardScreen = () => {
               className={`pagination-tab ${activeTab === tab ? "active" : ""}`}
               onClick={() => handleTabClick(tab)}
             >
-              {tab}
+              {tab.replace("_", " ")} {/* Display friendly tab names */}
             </span>
           ))}
         </div>
@@ -110,11 +110,13 @@ const RewardScreen = () => {
         {/* Reward Cards */}
         <div className="reward-cards">
           {rewards.length > 0 ? (
-            rewards.map((reward, index) => (
-              <div className="reward-card" key={reward.id}>  {/*Use unique ID from the server*/}
+            rewards.map((reward) => (
+              <div className="reward-card" key={reward.reward_id}> {/* Use unique ID */}
                 <div className="reward-left">
                   <img
-                    src={`${process.env.PUBLIC_URL}/${reward.reward_image_id || 'default-reward-icon.png'}`}
+                    src={reward.reward_image
+                      ? `https://bt-coins.onrender.com/images/${reward.reward_image}`
+                      : `${process.env.PUBLIC_URL}/default-reward-icon.png`}
                     alt={reward.reward_title}
                     className="reward-icon"
                   />
@@ -133,7 +135,7 @@ const RewardScreen = () => {
                     </div>
                   </div>
                 </div>
-                {activeTab === "On-Going Reward" ? (
+                {activeTab === "On-Going" ? (
                   <button
                     className="reward-cta"
                     style={{
