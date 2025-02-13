@@ -3,11 +3,11 @@ import Navigation from "../components/Navigation";
 import "./RewardScreen.css";
 
 const RewardScreen = () => {
-  const [activeTab, setActiveTab] = useState("New Reward");
+  const [activeTab, setActiveTab] = useState("On-Going Reward");
   const [totalTaps, setTotalTaps] = useState(0);
   const [rewardsData, setRewardsData] = useState({
-    "New Reward": [],
-    "Claimed Rewards": []
+    "On-Going Reward": [],
+    "Claimed Reward": []
   });
   const [loading, setLoading] = useState(true);
 
@@ -36,8 +36,8 @@ const RewardScreen = () => {
         const profileData = await profileResponse.json();
         setTotalTaps(profileData.total_coins); // Assuming total_coins is the field for total taps in the profile
 
-        // Fetch rewards for both new and claimed
-        const newRewardsResponse = await fetch("https://bt-coins.onrender.com/earn/my-rewards", {
+        // Fetch rewards for both ongoing and claimed
+        const ongoingRewardsResponse = await fetch("https://bt-coins.onrender.com/earn/my-rewards", {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -50,16 +50,16 @@ const RewardScreen = () => {
           },
         });
 
-        if (!newRewardsResponse.ok || !claimedRewardsResponse.ok) {
+        if (!ongoingRewardsResponse.ok || !claimedRewardsResponse.ok) {
           throw new Error("Failed to fetch rewards data");
         }
 
-        const newRewards = await newRewardsResponse.json();
+        const ongoingRewards = await ongoingRewardsResponse.json();
         const claimedRewards = await claimedRewardsResponse.json();
 
         setRewardsData({
-          "New Reward": newRewards,
-          "Claimed Rewards": claimedRewards
+          "On-Going Reward": ongoingRewards,
+          "Claimed Reward": claimedRewards
         });
 
       } catch (err) {
@@ -115,50 +115,54 @@ const RewardScreen = () => {
 
         {/* Reward Cards */}
         <div className="reward-cards">
-          {rewards.map((reward, index) => (
-            <div className="reward-card" key={index}>
-              <div className="reward-left">
-                <img
-                  src={`${process.env.PUBLIC_URL}${reward.icon}`}
-                  alt={reward.title}
-                  className="reward-icon"
-                />
-                <div className="reward-info">
-                  <p className="reward-title">{reward.title}</p>
-                  <div className="reward-meta">
-                    <img
-                      src={`${process.env.PUBLIC_URL}/logo.png`}
-                      alt="Coin Icon"
-                      className="small-icon"
-                    />
-                    <span>{reward.description}</span>
+          {rewards.length > 0 ? (
+            rewards.map((reward, index) => (
+              <div className="reward-card" key={index}>
+                <div className="reward-left">
+                  <img
+                    src={`${process.env.PUBLIC_URL}/default-reward-icon.png`} // Default icon path
+                    alt={reward.title || "Reward"}
+                    className="reward-icon"
+                  />
+                  <div className="reward-info">
+                    <p className="reward-title">{reward.title || "Untitled Reward"}</p>
+                    <div className="reward-meta">
+                      <img
+                        src={`${process.env.PUBLIC_URL}/logo.png`}
+                        alt="Coin Icon"
+                        className="small-icon"
+                      />
+                      <span>{reward.description || "No description available"}</span>
+                    </div>
                   </div>
                 </div>
+                {activeTab === "On-Going Reward" ? (
+                  <button
+                    className="reward-cta"
+                    style={{
+                      backgroundColor: "#FFA500", // Example color, adjust as needed
+                      color: "white",
+                    }}
+                  >
+                    Claim
+                  </button>
+                ) : (
+                  <div
+                    className="reward-share-icon"
+                    style={{ backgroundColor: "#4CAF50" }} // Example color, adjust as needed
+                  >
+                    <img
+                      src={`${process.env.PUBLIC_URL}/share-icon.png`} // Assuming you have a share icon
+                      alt="Share Icon"
+                      className="share-icon"
+                    />
+                  </div>
+                )}
               </div>
-              {activeTab === "New Reward" ? (
-                <button
-                  className="reward-cta"
-                  style={{
-                    backgroundColor: reward.button.bgColor,
-                    color: reward.button.textColor,
-                  }}
-                >
-                  {reward.button.label}
-                </button>
-              ) : (
-                <div
-                  className="reward-share-icon"
-                  style={{ backgroundColor: reward.button.bgColor }}
-                >
-                  <img
-                    src={`${process.env.PUBLIC_URL}${reward.button.icon}`}
-                    alt="Share Icon"
-                    className="share-icon"
-                  />
-                </div>
-              )}
-            </div>
-          ))}
+            ))
+          ) : (
+            <p>No rewards available for this category.</p>
+          )}
         </div>
       </div>
 
