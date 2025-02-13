@@ -1,15 +1,14 @@
 import React from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "./Navigation.css";
 
 const Navigation = () => {
   const navigate = useNavigate();
-  const location = useLocation(); // Get current route
 
   return (
     <div className="navigation-bar">
       <div
-        className={`navigation-item ${location.pathname === "/dashboard" ? "active" : ""}`}
+        className="navigation-item"
         onClick={() => navigate("/dashboard")}
       >
         <img
@@ -20,7 +19,7 @@ const Navigation = () => {
         <span>Earn</span>
       </div>
       <div
-        className={`navigation-item ${location.pathname === "/task-screen" ? "active" : ""}`}
+        className="navigation-item"
         onClick={() => navigate("/task-screen")}
       >
         <img
@@ -31,7 +30,7 @@ const Navigation = () => {
         <span>Tasks</span>
       </div>
       <div
-        className={`navigation-item ${location.pathname === "/invite-screen" ? "active" : ""}`}
+        className="navigation-item"
         onClick={() => navigate("/invite-screen")}
       >
         <img
@@ -42,7 +41,7 @@ const Navigation = () => {
         <span>Invite</span>
       </div>
       <div
-        className={`navigation-item ${location.pathname === "/wallet-screen" ? "active" : ""}`}
+        className="navigation-item"
         onClick={() => navigate("/wallet-screen")}
       >
         <img

@@ -126,7 +126,7 @@
 }
 
 /* Make task images round */
-.task-thumbnail.round-frame {
+.task-thumbnail {
   width: 40px;
   height: 40px;
   border-radius: 50%; /* Makes images round */

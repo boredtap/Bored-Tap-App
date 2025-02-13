@@ -9,6 +9,7 @@
   bottom: 0;
   left: 0;
   width: 100%;
+  
   border-top: 1px solid #414141;
   z-index: 1000; /* Keeps navigation above other content */
 }
@@ -29,8 +30,7 @@
   color: #c7913d; /* Highlight on hover */
 }
 
-/* Active Screen Highlight */
-.navigation-item.active {
-  color: #FFA500; /* Highlight active tab */
-  font-weight: bold;
+.navigation-icon {
+  width: 24px;
+  height: 24px;
 }
