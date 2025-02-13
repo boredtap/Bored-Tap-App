@@ -1,10 +1,12 @@
 from datetime import datetime
 from io import BytesIO
 from bson import ObjectId
+from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from superuser.reward.models import RewardsModel, RewardsModelResponse
 from superuser.reward.schemas import CreateReward, UpdateReward, Status
-from database_connection import rewards_collection, fs
+from database_connection import rewards_collection, fs, user_collection
+from dependencies import user_levels
 
 
 # ------------------------------- VERIFY BENEFICIARIES ------------------------------ #
@@ -14,17 +16,34 @@ def verify_beneficiaries(
         level: list[str] | None = None,
         specific_users: list[str] | None = None
     ):
+    # all users
     if new_reward.beneficiary == "all_users":
         new_reward.beneficiary = ["all_users"]
 
+    # verify levels
     if new_reward.beneficiary == "level":
-        new_reward.beneficiary = level[0].split(",")
+        level_participants = level[0].split(",")
+        game_levels = [level[1].lower() for k, level in user_levels.items()]
 
+        for level in level_participants:
+            if level.lower() not in game_levels:
+                raise HTTPException(status_code=400, detail="Invalid level entered.")
+        new_reward.beneficiary = level_participants
+
+    # verify clan
     if new_reward.beneficiary == "clan" and len(clan) > 0:
         new_reward.beneficiary = clan[0].split(",")
 
+    # verify specific users
     if new_reward.beneficiary == "specific_users" and len(specific_users) > 0:
-        new_reward.beneficiary = specific_users[0].split(",")
+        users = specific_users[0].split(",")
+
+        for user_id in users:
+            user = user_collection.find_one({"telegram_user_id": ObjectId(user_id)})
+            if not user:
+                raise HTTPException(status_code=400, detail="Invalid user entered.")
+
+        new_reward.beneficiary = users
 
 
 # ------------------------------- CREATE REWARD ------------------------------ #
@@ -142,7 +161,7 @@ def get_rewards():
             id=str(reward["_id"]),
             reward_title=reward["reward_title"],
             reward=reward["reward"],
-            beneficiary=reward["beneficiary"],
+            beneficiary=reward["beneficiary"],  
             launch_date=reward["launch_date"],
             status=reward["status"],
             claim_rate=reward["claim_rate"],

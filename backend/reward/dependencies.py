@@ -17,6 +17,7 @@ def my_on_going_rewards(telegram_user_id: str):
             if reward.status == "on_going":
                 if my_level in reward.beneficiary or \
                     my_clan in reward.beneficiary or \
+                    "all_users" in reward.beneficiary or \
                     telegram_user_id in reward.beneficiary:
 
                     yield RewardSchema(
