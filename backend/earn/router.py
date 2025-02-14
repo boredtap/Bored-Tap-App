@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import logging
 from typing import Annotated
 from fastapi import APIRouter, Depends
+
 from .dependencies import broken_streak_reset, calculate_time_difference, increment_streak_and_coin, init_streak
 from earn.schemas import StreakData
 from user_reg_and_prof_mngmnt.user_authentication import get_current_user
@@ -15,6 +16,7 @@ from superuser.leaderboard.dependencies import (
 )
 
 # ---------------------- imports for reward ---------------------- #
+from superuser.reward.dependencies import get_reward_image as get_reward_image_func
 from reward.dependencies import (
     my_on_going_rewards,
     claim_reward as claim_reward_func,
@@ -146,6 +148,14 @@ async def get_my_rewards(telegram_user_id: Annotated[str, Depends(get_current_us
         return my_on_going_rewards(telegram_user_id)
     
     return my_claimed_rewards(telegram_user_id)
+
+
+# ------------------------------------- GET REWARD IMAGE ------------------------------------- #
+@earnApp.get("/reward_image/{image_id}", status_code=201)
+async def get_reward_image(image_id: str):
+
+    return get_reward_image_func(image_id)
+
 
 
 # ------------------------------------- CLAIM REWARD ------------------------------------- #

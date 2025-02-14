@@ -78,7 +78,7 @@ def create_reward(reward: CreateReward, reward_image: bytes, image_name: str):
 
 
 def get_reward_image(image_id: str):
-    reward_image = fs.get(image_id)
+    reward_image = fs.get(ObjectId(image_id))
     image_buffer = BytesIO(reward_image.read())
     image_buffer.seek(0)
     return StreamingResponse(image_buffer, media_type="image/jpeg")
