@@ -17,6 +17,7 @@ from superuser.reward.dependencies import (
 )
 from superuser.reward.models import RewardsModelResponse
 from superuser.reward.schemas import CreateReward, Status, UpdateReward
+from user_reg_and_prof_mngmnt.user_authentication import get_current_user
 
 
 
@@ -29,17 +30,11 @@ rewardApp = APIRouter(
 
 
 # ------------------------------ VERIFY IMAGE ------------------------------ #
-def verify_image(img_upload_content):
-    try:
-        img_bytes = BytesIO(img_upload_content)
-        img = Image.open(img_bytes)
-        img.verify()
-        img.close()
-        img_bytes.seek(0)
-        img_data = img_bytes.getvalue()
-        return img_data
-    except Exception as e:
+def verify_image(format: str):
+    if format.lower() not in ["jpeg", "jpg", "png"]:
         raise HTTPException(status_code=400, detail="Invalid image file. Please upload a valid image file.")
+    
+    return True
 
 
 # ------------------------------ CREATE REWARD ------------------------------ #
@@ -48,19 +43,18 @@ async def create_reward(
         clan: list[str] | None = None,
         level: list[str] | None = None,
         specific_users: list[str] | None = None,
-        new_reward: CreateReward = Depends(CreateReward)
+        new_reward: CreateReward = Depends(CreateReward),
     ) -> RewardsModelResponse:
     if not new_reward.reward_image:
         raise HTTPException(status_code=400, detail="Please upload a reward image.")
 
-    try:
-        image_filename = new_reward.reward_image.filename
-        image_bytes = await new_reward.reward_image.read()
-        image_bytes = verify_image(image_bytes)
+    image_filename = new_reward.reward_image.filename
+    image_format = image_filename.split(".")[1]
+    image_bytes = await new_reward.reward_image.read()
+    
+    if verify_image(image_format):
         image_buffer = BytesIO(image_bytes)
         image_buffer.seek(0)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail="Invalid image file. Please upload a valid image file.")
 
     verify_beneficiaries(new_reward, clan, level, specific_users)
 
@@ -72,7 +66,7 @@ async def create_reward(
 # ------------------------------ REWARD IMAGE URL ------------------------------ #
 @rewardApp.get("/reward_image/{image_id}", status_code=201)
 async def get_reward_image(image_id: str):
-    image = get_reward_image_func(ObjectId(image_id))
+    image = get_reward_image_func(image_id)
 
     return image
 
