@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from superuser.dashboard.admin_auth import get_current_admin
 from dependencies import get_user_profile, update_coins_in_db,get_user_by_id
@@ -8,8 +8,9 @@ from tasks.router import taskApp
 from invite.router import inviteApp
 from telegram_bot import bot_interactions
 from superuser.dashboard.router import adminDashboard
-from superuser.reward.router import rewardApp
 from superuser.task.router import task_router
+from superuser.reward.router import rewardApp
+from superuser.challenge.router import challenge_router
 from superuser.leaderboard.router import adminLeaderboard
 from user_reg_and_prof_mngmnt.user_authentication import get_current_user
 from typing import Annotated
@@ -66,8 +67,9 @@ app.include_router(taskApp)
 app.include_router(inviteApp)
 app.include_router(bot_interactions)
 app.include_router(adminDashboard)
-app.include_router(rewardApp)
 app.include_router(task_router)
+app.include_router(rewardApp)
+app.include_router(challenge_router)
 app.include_router(adminLeaderboard)
 
 
@@ -115,3 +117,13 @@ async def get_user_data(telegram_user_id: Annotated[str, Depends(get_current_use
     user = get_user_profile(telegram_user_id)
     return user
 
+
+@app.get("/bored-tap/image", tags=["Global Routes"])
+async def get_image(image_id: str, request: Request):
+    user_agent = request.headers.get("User-Agent")
+    referer = request.headers.get("Referer")
+    origin = request.headers.get("Origin")
+
+    print(user_agent)
+    print(referer)
+    print(origin)

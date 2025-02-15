@@ -48,7 +48,7 @@ def verify_beneficiaries(
 
 # ------------------------------- CREATE REWARD ------------------------------ #
 def create_reward(reward: CreateReward, reward_image: bytes, image_name: str):
-    image_id = fs.put(reward_image, filename=image_name)
+    image_id = fs.put(reward_image, filename="reward_" + image_name)
 
     new_reward = RewardsModel(
         reward_title=reward.reward_title,
@@ -90,7 +90,7 @@ def update_reward(reward: UpdateReward, reward_image: bytes, img_name: str, rewa
     reward_data = rewards_collection.find_one(query_filter)
 
     if not reward_data:
-        raise Exception("Reward not found.")
+        raise HTTPException("Reward not found.")
 
     # delete old image and insert updated image
     old_img_id = reward_data["reward_image_id"]
