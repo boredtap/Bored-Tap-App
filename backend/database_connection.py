@@ -46,7 +46,8 @@ collection_names = [
     'invites_ref',
     'coin_stats',
     'tasks',
-    'rewards'
+    'rewards',
+    'challenges'
 ]
 
 for collection_name in collection_names:
@@ -61,3 +62,4 @@ invites_ref = db['invites_ref']
 coin_stats = db['coin_stats']
 task_collection = db['tasks']
 rewards_collection = db['rewards']
+challenges_collection = db['challenges']

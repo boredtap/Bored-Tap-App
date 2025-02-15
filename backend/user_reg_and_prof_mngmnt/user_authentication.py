@@ -17,7 +17,7 @@ from user_reg_and_prof_mngmnt.dependencies import get_user_by_id, serialize_any_
 
 SECRET_KEY = get_settings().secret_key
 ALGORITHM = get_settings().algorithm
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_HOURS = 12
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/signin",
@@ -62,7 +62,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(days=3)
+        expire = datetime.now(timezone.utc) + timedelta(hours=12)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt

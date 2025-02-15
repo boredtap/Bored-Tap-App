@@ -10,7 +10,7 @@ from user_reg_and_prof_mngmnt.dependencies import (
     serialize_any_http_url,
     referral_url_prefix)
 from user_reg_and_prof_mngmnt.user_authentication import (
-    ACCESS_TOKEN_EXPIRE_MINUTES,
+    ACCESS_TOKEN_EXPIRE_HOURS,
     authenticate_user,
     create_access_token,
     create_invite_ref,
@@ -111,7 +111,7 @@ async def sign_in(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"}
         )
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token_expires = timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
 
     if user:
         access_token = create_access_token(
