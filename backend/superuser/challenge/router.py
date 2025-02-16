@@ -19,7 +19,7 @@ from superuser.challenge.dependencies import verify_participants
 
 
 challenge_router = APIRouter(
-    prefix="/admin/task",
+    prefix="/admin/challenge",
     tags=["Admin Panel Challenge"],
     # responses={404: {"description": "Not found"}},
     dependencies=[Depends(get_current_admin)]
