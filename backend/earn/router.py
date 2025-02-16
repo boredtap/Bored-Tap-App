@@ -24,6 +24,9 @@ from reward.dependencies import (
 )
 from superuser.reward.schemas import Status
 
+# ---------------------- imports for challenge ---------------------- #
+from superuser.challenge.schemas import ChallengeStatus
+from challenge.dependencies import get_my_challenges as get_my_challenges_func
 
 
 
@@ -186,4 +189,13 @@ async def claim_reward(reward_id: str, telegram_user_id: Annotated[str, Depends(
 # --------------------------------------------------- EARN/CHALLENGE ------------------------------------------------------- #
 ##############################################################################################################################
 
+@earnApp.get("/earn/challenge/my-challenges")
+async def get_my_challenges(telegram_user_id: Annotated[str, Depends(get_current_user)], status: ChallengeStatus):
 
+    return get_my_challenges_func(telegram_user_id, status)
+
+
+@earnApp.get("/earn/challenge/challenge_image/{image_id}", status_code=201)
+async def get_challenge_image(image_id: str):
+
+    return get_reward_image_func(image_id)

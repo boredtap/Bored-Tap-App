@@ -105,8 +105,12 @@ def calculate_remaining_time(challenge_duration: str, challenge_launch_date: dat
     # calculate challenge remaining time
     if datetime.now(tz=challenge_launch_date.tzinfo) < challenge_launch_date:
         remaining_time = challenge_end_time - challenge_launch_date
+        if remaining_time < timedelta(days=0, hours=0, minutes=0, seconds=0):
+            remaining_time = timedelta(days=0, hours=0, minutes=0, seconds=0)
     else:
         remaining_time = challenge_end_time - datetime.now()
+        if remaining_time < timedelta(days=0, hours=0, minutes=0, seconds=0):
+            remaining_time = timedelta(days=0, hours=0, minutes=0, seconds=0)
 
     days = remaining_time.days
     hours, remainder = divmod(remaining_time.seconds, 3600)
