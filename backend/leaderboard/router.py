@@ -1,1 +1,1 @@
-# from fastapi import APIRouter
+# routed in earnApp router
