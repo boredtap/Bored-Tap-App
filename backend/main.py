@@ -12,6 +12,7 @@ from superuser.task.router import task_router
 from superuser.reward.router import rewardApp
 from superuser.challenge.router import challenge_router
 from superuser.leaderboard.router import adminLeaderboard
+from superuser.level.router import levelApp
 from user_reg_and_prof_mngmnt.user_authentication import get_current_user
 from typing import Annotated
 from user_reg_and_prof_mngmnt.schemas import UserProfile
@@ -71,6 +72,7 @@ app.include_router(task_router)
 app.include_router(rewardApp)
 app.include_router(challenge_router)
 app.include_router(adminLeaderboard)
+app.include_router(levelApp)
 
 
 @app.get('/', tags=["Global Routes"])

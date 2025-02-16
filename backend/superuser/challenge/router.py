@@ -66,9 +66,7 @@ async def create_challenge(
     image_format = image_filename.split(".")[1]
     image_bytes = await challenge.image.read()
 
-    if verify_image(image_format):
-        image_buffer = BytesIO(image_bytes)
-        image_buffer.seek(0)
+    verify_image(image_format)
 
     verify_participants(challenge, clan, level, specific_users)
 

@@ -47,7 +47,8 @@ collection_names = [
     'coin_stats',
     'tasks',
     'rewards',
-    'challenges'
+    'challenges',
+    'levels'
 ]
 
 for collection_name in collection_names:
@@ -63,3 +64,4 @@ coin_stats = db['coin_stats']
 task_collection = db['tasks']
 rewards_collection = db['rewards']
 challenges_collection = db['challenges']
+levels_collection = db['levels']
