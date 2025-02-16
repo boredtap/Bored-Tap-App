@@ -13,6 +13,7 @@ from superuser.reward.router import rewardApp
 from superuser.challenge.router import challenge_router
 from superuser.leaderboard.router import adminLeaderboard
 from superuser.level.router import levelApp
+from superuser.user_mgt.router import userMgtApp
 from user_reg_and_prof_mngmnt.user_authentication import get_current_user
 from typing import Annotated
 from user_reg_and_prof_mngmnt.schemas import UserProfile
@@ -73,6 +74,7 @@ app.include_router(rewardApp)
 app.include_router(challenge_router)
 app.include_router(adminLeaderboard)
 app.include_router(levelApp)
+app.include_router(userMgtApp)
 
 
 @app.get('/', tags=["Global Routes"])
@@ -120,7 +122,7 @@ async def get_user_data(telegram_user_id: Annotated[str, Depends(get_current_use
     return user
 
 
-@app.get("/bored-tap/image", tags=["Global Routes"])
+@app.get("/bored-tap/image", tags=["Global Routes"], deprecated=True)
 async def get_image(image_id: str, request: Request):
     user_agent = request.headers.get("User-Agent")
     referer = request.headers.get("Referer")
