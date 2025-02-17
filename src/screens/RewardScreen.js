@@ -166,9 +166,8 @@ const RewardScreen = () => {
 
         {/* Reward Cards */}
         <div className="reward-cards">
-          {loading ? (
-            <p>Loading rewards...</p>
-          ) : rewards.length > 0 ? (
+        {loading ? <p className="loading-message">Fetching Rewards...</p>
+         : rewards.length > 0 ? (
             rewards.map((reward) => (
               <div className="reward-card" key={reward.reward_id}>
                 <div className="reward-left">

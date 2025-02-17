@@ -136,3 +136,23 @@
   width: 20px;
   height: 20px;
 }
+
+/* Loading Rewards */
+.loading-message {
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  color: orange;
+  margin-top: 20px;
+  animation: fadeInOut 1.5s infinite alternate;
+}
+
+/* Smooth fade-in and fade-out effect */
+@keyframes fadeInOut {
+  0% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
+}
