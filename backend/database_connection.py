@@ -48,6 +48,7 @@ collection_names = [
     'tasks',
     'rewards',
     'challenges',
+    'extra_boosts',
     'levels'
 ]
 
@@ -64,4 +65,5 @@ coin_stats = db['coin_stats']
 task_collection = db['tasks']
 rewards_collection = db['rewards']
 challenges_collection = db['challenges']
+extra_boosts_collection = db['extra_boosts']
 levels_collection = db['levels']

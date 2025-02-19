@@ -50,7 +50,7 @@ async def create_task(task = Depends(CreateTask)):
         task_deadline=task.task_deadline
     )
 
-    created_task = create_task_func(task, image_data)
+    created_task = create_task_func(task)
 
 
     return created_task
