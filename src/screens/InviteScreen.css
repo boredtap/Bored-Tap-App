@@ -17,38 +17,10 @@
     margin-top: 20px;
   }
   
-  .invite-icon-placeholder, .friend-profile-img-placeholder, .icon-img-placeholder {
-    font-size: 24px; /* Adjust size as needed */
-    display: inline-block;
-    width: 32px; /* Match icon sizes from RewardScreen */
-    height: 32px;
-    line-height: 32px;
-    text-align: center;
-    background-color: #ccc; /* Optional: background for visibility */
-    border-radius: 50%; /* Circular like icons */
-    color: #000; /* Text color for placeholders */
-  }
-  
-  /* Ensure QR code and other elements are styled similarly */
-  .qr-code {
-    width: 200px; /* Adjust as needed */
-    height: auto;
-    margin: 16px auto;
-  }
-  
-  .reward-cta, .overlay-cta-button {
-    padding: 8px 16px;
-    border-radius: 25px;
-    border: none;
-    font-size: 14px;
-    cursor: pointer;
-    background-color: orange;
-    color: white;
-  }
-  
-  .cta-button:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
+  .invite-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
   }
   
   .invite-title {
