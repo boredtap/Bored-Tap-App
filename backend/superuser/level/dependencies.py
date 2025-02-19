@@ -1,5 +1,6 @@
 from bson import ObjectId
 from fastapi import HTTPException
+from httpx import delete
 from superuser.level.models import LevelModel, LevelModelResponse
 from superuser.level.schemas import CreateLevel
 from database_connection import levels_collection, fs
@@ -31,11 +32,14 @@ def verify_new_level(level: CreateLevel):
         raise HTTPException(status_code=400, detail="Level requirement must be greater than 0.")
 
     if levels:
-        current_higest_level = current_higest_level.next()
-        print(current_higest_level)
-        if level.requirement <= current_higest_level["requirement"]:
-            raise HTTPException(status_code=400, detail=f"Level requirement must be greater than {current_higest_level['requirement']}.")
-
+        try:
+            current_higest_level = current_higest_level.next()
+            print(current_higest_level)
+            if level.requirement <= current_higest_level["requirement"]:
+                raise HTTPException(status_code=400, detail=f"Level requirement must be greater than {current_higest_level['requirement']}.")
+        except StopIteration as e:
+            print(e)
+            pass
 
 # ---------------------------------- CREATE LEVEL ------------------------------ #
 def create_level(level: CreateLevel, badge: bytes, badge_name: str):
@@ -79,6 +83,8 @@ def delete_level(level_id: str):
     if not level:
         raise HTTPException(status_code=400, detail="Level not found.")
     
+    badge_id = level["badge_id"]
+    fs.delete(ObjectId(badge_id))
     deleted_level = levels_collection.delete_one({"_id": ObjectId(level_id)})
 
     if not deleted_level.acknowledged:
