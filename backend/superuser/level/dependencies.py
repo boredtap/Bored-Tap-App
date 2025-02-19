@@ -41,6 +41,7 @@ def verify_new_level(level: CreateLevel):
             print(e)
             pass
 
+
 # ---------------------------------- CREATE LEVEL ------------------------------ #
 def create_level(level: CreateLevel, badge: bytes, badge_name: str):
     badge_id = fs.put(badge, filename="badge_" + badge_name)
