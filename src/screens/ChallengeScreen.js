@@ -9,14 +9,17 @@ const ChallengeScreen = () => {
     "Open Challenges": [],
     "Completed Challenges": [],
   });
-  const [challengeImages, setChallengeImages] = useState({}); // State to store fetched images
+  const [challengeImages, setChallengeImages] = useState({});
+  const [loading, setLoading] = useState(true); // Add loading state
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true); // Set loading to true at the start
       const token = localStorage.getItem("accessToken");
       if (!token) {
         setError("No access token found");
+        setLoading(false);
         return;
       }
 
@@ -35,7 +38,7 @@ const ChallengeScreen = () => {
         }
 
         const profileData = await profileResponse.json();
-        setTotalTaps(profileData.total_coins || 0); // Assuming total_coins is the field
+        setTotalTaps(profileData.total_coins || 0);
 
         // Fetch ongoing challenges
         const ongoingChallengesResponse = await fetch(
@@ -79,7 +82,7 @@ const ChallengeScreen = () => {
             title: challenge.name,
             description: challenge.description,
             reward: challenge.reward,
-            time: challenge.remaining_time, // For ongoing challenges
+            time: challenge.remaining_time,
             status: "ongoing",
             id: challenge.challenge_id,
             imageId: challenge.image_id,
@@ -118,9 +121,8 @@ const ChallengeScreen = () => {
               throw new Error(`Failed to fetch image for challenge ${challenge.id}`);
             }
 
-            // Assuming the response is a URL or binary data; adjust based on actual response
-            const imageData = await imageResponse.blob(); // Or .text()/.json() depending on backend
-            const imageUrl = URL.createObjectURL(imageData); // Create a temporary URL for the image
+            const imageBlob = await imageResponse.blob();
+            const imageUrl = URL.createObjectURL(imageBlob);
 
             setChallengeImages(prev => ({
               ...prev,
@@ -135,10 +137,12 @@ const ChallengeScreen = () => {
           }
         });
 
-        await Promise.all(imagePromises); // Wait for all image fetches to complete
+        await Promise.all(imagePromises);
 
       } catch (err) {
         setError(err.message);
+      } finally {
+        setLoading(false); // Set loading to false when done
       }
     };
 
@@ -192,16 +196,18 @@ const ChallengeScreen = () => {
 
         {/* Challenge Cards */}
         <div className="challenge-cards">
-          {error ? (
+          {loading ? (
+            <p className="loading-message">Fetching Challenges...</p>
+          ) : error ? (
             <p className="error-message">Error: {error}</p>
           ) : challenges.length > 0 ? (
             challenges.map((challenge) => (
               <div className="challenge-card" key={challenge.id}>
                 <div className="challenge-left">
                   <img
-                    src={challengeImages[challenge.imageId] || `${process.env.PUBLIC_URL}/logo.png`} // Use fetched image or fallback
+                    src={challengeImages[challenge.imageId] || `${process.env.PUBLIC_URL}/logo.png`}
                     alt={challenge.title}
-                    className="challenge-icon"
+                    className="challenge-icon" // Matches reward-icon size (32x32px)
                   />
                   <div className="challenge-info">
                     <p className="challenge-title">{challenge.title}</p>
@@ -210,7 +216,7 @@ const ChallengeScreen = () => {
                       <img
                         src={`${process.env.PUBLIC_URL}/logo.png`}
                         alt="Coin Icon"
-                        className="small-icon"
+                        className="small-icon" // Matches small-icon size (16x16px)
                       />
                       <span>{challenge.reward}</span>
                       <span className="challenge-time">{challenge.time}</span>
