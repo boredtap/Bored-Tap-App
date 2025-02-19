@@ -26,7 +26,7 @@ const InviteScreen = () => {
         });
         if (!profileResponse.ok) throw new Error("Failed to fetch profile");
         const profileData = await profileResponse.json();
-        setInvites(profileData.invite || []); // Assuming 'invite' is the field in the profile for friends
+        setInvites(profileData.invite || []); // Assuming 'invite' is the field for friends
 
         // Fetch QR code
         const qrResponse = await fetch("https://bt-coins.onrender.com/invite-qr-code", {
@@ -41,9 +41,11 @@ const InviteScreen = () => {
           setQrCodeUrl(URL.createObjectURL(blob));
         } else {
           console.error("Failed to fetch QR code:", await qrResponse.text());
+          setQrCodeUrl(""); // Clear QR code if fetch fails
         }
       } catch (err) {
         console.error("Error fetching user profile or QR code:", err);
+        setQrCodeUrl(""); // Ensure no static fallback
       }
     };
 
@@ -51,7 +53,7 @@ const InviteScreen = () => {
   }, []);
 
   const user = JSON.parse(localStorage.getItem("telegramUser"));
-  const inviteLink = `http://t.me/Bored_Tap_Bot?start=${user.telegramUserId}`;
+  const inviteLink = `http://t.me/Bored_Tap_Bot?start=${user?.telegramUserId || ""}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(inviteLink);
@@ -60,14 +62,9 @@ const InviteScreen = () => {
 
   return (
     <div className="invite-screen">
-
       {/* Centralized Top Section */}
       <div className="invite-header">
-        <img
-          src={`${process.env.PUBLIC_URL}/invite.png`}
-          alt="Invite Icon"
-          className="invite-icon"
-        />
+        <span className="invite-icon-placeholder">📲</span> {/* Placeholder for invite icon, can be styled or removed */}
         <p className="invite-title">Invite Friends!</p>
         <p className="invite-subtitle">You and your friend will receive BT Coins</p>
       </div>
@@ -87,24 +84,15 @@ const InviteScreen = () => {
       <div className="your-friends-section">
         <p className="friends-title">Your Friends ({invites.length})</p>
         {invites.map((invite) => (
-          <div className="friend-card" key={invite.id}>
-            <img
-              src={`${process.env.PUBLIC_URL}/profile-picture.png`}
-              alt="Profile"
-              className="friend-profile-img"
-            />
+          <div className="friend-card" key={invite.id || invite.telegram_user_id}> {/* Fallback key */}
+            <span className="friend-profile-img-placeholder">👤</span> {/* Placeholder for profile image */}
             <div className="friend-details">
               <p className="friend-name">
-                {invite.username || invite.name} <span className="friend-level">.Lvl {invite.level || "?"}</span>
+                {invite.username || invite.name || "Unknown"} <span className="friend-level">.Lvl {invite.level || "?"}</span>
               </p>
-              {/* Assuming backend provides similar fields for each invite */}
               <div className="friend-icon-value">
-                <img
-                  src={`${process.env.PUBLIC_URL}/friends.png`}
-                  alt="Icon"
-                  className="icon-img"
-                />
-                <span className="icon-value">+{invite.iconValue || 0}</span>
+                <span className="icon-img-placeholder">+</span> {/* Placeholder for friends icon */}
+                <span className="icon-value">+{invite.invite_count || 0}</span> {/* Assuming invite_count is the field */}
               </div>
             </div>
             <p className="friend-bt-value">{invite.total_coins ? `${invite.total_coins} BT` : "0 BT"}</p>
@@ -118,13 +106,14 @@ const InviteScreen = () => {
           className="cta-button"
           style={{ backgroundColor: 'white', color: 'black' }}
           onClick={() => setOverlayVisible(true)}
+          disabled={!qrCodeUrl} // Disable if QR code failed to load
         >
           Invite a Friend
         </button>
       </div>
 
       {/* Overlay */}
-      {isOverlayVisible && (
+      {isOverlayVisible && qrCodeUrl && ( // Only show overlay if QR code is loaded
         <div className="overlay">
           <div className="overlay-card">
             <div className="overlay-header">
@@ -135,9 +124,10 @@ const InviteScreen = () => {
             </div>
             <div className="division-line"></div>
             <img
-              src={qrCodeUrl || `${process.env.PUBLIC_URL}/qr-code.png`}
+              src={qrCodeUrl}
               alt="QR Code"
               className="qr-code"
+              onError={() => setQrCodeUrl("")} // Clear if image fails to load
             />
             <button className="overlay-cta-button">Share</button>
             <button className="overlay-cta-button" onClick={handleCopy}>Copy</button>
