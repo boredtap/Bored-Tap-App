@@ -30,7 +30,7 @@ def verify_new_level(level: CreateLevel):
     if level.requirement < 0:
         raise HTTPException(status_code=400, detail="Level requirement must be greater than 0.")
 
-    if levels:
+    if levels not None:
         current_higest_level = current_higest_level.next()
         print(current_higest_level)
         if level.requirement <= current_higest_level["requirement"]:
