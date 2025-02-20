@@ -1,170 +1,13 @@
-// import React, { useState } from "react";
-// import Navigation from "../components/Navigation";
-// import "./RewardScreen.css";
-
-// const RewardScreen = () => {
-//   const [activeTab, setActiveTab] = useState("New Reward");
-
-//   const handleTabClick = (tab) => {
-//     setActiveTab(tab);
-//   };
-
-//   const rewardsData = {
-//     "New Reward": [
-//       {
-//         title: "1 Billion BT Coins Earned",
-//         description: "500",
-//         button: { label: "Claim", bgColor: "#fff", textColor: "#000" },
-//         icon: "/reward.png", // Fixed inconsistency in paths
-//       },
-//       {
-//         title: "Streak Master",
-//         description: "300",
-//         button: { label: "Claim", bgColor: "#fff", textColor: "#000" },
-//         icon: "/refresh-icon.png",
-//       },
-//       {
-//         title: "Leaderboard Champ",
-//         description: "200",
-//         button: { label: "Claim", bgColor: "#fff", textColor: "#000" },
-//         icon: "/first-icon.png",
-//       },
-//       {
-//         title: "Streak Legend",
-//         description: "150",
-//         button: { label: "Claim", bgColor: "#fff", textColor: "#000" },
-//         icon: "/refresh-icon.png",
-//       },
-//     ],
-//     "Claimed Reward": [
-//       {
-//         title: "1 Billion BT Coins Earned",
-//         description: "500",
-//         button: { icon: "/share-icon.png", bgColor: "#000" },
-//         icon: "/reward.png", // Fixed inconsistency in paths
-//       },
-//       {
-//         title: "Streak Master",
-//         description: "300",
-//         button: { icon: "/share-icon.png", bgColor: "#000" },
-//         icon: "/refresh-icon.png",
-//       },
-//       {
-//         title: "Leaderboard Champ",
-//         description: "200",
-//         button: { icon: "/share-icon.png", bgColor: "#000" },
-//         icon: "/first-icon.png",
-//       },
-//       {
-//         title: "Streak Legend",
-//         description: "150",
-//         button: { icon: "/share-icon.png", bgColor: "#000" },
-//         icon: "/refresh-icon.png",
-//       },
-//     ],
-//   };
-
-//   const rewards = rewardsData[activeTab] || []; // Added fallback to prevent errors when no rewards exist
-
-//   return (
-//     <div className="reward-screen">
-
-//       {/* Body */}
-//       <div className="reward-body">
-//         {/* Total Taps Section */}
-//         <div className="total-taps">
-//           <p>Your Total Taps:</p>
-//           <div className="taps-display">
-//             <img
-//               src={`${process.env.PUBLIC_URL}/logo.png`}
-//               alt="Logo"
-//               className="taps-logo"
-//             />
-//             <span className="taps-number">3,289,198</span>
-//           </div>
-//           <p className="task-link">How BT-boosters work?</p>
-//         </div>
-
-//         {/* Pagination */}
-//         <div className="pagination">
-//           {Object.keys(rewardsData).map((tab) => (
-//             <span
-//               key={tab}
-//               className={`pagination-tab ${
-//                 activeTab === tab ? "active" : ""
-//               }`}
-//               onClick={() => handleTabClick(tab)}
-//             >
-//               {tab}
-//             </span>
-//           ))}
-//         </div>
-
-//         {/* Reward Cards */}
-//         <div className="reward-cards">
-//           {rewards.map((reward, index) => (
-//             <div className="reward-card" key={index}>
-//               <div className="reward-left">
-//                 <img
-//                   src={`${process.env.PUBLIC_URL}${reward.icon}`}
-//                   alt={reward.title}
-//                   className="reward-icon"
-//                 />
-//                 <div className="reward-info">
-//                   <p className="reward-title">{reward.title}</p>
-//                   <div className="reward-meta">
-//                     <img
-//                       src={`${process.env.PUBLIC_URL}/logo.png`}
-//                       alt="Coin Icon"
-//                       className="small-icon"
-//                     />
-//                     <span>{reward.description}</span>
-//                   </div>
-//                 </div>
-//               </div>
-//               {activeTab === "New Reward" ? (
-//                 <button
-//                   className="reward-cta"
-//                   style={{
-//                     backgroundColor: reward.button.bgColor,
-//                     color: reward.button.textColor,
-//                   }}
-//                 >
-//                   {reward.button.label}
-//                 </button>
-//               ) : (
-//                 <div
-//                   className="reward-share-icon"
-//                   style={{ backgroundColor: reward.button.bgColor }}
-//                 >
-//                   <img
-//                     src={`${process.env.PUBLIC_URL}${reward.button.icon}`} // Fixed incorrect single quote
-//                     alt="Share Icon"
-//                     className="share-icon"
-//                   />
-//                 </div>
-//               )}
-//             </div>
-//           ))}
-//         </div>
-//       </div>
-
-//       {/* Navigation */}
-//       <Navigation />
-//     </div>
-//   );
-// };
-
-// export default RewardScreen;
 import React, { useState, useEffect } from "react";
 import Navigation from "../components/Navigation";
 import "./RewardScreen.css";
 
 const RewardScreen = () => {
-  const [activeTab, setActiveTab] = useState("New Reward");
+  const [activeTab, setActiveTab] = useState("on_going"); // Matches backend response
   const [totalTaps, setTotalTaps] = useState(0);
-  const [rewardsData, setRewardsData] = useState({});
-  // const [loading, setLoading] = useState(true);
+  const [rewardsData, setRewardsData] = useState({ on_going: [], claimed: [] });
+  const [rewardImages, setRewardImages] = useState({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserProfileAndRewards = async () => {
@@ -175,7 +18,7 @@ const RewardScreen = () => {
           return;
         }
 
-        // Fetch user profile for total taps
+        // Fetch user profile
         const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
           method: "GET",
           headers: {
@@ -185,64 +28,130 @@ const RewardScreen = () => {
         });
 
         if (!profileResponse.ok) {
-          throw new Error(`HTTP error! status: ${profileResponse.status}`);
+          throw new Error(`Profile fetch failed: ${profileResponse.status}`);
         }
 
         const profileData = await profileResponse.json();
-        setTotalTaps(profileData.total_coins); // Assuming total_coins is the field for total taps in the profile
+        setTotalTaps(profileData.total_coins);
 
-        // Placeholder for fetch rewards (once URL is available)
-        // const rewardsResponse = await fetch("REWARDS_API_URL", {
-        //   method: "GET",
-        //   headers: {
-        //     Authorization: `Bearer ${token}`,
-        //     "Content-Type": "application/json",
-        //   },
-        // });
-        // const rewards = await rewardsResponse.json();
-        // setRewardsData(rewards);
+        // Fetch rewards (both ongoing and claimed)
+        const rewardTypes = ["on_going", "claimed"];
+        const fetchedRewards = {};
 
+        for (const type of rewardTypes) {
+          const response = await fetch(`https://bt-coins.onrender.com/earn/my-rewards?status=${type}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`Failed to fetch ${type} rewards`);
+          }
+
+          fetchedRewards[type] = await response.json();
+        }
+
+        setRewardsData(fetchedRewards);
       } catch (err) {
         console.error("Error fetching user profile or rewards:", err);
-      } 
-      // finally {
-      //   setLoading(false);
-      // }
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchUserProfileAndRewards();
   }, []);
 
+  // Fetch images for rewards (Optimized to prevent infinite loops)
+  useEffect(() => {
+    const fetchRewardImages = async () => {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
+
+      const allRewards = [...rewardsData.on_going, ...rewardsData.claimed];
+
+      // Find rewards that don't have images already loaded
+      const missingImages = allRewards.filter(
+        (reward) => reward.reward_image_id && !rewardImages[reward.reward_image_id]
+      );
+
+      if (missingImages.length === 0) return; // Prevent unnecessary API calls
+
+      const newImages = {};
+      for (const reward of missingImages) {
+        try {
+          const response = await fetch(`https://bt-coins.onrender.com/reward_image/${reward.reward_image_id}`, {
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          });
+
+          if (!response.ok) throw new Error("Failed to fetch image");
+
+          const imageBlob = await response.blob();
+          newImages[reward.reward_image_id] = URL.createObjectURL(imageBlob);
+        } catch (error) {
+          console.error(`Error fetching image for ${reward.reward_image_id}:`, error);
+          newImages[reward.reward_image_id] = `${process.env.PUBLIC_URL}/default-reward-icon.png`;
+        }
+      }
+
+      // Use functional update to prevent unnecessary re-renders
+      setRewardImages((prevImages) => ({ ...prevImages, ...newImages }));
+    };
+
+    if (rewardsData.on_going.length > 0 || rewardsData.claimed.length > 0) {
+      fetchRewardImages();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rewardsData]); // ✅ Removed `rewardImages` to prevent infinite loop
+
   const handleTabClick = (tab) => {
     setActiveTab(tab);
   };
 
-  const rewards = rewardsData[activeTab] || []; // Use backend data once available, for now use placeholder
+  const handleClaimReward = async (rewardId) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch(`https://bt-coins.onrender.com/earn/my-rewards/${rewardId}/claim`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
-  // if (loading) {
-  //   return <div className="loading">Loading rewards...</div>;
-  // }
+      const result = await response.json();
+      if (response.ok) {
+        alert("Reward claimed successfully!");
+        setRewardsData((prevData) => ({
+          ...prevData,
+          on_going: prevData.on_going.filter((reward) => reward.reward_id !== rewardId),
+          claimed: [...prevData.claimed, result],
+        }));
+      } else {
+        alert(`Failed to claim reward: ${result.message}`);
+      }
+    } catch (err) {
+      console.error("Error claiming reward:", err);
+    }
+  };
+
+  const rewards = rewardsData[activeTab] || [];
 
   return (
     <div className="reward-screen">
-
-      {/* Body */}
       <div className="reward-body">
-        {/* Total Taps Section */}
         <div className="total-taps">
           <p>Your Total Taps:</p>
           <div className="taps-display">
-            <img
-              src={`${process.env.PUBLIC_URL}/logo.png`}
-              alt="Logo"
-              className="taps-logo"
-            />
+            <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Logo" className="taps-logo" />
             <span className="taps-number">{totalTaps.toLocaleString()}</span>
           </div>
           <p className="task-link">How BT-boosters work?</p>
         </div>
 
-        {/* Pagination */}
+        {/* Pagination Tabs */}
         <div className="pagination">
           {Object.keys(rewardsData).map((tab) => (
             <span
@@ -250,61 +159,60 @@ const RewardScreen = () => {
               className={`pagination-tab ${activeTab === tab ? "active" : ""}`}
               onClick={() => handleTabClick(tab)}
             >
-              {tab}
+              {tab.replace("_", " ").toUpperCase()}
             </span>
           ))}
         </div>
 
         {/* Reward Cards */}
         <div className="reward-cards">
-          {rewards.map((reward, index) => (
-            <div className="reward-card" key={index}>
-              <div className="reward-left">
-                <img
-                  src={`${process.env.PUBLIC_URL}${reward.icon}`}
-                  alt={reward.title}
-                  className="reward-icon"
-                />
-                <div className="reward-info">
-                  <p className="reward-title">{reward.title}</p>
-                  <div className="reward-meta">
-                    <img
-                      src={`${process.env.PUBLIC_URL}/logo.png`}
-                      alt="Coin Icon"
-                      className="small-icon"
-                    />
-                    <span>{reward.description}</span>
+        {loading ? <p className="loading-message">Fetching Rewards...</p>
+         : rewards.length > 0 ? (
+            rewards.map((reward) => (
+              <div className="reward-card" key={reward.reward_id}>
+                <div className="reward-left">
+                  <img
+                    src={rewardImages[reward.reward_image_id] || `${process.env.PUBLIC_URL}/default-reward-icon.png`}
+                    alt={reward.reward_title}
+                    className="reward-icon"
+                  />
+                  <div className="reward-info">
+                    <p className="reward-title">{reward.reward_title}</p>
+                    <div className="reward-meta">
+                      <img
+                        src={`${process.env.PUBLIC_URL}/logo.png`}
+                        alt="Coin Icon"
+                        className="small-icon"
+                      />
+                      <span>Reward: {reward.reward}</span>
+                    </div>
                   </div>
                 </div>
+                {activeTab === "on_going" ? (
+                  <button
+                    className="reward-cta"
+                    style={{ backgroundColor: "orange", color: "white" }}
+                    onClick={() => handleClaimReward(reward.reward_id)}
+                  >
+                    Claim
+                  </button>
+                ) : (
+                  <div className="reward-share-icon" style={{ backgroundColor: "white" }}>
+                    <img
+                      src={`${process.env.PUBLIC_URL}/share-icon.png`}
+                      alt="Share Icon"
+                      className="share-icon"
+                    />
+                  </div>
+                )}
               </div>
-              {activeTab === "New Reward" ? (
-                <button
-                  className="reward-cta"
-                  style={{
-                    backgroundColor: reward.button.bgColor,
-                    color: reward.button.textColor,
-                  }}
-                >
-                  {reward.button.label}
-                </button>
-              ) : (
-                <div
-                  className="reward-share-icon"
-                  style={{ backgroundColor: reward.button.bgColor }}
-                >
-                  <img
-                    src={`${process.env.PUBLIC_URL}${reward.button.icon}`}
-                    alt="Share Icon"
-                    className="share-icon"
-                  />
-                </div>
-              )}
-            </div>
-          ))}
+            ))
+          ) : (
+            <p>No rewards available for this category.</p>
+          )}
         </div>
       </div>
 
-      {/* Navigation */}
       <Navigation />
     </div>
   );

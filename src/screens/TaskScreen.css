@@ -125,6 +125,15 @@
   cursor: pointer;
 }
 
+/* Make task images round */
+.task-thumbnail {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%; /* Makes images round */
+  object-fit: cover;
+}
+
+
 .no-task-message {
   color: #d9d9d9;
   text-align: center;
@@ -133,8 +142,19 @@
 
 .loading-message {
   text-align: center;
-  color: orange;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: bold;
+  color: orange;
   margin-top: 20px;
+  animation: fadeInOut 1.5s infinite alternate;
+}
+
+/* Smooth fade-in and fade-out effect */
+@keyframes fadeInOut {
+  0% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
 }

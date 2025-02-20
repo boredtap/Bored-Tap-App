@@ -83,7 +83,9 @@
   }
   
   .challenge-icon {
-    border-radius: 10%;
+    width: 32px;
+    height: 32px;
+    border-radius: 100%;
   }
   
   .challenge-info {
@@ -114,16 +116,29 @@
   
   .progress-bar {
     width: 100%;
-    height: 6px;
+    height: 8px;
     background-color: #6f6f6f;
-    border-radius: 3px;
+    border-radius: 4px;
     overflow: hidden;
+    margin-top: 8px;
   }
   
   .progress-fill {
     height: 100%;
     background-color: #EBAE50;
+    border-radius: 4px;
+    transition: width 0.3s ease;
   }
+
+  /* Loading Message */
+.loading-message {
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  color: orange;
+  margin-top: 20px;
+  animation: fadeInOut 1.5s infinite alternate;
+}
   
   /* Challenge CTA */
   .challenge-cta {
@@ -149,4 +164,14 @@
   .challenge-time {
     color: orange;
   }
+
+  /* Smooth fade-in and fade-out effect */
+@keyframes fadeInOut {
+  0% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
+}
   
