@@ -13,7 +13,7 @@
 }
 
 /* Profile and Streak Section */
-.profile-streak-section {
+.profile1-streak-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -22,7 +22,7 @@
 }
 
 /* Profile Section */
-.profile-section {
+.profile1-section {
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -31,26 +31,26 @@
   transition: background-color 0.2s ease-in-out;
 }
 
-.profile-section img {
+.profile1-section img {
   width: 30px; /* Fixed size for profile picture */
   height: 30px;
   border-radius: 50%; /* Circular profile picture */
   object-fit: cover; /* Ensures the image fits without distortion */
 }
 
-.profile-info {
+.profile1-info {
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
-.profile-username {
+.profile1-username {
   font-size: 14px; /* Same as streak text */
   color: white;
   font-weight: bold; /* Made bold */
 }
 
-.profile-level {
+.profile1-level {
   font-size: 12px; /* Same as streak days */
   color: orange; /* Matches streak days */
 }
@@ -330,10 +330,10 @@
 
 /* Media Queries for Responsiveness */
 @media (max-width: 600px) {
-  .profile-username, .streak-text {
+  .profile1-username, .streak-text {
     font-size: 12px; /* Slightly smaller for mobile */
   }
-  .profile-level, .streak-days {
+  .profile1-level, .streak-days {
     font-size: 10px;
   }
   .big-tap-icon img {

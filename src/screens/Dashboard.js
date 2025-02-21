@@ -254,19 +254,19 @@ const Dashboard = () => {
   return (
     <div className="dashboard-container">
       {/* Profile and Streak Section */}
-      <div className="profile-streak-section">
+      <div className="profile1-streak-section">
         <div
-          className="profile-section"
+          className="profile1-section"
           onClick={() => navigate("/profile-screen")}
         >
           <img
             src={telegramData.image_url}
             alt="Profile"
-            className="profile-picture"
+            className="profile1-picture"
           />
-          <div className="profile-info">
-            <span className="profile-username">{telegramData.username}</span>
-            <span className="profile-level">Lvl {level}</span>
+          <div className="profile1-info">
+            <span className="profile1-username">{telegramData.username}</span>
+            <span className="profile1-level">Lvl {level}</span>
           </div>
         </div>
 
