@@ -337,7 +337,7 @@
     font-size: 12px;
   }
   .big-tap-icon img {
-    width: 350px; /* Smaller tap icon for mobile */
-    height: 350px;
+    width: 300px; /* Smaller tap icon for mobile */
+    height: 300px;
   }
 }

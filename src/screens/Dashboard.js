@@ -20,6 +20,8 @@ const Dashboard = () => {
   const [boostAnimation, setBoostAnimation] = useState(false);
   const [tapEffects, setTapEffects] = useState([]);
   const [currentStreak, setCurrentStreak] = useState(0);
+  
+  
 
   // Refs for managing backend updates and electric recharge
   const tapCountSinceLastUpdate = useRef(0);
@@ -224,7 +226,7 @@ const Dashboard = () => {
     return <div className="error">{error}</div>;
   }
 
-  const { level = 1 } = profile || {};
+  const { level = 1, level_name = "Beginner" } = profile || {};
 
   return (
     <div className="dashboard-container">
@@ -234,7 +236,7 @@ const Dashboard = () => {
           <img src={telegramData.image_url} alt="Profile" className="profile1-picture" />
           <div className="profile1-info">
             <span className="profile1-username">{telegramData.username}</span>
-            <span className="profile1-level">Lvl {level}</span>
+            <span className="profile1-level">Lv. {level} {level_name}</span>
           </div>
         </div>
         <div className="streak-section" onClick={() => navigate("/daily-streak-screen")}>
