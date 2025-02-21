@@ -81,7 +81,6 @@
 
 .streak-text {
   font-size: 16px; /* Same as profile username */
-  font-weight: bold;
   color: white; /* Same as profile username */
   margin: 0;
 }
