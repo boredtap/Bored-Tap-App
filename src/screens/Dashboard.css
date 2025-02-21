@@ -3,35 +3,37 @@
   color: #fff;
   min-height: 100vh;
   padding: 80px 16px;
-  padding-top: 0px; 
+  padding-top: 0px;
   font-family: "Roboto", sans-serif;
   position: relative;
   display: flex;
   flex-direction: column;
   width: 100%;
 }
-/* Container for both sections */
-.profile-streak-container {
+/* Profile and Streak Section */
+.profile-streak-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 10px;
   margin-bottom: 20px;
+  padding: 0 10px;
 }
 
-/* Profile Section (Left) */
+/* Profile Section */
 .profile-section {
   display: flex;
   align-items: center;
-  gap: 10px; /* Same spacing between icon and text */
-  cursor: pointer; /* Same clickable style */
+  justify-content: flex-start;
+  gap: 10px;
+  cursor: pointer; /* Indicate clickable area */
+  transition: background-color 0.2s ease-in-out;
 }
 
 .profile-section img {
-  width: 30px;
+  width: 30px; /* Fixed size for profile picture */
   height: 30px;
-  border-radius: 50%;
-  object-fit: cover;
+  border-radius: 50%; /* Circular profile picture */
+  object-fit: cover; /* Ensures the image fits without distortion */
 }
 
 .profile-info {
@@ -41,29 +43,31 @@
 }
 
 .profile-username {
-  font-size: 14px; /* Same size as streak main text */
-  color: white; /* Same color as streak main text */
-  font-weight: bold;
+  font-size: 12px; /* Adjust text size for username */
+  color: white;
+  /* font-weight: bold; */
 }
 
 .profile-level {
-  font-size: 12px; /* Same size as streak secondary text */
-  color: orange; /* Same color as streak secondary text */
+  font-size: 12px; /* Smaller text for level */
+  color: orange; /* Matches level design */
 }
 
-/* Streak Section (Right) */
 .streak-section {
   display: flex;
   align-items: center;
-  gap: 10px; /* Same spacing between icon and text */
-  cursor: pointer; /* Same clickable style */
+  gap: 10px;
+  width: fit-content; /* Ensure the section only takes as much space as needed */
+  height: auto; /* Prevent unnecessary stretching */
+  cursor: pointer;
 }
 
 .streak-icon {
-  width: 30px;
-  height: 30px;
+  width: 30px !important; /* Force the icon to be 30x30 */
+  height: 30px !important; /* Force the icon to be 30x30 */
   border-radius: 50%;
-  object-fit: contain;
+  object-fit: contain; /* Prevent distortion */
+  flex-shrink: 0; /* Prevent resizing of the icon */
 }
 
 .streak-info {
@@ -73,15 +77,17 @@
 }
 
 .streak-text {
-  font-size: 14px; /* Same size as profile username */
-  color: white; /* Same color as profile username */
+  font-size: 14px;
   font-weight: bold;
+  margin: 0; /* Prevent text from affecting layout */
 }
 
 .streak-days {
-  font-size: 12px; /* Same size as profile level */
-  color: orange; /* Same color as profile level */
+  font-size: 12px;
+  color: orange;
+  margin: 0; /* Prevent text from affecting layout */
 }
+
   
   .frames-section {
     display: flex;
