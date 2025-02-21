@@ -27,6 +27,7 @@ const Dashboard = () => {
   const updateBackendTimeout = useRef(null);
   const rechargeInterval = useRef(null);
   const isTapping = useRef(false);
+  let isHandlingTap = false; // Debounce flag for tap handling
 
   // Effect for fetching Telegram data
   useEffect(() => {
@@ -84,7 +85,7 @@ const Dashboard = () => {
     fetchStreakStatus();
   }, []);
 
-  // Effect for fetching profile data
+  // Effect for fetching profile data and restoring electricBoost
   useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem("accessToken");
@@ -113,6 +114,15 @@ const Dashboard = () => {
         setProfile(data);
         setTotalTaps(data.total_coins);
         setCurrentStreak(data.streak.current_streak || 0);
+
+        // Restore electricBoost from localStorage if available
+        const savedBoost = localStorage.getItem("electricBoost");
+        const lastTapTime = localStorage.getItem("lastTapTime");
+        if (savedBoost && lastTapTime) {
+          const timeElapsed = Math.floor((Date.now() - parseInt(lastTapTime)) / 1000); // seconds
+          const rechargedAmount = Math.min(timeElapsed, 1000 - parseInt(savedBoost));
+          setElectricBoost(parseInt(savedBoost) + rechargedAmount);
+        }
       } catch (err) {
         setError(err.message);
         console.error("Error fetching profile:", err);
@@ -124,6 +134,10 @@ const Dashboard = () => {
 
   // Handle tap effect with multi-touch and location responsiveness
   const handleTap = (event) => {
+    if (isHandlingTap) return;
+    isHandlingTap = true;
+    setTimeout(() => { isHandlingTap = false; }, 100); // Debounce for 100ms
+
     if (electricBoost === 0) return; // Stop if electric boost is depleted
 
     const fingersCount = event.touches?.length || 1;
@@ -154,6 +168,10 @@ const Dashboard = () => {
       updateBackend();
       startRecharge();
     }, 1000); // Update backend 1 second after last tap
+
+    // Save current electricBoost and timestamp
+    localStorage.setItem("electricBoost", electricBoost - fingersCount);
+    localStorage.setItem("lastTapTime", Date.now());
   };
 
   const playTapSound = () => {
@@ -201,7 +219,10 @@ const Dashboard = () => {
     rechargeInterval.current = setInterval(() => {
       setElectricBoost((prev) => {
         if (prev < 1000) {
-          return prev + 1;
+          const newBoost = prev + 1;
+          localStorage.setItem("electricBoost", newBoost);
+          localStorage.setItem("lastTapTime", Date.now());
+          return newBoost;
         } else {
           clearInterval(rechargeInterval.current);
           return 1000;
