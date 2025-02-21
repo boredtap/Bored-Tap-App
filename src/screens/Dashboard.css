@@ -4,7 +4,7 @@
   color: #fff;
   min-height: 100vh;
   padding: 80px 16px;
-  padding-top: 0px;
+  padding-top: 16px;
   font-family: "Roboto", sans-serif;
   position: relative;
   display: flex;
@@ -45,13 +45,13 @@
 }
 
 .profile1-username {
-  font-size: 14px; /* Same as streak text */
+  font-size: 16px; /* Same as streak text */
   color: white;
   font-weight: bold; /* Made bold */
 }
 
 .profile1-level {
-  font-size: 12px; /* Same as streak days */
+  font-size: 14px; /* Same as streak days */
   color: orange; /* Matches streak days */
 }
 
@@ -80,14 +80,14 @@
 }
 
 .streak-text {
-  font-size: 14px; /* Same as profile username */
+  font-size: 16px; /* Same as profile username */
   font-weight: bold;
   color: white; /* Same as profile username */
   margin: 0;
 }
 
 .streak-days {
-  font-size: 12px; /* Same as profile level */
+  font-size: 14px; /* Same as profile level */
   color: orange; /* Same as profile level */
   margin: 0;
 }
@@ -331,10 +331,10 @@
 /* Media Queries for Responsiveness */
 @media (max-width: 600px) {
   .profile1-username, .streak-text {
-    font-size: 12px; /* Slightly smaller for mobile */
+    font-size: 14px; /* Slightly smaller for mobile */
   }
   .profile1-level, .streak-days {
-    font-size: 10px;
+    font-size: 12px;
   }
   .big-tap-icon img {
     width: 200px; /* Smaller tap icon for mobile */
