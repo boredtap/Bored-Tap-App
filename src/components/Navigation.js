@@ -1,56 +1,37 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "./Navigation.css";
 
 const Navigation = () => {
   const navigate = useNavigate();
+  const location = useLocation(); // Get the current route path
+
+  // Define navigation items with their paths, labels, and icons
+  const navItems = [
+    { path: "/dashboard", label: "Earn", icon: "earn.png" },
+    { path: "/task-screen", label: "Tasks", icon: "task.png" },
+    { path: "/invite-screen", label: "Invite", icon: "invite.png" },
+    { path: "/wallet-screen", label: "Wallet", icon: "wallet.png" },
+  ];
 
   return (
     <div className="navigation-bar">
-      <div
-        className="navigation-item"
-        onClick={() => navigate("/dashboard")}
-      >
-        <img
-          src={`${process.env.PUBLIC_URL}/earn.png`}
-          alt="Earn Icon"
-          className="navigation-icon"
-        />
-        <span>Earn</span>
-      </div>
-      <div
-        className="navigation-item"
-        onClick={() => navigate("/task-screen")}
-      >
-        <img
-          src={`${process.env.PUBLIC_URL}/task.png`}
-          alt="Tasks Icon"
-          className="navigation-icon"
-        />
-        <span>Tasks</span>
-      </div>
-      <div
-        className="navigation-item"
-        onClick={() => navigate("/invite-screen")}
-      >
-        <img
-          src={`${process.env.PUBLIC_URL}/invite.png`}
-          alt="Invite Icon"
-          className="navigation-icon"
-        />
-        <span>Invite</span>
-      </div>
-      <div
-        className="navigation-item"
-        onClick={() => navigate("/wallet-screen")}
-      >
-        <img
-          src={`${process.env.PUBLIC_URL}/wallet.png`}
-          alt="Wallet Icon"
-          className="navigation-icon"
-        />
-        <span>Wallet</span>
-      </div>
+      {navItems.map((item) => (
+        <div
+          key={item.path}
+          className={`navigation-item ${
+            location.pathname === item.path ? "active" : ""
+          }`}
+          onClick={() => navigate(item.path)}
+        >
+          <img
+            src={`${process.env.PUBLIC_URL}/${item.icon}`}
+            alt={`${item.label} Icon`}
+            className="navigation-icon"
+          />
+          <span>{item.label}</span>
+        </div>
+      ))}
     </div>
   );
 };
