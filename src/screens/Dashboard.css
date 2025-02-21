@@ -329,10 +329,15 @@
 
 /* Media Queries for Responsiveness */
 @media (max-width: 600px) {
-  .profile1-username, .streak-text {
+  .profile1-username {
     font-size: 14px; /* Slightly smaller for mobile */
     font-weight: bold; /* Made bold */
   }
+
+  .streak-text {
+    font-size: 14px; /* Slightly smaller for mobile */
+  }
+
   .profile1-level, .streak-days {
     font-size: 12px;
   }
