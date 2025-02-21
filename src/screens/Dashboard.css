@@ -313,7 +313,7 @@
 .big-tap-icon {
   position: relative;
   cursor: pointer;
-  animation: tap-scale 0.2 ease-in-out;
+  /* animation: tap-scale 0.2 ease-in-out; */
 }
 
 @keyframes tap-scale {
@@ -337,7 +337,7 @@
     font-size: 12px;
   }
   .big-tap-icon img {
-    width: 300px; /* Smaller tap icon for mobile */
-    height: 300px;
+    width: 280px; /* Smaller tap icon for mobile */
+    height: 280px;
   }
 }

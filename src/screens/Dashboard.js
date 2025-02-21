@@ -236,7 +236,7 @@ const Dashboard = () => {
           <img src={telegramData.image_url} alt="Profile" className="profile1-picture" />
           <div className="profile1-info">
             <span className="profile1-username">{telegramData.username}</span>
-            <span className="profile1-level">Lv. {level} {level_name}</span>
+            <span className="profile1-level">Lv. {level}. {level_name}</span>
           </div>
         </div>
         <div className="streak-section" onClick={() => navigate("/daily-streak-screen")}>
