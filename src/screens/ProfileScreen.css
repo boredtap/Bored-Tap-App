@@ -68,6 +68,7 @@
   cursor: pointer;
   width: 100%; /* Full width within container */
   box-sizing: border-box; /* Prevents overflow */
+
 }
 
 /* Left Side of Card (Icon and Label) */
@@ -96,13 +97,14 @@
 
 /* Right Side of Card (Value) */
 .profile-data-right {
-  font-size: 14px; /* Increased for readability */
+  font-size: 12px; /* Increased for readability */
   color: orange;
-  text-align: right;
+  text-align: left;
   flex-shrink: 0; /* Prevents value from shrinking too much */
   max-width: 50%; /* Limits width to prevent overflow */
   overflow: hidden;
-  text-overflow: ellipsis; /* Truncates long values */
+  text-overflow:ellipsis; /* Truncates long values */
+  white-space: nowrap; /* Prevents label from wrapping */
 }
 
 /* Wallet Icon in Connect Wallet Card */
