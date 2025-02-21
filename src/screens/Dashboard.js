@@ -1,4 +1,3 @@
-// Dashboard.js
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
@@ -16,19 +15,20 @@ const Dashboard = () => {
 
   const [profile, setProfile] = useState(null);
   const [error, setError] = useState(null);
-  const [totalTaps, setTotalTaps] = useState(0); 
+  const [totalTaps, setTotalTaps] = useState(0);
   const [electricBoost, setElectricBoost] = useState(1000);
   const [tapAnimation, setTapAnimation] = useState(false);
   const [boostAnimation, setBoostAnimation] = useState(false);
   const [tapEffects, setTapEffects] = useState([]);
-  const [currentStreak, setCurrentStreak] = useState(0); // Moved up here for correct state management
+  const [currentStreak, setCurrentStreak] = useState(0);
 
   // Refs for managing backend updates and electric recharge
   const tapCountSinceLastUpdate = useRef(0);
   const updateBackendTimeout = useRef(null);
-  const rechargeTimeout = useRef(null);
+  const rechargeInterval = useRef(null);
+  const isTapping = useRef(false);
 
-  // Effect for fetching Telegram data (if needed)
+  // Effect for fetching Telegram data
   useEffect(() => {
     const initializeDashboard = async () => {
       try {
@@ -52,6 +52,7 @@ const Dashboard = () => {
     initializeDashboard();
   }, []);
 
+  // Effect for fetching streak status
   useEffect(() => {
     const fetchStreakStatus = async () => {
       const token = localStorage.getItem("accessToken");
@@ -59,7 +60,7 @@ const Dashboard = () => {
         console.error("No access token found");
         return;
       }
-  
+
       try {
         const response = await fetch("https://bt-coins.onrender.com/streak/status", {
           method: "GET",
@@ -68,30 +69,30 @@ const Dashboard = () => {
             "Content-Type": "application/json",
           },
         });
-  
+
         if (!response.ok) {
           throw new Error("Failed to fetch streak status");
         }
-  
+
         const streakStatus = await response.json();
         setCurrentStreak(streakStatus.current_streak || 0);
       } catch (err) {
         console.error("Error fetching streak status:", err);
       }
     };
-  
+
     fetchStreakStatus();
   }, []);
 
-  // Fetch profile data from the backend
+  // Effect for fetching profile data
   useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem("accessToken");
       if (!token) {
-        navigate("/splash"); 
+        navigate("/splash");
         return;
       }
-  
+
       try {
         const response = await fetch("https://bt-coins.onrender.com/user/profile", {
           method: "GET",
@@ -100,14 +101,14 @@ const Dashboard = () => {
             "Content-Type": "application/json",
           },
         });
-  
+
         if (!response.ok) {
           if (response.status === 401) {
             throw new Error("Unauthorized. Please log in again.");
           }
           throw new Error("Failed to fetch profile data.");
         }
-  
+
         const data = await response.json();
         setProfile(data);
         setTotalTaps(data.total_coins);
@@ -115,9 +116,9 @@ const Dashboard = () => {
       } catch (err) {
         setError(err.message);
         console.error("Error fetching profile:", err);
-      } 
+      }
     };
-  
+
     fetchProfile();
   }, [navigate]);
 
@@ -143,8 +144,16 @@ const Dashboard = () => {
     setTimeout(() => setTapAnimation(false), 500);
     setTimeout(() => setTapEffects((prevEffects) => prevEffects.filter(effect => effect.id !== newTapEffect.id)), 1000);
 
+    // Set tapping state
+    isTapping.current = true;
+
+    // Clear existing update timeout and set a new one to update backend after 1 second of inactivity
     if (updateBackendTimeout.current) clearTimeout(updateBackendTimeout.current);
-    updateBackendTimeout.current = setTimeout(updateBackend, 2000); // Update backend every 2 seconds
+    updateBackendTimeout.current = setTimeout(() => {
+      isTapping.current = false;
+      updateBackend();
+      startRecharge();
+    }, 1000); // Update backend 1 second after last tap
   };
 
   const playTapSound = () => {
@@ -153,7 +162,7 @@ const Dashboard = () => {
     audio.play().catch((err) => console.error("Audio playback error:", err));
   };
 
-  // Update backend with total taps every 2 seconds
+  // Update backend with total taps
   const updateBackend = async () => {
     if (tapCountSinceLastUpdate.current > 0) {
       try {
@@ -186,29 +195,31 @@ const Dashboard = () => {
     }
   };
 
-  // Recharge electric boost after 1 hour
-  useEffect(() => {
-    if (electricBoost === 0) {
-      rechargeTimeout.current = setTimeout(() => {
-        setElectricBoost(1000); // Recharge to full
-        console.log("Electric boost recharged to 1000/1000");
-      }, 60 * 60 * 1000); // 1 hour
-    } else if (rechargeTimeout.current) {
-      clearTimeout(rechargeTimeout.current); // Clear any existing recharge timer if boost is not zero
-    }
+  // Start recharging electric boost
+  const startRecharge = () => {
+    if (rechargeInterval.current) clearInterval(rechargeInterval.current);
+    rechargeInterval.current = setInterval(() => {
+      setElectricBoost((prev) => {
+        if (prev < 1000) {
+          return prev + 1;
+        } else {
+          clearInterval(rechargeInterval.current);
+          return 1000;
+        }
+      });
+    }, 1000); // Recharge 1 per second
+  };
 
-    return () => {
-      if (rechargeTimeout.current) {
-        clearTimeout(rechargeTimeout.current);
-      }
-    };
-  }, [electricBoost]);
+  // Stop recharging when tapping starts
+  const stopRecharge = () => {
+    if (rechargeInterval.current) clearInterval(rechargeInterval.current);
+  };
 
+  // Effect to manage recharge interval
   useEffect(() => {
     return () => {
-      if (rechargeTimeout.current) {
-        clearTimeout(rechargeTimeout.current);
-      }
+      if (rechargeInterval.current) clearInterval(rechargeInterval.current);
+      if (updateBackendTimeout.current) clearTimeout(updateBackendTimeout.current);
     };
   }, []);
 
@@ -239,13 +250,14 @@ const Dashboard = () => {
         </div>
 
         <div className="streak-section" onClick={() => navigate("/daily-streak-screen")}>
-        <img src={`${process.env.PUBLIC_URL}/streak.png`} alt="Streak Icon" className="streak-icon" />
-        <div className="streak-info">
-          <span className="streak-text">Current Streak</span>
-          <span className="streak-days">Day {currentStreak}</span>
+          <img src={`${process.env.PUBLIC_URL}/streak.png`} alt="Streak Icon" className="streak-icon" />
+          <div className="streak-info">
+            <span className="streak-text">Current Streak</span>
+            <span className="streak-days">Day {currentStreak}</span>
+          </div>
         </div>
       </div>
-      </div>
+
       {/* Frames Section */}
       <div className="frames-section">
         {[{ name: "Rewards", icon: "reward.png", path: "/reward-screen" },
@@ -281,8 +293,14 @@ const Dashboard = () => {
         </div>
         <div
           className={`big-tap-icon ${tapAnimation ? "tap-animation" : ""}`}
-          onTouchStart={handleTap}
-          onClick={handleTap}
+          onTouchStart={(e) => {
+            stopRecharge();
+            handleTap(e);
+          }}
+          onClick={(e) => {
+            stopRecharge();
+            handleTap(e);
+          }}
         >
           <img
             className="tap-logo-big"
