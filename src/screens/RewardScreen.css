@@ -71,7 +71,7 @@
 .reward-cards {
   display: flex;
   flex-direction: column;
-  gap: 8px; /* Consistent spacing between cards */
+  gap: 24px; /* Consistent spacing between cards */
 }
 
 /* Individual Reward Card */

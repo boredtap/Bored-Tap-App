@@ -192,7 +192,7 @@ const RewardScreen = () => {
                 {activeTab === "on_going" ? (
                   <button
                     className="reward-cta"
-                    style={{ backgroundColor: "orange", color: "black" }} // Black text for "Claim"
+                    style={{ backgroundColor: "#f9b54c", color: "black" }} // Black text for "Claim"
                     onClick={() => handleClaimReward(reward.reward_id)}
                   >
                     Claim
