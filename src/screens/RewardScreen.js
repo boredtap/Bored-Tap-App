@@ -3,15 +3,14 @@ import Navigation from "../components/Navigation";
 import "./RewardScreen.css";
 
 const RewardScreen = () => {
-  const [activeTab, setActiveTab] = useState("on_going"); // Default tab matches backend response
-  const [totalTaps, setTotalTaps] = useState(0); // User's total taps from profile
-  const [rewardsData, setRewardsData] = useState({ on_going: [], claimed: [] }); // Rewards data
-  const [rewardImages, setRewardImages] = useState({}); // Cache for reward images
-  const [loading, setLoading] = useState(true); // Loading state for data fetching
-  const [showOverlay, setShowOverlay] = useState(false); // Controls overlay visibility
-  const [selectedReward, setSelectedReward] = useState(null); // Tracks the reward being claimed
+  const [activeTab, setActiveTab] = useState("on_going");
+  const [totalTaps, setTotalTaps] = useState(0);
+  const [rewardsData, setRewardsData] = useState({ on_going: [], claimed: [] });
+  const [rewardImages, setRewardImages] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [selectedReward, setSelectedReward] = useState(null);
 
-  // Fetch user profile and rewards data on component mount
   useEffect(() => {
     const fetchUserProfileAndRewards = async () => {
       try {
@@ -21,7 +20,6 @@ const RewardScreen = () => {
           return;
         }
 
-        // Fetch user profile for total taps
         const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
           method: "GET",
           headers: {
@@ -37,7 +35,6 @@ const RewardScreen = () => {
         const profileData = await profileResponse.json();
         setTotalTaps(profileData.total_coins);
 
-        // Fetch rewards for both "on_going" and "claimed" statuses
         const rewardTypes = ["on_going", "claimed"];
         const fetchedRewards = {};
 
@@ -67,7 +64,6 @@ const RewardScreen = () => {
     fetchUserProfileAndRewards();
   }, []);
 
-  // Fetch reward images when rewards data updates
   useEffect(() => {
     const fetchRewardImages = async () => {
       const token = localStorage.getItem("accessToken");
@@ -105,12 +101,10 @@ const RewardScreen = () => {
     }
   }, [rewardsData, rewardImages]);
 
-  // Handle tab switching
   const handleTabClick = (tab) => {
     setActiveTab(tab);
   };
 
-  // Handle claiming a reward and show overlay
   const handleClaimReward = async (rewardId) => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -124,12 +118,10 @@ const RewardScreen = () => {
 
       const result = await response.json();
       if (response.ok) {
-        // Show overlay with reward details before updating state
         const claimedReward = rewardsData.on_going.find((r) => r.reward_id === rewardId);
         setSelectedReward(claimedReward);
         setShowOverlay(true);
 
-        // Update rewards data
         setRewardsData((prevData) => ({
           ...prevData,
           on_going: prevData.on_going.filter((reward) => reward.reward_id !== rewardId),
@@ -143,19 +135,17 @@ const RewardScreen = () => {
     }
   };
 
-  // Close overlay and slide out
   const handleCloseOverlay = () => {
     setShowOverlay(false);
     setSelectedReward(null);
   };
 
   const rewards = rewardsData[activeTab] || [];
-  const tabLabels = { on_going: "On-going Reward", claimed: "Claimed Reward" }; // Custom tab names
+  const tabLabels = { on_going: "On-going Reward", claimed: "Claimed Reward" };
 
   return (
     <div className="reward-screen">
       <div className="reward-body">
-        {/* Total Taps Display */}
         <div className="total-taps">
           <p>Your Total Taps:</p>
           <div className="taps-display">
@@ -164,7 +154,6 @@ const RewardScreen = () => {
           </div>
         </div>
 
-        {/* Pagination Tabs */}
         <div className="pagination">
           {Object.keys(rewardsData).map((tab) => (
             <span
@@ -177,89 +166,90 @@ const RewardScreen = () => {
           ))}
         </div>
 
-        {/* Reward Cards */}
-        <div className="reward-cards">
-          {loading ? (
-            <p className="loading-message">Fetching Rewards...</p>
-          ) : rewards.length > 0 ? (
-            rewards.map((reward) => (
-              <div className="reward-card" key={reward.reward_id}>
-                <div className="reward-left">
-                  <img
-                    src={rewardImages[reward.reward_image_id] || `${process.env.PUBLIC_URL}/default-reward-icon.png`}
-                    alt={reward.reward_title}
-                    className="reward-icon"
-                  />
-                  <div className="reward-info">
-                    <p className="reward-title">{reward.reward_title}</p>
-                    <div className="reward-meta">
-                      <img
-                        src={`${process.env.PUBLIC_URL}/logo.png`}
-                        alt="Coin Icon"
-                        className="small-icon"
-                      />
-                      <span>Reward: {reward.reward}</span>
+        <div className="reward-cards-container">
+          <div className="reward-cards">
+            {loading ? (
+              <p className="loading-message">Fetching Rewards...</p>
+            ) : rewards.length > 0 ? (
+              rewards.map((reward) => (
+                <div className="reward-card" key={reward.reward_id}>
+                  <div className="reward-left">
+                    <img
+                      src={rewardImages[reward.reward_image_id] || `${process.env.PUBLIC_URL}/default-reward-icon.png`}
+                      alt={reward.reward_title}
+                      className="reward-icon"
+                    />
+                    <div className="reward-info">
+                      <p className="reward-title">{reward.reward_title}</p>
+                      <div className="reward-meta">
+                        <img
+                          src={`${process.env.PUBLIC_URL}/logo.png`}
+                          alt="Coin Icon"
+                          className="small-icon"
+                        />
+                        <span>Reward: {reward.reward}</span>
+                      </div>
                     </div>
                   </div>
+                  {activeTab === "on_going" ? (
+                    <button
+                      className="reward-cta"
+                      style={{ backgroundColor: "#f9b54c", color: "black" }}
+                      onClick={() => handleClaimReward(reward.reward_id)}
+                    >
+                      Claim
+                    </button>
+                  ) : (
+                    <div className="reward-share-icon" style={{ backgroundColor: "#000" }}>
+                      <img
+                        src={`${process.env.PUBLIC_URL}/share-icon.png`}
+                        alt="Share Icon"
+                        className="share-icon"
+                      />
+                    </div>
+                  )}
                 </div>
-                {activeTab === "on_going" ? (
-                  <button
-                    className="reward-cta"
-                    style={{ backgroundColor: "#f9b54c", color: "black" }}
-                    onClick={() => handleClaimReward(reward.reward_id)}
-                  >
-                    Claim
-                  </button>
-                ) : (
-                  <div className="reward-share-icon" style={{ backgroundColor: "#000" }}>
-                    <img
-                      src={`${process.env.PUBLIC_URL}/share-icon.png`}
-                      alt="Share Icon"
-                      className="share-icon"
-                    />
-                  </div>
-                )}
-              </div>
-            ))
-          ) : (
-            <p>No rewards available for this category.</p>
-          )}
+              ))
+            ) : (
+              <p>No rewards available for this category.</p>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Overlay for Claim Confirmation */}
       {showOverlay && selectedReward && (
-        <div className={`reward-overlay ${showOverlay ? "slide-in" : "slide-out"}`}>
-          <div className="overlay-header">
-            <h2 className="overlay-title">Claim Reward</h2>
-            <img
-              src={`${process.env.PUBLIC_URL}/cancel.png`}
-              alt="Cancel"
-              className="overlay-cancel"
-              onClick={handleCloseOverlay}
-            />
-          </div>
-          <div className="overlay-divider"></div>
-          <div className="overlay-content">
-            <img
-              src={rewardImages[selectedReward.reward_image_id] || `${process.env.PUBLIC_URL}/default_reward.png`}
-              alt="Reward Icon"
-              className="overlay-reward-icon"
-            />
-            <p className="overlay-text">Your reward of</p>
-            <div className="overlay-reward-value">
-              <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Coin Icon" className="overlay-coin-icon" />
-              <span>{selectedReward.reward}</span>
+        <div className="overlay-container">
+          <div className={`reward-overlay ${showOverlay ? "slide-in" : "slide-out"}`}>
+            <div className="overlay-header">
+              <h2 className="overlay-title">Claim Reward</h2>
+              <img
+                src={`${process.env.PUBLIC_URL}/cancel.png`}
+                alt="Cancel"
+                className="overlay-cancel"
+                onClick={handleCloseOverlay}
+              />
             </div>
-            <p className="overlay-message">has been added to your coin balance</p>
-            <button className="overlay-cta" onClick={handleCloseOverlay}>
-              Ok
-            </button>
+            <div className="overlay-divider"></div>
+            <div className="overlay-content">
+              <img
+                src={rewardImages[selectedReward.reward_image_id] || `${process.env.PUBLIC_URL}/default_reward.png`}
+                alt="Reward Icon"
+                className="overlay-reward-icon"
+              />
+              <p className="overlay-text">Your reward of</p>
+              <div className="overlay-reward-value">
+                <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Coin Icon" className="overlay-coin-icon" />
+                <span>{selectedReward.reward}</span>
+              </div>
+              <p className="overlay-message">has been added to your coin balance</p>
+              <button className="overlay-cta" onClick={handleCloseOverlay}>
+                Ok
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Navigation Bar */}
       <Navigation />
     </div>
   );
