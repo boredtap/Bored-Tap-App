@@ -3,12 +3,13 @@ import Navigation from "../components/Navigation";
 import "./RewardScreen.css";
 
 const RewardScreen = () => {
-  const [activeTab, setActiveTab] = useState("on_going"); // Matches backend response
-  const [totalTaps, setTotalTaps] = useState(0);
-  const [rewardsData, setRewardsData] = useState({ on_going: [], claimed: [] });
-  const [rewardImages, setRewardImages] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("on_going"); // Default tab matches backend response
+  const [totalTaps, setTotalTaps] = useState(0); // User's total taps from profile
+  const [rewardsData, setRewardsData] = useState({ on_going: [], claimed: [] }); // Rewards data
+  const [rewardImages, setRewardImages] = useState({}); // Cache for reward images
+  const [loading, setLoading] = useState(true); // Loading state for data fetching
 
+  // Fetch user profile and rewards data on component mount
   useEffect(() => {
     const fetchUserProfileAndRewards = async () => {
       try {
@@ -18,7 +19,7 @@ const RewardScreen = () => {
           return;
         }
 
-        // Fetch user profile
+        // Fetch user profile for total taps
         const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
           method: "GET",
           headers: {
@@ -34,7 +35,7 @@ const RewardScreen = () => {
         const profileData = await profileResponse.json();
         setTotalTaps(profileData.total_coins);
 
-        // Fetch rewards (both ongoing and claimed)
+        // Fetch rewards for both "on_going" and "claimed" statuses
         const rewardTypes = ["on_going", "claimed"];
         const fetchedRewards = {};
 
@@ -64,30 +65,28 @@ const RewardScreen = () => {
     fetchUserProfileAndRewards();
   }, []);
 
-  // Fetch images for rewards (Optimized to prevent infinite loops)
+  // Fetch reward images when rewards data updates
   useEffect(() => {
     const fetchRewardImages = async () => {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
-
+  
       const allRewards = [...rewardsData.on_going, ...rewardsData.claimed];
-
-      // Find rewards that don't have images already loaded
       const missingImages = allRewards.filter(
         (reward) => reward.reward_image_id && !rewardImages[reward.reward_image_id]
       );
-
-      if (missingImages.length === 0) return; // Prevent unnecessary API calls
-
+  
+      if (missingImages.length === 0) return;
+  
       const newImages = {};
       for (const reward of missingImages) {
         try {
           const response = await fetch(`https://bt-coins.onrender.com/reward_image/${reward.reward_image_id}`, {
             headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
           });
-
+  
           if (!response.ok) throw new Error("Failed to fetch image");
-
+  
           const imageBlob = await response.blob();
           newImages[reward.reward_image_id] = URL.createObjectURL(imageBlob);
         } catch (error) {
@@ -95,21 +94,21 @@ const RewardScreen = () => {
           newImages[reward.reward_image_id] = `${process.env.PUBLIC_URL}/default-reward-icon.png`;
         }
       }
-
-      // Use functional update to prevent unnecessary re-renders
+  
       setRewardImages((prevImages) => ({ ...prevImages, ...newImages }));
     };
-
+  
     if (rewardsData.on_going.length > 0 || rewardsData.claimed.length > 0) {
       fetchRewardImages();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rewardsData]); // ✅ Removed `rewardImages` to prevent infinite loop
+  }, [rewardsData, rewardImages]); // Added rewardImages to dependency array
 
+  // Handle tab switching
   const handleTabClick = (tab) => {
     setActiveTab(tab);
   };
 
+  // Handle claiming a reward
   const handleClaimReward = async (rewardId) => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -138,17 +137,18 @@ const RewardScreen = () => {
   };
 
   const rewards = rewardsData[activeTab] || [];
+  const tabLabels = { on_going: "On-going Reward", claimed: "Claimed Reward" }; // Custom tab names
 
   return (
     <div className="reward-screen">
       <div className="reward-body">
+        {/* Total Taps Display */}
         <div className="total-taps">
           <p>Your Total Taps:</p>
           <div className="taps-display">
             <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Logo" className="taps-logo" />
             <span className="taps-number">{totalTaps.toLocaleString()}</span>
           </div>
-          <p className="task-link">How BT-boosters work?</p>
         </div>
 
         {/* Pagination Tabs */}
@@ -159,15 +159,16 @@ const RewardScreen = () => {
               className={`pagination-tab ${activeTab === tab ? "active" : ""}`}
               onClick={() => handleTabClick(tab)}
             >
-              {tab.replace("_", " ").toUpperCase()}
+              {tabLabels[tab]} {/* Use custom labels */}
             </span>
           ))}
         </div>
 
         {/* Reward Cards */}
         <div className="reward-cards">
-        {loading ? <p className="loading-message">Fetching Rewards...</p>
-         : rewards.length > 0 ? (
+          {loading ? (
+            <p className="loading-message">Fetching Rewards...</p>
+          ) : rewards.length > 0 ? (
             rewards.map((reward) => (
               <div className="reward-card" key={reward.reward_id}>
                 <div className="reward-left">
@@ -191,13 +192,16 @@ const RewardScreen = () => {
                 {activeTab === "on_going" ? (
                   <button
                     className="reward-cta"
-                    style={{ backgroundColor: "orange", color: "white" }}
+                    style={{ backgroundColor: "orange", color: "black" }} // Black text for "Claim"
                     onClick={() => handleClaimReward(reward.reward_id)}
                   >
                     Claim
                   </button>
                 ) : (
-                  <div className="reward-share-icon" style={{ backgroundColor: "white" }}>
+                  <div
+                    className="reward-share-icon"
+                    style={{ backgroundColor: "#000" }} // Black background for claimed
+                  >
                     <img
                       src={`${process.env.PUBLIC_URL}/share-icon.png`}
                       alt="Share Icon"
@@ -213,6 +217,7 @@ const RewardScreen = () => {
         </div>
       </div>
 
+      {/* Navigation Bar */}
       <Navigation />
     </div>
   );

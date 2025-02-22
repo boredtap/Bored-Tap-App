@@ -1,15 +1,21 @@
-/* Reward Screen Styling */
+/* Reward Screen Container */
 .reward-screen {
   background-color: #000;
   color: #fff;
   min-height: 100vh;
   padding: 80px 16px;
-  padding-top: 0px;
+  padding-top: 0px; /* Matches original design */
   font-family: "Roboto", sans-serif;
   position: relative;
   display: flex;
   flex-direction: column;
   width: 100%;
+  box-sizing: border-box;
+}
+
+/* Reward Body */
+.reward-body {
+  flex: 1; /* Ensures content takes available space */
 }
 
 /* Total Taps Section */
@@ -36,14 +42,7 @@
   font-weight: bold;
 }
 
-.task-link {
-  font-size: 14px;
-  color: #00bfff;
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-/* Pagination */
+/* Pagination Tabs */
 .pagination {
   display: flex;
   justify-content: space-evenly;
@@ -54,6 +53,8 @@
   font-size: 16px;
   cursor: pointer;
   color: #fff;
+  position: relative; /* For active underline */
+  padding-bottom: 4px; /* Space for underline */
 }
 
 .pagination-tab.active::after {
@@ -62,17 +63,18 @@
   width: 100%;
   height: 2px;
   background-color: #fff;
-  bottom: -4px;
+  bottom: 0;
   left: 0;
 }
 
-/* Reward Cards */
+/* Reward Cards Container */
 .reward-cards {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 8px; /* Consistent spacing between cards */
 }
 
+/* Individual Reward Card */
 .reward-card {
   display: flex;
   justify-content: space-between;
@@ -82,18 +84,22 @@
   background-color: #414141;
 }
 
+/* Left Side of Reward Card */
 .reward-left {
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  flex: 1; /* Ensures left side takes available space */
 }
 
+/* Reward Icon */
 .reward-icon {
   width: 32px;
   height: 32px;
-  border-radius: 100%;
+  border-radius: 50%; /* Circular icon */
 }
 
+/* Reward Information */
 .reward-info {
   display: flex;
   flex-direction: column;
@@ -116,20 +122,23 @@
   height: 16px;
 }
 
+/* Call-to-Action Button (Claim) */
 .reward-cta {
   padding: 8px 16px;
   border-radius: 25px;
   border: none;
   font-size: 14px;
   cursor: pointer;
+  font-weight: 500; /* Slightly bold for emphasis */
 }
 
+/* Share Icon for Claimed Rewards */
 .reward-share-icon {
-  padding: 8px 16px;
+  padding: 8px;
   border-radius: 25px;
-  border: none;
-  font-size: 14px;
-  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .share-icon {
@@ -137,7 +146,7 @@
   height: 20px;
 }
 
-/* Loading Rewards */
+/* Loading Message */
 .loading-message {
   text-align: center;
   font-size: 18px;
@@ -147,12 +156,65 @@
   animation: fadeInOut 1.5s infinite alternate;
 }
 
-/* Smooth fade-in and fade-out effect */
+/* Fade Animation for Loading */
 @keyframes fadeInOut {
   0% {
     opacity: 0.4;
   }
   100% {
     opacity: 1;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .reward-screen {
+    padding: 60px 12px;
+    padding-top: 0px;
+  }
+
+  .taps-number {
+    font-size: 28px; /* Smaller on mobile */
+  }
+
+  .taps-logo {
+    width: 24px;
+    height: 24px;
+  }
+
+  .pagination-tab {
+    font-size: 14px;
+  }
+
+  .reward-card {
+    padding: 12px; /* Reduced padding for mobile */
+  }
+
+  .reward-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .reward-title {
+    font-size: 13px;
+  }
+
+  .reward-meta {
+    font-size: 11px;
+  }
+
+  .small-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .reward-cta,
+  .reward-share-icon {
+    padding: 6px 12px; /* Adjusted for mobile */
+  }
+
+  .share-icon {
+    width: 18px;
+    height: 18px;
   }
 }
