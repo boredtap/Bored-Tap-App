@@ -2,17 +2,29 @@ import React, { useState, useEffect } from "react";
 import Navigation from "../components/Navigation";
 import "./ChallengeScreen.css";
 
+// ChallengeScreen component displays open and completed challenges with user-friendly navigation
 const ChallengeScreen = () => {
+  // State for active tab (Open Challenges or Completed Challenges)
   const [activeTab, setActiveTab] = useState("Open Challenges");
+  // State for user's total taps (coins)
   const [totalTaps, setTotalTaps] = useState(0);
+  // State for challenges data, categorized by status
   const [challengesData, setChallengesData] = useState({
     "Open Challenges": [],
     "Completed Challenges": [],
   });
+  // State for challenge images, mapped by imageId
   const [challengeImages, setChallengeImages] = useState({});
-  const [loading, setLoading] = useState(true); // Add loading state
+  // State for loading status during data fetching
+  const [loading, setLoading] = useState(true);
+  // State for error handling during data fetching
   const [error, setError] = useState(null);
+  // State for managing overlay visibility
+  const [showOverlay, setShowOverlay] = useState(false);
+  // State for storing the selected challenge for the overlay
+  const [selectedChallenge, setSelectedChallenge] = useState(null);
 
+  // Effect to fetch user profile, challenges, and images on component mount
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true); // Set loading to true at the start
@@ -76,9 +88,9 @@ const ChallengeScreen = () => {
 
         const completedChallenges = await completedChallengesResponse.json();
 
-        // Set challenges data
+        // Combine and map challenges data
         const allChallenges = [
-          ...ongoingChallenges.map(challenge => ({
+          ...ongoingChallenges.map((challenge) => ({
             title: challenge.name,
             description: challenge.description,
             reward: challenge.reward,
@@ -87,7 +99,7 @@ const ChallengeScreen = () => {
             id: challenge.challenge_id,
             imageId: challenge.image_id,
           })),
-          ...completedChallenges.map(challenge => ({
+          ...completedChallenges.map((challenge) => ({
             title: challenge.name,
             description: challenge.description,
             reward: challenge.reward,
@@ -98,9 +110,10 @@ const ChallengeScreen = () => {
           })),
         ];
 
+        // Set challenges data by category
         setChallengesData({
-          "Open Challenges": allChallenges.filter(ch => ch.status === "ongoing"),
-          "Completed Challenges": allChallenges.filter(ch => ch.status === "completed"),
+          "Open Challenges": allChallenges.filter((ch) => ch.status === "ongoing"),
+          "Completed Challenges": allChallenges.filter((ch) => ch.status === "completed"),
         });
 
         // Fetch all challenge images
@@ -124,13 +137,13 @@ const ChallengeScreen = () => {
             const imageBlob = await imageResponse.blob();
             const imageUrl = URL.createObjectURL(imageBlob);
 
-            setChallengeImages(prev => ({
+            setChallengeImages((prev) => ({
               ...prev,
               [challenge.imageId]: imageUrl,
             }));
           } catch (err) {
             console.error(`Error fetching image for challenge ${challenge.id}:`, err);
-            setChallengeImages(prev => ({
+            setChallengeImages((prev) => ({
               ...prev,
               [challenge.imageId]: `${process.env.PUBLIC_URL}/logo.png`, // Fallback image
             }));
@@ -138,7 +151,6 @@ const ChallengeScreen = () => {
         });
 
         await Promise.all(imagePromises);
-
       } catch (err) {
         setError(err.message);
       } finally {
@@ -149,22 +161,31 @@ const ChallengeScreen = () => {
     fetchData();
   }, []);
 
+  // Handler for switching tabs
   const handleTabClick = (tab) => {
     setActiveTab(tab);
   };
 
+  // Handler for clicking the "Claim" button
   const handleClaimClick = (challenge) => {
-    console.log(`Claiming reward for challenge: ${challenge.title}`);
-    // Add logic to claim reward here if needed
+    setSelectedChallenge(challenge);
+    setShowOverlay(true);
   };
 
+  // Handler for closing the overlay
+  const handleCloseOverlay = () => {
+    setShowOverlay(false);
+    setSelectedChallenge(null);
+  };
+
+  // Get challenges for the active tab
   const challenges = challengesData[activeTab] || [];
 
   return (
     <div className="challenge-screen">
-      {/* Body */}
-      <div className="challenge-body">
-        {/* Total Taps */}
+      {/* Main content wrapper for alignment */}
+      <div className="challenge-content">
+        {/* Total Taps Section */}
         <div className="total-taps">
           <p>Your Total Taps:</p>
           <div className="taps-display">
@@ -175,13 +196,10 @@ const ChallengeScreen = () => {
             />
             <span className="taps-number">{totalTaps.toLocaleString()}</span>
           </div>
-          <p className="tap-rewards">
-            Earn BT-coin rewards by completing simple tasks.
-          </p>
-          <p className="task-link">How tasks work?</p>
+          <p className="tap-rewards">Earn BT-coin rewards by completing challenges.</p>
         </div>
 
-        {/* Pagination (Tabs) - Moved above challenge cards */}
+        {/* Pagination Tabs */}
         <div className="pagination">
           {Object.keys(challengesData).map((tab) => (
             <span
@@ -194,57 +212,106 @@ const ChallengeScreen = () => {
           ))}
         </div>
 
-        {/* Challenge Cards */}
-        <div className="challenge-cards">
-          {loading ? (
-            <p className="loading-message">Fetching Challenges...</p>
-          ) : error ? (
-            <p className="error-message">Error: {error}</p>
-          ) : challenges.length > 0 ? (
-            challenges.map((challenge) => (
-              <div className="challenge-card" key={challenge.id}>
-                <div className="challenge-left">
-                  <img
-                    src={challengeImages[challenge.imageId] || `${process.env.PUBLIC_URL}/logo.png`}
-                    alt={challenge.title}
-                    className="challenge-icon" // Matches reward-icon size (32x32px)
-                  />
-                  <div className="challenge-info">
-                    <p className="challenge-title">{challenge.title}</p>
-                    <p className="challenge-description">{challenge.description}</p>
-                    <div className="challenge-meta">
-                      <img
-                        src={`${process.env.PUBLIC_URL}/logo.png`}
-                        alt="Coin Icon"
-                        className="small-icon" // Matches small-icon size (16x16px)
-                      />
-                      <span>{challenge.reward}</span>
-                      <span className="challenge-time">{challenge.time}</span>
-                    </div>
-                    <div className="progress-bar">
-                      <div
-                        className="progress-fill"
-                        style={{ width: challenge.status === "ongoing" ? "50%" : "100%" }}
-                      ></div>
+        {/* Scrollable Challenge Cards Container */}
+        <div className="challenge-cards-container">
+          <div className="challenge-cards">
+            {loading ? (
+              <p className="loading-message">Fetching Challenges...</p>
+            ) : error ? (
+              <p className="error-message">Error: {error}</p>
+            ) : challenges.length > 0 ? (
+              challenges.map((challenge) => (
+                <div className="challenge-card" key={challenge.id}>
+                  <div className="challenge-left">
+                    <img
+                      src={
+                        challengeImages[challenge.imageId] ||
+                        `${process.env.PUBLIC_URL}/logo.png`
+                      }
+                      alt={challenge.title}
+                      className="challenge-icon"
+                    />
+                    <div className="challenge-info">
+                      <p className="challenge-title">{challenge.title}</p>
+                      <p className="challenge-description">{challenge.description}</p>
+                      <div className="challenge-meta">
+                        <img
+                          src={`${process.env.PUBLIC_URL}/logo.png`}
+                          alt="Coin Icon"
+                          className="small-icon"
+                        />
+                        <span>{challenge.reward}</span>
+                        <span className="divider">•</span>
+                        <span className="challenge-time">{challenge.time}</span>
+                      </div>
+                      <div className="progress-bar">
+                        <div
+                          className="progress-fill"
+                          style={{
+                            width: challenge.status === "ongoing" ? "50%" : "100%",
+                          }}
+                        ></div>
+                      </div>
                     </div>
                   </div>
+                  <button
+                    className="challenge-cta"
+                    onClick={() => handleClaimClick(challenge)}
+                    disabled={challenge.status === "completed"}
+                  >
+                    {challenge.status === "ongoing" ? "Claim" : "Completed"}
+                  </button>
                 </div>
-                <button
-                  className="challenge-cta"
-                  onClick={() => handleClaimClick(challenge)}
-                  disabled={challenge.status === "completed"}
-                >
-                  {challenge.status === "ongoing" ? "Claim" : "Completed"}
-                </button>
-              </div>
-            ))
-          ) : (
-            <p className="no-challenges">No challenges available yet.</p>
-          )}
+              ))
+            ) : (
+              <p className="no-challenges">No challenges available yet.</p>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Navigation */}
+      {/* Overlay for Claim Confirmation */}
+      {showOverlay && selectedChallenge && (
+        <div className="overlay-container">
+          <div className={`challenge-overlay ${showOverlay ? "slide-in" : "slide-out"}`}>
+            <div className="overlay-header">
+              <h2 className="overlay-title">Claim Reward</h2>
+              <img
+                src={`${process.env.PUBLIC_URL}/cancel.png`}
+                alt="Cancel"
+                className="overlay-cancel"
+                onClick={handleCloseOverlay}
+              />
+            </div>
+            <div className="overlay-divider"></div>
+            <div className="overlay-content">
+              <img
+                src={
+                  challengeImages[selectedChallenge.imageId] ||
+                  `${process.env.PUBLIC_URL}/default-challenge-icon.png`
+                }
+                alt="Challenge Icon"
+                className="overlay-challenge-icon"
+              />
+              <p className="overlay-text">Your reward of</p>
+              <div className="overlay-reward-value">
+                <img
+                  src={`${process.env.PUBLIC_URL}/logo.png`}
+                  alt="Coin Icon"
+                  className="overlay-coin-icon"
+                />
+                <span>{selectedChallenge.reward}</span>
+              </div>
+              <p className="overlay-message">has been added to your coin balance</p>
+              <button className="overlay-cta" onClick={handleCloseOverlay}>
+                Ok
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Navigation Component */}
       <Navigation />
     </div>
   );
