@@ -8,6 +8,7 @@ class BoostCategories(str, Enum):
     BOOST = "boost"
     MULTIPLIER = "multiplier"
     RECHARGING_SPEED = "recharging speed"
+    AUTO_BOT_TAPPING = "Auto-bot Tapping"
 
     def __repr__(self):
         return self.value
