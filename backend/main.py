@@ -4,6 +4,7 @@ from superuser.dashboard.admin_auth import get_current_admin
 from dependencies import get_user_profile, update_coins_in_db,get_user_by_id
 from user_reg_and_prof_mngmnt.router import userApp
 from earn.router import earnApp
+from boosts.router import userExtraBoostApp
 from tasks.router import taskApp
 from invite.router import inviteApp
 from telegram_bot import bot_interactions
@@ -66,6 +67,7 @@ app.add_middleware(
 
 app.include_router(userApp)
 app.include_router(earnApp)
+app.include_router(userExtraBoostApp)
 app.include_router(taskApp)
 app.include_router(inviteApp)
 app.include_router(bot_interactions)

@@ -1,8 +1,10 @@
 from datetime import datetime, timezone
+from io import BytesIO
 
 from bson import ObjectId
 from fastapi import HTTPException
-from superuser.boost.models import ExtraBoostModel, ExtraBoostModelResponse
+from fastapi.responses import StreamingResponse
+from superuser.boost.models import AutoBotModel, AutoBotModelResponse, ExtraBoostModel, ExtraBoostModelResponse
 from superuser.boost.schemas import CreateExtraBoost, UpdateUpgradeCost
 from database_connection import extra_boosts_collection, fs
 
@@ -25,28 +27,37 @@ def verify_new_extra_boost(eboost: CreateExtraBoost, ):
     Returns:
         None
     """
+    if eboost.name == "Auto-bot Tapping":
+        auto_bot = extra_boosts_collection.find({"name": "Auto-bot Tapping"})
+        if auto_bot:
+            raise HTTPException(status_code=400, detail="Cannot create more than one Auto-Tapping bot.")
+        return
 
-    # find extra boosts and sort them in ascending order
+    # find other extra boosters and sort them in ascending order
     extra_boosts_from_db = extra_boosts_collection.find({"name": eboost.name}).sort("level", -1)
-    try:
-        extra_boosts: list[ExtraBoostModelResponse] = []
-        for extra_boost in extra_boosts_from_db:
-            extra_boosts.append(
-                ExtraBoostModelResponse(
-                    id= str(extra_boost["_id"]),
-                    name=extra_boost["name"],
-                    description=extra_boost["description"],
-                    level=extra_boost["level"],
-                    effect=extra_boost["effect"],
-                    upgrade_cost=extra_boost["upgrade_cost"],
-                    condition=extra_boost["condition"],
-                    image_id=str(extra_boost["image_id"]),
-                    created_at=extra_boost["created_at"]
+    if extra_boosts_from_db:
+        try:
+            extra_boosts: list[ExtraBoostModelResponse] = []
+            for extra_boost in extra_boosts_from_db:
+                print(extra_boost["name"])
+                extra_boosts.append(
+                    ExtraBoostModelResponse(
+                        id= str(extra_boost["_id"]),
+                        name=extra_boost["name"],
+                        description=extra_boost["description"],
+                        level=extra_boost["level"],
+                        effect=extra_boost["effect"],
+                        upgrade_cost=extra_boost["upgrade_cost"],
+                        condition=extra_boost["condition"],
+                        image_id=str(extra_boost["image_id"]),
+                        created_at=extra_boost["created_at"]
+                    )
                 )
-            )
-    except StopIteration as e:
-        print(e)
-        pass
+        except StopIteration as e:
+            print(e)
+            pass
+    else:
+        return
 
     # check if there are already 5 extra boosts
     if len(extra_boosts) == 5:
@@ -54,7 +65,6 @@ def verify_new_extra_boost(eboost: CreateExtraBoost, ):
         
     # check if level already exists
     if len(extra_boosts) >= eboost.level:
-        # raise httpexception, extraboost level already exists
         raise HTTPException(status_code=400, detail=f"{eboost.name} level {eboost.level} already exists.")
     
     # check if boost upgrade cost is greater than 0
@@ -89,32 +99,63 @@ def create_extra_boost(eboost: CreateExtraBoost):
     if verify_image(image_format):
         image_id = fs.put(image, filename="eboost_" + image_name)
 
-        new_boost = ExtraBoostModel(
-            name=eboost.name,
-            description=eboost.description,
-            level=eboost.level,
-            effect=eboost.effect,
-            upgrade_cost=eboost.upgrade_cost,
-            condition=eboost.condition,
-            image_id=str(image_id),
-            created_at=datetime.now(timezone.utc)
-        )
+        if eboost.name == "Auto-bot Tapping":
+            new_boost = AutoBotModel(
+                name=eboost.name,
+                # description=eboost.description,
+                # level=eboost.level,
+                # effect=eboost.effect,
+                upgrade_cost=eboost.upgrade_cost,
+                # condition=eboost.condition,
+                image_id=str(image_id),
+                created_at=datetime.now(timezone.utc)
+            )
+        else:
+            new_boost = ExtraBoostModel(
+                name=eboost.name,
+                description=eboost.description,
+                level=eboost.level,
+                effect=eboost.effect,
+                upgrade_cost=eboost.upgrade_cost,
+                condition=eboost.condition,
+                image_id=str(image_id),
+                created_at=datetime.now(timezone.utc)
+            )
+        
 
         inserted_eboost = extra_boosts_collection.insert_one(new_boost.model_dump())
-
         eboost_id = str(inserted_eboost.inserted_id)
 
-        return ExtraBoostModelResponse(
-            id=eboost_id,
-            **new_boost.model_dump()
-        )
+        if eboost.name == "Auto-bot Tapping":
+            return AutoBotModelResponse(
+                id=eboost_id,
+                **new_boost.model_dump()
+            )
+        else:
+            return ExtraBoostModelResponse(
+                id=eboost_id,
+                **new_boost.model_dump()
+            )
 
 
+# ----------------------------- GET EXTRA BOOSTERS ------------------------------ #
 def get_extra_boosters():
     eboosters = extra_boosts_collection.find({})
-
     try:
         for extra_boost in eboosters:
+            if extra_boost["name"] == "Auto-bot Tapping":
+                yield AutoBotModelResponse(
+                    id= str(extra_boost["_id"]),
+                    name=extra_boost["name"],
+                    description=extra_boost["description"],
+                    level=extra_boost["level"],
+                    effect=extra_boost["effect"],
+                    upgrade_cost=extra_boost["upgrade_cost"],
+                    condition=extra_boost["condition"],
+                    image_id=str(extra_boost["image_id"]),
+                    created_at=extra_boost["created_at"]
+                )
+                continue
             yield ExtraBoostModelResponse(
                     id= str(extra_boost["_id"]),
                     name=extra_boost["name"],
@@ -131,12 +172,19 @@ def get_extra_boosters():
 
 
 # ----------------------------- UPDATE UPGRADE COST ------------------------------ #
+def get_extra_boost_image(image_id: str):
+    image = fs.get(ObjectId(image_id))
+    image_format = image.filename.split(".")[1]
+    image_buffer = BytesIO(image.read())
+    image_buffer.seek(0)
+    return StreamingResponse(image_buffer, media_type=f"image/{image_format}")
+
+
+# ----------------------------- UPDATE UPGRADE COST ------------------------------ #
 def update_upgrade_cost(upgrade: UpdateUpgradeCost):
     query_filter = {"_id": ObjectId(upgrade.extra_boost_id)}
     eboost = extra_boosts_collection.find_one(query_filter)
 
-    if not eboost:
-        raise HTTPException(status_code=404, detail="Extra boost not found/invalid id")
     if not eboost:
         raise HTTPException(status_code=404, detail="Extra boost not found/invalid id")
 
@@ -150,6 +198,9 @@ def update_upgrade_cost(upgrade: UpdateUpgradeCost):
         query_filter,
         update_operation
     )
+
+    if not update.acknowledged:
+        raise HTTPException(status_code=400, detail="Upgrade cost update failed.")
 
     return {"message": "upgrade cost updated successfully."}
 
