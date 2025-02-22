@@ -4,7 +4,7 @@
   color: #fff;
   min-height: 100vh;
   padding: 80px 16px;
-  padding-top: 0px; /* Matches original design */
+  padding-top: 0px;
   font-family: "Roboto", sans-serif;
   position: relative;
   display: flex;
@@ -15,7 +15,7 @@
 
 /* Reward Body */
 .reward-body {
-  flex: 1; /* Ensures content takes available space */
+  flex: 1;
 }
 
 /* Total Taps Section */
@@ -53,8 +53,8 @@
   font-size: 16px;
   cursor: pointer;
   color: #fff;
-  position: relative; /* For active underline */
-  padding-bottom: 4px; /* Space for underline */
+  position: relative;
+  padding-bottom: 4px;
 }
 
 .pagination-tab.active::after {
@@ -71,7 +71,7 @@
 .reward-cards {
   display: flex;
   flex-direction: column;
-  gap: 24px; /* Consistent spacing between cards */
+  gap: 24px;
 }
 
 /* Individual Reward Card */
@@ -89,14 +89,14 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  flex: 1; /* Ensures left side takes available space */
+  flex: 1;
 }
 
 /* Reward Icon */
 .reward-icon {
   width: 32px;
   height: 32px;
-  border-radius: 50%; /* Circular icon */
+  border-radius: 50%;
 }
 
 /* Reward Information */
@@ -129,7 +129,7 @@
   border: none;
   font-size: 14px;
   cursor: pointer;
-  font-weight: 500; /* Slightly bold for emphasis */
+  font-weight: 500;
 }
 
 /* Share Icon for Claimed Rewards */
@@ -141,29 +141,126 @@
   justify-content: center;
 }
 
-.share-icon {
-  width: 20px;
-  height: 20px;
+/* Overlay for Claim Confirmation */
+.reward-overlay {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 50%; /* Takes half the screen height */
+  background-color: #1d1d1d; /* Overlay background */
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  box-sizing: border-box;
+  z-index: 1000; /* Above other content */
+  animation: slideIn 0.3s ease-out forwards;
 }
 
-/* Loading Message */
-.loading-message {
-  text-align: center;
+.reward-overlay.slide-out {
+  animation: slideOut 0.3s ease-out forwards;
+}
+
+/* Slide-in Animation */
+@keyframes slideIn {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Slide-out Animation */
+@keyframes slideOut {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+/* Overlay Header */
+.overlay-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.overlay-title {
   font-size: 18px;
   font-weight: bold;
-  color: #f9b54c;
-  margin-top: 20px;
-  animation: fadeInOut 1.5s infinite alternate;
 }
 
-/* Fade Animation for Loading */
-@keyframes fadeInOut {
-  0% {
-    opacity: 0.4;
-  }
-  100% {
-    opacity: 1;
-  }
+.overlay-cancel {
+  position: absolute;
+  right: 0;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+/* Overlay Divider */
+.overlay-divider {
+  width: 100%;
+  height: 1px;
+  background-color: #fff;
+  margin-bottom: 20px;
+}
+
+/* Overlay Content */
+.overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  justify-content: center;
+}
+
+.overlay-reward-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+}
+
+.overlay-text {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.overlay-reward-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.overlay-coin-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.overlay-message {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.overlay-cta {
+  width: 100%;
+  padding: 12px;
+  background-color: #fff;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
 }
 
 /* Responsive Design */
@@ -174,7 +271,7 @@
   }
 
   .taps-number {
-    font-size: 28px; /* Smaller on mobile */
+    font-size: 28px;
   }
 
   .taps-logo {
@@ -187,7 +284,7 @@
   }
 
   .reward-card {
-    padding: 12px; /* Reduced padding for mobile */
+    padding: 12px;
   }
 
   .reward-icon {
@@ -210,11 +307,42 @@
 
   .reward-cta,
   .reward-share-icon {
-    padding: 6px 12px; /* Adjusted for mobile */
+    padding: 6px 12px;
   }
 
-  .share-icon {
-    width: 18px;
-    height: 18px;
+  .overlay-title {
+    font-size: 16px;
+  }
+
+  .overlay-cancel {
+    width: 20px;
+    height: 20px;
+  }
+
+  .overlay-reward-icon {
+    width: 50px;
+    height: 50px;
+  }
+
+  .overlay-text {
+    font-size: 14px;
+  }
+
+  .overlay-reward-value {
+    font-size: 18px;
+  }
+
+  .overlay-coin-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .overlay-message {
+    font-size: 12px;
+  }
+
+  .overlay-cta {
+    padding: 10px;
+    font-size: 14px;
   }
 }
