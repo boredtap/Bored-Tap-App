@@ -1,5 +1,8 @@
+from bson import ObjectId
+from fastapi import HTTPException
 from database_connection import extra_boosts_collection, user_collection
 from boosts.schemas import AutoBotTap, ExtraBoosters
+from superuser import boost
 
 
 
@@ -86,3 +89,77 @@ def my_extra_boosters(telegram_user_id: str):
 
         return user_boosters
     
+
+# ----------------------------------- PERFORM UPGRADE ---------------------------------------
+def upgrade_extra_boost(extra_boost_id: str, telegram_user_id: str):
+    """
+    Upgrade an extra booster.
+
+    Args:
+        extra_boost_id (str): The ID of the extra booster to upgrade.
+        telegram_user_id (str): The Telegram user ID of the user.
+
+    Raises:
+        HTTPException: If the user does not have enough coins to make the upgrade.
+
+    Returns:
+        dict: A dictionary with two keys: "status" and "message". "status" is a boolean indicating whether the upgrade was successful, and "message" is a string with a message about the upgrade.
+    """
+    user: dict = user_collection.find_one({"telegram_user_id": telegram_user_id})
+    ebooster: dict = extra_boosts_collection.find_one({"_id": ObjectId(extra_boost_id)})
+
+    # check if user has enough coins
+    if ebooster["upgrade_cost"] > user["total_coins"]:
+         raise HTTPException(status_code=400, detail="Not enough coins to make this upgrade.")
+    
+    # get name of the extra booster
+    ebooster_name = ebooster["name"]
+    if ebooster_name != "Auto-bot Tapping":
+        booster_names = {
+            #  boosterdb: userProfile
+            "boost": "boost",
+            "multiplier": "multiplier",
+            "recharging speed": "recharging_speed"
+        }
+        booster_name = booster_names[ebooster_name]
+
+
+        update = user_collection.update_one(
+            {"telegram_user_id": telegram_user_id},
+            {
+                # subtract upgrade cost from user total coins
+                "$inc": {
+                    "total_coins": -ebooster["upgrade_cost"],
+                    f"extra_boost.{booster_name}": 1
+                }
+            }
+        )
+
+        if update.modified_count:
+            print(update.modified_count)
+            return {
+                "status": True,
+                "message": "Extra boost upgraded successfully."
+            }
+    
+    else:
+        update = user_collection.update_one(
+            {"telegram_user_id": telegram_user_id},
+            {
+                # subtract upgrade cost from user total coins
+                "$inc": {
+                    "total_coins": -ebooster["upgrade_cost"]
+                },
+
+                # increment user extra boost level
+                "$set": {
+                    "extra_boost.auto_bot_tap": True
+                }
+            }
+        )
+
+        if update.modified_count == 1:
+            return {
+                "status": True,
+                "message": "Extra boost upgraded successfully."
+            }

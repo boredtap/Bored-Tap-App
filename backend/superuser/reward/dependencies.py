@@ -39,7 +39,7 @@ def verify_beneficiaries(
         users = specific_users[0].split(",")
 
         for user_id in users:
-            user = user_collection.find_one({"telegram_user_id": ObjectId(user_id)})
+            user = user_collection.find_one({"telegram_user_id": user_id})
             if not user:
                 raise HTTPException(status_code=400, detail="Invalid user entered.")
 
