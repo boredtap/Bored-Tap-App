@@ -1,5 +1,5 @@
 from database_connection import extra_boosts_collection, user_collection
-from boosts.schemas import ExtraBoosters
+from boosts.schemas import AutoBotTap, ExtraBoosters
 
 
 
@@ -71,8 +71,18 @@ def my_extra_boosters(telegram_user_id: str):
                     user_boosters.append(recharge_speed_status)
 
             # auto bot tap
-            # if booster["name"] == "Auto-bot Tapping":
-            #     user_boosters.append()
+            if booster["name"] == "Auto-bot Tapping":
+                user_boosters.append(
+                     AutoBotTap(
+                        booster_id=str(booster["_id"]),
+                        name=booster["name"],
+                        description=booster["description"],
+                        level=booster["level"],
+                        effect=booster["effect"],
+                        upgrade_cost=booster["upgrade_cost"],
+                        image_id=booster["image_id"]
+                     )
+                )
 
         return user_boosters
     
