@@ -4,16 +4,16 @@ import Navigation from "../components/Navigation";
 import "./ProfileScreen.css";
 
 const ProfileScreen = () => {
-  const [profile, setProfile] = useState(null); // State to hold profile data
-  const [error, setError] = useState(null); // State to handle errors
-  const navigate = useNavigate(); // Hook for navigation between screens
+  const [profile, setProfile] = useState(null); // Holds user profile data from backend
+  const [error, setError] = useState(null); // Tracks fetch errors
+  const navigate = useNavigate(); // Enables programmatically navigating between screens
 
-  // Fetch profile data from the backend on component mount
+  // Fetch user profile data when component mounts
   useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem("accessToken");
       if (!token) {
-        navigate("/splash"); // Redirect to splash if no token is found
+        navigate("/splash"); // Redirect to splash screen if no auth token exists
         return;
       }
 
@@ -27,16 +27,14 @@ const ProfileScreen = () => {
         });
 
         if (!response.ok) {
-          if (response.status === 401) {
-            throw new Error("Unauthorized. Please log in again.");
-          }
+          if (response.status === 401) throw new Error("Unauthorized. Please log in again.");
           throw new Error("Failed to fetch profile data.");
         }
 
         const data = await response.json();
-        setProfile(data); // Update state with fetched profile data
+        setProfile(data); // Store fetched profile data in state
       } catch (err) {
-        setError(err.message); // Capture and display any errors
+        setError(err.message); // Set error state for display
         console.error("Error fetching profile:", err);
       }
     };
@@ -44,7 +42,7 @@ const ProfileScreen = () => {
     fetchProfile();
   }, [navigate]);
 
-  // Display error message with retry option if fetch fails
+  // Render error state with retry navigation
   if (error) {
     return (
       <div className="error">
@@ -54,46 +52,30 @@ const ProfileScreen = () => {
     );
   }
 
-  // Profile data cards configuration
+  // Define profile data for cards with consistent structure
   const profileData = [
-    { 
-      icon: `${process.env.PUBLIC_URL}/logo.png`, 
-      label: "Total Coin", 
-      value: profile?.total_coins || "0" 
+    { icon: `${process.env.PUBLIC_URL}/logo.png`, label: "Total Coin", value: profile?.total_coins || "0" },
+    { icon: `${process.env.PUBLIC_URL}/task.png`, label: "Completed Task", value: profile?.completed_tasks || "0" },
+    { icon: `${process.env.PUBLIC_URL}/leaderboard12-icon.png`, label: "Rank", value: profile?.rank || "N/A" },
+    { icon: `${process.env.PUBLIC_URL}/invite.png`, label: "Invited Friends", value: profile?.invited_friends || "0" },
+    {
+      icon: `${process.env.PUBLIC_URL}/level.png`,
+      label: "Level",
+      value: `Lv. ${profile?.level || "1"} ${profile?.level_name || ""}`,
+      onClick: () => navigate("/level-screen"), // Navigate to level screen on click
     },
-    { 
-      icon: `${process.env.PUBLIC_URL}/task.png`, 
-      label: "Completed Task", 
-      value: profile?.completed_tasks || "0" 
-    },
-    { 
-      icon: `${process.env.PUBLIC_URL}/leaderboard12-icon.png`, 
-      label: "Rank", 
-      value: profile?.rank || "N/A" 
-    },
-    { 
-      icon: `${process.env.PUBLIC_URL}/invite.png`, 
-      label: "Invited Friends", 
-      value: profile?.invited_friends || "0" 
-    },
-    { 
-      icon: `${process.env.PUBLIC_URL}/level.png`, 
-      label: "Level", 
-      value: `Lv. ${profile?.level || "1"} ${profile?.level_name || ""}`, // Horizontal level display
-      onClick: () => navigate("/level-screen") 
-    },
-    { 
-      icon: `${process.env.PUBLIC_URL}/wallet.png`, 
-      label: "Connect Wallet", 
-      value: <img src={`${process.env.PUBLIC_URL}/plus-icon.png`} alt="Add Wallet" className="wallet-icon" /> 
+    {
+      icon: `${process.env.PUBLIC_URL}/wallet.png`,
+      label: "Connect Wallet",
+      value: <img src={`${process.env.PUBLIC_URL}/plus-icon.png`} alt="Add Wallet" className="wallet-icon" />,
     },
   ];
 
   return (
     <div className="profile-screen">
-      {/* Main profile content */}
+      {/* Main content area */}
       <div className="profile-body">
-        {/* Profile picture section */}
+        {/* User profile picture */}
         <div className="profile-picture">
           <img
             src={profile?.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`}
@@ -101,16 +83,18 @@ const ProfileScreen = () => {
             className="profile-image"
           />
         </div>
+        {/* Username display */}
         <div className="profile-username">{profile?.username || "User"}</div>
+        {/* Level display */}
         <div className="profile-level">Lv. {profile?.level || "1"} {profile?.level_name || ""}</div>
 
-        {/* Profile data cards */}
+        {/* Profile data cards container */}
         <div className="profile-data-cards">
           {profileData.map((item, index) => (
             <div
               key={index}
               className="profile-data-card"
-              onClick={item.onClick || null} // Apply onClick if defined
+              onClick={item.onClick || null} // Apply click handler if defined
             >
               <div className="profile-data-left">
                 <div className="profile-icon">
@@ -130,7 +114,7 @@ const ProfileScreen = () => {
         </div>
       </div>
 
-      {/* Bottom navigation */}
+      {/* Bottom navigation bar */}
       <Navigation />
     </div>
   );

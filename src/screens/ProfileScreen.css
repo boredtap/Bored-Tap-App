@@ -11,12 +11,12 @@
   flex-direction: column;
   width: 100%;
   text-align: center;
-  box-sizing: border-box; /* Ensures padding doesn't overflow */
+  box-sizing: border-box;
 }
 
 /* Profile Body */
 .profile-body {
-  flex: 1; /* Allows body to grow and push navigation to bottom */
+  flex: 1; /* Ensures body takes available space, pushing navigation down */
 }
 
 /* Profile Picture */
@@ -34,83 +34,88 @@
   object-fit: cover;
 }
 
-/* Username and Level */
+/* Username Styling */
 .profile-username {
   margin-top: 16px;
   font-size: 18px;
-  font-weight: bold;
+  font-weight: 700; /* Bold */
 }
 
+/* Level Styling */
 .profile-level {
   font-size: 14px;
-  color: #f9b54c;
+  color: #f9b54c; /* Orange for level */
   margin-bottom: 24px;
+  font-weight: 400; /* Normal weight */
 }
 
 /* Profile Data Cards Container */
 .profile-data-cards {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 8px; /* Exact 8px spacing between cards */
   width: 100%;
-  max-width: 400px; /* Limits card width for better layout */
-  margin: 0 auto; /* Centers cards horizontally */
+  max-width: 360px; /* Slightly narrower for better mobile fit */
+  margin: 0 auto; /* Center cards */
 }
 
 /* Individual Data Card */
 .profile-data-card {
   display: flex;
-  justify-content: space-between; /* Ensures content fits within card */
+  justify-content: space-between;
   align-items: center;
   background-color: #414141;
-  padding: 12px;
+  padding: 10px 12px; /* Reduced padding for tighter fit */
   border-radius: 8px;
   cursor: pointer;
-  width: 100%; /* Full width within container */
-  box-sizing: border-box; /* Prevents overflow */
-
+  width: 100%;
+  box-sizing: border-box;
+  height: 40px; /* Fixed height for consistency */
 }
 
 /* Left Side of Card (Icon and Label) */
 .profile-data-left {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex: 1; /* Allows left side to take available space */
-  overflow: hidden; /* Prevents label from overflowing */
+  gap: 10px; /* Reduced gap for compactness */
+  flex: 1; /* Takes equal space as right side */
+  overflow: hidden;
 }
 
 /* Profile Icon */
 .profile-icon img {
-  width: 24px;
-  height: 24px;
+  width: 20px; /* Smaller icon for balance */
+  height: 20px;
   object-fit: contain;
 }
 
 /* Card Label */
 .profile-label {
-  font-size: 14px;
-  white-space: nowrap; /* Prevents label from wrapping */
+  font-size: 12px; /* Reduced font size */
+  font-weight: 400; /* Normal weight, less thick */
+  color: #fff;
+  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis; /* Truncates long labels with ellipsis */
+  text-overflow: ellipsis;
 }
 
 /* Right Side of Card (Value) */
 .profile-data-right {
-  font-size: 12px; /* Increased for readability */
+  font-size: 12px; /* Matches label size */
+  font-weight: 400; /* Normal weight */
   color: orange;
-  text-align: left;
-  flex-shrink: 0; /* Prevents value from shrinking too much */
-  max-width: 50%; /* Limits width to prevent overflow */
+  text-align: right; /* Aligns text to right */
+  direction: rtl; /* Right-to-left for better fit */
+  flex: 1; /* Matches left side size */
   overflow: hidden;
-  text-overflow:ellipsis; /* Truncates long values */
-  white-space: nowrap; /* Prevents label from wrapping */
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Wallet Icon in Connect Wallet Card */
 .wallet-icon {
-  width: 20px;
-  height: 20px;
+  width: 16px; /* Smaller for consistency */
+  height: 16px;
 }
 
 /* Footer Links */
@@ -124,6 +129,7 @@
 .profile-links a {
   color: #b2b2b2;
   text-decoration: underline;
+  font-size: 12px;
 }
 
 .profile-links a:hover {
@@ -133,33 +139,63 @@
 /* Responsive Design */
 @media (max-width: 600px) {
   .profile-screen {
-    padding: 60px 12px; /* Reduced padding for smaller screens */
+    padding: 60px 12px; /* Adjusted for smaller screens */
     padding-top: 8px;
   }
 
   .profile-picture {
-    width: 60px; /* Smaller profile picture */
+    width: 60px;
     height: 60px;
   }
 
   .profile-username {
-    font-size: 16px; /* Slightly smaller font */
+    font-size: 16px;
   }
 
   .profile-level {
     font-size: 12px;
   }
 
-  .profile-data-card {
-    padding: 10px; /* Reduced padding */
+  .profile-data-cards {
+    max-width: 100%; /* Full width on small screens */
+    padding: 0 8px; /* Add slight padding for edges */
   }
 
-  .profile-label, .profile-data-right {
-    font-size: 12px; /* Smaller text for mobile */
+  .profile-data-card {
+    padding: 8px 10px; /* Even tighter padding */
+    height: 36px; /* Slightly smaller height */
   }
 
   .profile-icon img {
-    width: 20px; /* Smaller icons */
-    height: 20px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .profile-label,
+  .profile-data-right {
+    font-size: 10px; /* Smaller text for mobile */
+  }
+
+  .wallet-icon {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* Extra Small Screens (e.g., < 400px) */
+@media (max-width: 400px) {
+  .profile-data-card {
+    padding: 6px 8px;
+    height: 32px;
+  }
+
+  .profile-label,
+  .profile-data-right {
+    font-size: 9px;
+  }
+
+  .profile-icon img {
+    width: 16px;
+    height: 16px;
   }
 }
