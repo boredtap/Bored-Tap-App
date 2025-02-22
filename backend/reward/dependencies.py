@@ -12,9 +12,10 @@ def my_on_going_rewards(telegram_user_id: str):
     if my_data:
         my_level: str = my_data["level_name"].lower()
         my_clan = my_data["clan"]
+        my_claimed_rewards = my_data["claimed_rewards"]
 
         for reward in get_rewards():
-            if reward.status == "on_going":
+            if reward.status == "on_going" and reward.id not in my_claimed_rewards:
                 if my_level in reward.beneficiary or \
                     my_clan in reward.beneficiary or \
                     "all_users" in reward.beneficiary or \

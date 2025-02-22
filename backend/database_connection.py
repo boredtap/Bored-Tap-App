@@ -1,8 +1,6 @@
 from config import get_settings
 from gridfs import GridFS
 from pymongo import MongoClient, errors
-from superuser import task
-from user_reg_and_prof_mngmnt.schemas import BasicProfile
 
 
 connection_string: str = get_settings().mongodb_connection_string
