@@ -220,49 +220,49 @@ const ChallengeScreen = () => {
             ) : error ? (
               <p className="error-message">Error: {error}</p>
             ) : challenges.length > 0 ? (
-              challenges.map((challenge) => (
-                <div className="challenge-card" key={challenge.id}>
-                  <div className="challenge-left">
-                    <img
-                      src={
-                        challengeImages[challenge.imageId] ||
-                        `${process.env.PUBLIC_URL}/logo.png`
-                      }
-                      alt={challenge.title}
-                      className="challenge-icon"
-                    />
-                    <div className="challenge-info">
-                      <p className="challenge-title">{challenge.title}</p>
-                      <p className="challenge-description">{challenge.description}</p>
-                      <div className="challenge-meta">
-                        <img
-                          src={`${process.env.PUBLIC_URL}/logo.png`}
-                          alt="Coin Icon"
-                          className="small-icon"
-                        />
-                        <span>{challenge.reward}</span>
-                        <span className="divider">•</span>
-                        <span className="challenge-time">{challenge.time}</span>
-                      </div>
-                      <div className="progress-bar">
-                        <div
-                          className="progress-fill"
-                          style={{
-                            width: challenge.status === "ongoing" ? "50%" : "100%",
-                          }}
-                        ></div>
+              challenges.map((challenge) => {
+                // Determine if the challenge is claimable (e.g., completed)
+                const isClaimable = challenge.status === "completed"; // Adjust based on actual condition
+            
+                return (
+                  <div className="challenge-card" key={challenge.id}>
+                    <div className="challenge-left">
+                      <img
+                        src={challengeImages[challenge.imageId] || `${process.env.PUBLIC_URL}/logo.png`}
+                        alt={challenge.title}
+                        className="challenge-icon"
+                      />
+                      <div className="challenge-info">
+                        <p className="challenge-title">{challenge.title}</p>
+                        <p className="challenge-description">{challenge.description}</p>
+                        <div className="challenge-meta">
+                          <img
+                            src={`${process.env.PUBLIC_URL}/logo.png`}
+                            alt="Coin Icon"
+                            className="small-icon"
+                          />
+                          <span>{challenge.reward}</span>
+                          <span className="divider">•</span>
+                          <span className="challenge-time">{challenge.time}</span>
+                        </div>
+                        <div className="progress-bar">
+                          <div
+                            className="progress-fill"
+                            style={{ width: challenge.status === "ongoing" ? "50%" : "100%" }}
+                          ></div>
+                        </div>
                       </div>
                     </div>
+                    <button
+                      className={`challenge-cta ${isClaimable ? "active" : "inactive"}`}
+                      onClick={() => handleClaimClick(challenge)}
+                      disabled={!isClaimable}
+                    >
+                      {isClaimable ? "Claim" : "Claim"}
+                    </button>
                   </div>
-                  <button
-                    className="challenge-cta"
-                    onClick={() => handleClaimClick(challenge)}
-                    disabled={challenge.status === "completed"}
-                  >
-                    {challenge.status === "ongoing" ? "Claim" : "Completed"}
-                  </button>
-                </div>
-              ))
+                );
+              })
             ) : (
               <p className="no-challenges">No challenges available yet.</p>
             )}

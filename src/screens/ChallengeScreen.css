@@ -161,9 +161,25 @@
   border: none;
   font-size: 14px;
   cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.challenge-cta.active {
   background-color: #f9b54c;
   color: black;
-  font-weight: 500;
+}
+
+.challenge-cta.inactive {
+  background-color: black;
+  color: #f9b54c;
+  cursor: not-allowed;
+}
+
+/* Challenge Time */
+.challenge-time {
+  font-size: 12px; /* Matches description size */
+  color: orange;
 }
 
 /* Loading Message */
