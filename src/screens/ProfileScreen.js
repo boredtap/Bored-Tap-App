@@ -86,7 +86,7 @@ const ProfileScreen = () => {
         {/* Username display */}
         <div className="profile-username">{profile?.username || "User"}</div>
         {/* Level display */}
-        <div className="profile-level">Lv. {profile?.level || "1"} {profile?.level_name || ""}</div>
+        <div className="profile-level">Lv. {profile?.level || "1"} .{profile?.level_name || ""}</div>
 
         {/* Profile data cards container */}
         <div className="profile-data-cards">

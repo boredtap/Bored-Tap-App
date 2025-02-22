@@ -65,7 +65,7 @@
   justify-content: space-between;
   align-items: center;
   background-color: #414141;
-  padding: 10px 12px; /* Reduced padding for tighter fit */
+  padding: 24px 12px; /* Reduced padding for tighter fit */
   border-radius: 8px;
   cursor: pointer;
   width: 100%;
@@ -84,8 +84,8 @@
 
 /* Profile Icon */
 .profile-icon img {
-  width: 20px; /* Smaller icon for balance */
-  height: 20px;
+  width: 24px; /* Smaller icon for balance */
+  height: 24px;
   object-fit: contain;
 }
 
