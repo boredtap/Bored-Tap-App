@@ -1,5 +1,6 @@
 from pydantic import BaseModel, AnyHttpUrl, Field
 from earn.schemas import StreakData
+from superuser.security.models import SuspendDetails
 
 
 class Token(BaseModel):
@@ -83,3 +84,6 @@ class UserProfile(
     streak: StreakData = Field(default_factory=StreakData)
     invite: list[InviteeData] | None = []
 
+
+class SuspendedUser(BasicProfile, SuspendDetails):
+    pass

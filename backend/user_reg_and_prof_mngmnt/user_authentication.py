@@ -17,7 +17,8 @@ from user_reg_and_prof_mngmnt.dependencies import get_user_by_id, serialize_any_
 
 SECRET_KEY = get_settings().secret_key
 ALGORITHM = get_settings().algorithm
-ACCESS_TOKEN_EXPIRE_HOURS = 12
+USER_ACCESS_TOKEN_EXPIRE_HOURS = 2
+ADMIN_ACCESS_TOKEN_EXPIRE_HOURS = 12
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/signin",
@@ -40,8 +41,38 @@ def authenticate_user(telegram_user_id: str) -> BasicProfile:
         BasicProfile: The basic profile of the user if authenticated, otherwise None.
     """
     user = get_user_by_id(telegram_user_id)
+
     if not user:
         return None
+
+    # check if user is suspended
+    if not user.is_active:
+        # get suspension remaining time
+        suspend_end_date: datetime = user_collection.find_one({"telegram_user_id": telegram_user_id, "suspend_details.end_date": {"$exists": True}})["suspend_details"]["end_date"]
+        if suspend_end_date.tzinfo:
+            suspend_end_date = suspend_end_date.astimezone(timezone.utc)
+        else:
+            suspend_end_date = suspend_end_date.replace(tzinfo=timezone.utc)
+
+        now = datetime.now()
+        today = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+
+        suspend_remaining_time = suspend_end_date - today
+
+        if suspend_remaining_time > timedelta(days=0, hours=0):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"User has been suspended. Remaining time: {suspend_remaining_time}")
+
+        # release user and remove suspend details from user profile
+        release_suspend = user_collection.update_one(
+            {"telegram_user_id": telegram_user_id, "is_active": False},
+            {
+                "$set": {"is_active": True},
+                "$unset": {"suspend_details": ""}
+            },
+        )
+
+        if release_suspend.modified_count == 0:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="User suspension release failed.")
 
     return user
 

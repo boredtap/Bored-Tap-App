@@ -16,6 +16,7 @@ from superuser.leaderboard.router import adminLeaderboard
 from superuser.boost.router import boostApp
 from superuser.level.router import levelApp
 from superuser.user_mgt.router import userMgtApp
+from superuser.security.router import securityApp
 from user_reg_and_prof_mngmnt.user_authentication import get_current_user
 from typing import Annotated
 from user_reg_and_prof_mngmnt.schemas import UserProfile
@@ -79,6 +80,7 @@ app.include_router(adminLeaderboard)
 app.include_router(boostApp)
 app.include_router(levelApp)
 app.include_router(userMgtApp)
+app.include_router(securityApp)
 
 
 @app.get('/', tags=["Global Routes"])
@@ -88,7 +90,7 @@ async def home():
 
 # update user coins tapped
 @app.post('/update-coins', tags=["Global Routes"])
-async def update_coins(telegram_user_id: Annotated[str, Depends(get_current_user)], coins: int):
+async def update_coins(telegram_user_id: Annotated[str, Depends(get_current_user)], coins: int, request: Request):
     """Update coins gannered from different activities to database
 
     Args:
@@ -98,6 +100,15 @@ async def update_coins(telegram_user_id: Annotated[str, Depends(get_current_user
     Returns:
         _type_: int
     """
+    user_agent = request.headers.get("User-Agent")
+    referer = request.headers.get("Referer")
+    origin = request.headers.get("Origin")
+
+    print("user agent: ", user_agent)
+    print("referer: ", referer)
+    print("origin: ", origin)
+    print("request headers: ", request.headers)
+
     result = update_coins_in_db(telegram_user_id, coins)
     user = get_user_by_id(telegram_user_id)
     if result:
