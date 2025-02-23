@@ -51,7 +51,7 @@ const InviteScreen = () => {
   }, []);
 
   const user = JSON.parse(localStorage.getItem("telegramUser"));
-  const inviteLink = `http://t.me/Bored_Tap_Bot?start=${user.telegramUserId}`;
+  const inviteLink = `https://t.me/Bored_Tap_Bot?start=${user.telegramUserId}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(inviteLink);
