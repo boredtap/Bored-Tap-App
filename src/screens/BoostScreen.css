@@ -64,18 +64,19 @@
 
 .daily-boosters-container {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column; /* Stack cards vertically */
   gap: 10px;
+  width: 100%; /* Full width */
 }
 
 .booster-frame {
   background-color: #414141;
   border-radius: 8px;
   padding: 10px;
-  flex: 1;
   display: flex;
   align-items: center;
   cursor: pointer;
+  width: 100%; /* Full width */
 }
 
 .booster-icon {
@@ -165,74 +166,63 @@
   height: 30px;
 }
 
-/* Overlay Container */
 .overlay-container {
   position: fixed;
-  top: 0;
+  bottom: 0;
   left: 0;
   width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1001;
-}
-
-/* Overlay Card */
-.overlay-card {
   background: #1d1d1d;
-  width: 90%;
-  max-width: 360px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
   padding: 20px;
-  border-radius: 16px;
-  text-align: center;
-  position: relative;
+  box-sizing: border-box;
+  z-index: 1001;
+  transition: transform 0.3s ease-out;
+  transform: translateY(100%); /* Initially hidden below screen */
 }
 
-/* Overlay Header */
+.overlay-container.slide-in {
+  transform: translateY(0); /* Slide up into view */
+}
+
+.overlay-container.slide-out {
+  transform: translateY(100%); /* Slide back down */
+}
+
+.overlay-card {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  text-align: center;
+}
+
 .overlay-header {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  position: relative;
   margin-bottom: 10px;
 }
 
-.overlay-header h2 {
+.overlay-title {
   font-size: 18px;
   font-weight: bold;
-  color: white;
 }
 
 .overlay-close {
-  position: absolute;
-  top: 10px;
-  right: 10px;
   background: none;
   border: none;
   font-size: 20px;
-  color: white;
+  color: #fff;
   cursor: pointer;
 }
 
-/* Division Line */
-.division-line {
-  margin: 10px 0;
-  border: 0.5px solid #2f2f2f;
-  width: 90%;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* Overlay Icon */
 .overlay-icon {
   width: 60px;
   height: 60px;
   margin: 20px auto;
 }
 
-/* Overlay Content */
 .overlay-description {
   font-size: 14px;
   color: #e0e0e0;
@@ -255,18 +245,11 @@
 .overlay-value {
   font-size: 20px;
   font-weight: bold;
-  color: white;
 }
 
-.overlay-level {
-  font-size: 14px;
-  color: orange;
-}
-
-/* Overlay CTA Button */
 .overlay-cta {
-  background: white;
-  color: black;
+  background: #fff;
+  color: #000;
   width: 100%;
   padding: 12px 0;
   font-size: 16px;
@@ -274,13 +257,6 @@
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  margin-top: 20px;
-}
-
-.overlay-cta:disabled {
-  background: #ccc;
-  color: #666;
-  cursor: not-allowed;
 }
 
 /* Loading and Error Messages */
