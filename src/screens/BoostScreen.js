@@ -1,19 +1,34 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
-import "./BoostScreen.css";
+import "./Dashboard.css";
 
 // Configurable constants
-const BOOST_DURATION = 20000; // 20 seconds per booster use
-const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours for reset
+const MAX_ELECTRIC_BOOST = 1000; // Max energy capacity
+const RECHARGE_INTERVAL = 3000; // 3 seconds per unit (3000s from 0 to 1000)
 
-const BoostScreen = () => {
-  const [activeOverlay, setActiveOverlay] = useState(null);
-  const [totalTaps, setTotalTaps] = useState(0);
-  const [boostersData, setBoostersData] = useState({ dailyBoosters: [], extraBoosters: [] });
-  const [loading, setLoading] = useState(true);
+const Dashboard = () => {
+  const navigate = useNavigate();
+
+  // States for user and dashboard data
+  const [telegramData, setTelegramData] = useState({
+    telegram_user_id: "",
+    username: "User",
+    image_url: "",
+  });
+  const [profile, setProfile] = useState(null);
   const [error, setError] = useState(null);
+  const [totalTaps, setTotalTaps] = useState(0);
+  const [electricBoost, setElectricBoost] = useState(() => {
+    const savedBoost = localStorage.getItem("electricBoost");
+    return savedBoost ? parseInt(savedBoost) : MAX_ELECTRIC_BOOST;
+  });
+  const [tapAnimation, setTapAnimation] = useState(false);
+  const [boostAnimation, setBoostAnimation] = useState(false);
+  const [tapEffects, setTapEffects] = useState([]);
+  const [currentStreak, setCurrentStreak] = useState(0);
 
-  // Daily boosters state with initialization from localStorage
+  // Booster states with initialization from localStorage
   const [dailyBoosters, setDailyBoosters] = useState(() => {
     const savedBoosters = localStorage.getItem("dailyBoosters");
     return savedBoosters
@@ -24,25 +39,108 @@ const BoostScreen = () => {
         };
   });
 
-  // Closes the overlay
-  const handleOverlayClose = () => {
-    setActiveOverlay(null);
-  };
+  // Refs for managing backend updates and recharge
+  const tapCountSinceLastUpdate = useRef(0);
+  const updateBackendTimeout = useRef(null);
+  const rechargeInterval = useRef(null);
+  const isTapping = useRef(false);
 
-  // Loads daily boosters from localStorage on mount
+  // Fetch Telegram data
   useEffect(() => {
-    const savedBoosters = localStorage.getItem("dailyBoosters");
-    if (savedBoosters) {
-      setDailyBoosters(JSON.parse(savedBoosters));
-    }
+    const initializeDashboard = async () => {
+      try {
+        if (window.Telegram?.WebApp) {
+          const user = window.Telegram.WebApp.initDataUnsafe.user;
+          if (user) {
+            setTelegramData({
+              telegram_user_id: user.id,
+              username: user.username || `User${user.id}`,
+              image_url: user.photo_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
+            });
+          } else {
+            console.error("Telegram user data not available");
+          }
+        }
+      } catch (err) {
+        console.error("Error syncing Telegram data:", err);
+      }
+    };
+    initializeDashboard();
   }, []);
 
-  // Saves daily boosters to localStorage on change
+  // Fetch profile data and initialize boosters
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        navigate("/splash");
+        return;
+      }
+
+      try {
+        const response = await fetch("https://bt-coins.onrender.com/user/profile", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) throw new Error("Unauthorized. Please log in again.");
+          throw new Error("Failed to fetch profile data.");
+        }
+
+        const data = await response.json();
+        setProfile(data);
+        setTotalTaps(data.total_coins);
+        setCurrentStreak(data.streak?.current_streak || 0);
+
+        // Restore electricBoost from localStorage
+        const savedBoost = localStorage.getItem("electricBoost");
+        if (savedBoost) {
+          setElectricBoost(parseInt(savedBoost));
+        } else {
+          localStorage.setItem("electricBoost", MAX_ELECTRIC_BOOST);
+          localStorage.setItem("lastBoostUpdateTime", Date.now());
+        }
+
+        // Load daily boosters from localStorage
+        const savedBoosters = localStorage.getItem("dailyBoosters");
+        if (savedBoosters) {
+          setDailyBoosters(JSON.parse(savedBoosters));
+        }
+      } catch (err) {
+        setError(err.message);
+        console.error("Error fetching profile:", err);
+      }
+    };
+
+    fetchProfile();
+  }, [navigate]);
+
+  // Save boosters and electricBoost to localStorage
   useEffect(() => {
     localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
-  }, [dailyBoosters]);
+    localStorage.setItem("electricBoost", electricBoost);
+    localStorage.setItem("lastBoostUpdateTime", Date.now());
+  }, [dailyBoosters, electricBoost]);
 
-  // Real-time timer updates for boosters
+  // Dynamic electric boost recharge every 3 seconds
+  useEffect(() => {
+    if (rechargeInterval.current) clearInterval(rechargeInterval.current);
+    rechargeInterval.current = setInterval(() => {
+      setElectricBoost((prev) => {
+        if (prev < MAX_ELECTRIC_BOOST && !dailyBoosters.fullEnergy.isActive) {
+          return Math.min(prev + 1, MAX_ELECTRIC_BOOST);
+        }
+        return prev;
+      });
+    }, RECHARGE_INTERVAL);
+    return () => clearInterval(rechargeInterval.current);
+  }, [dailyBoosters.fullEnergy.isActive]);
+
+  // Real-time booster timer updates
   useEffect(() => {
     const intervalId = setInterval(() => {
       setDailyBoosters((prev) => {
@@ -53,10 +151,10 @@ const BoostScreen = () => {
             const nextTimer = booster.timers[0];
             if (Date.now() >= nextTimer.endTime) {
               if (booster.isActive) {
-                booster.isActive = false; // End 20s effect
+                booster.isActive = false;
                 booster.timers.shift();
               } else if (booster.usesLeft === 0) {
-                booster.usesLeft = 3; // Reset after 24h
+                booster.usesLeft = 3;
                 booster.timers = [];
               }
             }
@@ -64,278 +162,176 @@ const BoostScreen = () => {
         });
         return updated;
       });
-    }, 1000); // Check every second
+    }, 1000);
     return () => clearInterval(intervalId);
   }, []);
 
-  // Fetch profile and extra boosters
-  const fetchProfileAndBoosters = useCallback(async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) throw new Error("No access token found");
+  // Handle tap events with booster logic
+  const handleTap = (event) => {
+    if (electricBoost === 0 && !dailyBoosters.fullEnergy.isActive) return;
 
-      const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      });
-      if (!profileResponse.ok) throw new Error("Profile fetch failed");
-      const profileData = await profileResponse.json();
-      setTotalTaps(profileData.total_coins || 0);
+    const fingersCount = event.touches?.length || 1;
+    const tapMultiplier = dailyBoosters.tapperBoost.isActive ? 2 : 1;
 
-      const extraBoostersResponse = await fetch("https://bt-coins.onrender.com/user/boost/extra_boosters", {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      });
-      if (!extraBoostersResponse.ok) throw new Error("Extra boosters fetch failed");
-      const extraBoostersData = await extraBoostersResponse.json();
+    setTotalTaps((prev) => prev + fingersCount * tapMultiplier);
+    setElectricBoost((prev) => {
+      // If Full Energy is active, reset to max instantly
+      if (dailyBoosters.fullEnergy.isActive) {
+        return MAX_ELECTRIC_BOOST;
+      }
+      return Math.max(prev - fingersCount, 0);
+    });
+    tapCountSinceLastUpdate.current += fingersCount * tapMultiplier;
 
-      const mappedExtraBoosters = extraBoostersData.map((booster) => ({
-        id: booster.booster_id,
-        title: booster.name,
-        description: booster.description,
-        value: booster.upgrade_cost.toString(),
-        level: `Level ${booster.level}`,
-        ctaText: "Upgrade",
-        altCTA: totalTaps < booster.upgrade_cost ? "Insufficient Funds" : null,
-        actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
-        icon: `${process.env.PUBLIC_URL}/extra-booster-icon.png`,
-        imageId: booster.image_id,
-      }));
+    // Visual feedback
+    setTapAnimation(true);
+    setBoostAnimation(true);
+    setTimeout(() => {
+      setTapAnimation(false);
+      setBoostAnimation(false);
+    }, 500);
 
-      setBoostersData((prev) => ({ ...prev, extraBoosters: mappedExtraBoosters }));
-    } catch (err) {
-      setError(err.message);
-      console.error("Error fetching data:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [totalTaps]);
+    const tapX = event.touches?.[0]?.clientX || event.clientX;
+    const tapY = event.touches?.[0]?.clientY || event.clientY;
+    const newTapEffect = { id: Date.now(), x: tapX, y: tapY, count: fingersCount * tapMultiplier };
+    setTapEffects((prevEffects) => [...prevEffects, newTapEffect]);
+    setTimeout(() => setTapEffects((prev) => prev.filter((e) => e.id !== newTapEffect.id)), 1000);
 
-  useEffect(() => {
-    fetchProfileAndBoosters();
-  }, [fetchProfileAndBoosters]);
+    if (updateBackendTimeout.current) clearTimeout(updateBackendTimeout.current);
+    updateBackendTimeout.current = setTimeout(() => {
+      updateBackend();
+    }, 2000);
 
-  // Upgrades an extra booster
-  const handleUpgradeBoost = async (boosterId) => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch(`https://bt-coins.onrender.com/user/boost/upgrade/${boosterId}`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      });
-      if (!response.ok) throw new Error("Upgrade failed");
-      fetchProfileAndBoosters();
-      handleOverlayClose();
-    } catch (err) {
-      setError(err.message);
-      console.error("Upgrade error:", err);
-    }
+    isTapping.current = true;
+    playTapSound();
   };
 
-  // Claims a daily booster and applies its effect
-  const handleClaimDailyBooster = (boosterType) => {
-    const booster = dailyBoosters[boosterType];
-    if (booster.usesLeft > 0) {
-      const now = Date.now();
-      setDailyBoosters((prev) => {
-        const newTimers = [...booster.timers, { id: now, endTime: now + BOOST_DURATION }];
-        if (booster.usesLeft === 1) {
-          newTimers.push({ id: now + 1, endTime: now + DAILY_RESET_INTERVAL });
-        }
-        return {
-          ...prev,
-          [boosterType]: {
-            usesLeft: booster.usesLeft - 1,
-            timers: newTimers,
-            isActive: true,
-          },
-        };
-      });
-    }
-    handleOverlayClose();
+  // Play tap sound effect
+  const playTapSound = () => {
+    const audio = new Audio(`${process.env.PUBLIC_URL}/tap.mp3`);
+    audio.volume = 0.3;
+    audio.play().catch((err) => console.error("Audio playback error:", err));
   };
 
-  // Renders the timer (20s for active boost, 24h for reset)
-  const renderTimer = (boosterType) => {
-    const booster = dailyBoosters[boosterType];
-    const timers = booster.timers;
+  // Update backend with accumulated taps
+  const updateBackend = async () => {
+    if (tapCountSinceLastUpdate.current > 0) {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const response = await fetch(
+          `https://bt-coins.onrender.com/update-coins?coins=${tapCountSinceLastUpdate.current}`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
-    if (timers.length > 0) {
-      const remainingTime = timers[0].endTime - Date.now();
-      if (remainingTime > 0) {
-        if (booster.isActive) {
-          const seconds = Math.floor(remainingTime / 1000);
-          return `00:00:${seconds.toString().padStart(2, "0")}`;
-        } else if (booster.usesLeft === 0) {
-          const hours = Math.floor(remainingTime / 3600000);
-          const minutes = Math.floor((remainingTime % 3600000) / 60000);
-          const seconds = Math.floor((remainingTime % 60000) / 1000);
-          return `${hours.toString().padStart(2, "0")}:${minutes
-            .toString()
-            .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+        const data = await response.json();
+        if (response.ok) {
+          console.log("Backend updated successfully:", data);
+          if (data.total_coins !== undefined) {
+            setTotalTaps(data.total_coins);
+          }
+        } else {
+          console.error("Failed to update backend:", data.detail);
         }
+      } catch (err) {
+        console.error("Error updating backend:", err);
+      } finally {
+        tapCountSinceLastUpdate.current = 0;
+        isTapping.current = false;
       }
     }
-    return "";
   };
 
-  // Renders the overlay for booster details
-  const renderOverlay = () => {
-    if (!activeOverlay) return null;
-    const { type, title, description, value, level, ctaText, altCTA, id, icon } = activeOverlay;
-    const isExtraBooster = type === "extra";
-    const isDisabled = altCTA && value !== "Free";
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      if (rechargeInterval.current) clearInterval(rechargeInterval.current);
+      if (updateBackendTimeout.current) clearTimeout(updateBackendTimeout.current);
+    };
+  }, []);
 
-    return (
-      <div className="overlay-container">
-        <div className={`boost-overlay ${activeOverlay ? "slide-in" : "slide-out"}`}>
-          <div className="overlay-header">
-            <h2 className="overlay-title">{title}</h2>
-            <img
-              src={`${process.env.PUBLIC_URL}/cancel.png`}
-              alt="Cancel"
-              className="overlay-cancel"
-              onClick={handleOverlayClose}
-            />
-          </div>
-          <div className="overlay-divider"></div>
-          <div className="overlay-content">
-            <img src={icon} alt={title} className="overlay-boost-icon" />
-            <p className="overlay-description">{description}</p>
-            <div className="overlay-value-container">
-              <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Coin Icon" className="overlay-coin-icon" />
-              <span className="overlay-value">{value}</span>
-            </div>
-            {level && <p className="overlay-level">{level}</p>}
-            <button
-              className="overlay-cta"
-              disabled={isDisabled}
-              onClick={isExtraBooster ? () => handleUpgradeBoost(id) : () => handleClaimDailyBooster(type)}
-            >
-              {isDisabled ? altCTA : ctaText}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
+  if (error) {
+    return <div className="error">{error}</div>;
+  }
+
+  const { level = 1, level_name = "Beginner" } = profile || {};
 
   return (
-    <div className="boost-screen">
-      <div className="boost-body">
-        <div className="total-taps-section">
-          <p>Your Total Taps:</p>
-          <div className="taps-display">
-            <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Taps Icon" className="taps-icon" />
-            <span className="total-taps-value">{totalTaps.toLocaleString()}</span>
+    <div className="dashboard-container">
+      {/* Profile and Streak Section */}
+      <div className="profile1-streak-section">
+        <div className="profile1-section" onClick={() => navigate("/profile-screen")}>
+          <img src={telegramData.image_url} alt="Profile" className="profile1-picture" />
+          <div className="profile1-info">
+            <span className="profile1-username">{telegramData.username}</span>
+            <span className="profile1-level">Lv. {level}. {level_name}</span>
           </div>
-          <p className="bt-boost-info">How BT-boosters work?</p>
         </div>
-
-        {loading ? (
-          <p className="loading-message">Fetching Boosters...</p>
-        ) : error ? (
-          <p className="error-message">Error: {error}</p>
-        ) : (
-          <>
-            <div className="daily-boosters-section">
-              <p className="daily-boosters-title">Your Daily Boosters:</p>
-              <div className="daily-boosters-container">
-                {[
-                  {
-                    type: "tapperBoost",
-                    title: "Tapper Boost",
-                    icon: `${process.env.PUBLIC_URL}/tapperboost.png`,
-                    usesLeft: dailyBoosters.tapperBoost.usesLeft,
-                    timer: renderTimer("tapperBoost"),
-                  },
-                  {
-                    type: "fullEnergy",
-                    title: "Full Energy",
-                    icon: `${process.env.PUBLIC_URL}/electric-icon.png`,
-                    usesLeft: dailyBoosters.fullEnergy.usesLeft,
-                    timer: renderTimer("fullEnergy"),
-                  },
-                ].map((booster) => (
-                  <div
-                    className="booster-frame"
-                    key={booster.type}
-                    onClick={() =>
-                      booster.usesLeft > 0 &&
-                      setActiveOverlay({
-                        type: booster.type,
-                        title: booster.title,
-                        description:
-                          booster.type === "tapperBoost"
-                            ? "Multiply your tap income by X2 for 20 seconds."
-                            : "Prevent energy drain for 20 seconds.",
-                        value: "Free",
-                        ctaText: "Claim",
-                        icon: booster.icon,
-                      })
-                    }
-                  >
-                    <img src={booster.icon} alt={booster.title} className="booster-icon" />
-                    <div className="booster-info">
-                      <p className="booster-title">{booster.title}</p>
-                      <p className="booster-value">
-                        {booster.usesLeft}/3 {booster.timer}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="extra-boosters-section">
-              <p className="extra-boosters-title">Extra Boosters:</p>
-              <div className="extra-boosters-container">
-                {boostersData.extraBoosters.map((booster) => (
-                  <div
-                    className="extra-booster-card"
-                    key={booster.id}
-                    onClick={() =>
-                      setActiveOverlay({
-                        type: "extra",
-                        title: booster.title,
-                        description: booster.description,
-                        value: booster.value,
-                        level: booster.level,
-                        ctaText: booster.ctaText,
-                        altCTA: booster.altCTA,
-                        id: booster.id,
-                        icon: booster.icon,
-                      })
-                    }
-                  >
-                    <div className="booster-left">
-                      <img src={booster.icon} alt={booster.title} className="booster-icon" />
-                      <div className="booster-info">
-                        <p className="booster-title">{booster.title}</p>
-                        <div className="booster-meta">
-                          <img
-                            src={`${process.env.PUBLIC_URL}/logo.png`}
-                            alt="Coin Icon"
-                            className="small-icon"
-                          />
-                          <span>{booster.value}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <img src={booster.actionIcon} alt="Action Icon" className="action-icon" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
+        <div className="streak-section" onClick={() => navigate("/daily-streak-screen")}>
+          <img src={`${process.env.PUBLIC_URL}/streak.png`} alt="Streak Icon" className="streak-icon" />
+          <div className="streak-info">
+            <span className="streak-text">Current Streak</span>
+            <span className="streak-days">Day {currentStreak}</span>
+          </div>
+        </div>
       </div>
 
-      {renderOverlay()}
+      {/* Frames Section */}
+      <div className="frames-section">
+        {[
+          { name: "Rewards", icon: "reward.png", path: "/reward-screen" },
+          { name: "Challenge", icon: "challenge.png", path: "/challenge-screen" },
+          { name: "Clan", icon: "clan.png", path: "/clan-screen" },
+          { name: "Leaderboard", icon: "leaderboard.png", path: "/leaderboard-screen" },
+        ].map((frame, index) => (
+          <div className="frame" key={index} onClick={() => navigate(frame.path)}>
+            <img src={`${process.env.PUBLIC_URL}/${frame.icon}`} alt={`${frame.name} Icon`} className="frame-icon" />
+            <span>{frame.name}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Total Taps Section */}
+      <div className="total-taps-section">
+        <p className="total-taps-text">Your Total Taps:</p>
+        <div className="total-taps-count">
+          <img className="tap-logo-small" src={`${process.env.PUBLIC_URL}/logo.png`} alt="Small Icon" />
+          <span>{totalTaps.toLocaleString()}</span>
+        </div>
+        <div
+          className={`big-tap-icon ${tapAnimation ? "tap-animation" : ""}`}
+          onTouchStart={handleTap}
+          onClick={handleTap}
+        >
+          <img className="tap-logo-big" src={`${process.env.PUBLIC_URL}/logo.png`} alt="Big Tap Icon" />
+        </div>
+        {tapEffects.map((effect) => (
+          <div key={effect.id} className="tap-effect" style={{ top: effect.y, left: effect.x }}>
+            +{effect.count}
+          </div>
+        ))}
+      </div>
+
+      {/* Electric Boost Section */}
+      <div className="electric-boost-section">
+        <div className={`electric-value ${boostAnimation ? "boost-animation" : ""}`}>
+          <img src={`${process.env.PUBLIC_URL}/electric-icon.png`} alt="Electric Icon" className="electric-icon" />
+          <span>{electricBoost}/{MAX_ELECTRIC_BOOST}</span>
+        </div>
+        <button className="boost-btn" onClick={() => navigate("/boost-screen")}>
+          <img src={`${process.env.PUBLIC_URL}/boostx2.png`} alt="Boost Icon" className="boost-icon" />
+          Boost
+        </button>
+      </div>
+
       <Navigation />
     </div>
   );
 };
 
-export default BoostScreen;
+export default Dashboard;
