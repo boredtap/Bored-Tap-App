@@ -2,15 +2,23 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./Dashboard.css";
-import { autobotService } from "./autobotService";
 
 // Configurable constants
 const BASE_MAX_ELECTRIC_BOOST = 1000;
+const RECHARGE_TIMES = {
+  0: 3000,
+  1: 2500,
+  2: 2000,
+  3: 1500,
+  4: 1000,
+  5: 500,
+};
+const AUTOBOT_TAP_INTERVAL = 1000; // 1 tap per second
 
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  // States for user and dashboard data
+  // States
   const [telegramData, setTelegramData] = useState({
     telegram_user_id: "",
     username: "User",
@@ -33,11 +41,19 @@ const Dashboard = () => {
           fullEnergy: { usesLeft: 3, timers: [], isActive: false },
         };
   });
+  const [maxElectricBoost, setMaxElectricBoost] = useState(BASE_MAX_ELECTRIC_BOOST);
+  const [rechargeIntervalMs, setRechargeIntervalMs] = useState(
+    (RECHARGE_TIMES[0] / BASE_MAX_ELECTRIC_BOOST) * 1000
+  );
+  const [tapBoostLevel, setTapBoostLevel] = useState(0);
+  const [hasAutobot, setHasAutobot] = useState(false);
 
   // Refs
   const tapCountSinceLastUpdate = useRef(0);
   const updateBackendTimeout = useRef(null);
   const isTapping = useRef(false);
+  const autobotInterval = useRef(null);
+  const rechargeInterval = useRef(null);
 
   // Fetch Telegram data
   useEffect(() => {
@@ -83,7 +99,6 @@ const Dashboard = () => {
         const data = await response.json();
         setProfile(data);
         setTotalTaps(data.total_coins);
-        autobotService.setTapCoins(data.total_coins);
         setCurrentStreak(data.streak?.current_streak || 0);
 
         const savedBoost = localStorage.getItem("electricBoost");
@@ -102,7 +117,7 @@ const Dashboard = () => {
         const savedExtraBoosters = localStorage.getItem("extraBoosters");
         if (savedExtraBoosters) {
           const boosters = JSON.parse(savedExtraBoosters);
-          autobotService.initialize(boosters);
+          applyExtraBoosterEffects(boosters);
         }
       } catch (err) {
         setError(err.message);
@@ -112,17 +127,70 @@ const Dashboard = () => {
 
     fetchProfile();
 
-    const unsubscribe = autobotService.subscribe(({ electricBoost: newBoost, totalTaps: newTaps }) => {
-      setElectricBoost(newBoost);
-      setTotalTaps(newTaps);
-      tapCountSinceLastUpdate.current += newTaps - totalTaps; // Track autobot taps
-    });
+    // Start autobot if owned
+    if (hasAutobot && !autobotInterval.current) {
+      autobotInterval.current = setInterval(() => {
+        const tapperBoostActive = dailyBoosters.tapperBoost.isActive;
+        const multiplier = (tapperBoostActive ? 2 : 1) + tapBoostLevel;
+        tapCountSinceLastUpdate.current += multiplier;
+        setTotalTaps((prev) => prev + multiplier);
+      }, AUTOBOT_TAP_INTERVAL);
+    }
+
+    // Start energy recharge
+    rechargeInterval.current = setInterval(() => {
+      const isFullEnergyActive = dailyBoosters.fullEnergy.isActive;
+      if (electricBoost < maxElectricBoost && !isFullEnergyActive) {
+        setElectricBoost((prev) => Math.min(prev + 1, maxElectricBoost));
+        localStorage.setItem("electricBoost", electricBoost + 1);
+      }
+    }, rechargeIntervalMs);
+
+    // Periodic backend sync
+    const syncInterval = setInterval(() => {
+      if (tapCountSinceLastUpdate.current > 0) updateBackend();
+    }, 2000);
 
     return () => {
-      unsubscribe();
+      clearInterval(autobotInterval.current);
+      clearInterval(rechargeInterval.current);
+      clearInterval(syncInterval);
       if (updateBackendTimeout.current) clearTimeout(updateBackendTimeout.current);
     };
-  }, [navigate, totalTaps]);
+  }, [navigate, dailyBoosters, hasAutobot, tapBoostLevel, maxElectricBoost, rechargeIntervalMs, electricBoost]);
+
+  // Apply Extra Booster effects
+  const applyExtraBoosterEffects = (boosters) => {
+    let newMaxElectricBoost = BASE_MAX_ELECTRIC_BOOST;
+    let newRechargeTime = RECHARGE_TIMES[0];
+    let newTapBoostLevel = 0;
+    let autobotOwned = false;
+
+    boosters.forEach((booster) => {
+      switch (booster.title.toLowerCase()) {
+        case "boost":
+          newTapBoostLevel = parseInt(booster.rawLevel) || 0;
+          break;
+        case "multiplier":
+          newMaxElectricBoost += 500 * (parseInt(booster.rawLevel) || 0);
+          break;
+        case "recharging speed":
+          newRechargeTime = RECHARGE_TIMES[parseInt(booster.rawLevel)] || RECHARGE_TIMES[0];
+          break;
+        case "auto-bot tapping":
+          autobotOwned = booster.rawLevel !== "-";
+          break;
+        default:
+          break;
+      }
+    });
+
+    setMaxElectricBoost(newMaxElectricBoost);
+    setRechargeIntervalMs((newRechargeTime / newMaxElectricBoost) * 1000);
+    setTapBoostLevel(newTapBoostLevel);
+    setHasAutobot(autobotOwned);
+    setElectricBoost((prev) => Math.min(prev, newMaxElectricBoost));
+  };
 
   // Save daily boosters to localStorage
   useEffect(() => {
@@ -162,11 +230,12 @@ const Dashboard = () => {
     const fingersCount = event.touches?.length || 1;
     const tapperBoostActive = dailyBoosters.tapperBoost.isActive;
     const fullEnergyActive = dailyBoosters.fullEnergy.isActive;
+    const multiplier = (tapperBoostActive ? 2 : 1) + tapBoostLevel;
+    const coinsAdded = fingersCount * multiplier;
 
-    const coinsAdded = fullEnergyActive
-      ? autobotService.fullEnergyTap(fingersCount, tapperBoostActive)
-      : autobotService.tap(fingersCount, tapperBoostActive);
-
+    setTotalTaps((prev) => prev + coinsAdded);
+    setElectricBoost((prev) => (fullEnergyActive ? maxElectricBoost : Math.max(prev - fingersCount, 0)));
+    localStorage.setItem("electricBoost", fullEnergyActive ? maxElectricBoost : Math.max(electricBoost - fingersCount, 0));
     tapCountSinceLastUpdate.current += coinsAdded;
 
     setTapAnimation(true);
@@ -214,7 +283,6 @@ const Dashboard = () => {
           console.log("Backend updated successfully:", data);
           if (data.total_coins !== undefined) {
             setTotalTaps(data.total_coins);
-            autobotService.setTapCoins(data.total_coins);
           }
         } else {
           console.error("Failed to update backend:", data.detail);
@@ -233,7 +301,6 @@ const Dashboard = () => {
   }
 
   const { level = 1, level_name = "Beginner" } = profile || {};
-  const { maxElectricBoost } = autobotService.getState();
 
   return (
     <div className="dashboard-container">

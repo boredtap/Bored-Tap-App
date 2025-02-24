@@ -13,7 +13,6 @@ const BoostScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Daily boosters state with initialization from localStorage
   const [dailyBoosters, setDailyBoosters] = useState(() => {
     const savedBoosters = localStorage.getItem("dailyBoosters");
     return savedBoosters
@@ -24,12 +23,10 @@ const BoostScreen = () => {
         };
   });
 
-  // Closes the overlay
   const handleOverlayClose = () => {
     setActiveOverlay(null);
   };
 
-  // Loads daily boosters from localStorage on mount
   useEffect(() => {
     const savedBoosters = localStorage.getItem("dailyBoosters");
     if (savedBoosters) {
@@ -37,12 +34,10 @@ const BoostScreen = () => {
     }
   }, []);
 
-  // Saves daily boosters to localStorage on change
   useEffect(() => {
     localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
   }, [dailyBoosters]);
 
-  // Real-time timer updates for daily boosters
   useEffect(() => {
     const intervalId = setInterval(() => {
       setDailyBoosters((prev) => {
@@ -68,7 +63,6 @@ const BoostScreen = () => {
     return () => clearInterval(intervalId);
   }, []);
 
-  // Fetch profile and extra boosters
   const fetchProfileAndBoosters = useCallback(async () => {
     setLoading(true);
     try {
@@ -95,18 +89,18 @@ const BoostScreen = () => {
         title: booster.name,
         description: booster.description,
         value: booster.upgrade_cost.toString(),
-        level: `Level ${booster.level}`,
-        ctaText: "Upgrade",
+        level: booster.level === "-" ? "Not Owned" : `Level ${booster.level}`,
+        ctaText: booster.level === "-" ? "Buy" : "Upgrade",
         altCTA: totalTaps < booster.upgrade_cost ? "Insufficient Funds" : null,
         actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
         icon: `${process.env.PUBLIC_URL}/extra-booster-icon.png`,
         imageId: booster.image_id,
-        rawLevel: booster.level, // Store numeric level for Dashboard use
+        rawLevel: booster.level,
         effect: booster.effect,
       }));
 
       setBoostersData((prev) => ({ ...prev, extraBoosters: mappedExtraBoosters }));
-      localStorage.setItem("extraBoosters", JSON.stringify(mappedExtraBoosters)); // Persist for Dashboard
+      localStorage.setItem("extraBoosters", JSON.stringify(mappedExtraBoosters));
     } catch (err) {
       setError(err.message);
       console.error("Error fetching data:", err);
@@ -119,16 +113,15 @@ const BoostScreen = () => {
     fetchProfileAndBoosters();
   }, [fetchProfileAndBoosters]);
 
-  // Upgrades an extra booster
   const handleUpgradeBoost = async (boosterId) => {
     try {
       const token = localStorage.getItem("accessToken");
       const response = await fetch(`https://bt-coins.onrender.com/user/boost/upgrade/${boosterId}`, {
-        method: "PUT", // Changed to PUT per API spec
+        method: "PUT",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       });
       if (!response.ok) throw new Error("Upgrade failed");
-      await fetchProfileAndBoosters(); // Refresh data after upgrade
+      await fetchProfileAndBoosters();
       handleOverlayClose();
     } catch (err) {
       setError(err.message);
@@ -136,7 +129,6 @@ const BoostScreen = () => {
     }
   };
 
-  // Claims a daily booster and applies its effect
   const handleClaimDailyBooster = (boosterType) => {
     const booster = dailyBoosters[boosterType];
     if (booster.usesLeft > 0) {
@@ -162,7 +154,6 @@ const BoostScreen = () => {
     handleOverlayClose();
   };
 
-  // Renders the timer (20s for active boost, 24h for reset)
   const renderTimer = (boosterType) => {
     const booster = dailyBoosters[boosterType];
     const timers = booster.timers;
@@ -186,7 +177,6 @@ const BoostScreen = () => {
     return "";
   };
 
-  // Renders the overlay for booster details
   const renderOverlay = () => {
     if (!activeOverlay) return null;
     const { type, title, description, value, level, ctaText, altCTA, id, icon } = activeOverlay;
