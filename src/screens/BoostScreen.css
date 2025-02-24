@@ -4,7 +4,7 @@
   color: #fff;
   min-height: 100vh;
   padding: 80px 16px;
-  padding-top: 0;
+  padding-top: 0px;
   font-family: "Roboto", sans-serif;
   position: relative;
   display: flex;
@@ -64,19 +64,18 @@
 
 .daily-boosters-container {
   display: flex;
-  flex-direction: column; /* Stack cards vertically */
-  gap: 10px;
-  width: 100%; /* Full width */
+  justify-content: space-between;
+  gap: 10px; /* Added for spacing */
 }
 
 .booster-frame {
   background-color: #414141;
   border-radius: 8px;
   padding: 10px;
+  flex: 1;
   display: flex;
   align-items: center;
   cursor: pointer;
-  width: 100%; /* Full width */
 }
 
 .booster-icon {
@@ -166,63 +165,74 @@
   height: 30px;
 }
 
+/* Overlay Container */
 .overlay-container {
   position: fixed;
-  bottom: 0;
+  top: 0;
   left: 0;
   width: 100%;
-  background: #1d1d1d;
-  color: #fff;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
-  flex-direction: column;
-  padding: 20px;
-  box-sizing: border-box;
+  justify-content: center;
+  align-items: center;
   z-index: 1001;
-  transition: transform 0.3s ease-out;
-  transform: translateY(100%); /* Initially hidden below screen */
 }
 
-.overlay-container.slide-in {
-  transform: translateY(0); /* Slide up into view */
-}
-
-.overlay-container.slide-out {
-  transform: translateY(100%); /* Slide back down */
-}
-
+/* Overlay Card */
 .overlay-card {
-  width: 100%;
-  max-width: 360px;
-  margin: 0 auto;
+  background: #1d1d1d;
+  width: 90%;
+  max-width: 360px; /* Consistent with other screens */
+  padding: 20px;
+  border-radius: 16px;
   text-align: center;
+  position: relative;
 }
 
+/* Overlay Header */
 .overlay-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  position: relative;
   margin-bottom: 10px;
 }
 
-.overlay-title {
+.overlay-header h2 {
   font-size: 18px;
   font-weight: bold;
+  color: white;
 }
 
 .overlay-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
   background: none;
   border: none;
   font-size: 20px;
-  color: #fff;
+  color: white;
   cursor: pointer;
 }
 
+/* Division Line */
+.division-line {
+  margin: 10px 0;
+  border: 0.5px solid #2f2f2f;
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Overlay Icon */
 .overlay-icon {
   width: 60px;
   height: 60px;
   margin: 20px auto;
 }
 
+/* Overlay Content */
 .overlay-description {
   font-size: 14px;
   color: #e0e0e0;
@@ -245,11 +255,18 @@
 .overlay-value {
   font-size: 20px;
   font-weight: bold;
+  color: white;
 }
 
+.overlay-level {
+  font-size: 14px;
+  color: orange;
+}
+
+/* Overlay CTA Button */
 .overlay-cta {
-  background: #fff;
-  color: #000;
+  background: white;
+  color: black;
   width: 100%;
   padding: 12px 0;
   font-size: 16px;
@@ -257,51 +274,92 @@
   border: none;
   border-radius: 8px;
   cursor: pointer;
-}
-
-/* Loading and Error Messages */
-.loading-message {
-  text-align: center;
-  font-size: 18px;
-  font-weight: bold;
-  color: #f9b54c;
-  margin-top: 20px;
-  animation: fadeInOut 1.5s infinite alternate;
-}
-
-.error-message {
-  text-align: center;
-  font-size: 16px;
-  color: #ff4444;
   margin-top: 20px;
 }
 
-/* Fade Animation */
-@keyframes fadeInOut {
-  0% { opacity: 0.4; }
-  100% { opacity: 1; }
+.overlay-cta:disabled {
+  background: #ccc;
+  color: #666;
+  cursor: not-allowed;
 }
+
+
 
 /* Responsive Design */
 @media (max-width: 600px) {
   .boost-screen {
     padding: 60px 12px;
-    padding-top: 0;
+    padding-top: 0px;
   }
 
-  .total-taps-value { font-size: 28px; }
-  .taps-icon { width: 24px; height: 24px; }
-  .daily-boosters-title, .extra-boosters-title { font-size: 14px; }
-  .booster-frame, .extra-booster-card { padding: 8px; }
-  .booster-icon, .booster-icon-large { width: 24px; height: 24px; }
-  .booster-info .booster-title { font-size: 13px; }
-  .booster-info .booster-value, .booster-stats .booster-value, .booster-level { font-size: 11px; }
-  .value-icon-small { width: 16px; height: 16px; }
-  .action-icon { width: 24px; height: 24px; }
-  .overlay-header h2 { font-size: 16px; }
-  .overlay-icon { width: 50px; height: 50px; }
-  .overlay-description { font-size: 13px; }
-  .overlay-value { font-size: 18px; }
-  .overlay-level { font-size: 12px; }
-  .overlay-cta { padding: 10px 0; font-size: 14px; }
+  .total-taps-value {
+    font-size: 28px;
+  }
+
+  .taps-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .daily-boosters-title,
+  .extra-boosters-title {
+    font-size: 14px;
+  }
+
+  .booster-frame,
+  .extra-booster-card {
+    padding: 8px;
+  }
+
+  .booster-icon,
+  .booster-icon-large {
+    width: 24px;
+    height: 24px;
+  }
+
+  .booster-info .booster-title {
+    font-size: 13px;
+  }
+
+  .booster-info .booster-value,
+  .booster-stats .booster-value,
+  .booster-level {
+    font-size: 11px;
+  }
+
+  .value-icon-small {
+    width: 16px;
+    height: 16px;
+  }
+
+  .action-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .overlay-header h2 {
+    font-size: 16px;
+  }
+
+  .overlay-icon {
+    width: 50px;
+    height: 50px;
+  }
+
+  .overlay-description {
+    font-size: 13px;
+  }
+
+  .overlay-value {
+    font-size: 18px;
+  }
+
+  .overlay-level {
+    font-size: 12px;
+  }
+
+  .overlay-cta {
+    padding: 10px 0;
+    font-size: 14px;
+  }
 }
