@@ -4,8 +4,17 @@ import Navigation from "../components/Navigation";
 import "./Dashboard.css";
 
 // Configurable constants
-const MAX_ELECTRIC_BOOST = 1000; // Max energy capacity
-const RECHARGE_INTERVAL = 3000; // 3 seconds per unit (3000s from 0 to 1000)
+const BASE_MAX_ELECTRIC_BOOST = 1000; // Base energy capacity
+
+// Recharge time per level for "recharging speed" booster (in seconds)
+const RECHARGE_TIMES = {
+  0: 3000, // Default
+  1: 2500,
+  2: 2000,
+  3: 1500,
+  4: 1000,
+  5: 500,
+};
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -21,14 +30,14 @@ const Dashboard = () => {
   const [totalTaps, setTotalTaps] = useState(0);
   const [electricBoost, setElectricBoost] = useState(() => {
     const savedBoost = localStorage.getItem("electricBoost");
-    return savedBoost ? parseInt(savedBoost) : MAX_ELECTRIC_BOOST;
+    return savedBoost ? parseInt(savedBoost) : BASE_MAX_ELECTRIC_BOOST;
   });
   const [tapAnimation, setTapAnimation] = useState(false);
   const [boostAnimation, setBoostAnimation] = useState(false);
   const [tapEffects, setTapEffects] = useState([]);
   const [currentStreak, setCurrentStreak] = useState(0);
 
-  // Booster states with initialization from localStorage
+  // Daily booster states
   const [dailyBoosters, setDailyBoosters] = useState(() => {
     const savedBoosters = localStorage.getItem("dailyBoosters");
     return savedBoosters
@@ -39,7 +48,21 @@ const Dashboard = () => {
         };
   });
 
-  // Refs for managing backend updates and recharge
+  // Extra Boosters state
+  // eslint-disable-next-line no-unused-vars
+  const [extraBoosters, setExtraBoosters] = useState(() => {
+    const savedBoosters = localStorage.getItem("extraBoosters");
+    return savedBoosters ? JSON.parse(savedBoosters) : [];
+  });
+
+  // Dynamic constants based on Extra Boosters
+  const [MAX_ELECTRIC_BOOST, setMaxElectricBoost] = useState(BASE_MAX_ELECTRIC_BOOST);
+  const [RECHARGE_INTERVAL, setRechargeInterval] = useState(
+    RECHARGE_TIMES[0] / BASE_MAX_ELECTRIC_BOOST * 1000 // Default ms per unit
+  );
+  const [tapBoostLevel, setTapBoostLevel] = useState(0);
+
+  // Refs
   const tapCountSinceLastUpdate = useRef(0);
   const updateBackendTimeout = useRef(null);
   const rechargeInterval = useRef(null);
@@ -57,8 +80,6 @@ const Dashboard = () => {
               username: user.username || `User${user.id}`,
               image_url: user.photo_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
             });
-          } else {
-            console.error("Telegram user data not available");
           }
         }
       } catch (err) {
@@ -68,7 +89,7 @@ const Dashboard = () => {
     initializeDashboard();
   }, []);
 
-  // Fetch profile data and initialize boosters
+  // Fetch profile data and initialize
   useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem("accessToken");
@@ -80,10 +101,7 @@ const Dashboard = () => {
       try {
         const response = await fetch("https://bt-coins.onrender.com/user/profile", {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         });
 
         if (!response.ok) {
@@ -96,19 +114,27 @@ const Dashboard = () => {
         setTotalTaps(data.total_coins);
         setCurrentStreak(data.streak?.current_streak || 0);
 
-        // Restore electricBoost from localStorage
+        // Restore electricBoost
         const savedBoost = localStorage.getItem("electricBoost");
         if (savedBoost) {
           setElectricBoost(parseInt(savedBoost));
         } else {
-          localStorage.setItem("electricBoost", MAX_ELECTRIC_BOOST);
+          localStorage.setItem("electricBoost", BASE_MAX_ELECTRIC_BOOST);
           localStorage.setItem("lastBoostUpdateTime", Date.now());
         }
 
-        // Load daily boosters from localStorage
-        const savedBoosters = localStorage.getItem("dailyBoosters");
-        if (savedBoosters) {
-          setDailyBoosters(JSON.parse(savedBoosters));
+        // Load daily boosters
+        const savedDailyBoosters = localStorage.getItem("dailyBoosters");
+        if (savedDailyBoosters) {
+          setDailyBoosters(JSON.parse(savedDailyBoosters));
+        }
+
+        // Load extra boosters and apply effects
+        const savedExtraBoosters = localStorage.getItem("extraBoosters");
+        if (savedExtraBoosters) {
+          const boosters = JSON.parse(savedExtraBoosters);
+          setExtraBoosters(boosters);
+          applyExtraBoosterEffects(boosters);
         }
       } catch (err) {
         setError(err.message);
@@ -126,7 +152,37 @@ const Dashboard = () => {
     localStorage.setItem("lastBoostUpdateTime", Date.now());
   }, [dailyBoosters, electricBoost]);
 
-  // Dynamic electric boost recharge every 3 seconds
+  // Apply Extra Booster effects
+  const applyExtraBoosterEffects = (boosters) => {
+    let newMaxElectricBoost = BASE_MAX_ELECTRIC_BOOST;
+    let newRechargeTime = RECHARGE_TIMES[0]; // Default full recharge time in seconds
+    let newTapBoostLevel = 0;
+
+    boosters.forEach((booster) => {
+      switch (booster.title.toLowerCase()) {
+        case "boost":
+          newTapBoostLevel = booster.rawLevel;
+          break;
+        case "multiplier":
+          newMaxElectricBoost += 500 * booster.rawLevel;
+          break;
+        case "recharging speed":
+          newRechargeTime = RECHARGE_TIMES[booster.rawLevel] || RECHARGE_TIMES[0];
+          break;
+        default:
+          break;
+      }
+    });
+
+    setMaxElectricBoost(newMaxElectricBoost);
+    setRechargeInterval((newRechargeTime / newMaxElectricBoost) * 1000); // Convert to ms per unit
+    setTapBoostLevel(newTapBoostLevel);
+
+    // Adjust electricBoost if it exceeds new max
+    setElectricBoost((prev) => Math.min(prev, newMaxElectricBoost));
+  };
+
+  // Dynamic electric boost recharge
   useEffect(() => {
     if (rechargeInterval.current) clearInterval(rechargeInterval.current);
     rechargeInterval.current = setInterval(() => {
@@ -138,9 +194,9 @@ const Dashboard = () => {
       });
     }, RECHARGE_INTERVAL);
     return () => clearInterval(rechargeInterval.current);
-  }, [dailyBoosters.fullEnergy.isActive]);
+  }, [dailyBoosters.fullEnergy.isActive, MAX_ELECTRIC_BOOST, RECHARGE_INTERVAL]);
 
-  // Real-time booster timer updates
+  // Real-time daily booster timer updates
   useEffect(() => {
     const intervalId = setInterval(() => {
       setDailyBoosters((prev) => {
@@ -171,11 +227,10 @@ const Dashboard = () => {
     if (electricBoost === 0 && !dailyBoosters.fullEnergy.isActive) return;
 
     const fingersCount = event.touches?.length || 1;
-    const tapMultiplier = dailyBoosters.tapperBoost.isActive ? 2 : 1;
+    const tapMultiplier = (dailyBoosters.tapperBoost.isActive ? 2 : 1) + tapBoostLevel;
 
     setTotalTaps((prev) => prev + fingersCount * tapMultiplier);
     setElectricBoost((prev) => {
-      // If Full Energy is active, reset to max instantly
       if (dailyBoosters.fullEnergy.isActive) {
         return MAX_ELECTRIC_BOOST;
       }
@@ -222,10 +277,7 @@ const Dashboard = () => {
           `https://bt-coins.onrender.com/update-coins?coins=${tapCountSinceLastUpdate.current}`,
           {
             method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
           }
         );
 
@@ -263,7 +315,6 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      {/* Profile and Streak Section */}
       <div className="profile1-streak-section">
         <div className="profile1-section" onClick={() => navigate("/profile-screen")}>
           <img src={telegramData.image_url} alt="Profile" className="profile1-picture" />
@@ -281,7 +332,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Frames Section */}
       <div className="frames-section">
         {[
           { name: "Rewards", icon: "reward.png", path: "/reward-screen" },
@@ -296,7 +346,6 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Total Taps Section */}
       <div className="total-taps-section">
         <p className="total-taps-text">Your Total Taps:</p>
         <div className="total-taps-count">
@@ -317,7 +366,6 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Electric Boost Section */}
       <div className="electric-boost-section">
         <div className={`electric-value ${boostAnimation ? "boost-animation" : ""}`}>
           <img src={`${process.env.PUBLIC_URL}/electric-icon.png`} alt="Electric Icon" className="electric-icon" />

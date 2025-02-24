@@ -42,7 +42,7 @@ const BoostScreen = () => {
     localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
   }, [dailyBoosters]);
 
-  // Real-time timer updates for boosters
+  // Real-time timer updates for daily boosters
   useEffect(() => {
     const intervalId = setInterval(() => {
       setDailyBoosters((prev) => {
@@ -53,10 +53,10 @@ const BoostScreen = () => {
             const nextTimer = booster.timers[0];
             if (Date.now() >= nextTimer.endTime) {
               if (booster.isActive) {
-                booster.isActive = false; // End 20s effect
+                booster.isActive = false;
                 booster.timers.shift();
               } else if (booster.usesLeft === 0) {
-                booster.usesLeft = 3; // Reset after 24h
+                booster.usesLeft = 3;
                 booster.timers = [];
               }
             }
@@ -64,7 +64,7 @@ const BoostScreen = () => {
         });
         return updated;
       });
-    }, 1000); // Check every second
+    }, 1000);
     return () => clearInterval(intervalId);
   }, []);
 
@@ -101,9 +101,12 @@ const BoostScreen = () => {
         actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
         icon: `${process.env.PUBLIC_URL}/extra-booster-icon.png`,
         imageId: booster.image_id,
+        rawLevel: booster.level, // Store numeric level for Dashboard use
+        effect: booster.effect,
       }));
 
       setBoostersData((prev) => ({ ...prev, extraBoosters: mappedExtraBoosters }));
+      localStorage.setItem("extraBoosters", JSON.stringify(mappedExtraBoosters)); // Persist for Dashboard
     } catch (err) {
       setError(err.message);
       console.error("Error fetching data:", err);
@@ -121,11 +124,11 @@ const BoostScreen = () => {
     try {
       const token = localStorage.getItem("accessToken");
       const response = await fetch(`https://bt-coins.onrender.com/user/boost/upgrade/${boosterId}`, {
-        method: "POST",
+        method: "PUT", // Changed to PUT per API spec
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       });
       if (!response.ok) throw new Error("Upgrade failed");
-      fetchProfileAndBoosters();
+      await fetchProfileAndBoosters(); // Refresh data after upgrade
       handleOverlayClose();
     } catch (err) {
       setError(err.message);
@@ -140,7 +143,6 @@ const BoostScreen = () => {
       const now = Date.now();
       setDailyBoosters((prev) => {
         const newTimers = [...booster.timers];
-        // Only add a new 20s timer if not already active
         if (!booster.isActive) {
           newTimers.push({ id: now, endTime: now + BOOST_DURATION });
           if (booster.usesLeft === 1) {
@@ -150,7 +152,7 @@ const BoostScreen = () => {
         return {
           ...prev,
           [boosterType]: {
-            usesLeft: booster.isActive ? booster.usesLeft : booster.usesLeft - 1, // Decrease only on first claim
+            usesLeft: booster.isActive ? booster.usesLeft : booster.usesLeft - 1,
             timers: newTimers,
             isActive: true,
           },
@@ -269,7 +271,7 @@ const BoostScreen = () => {
                     key={booster.type}
                     onClick={() =>
                       booster.usesLeft > 0 &&
-                      !booster.isActive && // Disable clicking if already active
+                      !booster.isActive &&
                       setActiveOverlay({
                         type: booster.type,
                         title: booster.title,
