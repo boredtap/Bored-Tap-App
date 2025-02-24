@@ -103,7 +103,7 @@ const BoostScreen = () => {
         level: `Level ${booster.level}`,
         ctaText: "Upgrade",
         altCTA: totalTaps < booster.upgrade_cost ? "Insufficient Funds" : null,
-        actionIcon: `${process.env.PUBLIC_URL}/upgrade-icon.png`,
+        actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
         icon: `${process.env.PUBLIC_URL}/extra-booster-icon.png`,
         imageId: booster.image_id,
       }));
