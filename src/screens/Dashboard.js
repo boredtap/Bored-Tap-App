@@ -4,7 +4,7 @@ import Navigation from "../components/Navigation";
 import "./Dashboard.css";
 import { autobotService } from "./autobotService";
 
-// Configurable constants (unused here, managed in autobotService)
+// Configurable constants
 const BASE_MAX_ELECTRIC_BOOST = 1000;
 
 const Dashboard = () => {
@@ -37,6 +37,7 @@ const Dashboard = () => {
   // Refs
   const tapCountSinceLastUpdate = useRef(0);
   const updateBackendTimeout = useRef(null);
+  const isTapping = useRef(false);
 
   // Fetch Telegram data
   useEffect(() => {
@@ -111,17 +112,17 @@ const Dashboard = () => {
 
     fetchProfile();
 
-    // Subscribe to autobot updates
     const unsubscribe = autobotService.subscribe(({ electricBoost: newBoost, totalTaps: newTaps }) => {
       setElectricBoost(newBoost);
       setTotalTaps(newTaps);
+      tapCountSinceLastUpdate.current += newTaps - totalTaps; // Track autobot taps
     });
 
     return () => {
       unsubscribe();
       if (updateBackendTimeout.current) clearTimeout(updateBackendTimeout.current);
     };
-  }, [navigate]);
+  }, [navigate, totalTaps]);
 
   // Save daily boosters to localStorage
   useEffect(() => {
@@ -156,6 +157,8 @@ const Dashboard = () => {
 
   // Handle tap events with booster logic
   const handleTap = (event) => {
+    if (electricBoost === 0) return;
+
     const fingersCount = event.touches?.length || 1;
     const tapperBoostActive = dailyBoosters.tapperBoost.isActive;
     const fullEnergyActive = dailyBoosters.fullEnergy.isActive;
@@ -184,6 +187,7 @@ const Dashboard = () => {
       updateBackend();
     }, 2000);
 
+    isTapping.current = true;
     playTapSound();
   };
 
@@ -219,6 +223,7 @@ const Dashboard = () => {
         console.error("Error updating backend:", err);
       } finally {
         tapCountSinceLastUpdate.current = 0;
+        isTapping.current = false;
       }
     }
   };

@@ -8,8 +8,7 @@ const RECHARGE_TIMES = {
   4: 1000,
   5: 500,
 };
-const AUTOBOT_RATE = 10000 / 3600; // Coins per second
-const AUTOBOT_MAX_HOURS = 24;
+const AUTOBOT_TAP_INTERVAL = 1000; // 1 tap per second
 
 let electricBoost = parseInt(localStorage.getItem("electricBoost")) || BASE_MAX_ELECTRIC_BOOST;
 let totalTaps = 0;
@@ -17,8 +16,8 @@ let maxElectricBoost = BASE_MAX_ELECTRIC_BOOST;
 let rechargeIntervalMs = (RECHARGE_TIMES[0] / BASE_MAX_ELECTRIC_BOOST) * 1000;
 let tapBoostLevel = 0;
 let hasAutobot = false;
-let lastActiveTime = Date.now();
 let listeners = [];
+let lastRechargeTime = Date.now();
 
 const applyExtraBoosterEffects = (boosters) => {
   let newMaxElectricBoost = BASE_MAX_ELECTRIC_BOOST;
@@ -50,29 +49,9 @@ const applyExtraBoosterEffects = (boosters) => {
   tapBoostLevel = newTapBoostLevel;
   hasAutobot = autobotOwned;
   electricBoost = Math.min(electricBoost, maxElectricBoost);
-};
 
-const updateAutobotEarnings = () => {
-  if (!hasAutobot) return;
-
-  const now = Date.now();
-  const elapsedSeconds = (now - lastActiveTime) / 1000;
-  const maxSeconds = AUTOBOT_MAX_HOURS * 3600;
-  const effectiveSeconds = Math.min(elapsedSeconds, maxSeconds);
-  const earnedCoins = Math.floor(effectiveSeconds * AUTOBOT_RATE);
-
-  if (earnedCoins > 0) {
-    totalTaps += earnedCoins;
-    localStorage.setItem("autobotCoins", totalTaps);
-    notifyListeners();
-  }
-};
-
-const rechargeEnergy = (isFullEnergyActive) => {
-  if (electricBoost < maxElectricBoost && !isFullEnergyActive) {
-    electricBoost = Math.min(electricBoost + 1, maxElectricBoost);
-    localStorage.setItem("electricBoost", electricBoost);
-    notifyListeners();
+  if (autobotOwned && !autobotInterval) {
+    startAutobot();
   }
 };
 
@@ -80,17 +59,37 @@ const notifyListeners = () => {
   listeners.forEach((listener) => listener({ electricBoost, totalTaps }));
 };
 
-const updateLoop = () => {
-  const savedBoosters = JSON.parse(localStorage.getItem("dailyBoosters") || "{}");
-  const isFullEnergyActive = savedBoosters.fullEnergy?.isActive || false;
-
-  updateAutobotEarnings();
-  rechargeEnergy(isFullEnergyActive);
-
-  requestAnimationFrame(updateLoop);
+let autobotInterval = null;
+const startAutobot = () => {
+  if (autobotInterval) return;
+  autobotInterval = setInterval(() => {
+    const savedBoosters = JSON.parse(localStorage.getItem("dailyBoosters") || "{}");
+    const tapperBoostActive = savedBoosters.tapperBoost?.isActive || false;
+    const multiplier = (tapperBoostActive ? 2 : 1) + tapBoostLevel;
+    totalTaps += multiplier;
+    localStorage.setItem("autobotCoins", totalTaps);
+    notifyListeners();
+  }, AUTOBOT_TAP_INTERVAL);
 };
 
-requestAnimationFrame(updateLoop);
+const rechargeEnergy = () => {
+  const now = Date.now();
+  const elapsedMs = now - lastRechargeTime;
+  if (elapsedMs >= rechargeIntervalMs) {
+    const savedBoosters = JSON.parse(localStorage.getItem("dailyBoosters") || "{}");
+    const isFullEnergyActive = savedBoosters.fullEnergy?.isActive || false;
+
+    if (electricBoost < maxElectricBoost && !isFullEnergyActive) {
+      electricBoost = Math.min(electricBoost + 1, maxElectricBoost);
+      localStorage.setItem("electricBoost", electricBoost);
+      notifyListeners();
+    }
+    lastRechargeTime = now;
+  }
+  requestAnimationFrame(rechargeEnergy);
+};
+
+requestAnimationFrame(rechargeEnergy);
 
 export const autobotService = {
   initialize: (boosters) => {
@@ -115,8 +114,6 @@ export const autobotService = {
     electricBoost = Math.max(electricBoost - fingersCount, 0);
     localStorage.setItem("electricBoost", electricBoost);
     localStorage.setItem("autobotCoins", totalTaps);
-    lastActiveTime = Date.now();
-    localStorage.setItem("lastActiveTime", lastActiveTime);
     notifyListeners();
     return fingersCount * multiplier;
   },
@@ -126,8 +123,6 @@ export const autobotService = {
     electricBoost = maxElectricBoost;
     localStorage.setItem("electricBoost", electricBoost);
     localStorage.setItem("autobotCoins", totalTaps);
-    lastActiveTime = Date.now();
-    localStorage.setItem("lastActiveTime", lastActiveTime);
     notifyListeners();
     return fingersCount * multiplier;
   },
