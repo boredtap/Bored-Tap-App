@@ -108,7 +108,7 @@
 .extra-boosters-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 24px;
 }
 
 .extra-booster-card {
@@ -119,6 +119,7 @@
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
+  gap: 24px;
 }
 
 .booster-left {
