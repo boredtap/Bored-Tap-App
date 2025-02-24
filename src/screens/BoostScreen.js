@@ -3,8 +3,8 @@ import Navigation from "../components/Navigation";
 import "./BoostScreen.css";
 
 // Configurable constants
-const BOOST_DURATION = 20000; // 20 seconds in milliseconds for both boosters
-const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+const BOOST_DURATION = 20000; // 20 seconds per booster use
+const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours for reset
 
 const BoostScreen = () => {
   const [activeOverlay, setActiveOverlay] = useState(null);
@@ -13,10 +13,15 @@ const BoostScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Daily boosters state: tracks uses, timers, and active status
-  const [dailyBoosters, setDailyBoosters] = useState({
-    tapperBoost: { usesLeft: 3, timers: [], isActive: false },
-    fullEnergy: { usesLeft: 3, timers: [], isActive: false },
+  // Daily boosters state with initialization from localStorage
+  const [dailyBoosters, setDailyBoosters] = useState(() => {
+    const savedBoosters = localStorage.getItem("dailyBoosters");
+    return savedBoosters
+      ? JSON.parse(savedBoosters)
+      : {
+          tapperBoost: { usesLeft: 3, timers: [], isActive: false },
+          fullEnergy: { usesLeft: 3, timers: [], isActive: false },
+        };
   });
 
   // Closes the overlay
@@ -37,32 +42,33 @@ const BoostScreen = () => {
     localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
   }, [dailyBoosters]);
 
-  // Real-time timer updates for active effects and reset countdowns
+  // Real-time timer updates for boosters
   useEffect(() => {
     const intervalId = setInterval(() => {
       setDailyBoosters((prev) => {
         const updated = { ...prev };
-
         ["tapperBoost", "fullEnergy"].forEach((type) => {
           const booster = updated[type];
-          if (booster.isActive && booster.timers.length > 0) {
-            const activeTimer = booster.timers[0];
-            if (Date.now() >= activeTimer.endTime) {
-              booster.isActive = false;
-              booster.timers.shift(); // Remove expired 20s timer
+          if (booster.timers.length > 0) {
+            const nextTimer = booster.timers[0];
+            if (Date.now() >= nextTimer.endTime) {
+              if (booster.isActive) {
+                booster.isActive = false; // End 20s effect
+                booster.timers.shift();
+              } else if (booster.usesLeft === 0) {
+                booster.usesLeft = 3; // Reset after 24h
+                booster.timers = [];
+              }
             }
           }
-          // Filter out expired timers
-          booster.timers = booster.timers.filter((timer) => timer.endTime > Date.now());
         });
-
         return updated;
       });
-    }, 1000); // Updates every second
+    }, 1000); // Check every second
     return () => clearInterval(intervalId);
   }, []);
 
-  // Fetches profile and extra boosters (unchanged)
+  // Fetch profile and extra boosters
   const fetchProfileAndBoosters = useCallback(async () => {
     setLoading(true);
     try {
@@ -92,7 +98,7 @@ const BoostScreen = () => {
         level: `Level ${booster.level}`,
         ctaText: "Upgrade",
         altCTA: totalTaps < booster.upgrade_cost ? "Insufficient Funds" : null,
-        actionIcon: `${process.env.PUBLIC_URL}/upgrade-icon.png`,
+        actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
         icon: `${process.env.PUBLIC_URL}/extra-booster-icon.png`,
         imageId: booster.image_id,
       }));
@@ -110,7 +116,7 @@ const BoostScreen = () => {
     fetchProfileAndBoosters();
   }, [fetchProfileAndBoosters]);
 
-  // Upgrades an extra booster (unchanged)
+  // Upgrades an extra booster
   const handleUpgradeBoost = async (boosterId) => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -133,31 +139,18 @@ const BoostScreen = () => {
     if (booster.usesLeft > 0) {
       const now = Date.now();
       setDailyBoosters((prev) => {
-        const updated = { ...prev };
-        const newTimers = [...booster.timers];
-
-        // Add 20s timer for this use
-        newTimers.push({ id: now, endTime: now + BOOST_DURATION });
-
-        // If last use, add 24h reset timer
+        const newTimers = [...booster.timers, { id: now, endTime: now + BOOST_DURATION }];
         if (booster.usesLeft === 1) {
           newTimers.push({ id: now + 1, endTime: now + DAILY_RESET_INTERVAL });
         }
-
-        updated[boosterType] = {
-          usesLeft: booster.usesLeft - 1,
-          timers: newTimers,
-          isActive: true, // Activates the 20s effect
+        return {
+          ...prev,
+          [boosterType]: {
+            usesLeft: booster.usesLeft - 1,
+            timers: newTimers,
+            isActive: true,
+          },
         };
-
-        // Log effect (to be integrated with Dashboard)
-        if (boosterType === "tapperBoost") {
-          console.log("Tapper Boost activated: x2 tap income for 20s");
-        } else if (boosterType === "fullEnergy") {
-          console.log("Full Energy activated: Energy refilled to 100% for 20s");
-        }
-
-        return updated;
       });
     }
     handleOverlayClose();
@@ -172,11 +165,9 @@ const BoostScreen = () => {
       const remainingTime = timers[0].endTime - Date.now();
       if (remainingTime > 0) {
         if (booster.isActive) {
-          // 20s countdown during active boost
           const seconds = Math.floor(remainingTime / 1000);
           return `00:00:${seconds.toString().padStart(2, "0")}`;
         } else if (booster.usesLeft === 0) {
-          // 24h reset countdown when exhausted
           const hours = Math.floor(remainingTime / 3600000);
           const minutes = Math.floor((remainingTime % 3600000) / 60000);
           const seconds = Math.floor((remainingTime % 60000) / 1000);
@@ -184,12 +175,6 @@ const BoostScreen = () => {
             .toString()
             .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
         }
-      } else if (booster.usesLeft === 0 && timers.length === 1) {
-        // Reset boosters when 24h timer expires
-        setDailyBoosters((prev) => ({
-          ...prev,
-          [boosterType]: { usesLeft: 3, timers: [], isActive: false },
-        }));
       }
     }
     return "";
@@ -255,7 +240,7 @@ const BoostScreen = () => {
         ) : (
           <>
             <div className="daily-boosters-section">
-              <p className="daily boos ters-title">Your Daily Boosters:</p>
+              <p className="daily-boosters-title">Your Daily Boosters:</p>
               <div className="daily-boosters-container">
                 {[
                   {
@@ -284,7 +269,7 @@ const BoostScreen = () => {
                         description:
                           booster.type === "tapperBoost"
                             ? "Multiply your tap income by X2 for 20 seconds."
-                            : "Fill your energy to 100% instantly 3 times per day.",
+                            : "Prevent energy drain for 20 seconds.",
                         value: "Free",
                         ctaText: "Claim",
                         icon: booster.icon,
