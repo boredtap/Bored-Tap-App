@@ -13,20 +13,21 @@
   box-sizing: border-box;
 }
 
+/* Boost Body */
+.boost-body {
+  flex: 1;
+}
+
 /* Total Taps Section */
 .total-taps-section {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 24px;
 }
 
-.total-taps-text {
-  font-size: 16px;
-}
-
-.total-taps-container {
+.taps-display {
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   margin: 12px 0;
 }
@@ -39,7 +40,6 @@
 .total-taps-value {
   font-size: 36px;
   font-weight: bold;
-  margin: 0;
 }
 
 .bt-boost-info {
@@ -52,9 +52,6 @@
 /* Daily Boosters Section */
 .daily-boosters-section {
   margin-bottom: 30px;
-  max-width: 360px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .daily-boosters-title {
@@ -64,24 +61,23 @@
 
 .daily-boosters-container {
   display: flex;
-  justify-content: space-between;
-  gap: 10px; /* Added for spacing */
+  flex-direction: column;
+  gap: 12px;
 }
 
 .booster-frame {
   background-color: #414141;
   border-radius: 8px;
-  padding: 10px;
-  flex: 1;
+  padding: 16px;
   display: flex;
   align-items: center;
   cursor: pointer;
 }
 
 .booster-icon {
-  width: 30px;
-  height: 30px;
-  margin-right: 10px;
+  width: 32px;
+  height: 32px;
+  margin-right: 12px;
 }
 
 .booster-info {
@@ -89,12 +85,12 @@
   flex-direction: column;
 }
 
-.booster-info .booster-title {
+.booster-title {
   font-size: 14px;
   font-weight: bold;
 }
 
-.booster-info .booster-value {
+.booster-value {
   font-size: 12px;
   color: #aaa;
 }
@@ -102,9 +98,6 @@
 /* Extra Boosters Section */
 .extra-boosters-section {
   margin-bottom: 30px;
-  max-width: 360px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .extra-boosters-title {
@@ -115,13 +108,13 @@
 .extra-boosters-container {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .extra-booster-card {
   background-color: #414141;
   border-radius: 8px;
-  padding: 10px;
+  padding: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -131,38 +124,24 @@
 .booster-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
-.booster-icon-large {
-  width: 30px;
-  height: 30px;
-}
-
-.value-icon-small {
-  width: 20px;
-  height: 20px;
-  margin-right: 5px;
-}
-
-.booster-stats {
+.booster-meta {
   display: flex;
   align-items: center;
-  gap: 5px;
-}
-
-.booster-stats .booster-value {
+  gap: 4px;
   font-size: 12px;
 }
 
-.booster-level {
-  font-size: 12px;
-  color: orange;
+.small-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .action-icon {
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
 }
 
 /* Overlay Container */
@@ -172,22 +151,54 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.8);
+  z-index: 1001;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
-  align-items: center;
-  z-index: 1001;
+  align-items: flex-end;
 }
 
-/* Overlay Card */
-.overlay-card {
-  background: #1d1d1d;
-  width: 90%;
-  max-width: 360px; /* Consistent with other screens */
+/* Boost Overlay */
+.boost-overlay {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 60%;
+  background-color: #1d1d1d;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
   padding: 20px;
-  border-radius: 16px;
-  text-align: center;
-  position: relative;
+  box-sizing: border-box;
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out forwards;
+  border-top-left-radius: 25px;
+  border-top-right-radius: 25px;
+}
+
+.boost-overlay.slide-out {
+  animation: slideOut 0.3s ease-out forwards;
+}
+
+/* Slide-in Animation */
+@keyframes slideIn {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Slide-out Animation */
+@keyframes slideOut {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
 }
 
 /* Overlay Header */
@@ -199,55 +210,54 @@
   margin-bottom: 10px;
 }
 
-.overlay-header h2 {
+.overlay-title {
   font-size: 18px;
-  font-weight: bold;
-  color: white;
 }
 
-.overlay-close {
+.overlay-cancel {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
-  border: none;
-  font-size: 20px;
-  color: white;
+  right: 0;
+  width: 24px;
+  height: 24px;
   cursor: pointer;
 }
 
-/* Division Line */
-.division-line {
-  margin: 10px 0;
-  border: 0.5px solid #2f2f2f;
-  width: 90%;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* Overlay Icon */
-.overlay-icon {
-  width: 60px;
-  height: 60px;
-  margin: 20px auto;
+/* Overlay Divider */
+.overlay-divider {
+  width: 100%;
+  height: 1px;
+  background-color: #777777;
+  margin: 20px 0;
 }
 
 /* Overlay Content */
+.overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  justify-content: center;
+}
+
+.overlay-boost-icon {
+  width: 60px;
+  height: 60px;
+}
+
 .overlay-description {
   font-size: 14px;
   color: #e0e0e0;
-  margin-bottom: 10px;
+  text-align: center;
 }
 
 .overlay-value-container {
   display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 8px;
 }
 
-.value-icon-large {
+.overlay-coin-icon {
   width: 24px;
   height: 24px;
 }
@@ -255,7 +265,6 @@
 .overlay-value {
   font-size: 20px;
   font-weight: bold;
-  color: white;
 }
 
 .overlay-level {
@@ -263,18 +272,16 @@
   color: orange;
 }
 
-/* Overlay CTA Button */
 .overlay-cta {
-  background: white;
-  color: black;
   width: 100%;
-  padding: 12px 0;
-  font-size: 16px;
-  font-weight: 500;
+  padding: 12px;
+  background-color: #fff;
+  color: #000;
   border: none;
   border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
   cursor: pointer;
-  margin-top: 20px;
 }
 
 .overlay-cta:disabled {
@@ -282,8 +289,6 @@
   color: #666;
   cursor: not-allowed;
 }
-
-
 
 /* Responsive Design */
 @media (max-width: 600px) {
@@ -308,40 +313,43 @@
 
   .booster-frame,
   .extra-booster-card {
-    padding: 8px;
+    padding: 12px;
   }
 
-  .booster-icon,
-  .booster-icon-large {
-    width: 24px;
-    height: 24px;
+  .booster-icon {
+    width: 28px;
+    height: 28px;
   }
 
-  .booster-info .booster-title {
+  .booster-title {
     font-size: 13px;
   }
 
-  .booster-info .booster-value,
-  .booster-stats .booster-value,
-  .booster-level {
+  .booster-value,
+  .booster-meta {
     font-size: 11px;
   }
 
-  .value-icon-small {
-    width: 16px;
-    height: 16px;
+  .small-icon {
+    width: 14px;
+    height: 14px;
   }
 
   .action-icon {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
   }
 
-  .overlay-header h2 {
+  .overlay-title {
     font-size: 16px;
   }
 
-  .overlay-icon {
+  .overlay-cancel {
+    width: 20px;
+    height: 20px;
+  }
+
+  .overlay-boost-icon {
     width: 50px;
     height: 50px;
   }
@@ -354,12 +362,17 @@
     font-size: 18px;
   }
 
+  .overlay-coin-icon {
+    width: 20px;
+    height: 20px;
+  }
+
   .overlay-level {
     font-size: 12px;
   }
 
   .overlay-cta {
-    padding: 10px 0;
+    padding: 10px;
     font-size: 14px;
   }
 }
