@@ -4,7 +4,7 @@
   color: #fff;
   min-height: 100vh;
   padding: 80px 16px;
-  padding-top: 0px;
+  padding-top: 0;
   font-family: "Roboto", sans-serif;
   position: relative;
   display: flex;
@@ -65,7 +65,7 @@
 .daily-boosters-container {
   display: flex;
   justify-content: space-between;
-  gap: 10px; /* Added for spacing */
+  gap: 10px;
 }
 
 .booster-frame {
@@ -183,7 +183,7 @@
 .overlay-card {
   background: #1d1d1d;
   width: 90%;
-  max-width: 360px; /* Consistent with other screens */
+  max-width: 360px;
   padding: 20px;
   border-radius: 16px;
   text-align: center;
@@ -283,7 +283,7 @@
   cursor: not-allowed;
 }
 
-/* Loading Message */
+/* Loading and Error Messages */
 .loading-message {
   text-align: center;
   font-size: 18px;
@@ -293,91 +293,39 @@
   animation: fadeInOut 1.5s infinite alternate;
 }
 
+.error-message {
+  text-align: center;
+  font-size: 16px;
+  color: #ff4444;
+  margin-top: 20px;
+}
+
 /* Fade Animation */
 @keyframes fadeInOut {
-  0% {
-    opacity: 0.4;
-  }
-  100% {
-    opacity: 1;
-  }
+  0% { opacity: 0.4; }
+  100% { opacity: 1; }
 }
 
 /* Responsive Design */
 @media (max-width: 600px) {
   .boost-screen {
     padding: 60px 12px;
-    padding-top: 0px;
+    padding-top: 0;
   }
 
-  .total-taps-value {
-    font-size: 28px;
-  }
-
-  .taps-icon {
-    width: 24px;
-    height: 24px;
-  }
-
-  .daily-boosters-title,
-  .extra-boosters-title {
-    font-size: 14px;
-  }
-
-  .booster-frame,
-  .extra-booster-card {
-    padding: 8px;
-  }
-
-  .booster-icon,
-  .booster-icon-large {
-    width: 24px;
-    height: 24px;
-  }
-
-  .booster-info .booster-title {
-    font-size: 13px;
-  }
-
-  .booster-info .booster-value,
-  .booster-stats .booster-value,
-  .booster-level {
-    font-size: 11px;
-  }
-
-  .value-icon-small {
-    width: 16px;
-    height: 16px;
-  }
-
-  .action-icon {
-    width: 24px;
-    height: 24px;
-  }
-
-  .overlay-header h2 {
-    font-size: 16px;
-  }
-
-  .overlay-icon {
-    width: 50px;
-    height: 50px;
-  }
-
-  .overlay-description {
-    font-size: 13px;
-  }
-
-  .overlay-value {
-    font-size: 18px;
-  }
-
-  .overlay-level {
-    font-size: 12px;
-  }
-
-  .overlay-cta {
-    padding: 10px 0;
-    font-size: 14px;
-  }
+  .total-taps-value { font-size: 28px; }
+  .taps-icon { width: 24px; height: 24px; }
+  .daily-boosters-title, .extra-boosters-title { font-size: 14px; }
+  .booster-frame, .extra-booster-card { padding: 8px; }
+  .booster-icon, .booster-icon-large { width: 24px; height: 24px; }
+  .booster-info .booster-title { font-size: 13px; }
+  .booster-info .booster-value, .booster-stats .booster-value, .booster-level { font-size: 11px; }
+  .value-icon-small { width: 16px; height: 16px; }
+  .action-icon { width: 24px; height: 24px; }
+  .overlay-header h2 { font-size: 16px; }
+  .overlay-icon { width: 50px; height: 50px; }
+  .overlay-description { font-size: 13px; }
+  .overlay-value { font-size: 18px; }
+  .overlay-level { font-size: 12px; }
+  .overlay-cta { padding: 10px 0; font-size: 14px; }
 }
