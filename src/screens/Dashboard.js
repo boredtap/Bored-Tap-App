@@ -7,7 +7,7 @@ import "./Dashboard.css";
 const BASE_MAX_ELECTRIC_BOOST = 1000;
 const RECHARGE_TIMES = { 0: 3000, 1: 2500, 2: 2000, 3: 1500, 4: 1000, 5: 500 }; // Recharge times in seconds
 const AUTOBOT_TAP_INTERVAL = 1000; // 1 tap per second
-const TAP_DEBOUNCE_DELAY = 200; // Increased debounce delay to prevent double taps
+const TAP_DEBOUNCE_DELAY = 200; // Debounce delay to prevent double taps
 const SYNC_DELAY = 1000; // 1-second delay before syncing taps to backend
 
 const Dashboard = () => {
@@ -73,7 +73,7 @@ const Dashboard = () => {
     initTelegram();
   }, []);
 
-  // Memoized fetch profile function to reduce redundant calls
+  // Memoized fetch profile function
   const fetchProfile = useCallback(async () => {
     const token = localStorage.getItem("accessToken");
     if (!token) {
@@ -124,6 +124,13 @@ const Dashboard = () => {
       if (savedBoosters) applyExtraBoosterEffects(JSON.parse(savedBoosters));
     });
 
+    // Listen for Full Energy claim to instantly refill energy
+    window.addEventListener("fullEnergyClaimed", () => {
+      setElectricBoost(maxElectricBoost);
+      localStorage.setItem("electricBoost", maxElectricBoost);
+      console.log("Full Energy claimed, electricBoost set to:", maxElectricBoost);
+    });
+
     const lastUpdateTime = localStorage.getItem("lastBoostUpdateTime");
     const currentBoost = parseFloat(localStorage.getItem("electricBoost")) || BASE_MAX_ELECTRIC_BOOST;
     if (lastUpdateTime && currentBoost < maxElectricBoost) {
@@ -136,7 +143,10 @@ const Dashboard = () => {
     }
     localStorage.setItem("lastBoostUpdateTime", Date.now());
 
-    return () => window.removeEventListener("boosterUpgraded", fetchProfile);
+    return () => {
+      window.removeEventListener("boosterUpgraded", fetchProfile);
+      window.removeEventListener("fullEnergyClaimed", () => {});
+    };
   }, [fetchProfile, maxElectricBoost]);
 
   // Function to apply effects of extra boosters
@@ -215,10 +225,11 @@ const Dashboard = () => {
   // Async function to update backend with current tap count
   const updateBackend = useCallback(async () => {
     if (tapCountSinceLastUpdate.current === 0) return;
+    const tapsToSync = tapCountSinceLastUpdate.current; // Capture current value
     try {
       const token = localStorage.getItem("accessToken");
       const response = await fetch(
-        `https://bt-coins.onrender.com/update-coins?coins=${tapCountSinceLastUpdate.current}`,
+        `https://bt-coins.onrender.com/update-coins?coins=${tapsToSync}`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -228,9 +239,9 @@ const Dashboard = () => {
         const data = await response.json();
         console.log("Backend response:", data);
         if (data.total_coins >= 0) {
-          setTotalTaps(data.total_coins); // Ensure we trust backend total
+          setTotalTaps(data.total_coins); // Trust backend total
+          tapCountSinceLastUpdate.current = 0; // Reset only after successful sync
         }
-        tapCountSinceLastUpdate.current = 0;
       } else {
         console.error("Backend sync failed");
       }
@@ -248,16 +259,19 @@ const Dashboard = () => {
     };
   }, [updateBackend]);
 
-  // Effect for daily booster timers and reset logic
+  // Effect for daily booster timers (only Tapper Boost)
   useEffect(() => {
     const intervalId = setInterval(() => {
       setDailyBoosters((prev) => {
         const updated = { ...prev };
-        ["tapperBoost", "fullEnergy"].forEach((type) => {
+        ["tapperBoost"].forEach((type) => {
           const booster = updated[type];
-          if (type === "tapperBoost" && booster.isActive && Date.now() >= booster.endTime) {
+          if (booster.isActive && Date.now() >= booster.endTime) {
             booster.isActive = false;
           }
+        });
+        ["tapperBoost", "fullEnergy"].forEach((type) => {
+          const booster = updated[type];
           if (booster.usesLeft === 0 && booster.resetTime && Date.now() >= booster.resetTime) {
             booster.usesLeft = 3;
             booster.resetTime = null;
@@ -270,12 +284,12 @@ const Dashboard = () => {
     return () => clearInterval(intervalId);
   }, [dailyBoosters]);
 
-  // Tap handling function with robust debounce and event prevention
+  // Tap handling function with corrected coin calculation
   const handleTap = useCallback((event) => {
-    event.preventDefault(); // Prevent default to avoid duplicate events
+    event.preventDefault();
     if (electricBoost === 0 || isTapProcessed.current) return;
 
-    isTapProcessed.current = true; // Mark tap as processed
+    isTapProcessed.current = true;
     const fingersCount = event.touches ? event.touches.length : 1;
     const tapperBoostActive = dailyBoosters.tapperBoost.isActive;
     const multiplier = (tapperBoostActive ? 2 : 1) + tapBoostLevel;
@@ -316,10 +330,10 @@ const Dashboard = () => {
     tapSoundRef.current.play().catch((err) => console.error("Audio playback error:", err));
 
     tapTimeout.current = setTimeout(() => {
-      isTapProcessed.current = false; // Allow next tap after debounce
+      isTapProcessed.current = false;
     }, TAP_DEBOUNCE_DELAY);
 
-    // Clear any existing sync timeout and set a new one
+    // Sync after a delay, but only if no new taps occur
     if (syncTimeout.current) clearTimeout(syncTimeout.current);
     syncTimeout.current = setTimeout(() => {
       if (tapCountSinceLastUpdate.current > 0) {
@@ -329,27 +343,8 @@ const Dashboard = () => {
     }, SYNC_DELAY);
   }, [electricBoost, dailyBoosters, tapBoostLevel, updateBackend]);
 
-  // Function to handle tap end
   const handleTapEnd = (event) => {
-    event.preventDefault(); // Prevent default to avoid duplicate triggers
-  };
-
-  // Function to handle Full Energy booster
-  const handleFullEnergy = () => {
-    const booster = dailyBoosters.fullEnergy;
-    if (booster.usesLeft > 0) {
-      setElectricBoost(maxElectricBoost);
-      localStorage.setItem("electricBoost", maxElectricBoost);
-      setDailyBoosters((prev) => ({
-        ...prev,
-        fullEnergy: {
-          usesLeft: booster.usesLeft - 1,
-          isActive: false,
-          endTime: null,
-          resetTime: booster.usesLeft === 1 ? Date.now() + 24 * 60 * 60 * 1000 : booster.resetTime,
-        },
-      }));
-    }
+    event.preventDefault();
   };
 
   if (error) return <div className="error">{error}</div>;
@@ -416,9 +411,9 @@ const Dashboard = () => {
           <img src={`${process.env.PUBLIC_URL}/electric-icon.png`} alt="Electric Icon" className="electric-icon" />
           <span>{Math.floor(electricBoost)}/{maxElectricBoost}</span>
         </div>
-        <button className="boost-btn" onClick={handleFullEnergy}>
+        <button className="boost-btn" onClick={() => navigate("/boost-screen")}>
           <img src={`${process.env.PUBLIC_URL}/boostx2.png`} alt="Boost Icon" className="boost-icon" />
-          Full Energy
+          Boost
         </button>
       </div>
 

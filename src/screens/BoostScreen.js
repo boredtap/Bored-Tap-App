@@ -3,7 +3,7 @@ import Navigation from "../components/Navigation";
 import "./BoostScreen.css";
 
 // Configurable constants for booster duration and daily reset
-const BOOST_DURATION = 20000; // 20 seconds per booster use
+const BOOST_DURATION = 20000; // 20 seconds for Tapper Boost
 const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours for reset
 
 const BoostScreen = () => {
@@ -19,7 +19,7 @@ const BoostScreen = () => {
       ? JSON.parse(savedBoosters)
       : {
           tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
-          fullEnergy: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
+          fullEnergy: { usesLeft: 3, isActive: false, endTime: null, resetTime: null }, // No active duration
         };
   });
 
@@ -96,32 +96,53 @@ const BoostScreen = () => {
     }
   };
 
+  // Modified to handle Full Energy instant refill
   const handleClaimDailyBooster = (boosterType) => {
     const booster = dailyBoosters[boosterType];
     if (booster.usesLeft > 0 && !booster.isActive) {
       const now = Date.now();
-      setDailyBoosters((prev) => ({
-        ...prev,
-        [boosterType]: {
-          usesLeft: booster.usesLeft - 1,
-          isActive: true,
-          endTime: now + BOOST_DURATION,
-          resetTime: booster.usesLeft === 1 ? now + DAILY_RESET_INTERVAL : booster.resetTime,
-        },
-      }));
+      if (boosterType === "fullEnergy") {
+        // Instantly dispatch event to refill energy, no active duration
+        window.dispatchEvent(new Event("fullEnergyClaimed"));
+        setDailyBoosters((prev) => ({
+          ...prev,
+          [boosterType]: {
+            usesLeft: booster.usesLeft - 1,
+            isActive: false, // No timer for Full Energy
+            endTime: null,
+            resetTime: booster.usesLeft === 1 ? now + DAILY_RESET_INTERVAL : booster.resetTime,
+          },
+        }));
+      } else {
+        // Tapper Boost retains 20-second timer
+        setDailyBoosters((prev) => ({
+          ...prev,
+          [boosterType]: {
+            usesLeft: booster.usesLeft - 1,
+            isActive: true,
+            endTime: now + BOOST_DURATION,
+            resetTime: booster.usesLeft === 1 ? now + DAILY_RESET_INTERVAL : booster.resetTime,
+          },
+        }));
+      }
     }
     handleOverlayClose();
   };
 
+  // Timer effect only for Tapper Boost
   useEffect(() => {
     const intervalId = setInterval(() => {
       setDailyBoosters((prev) => {
         const updated = { ...prev };
-        ["tapperBoost", "fullEnergy"].forEach((type) => {
+        ["tapperBoost"].forEach((type) => { // Only Tapper Boost has a timer
           const booster = updated[type];
           if (booster.isActive && Date.now() >= booster.endTime) {
             booster.isActive = false;
           }
+        });
+        // Reset logic for both boosters
+        ["tapperBoost", "fullEnergy"].forEach((type) => {
+          const booster = updated[type];
           if (booster.usesLeft === 0 && booster.resetTime && Date.now() >= booster.resetTime) {
             booster.usesLeft = 3;
             booster.resetTime = null;
@@ -133,22 +154,20 @@ const BoostScreen = () => {
     return () => clearInterval(intervalId);
   }, []);
 
-
-// Inside the `renderTimer` function, update the timer display logic:
-const renderTimer = (boosterType) => {
-  const booster = dailyBoosters[boosterType];
-  if (booster.isActive) {
-    const remaining = Math.max(0, (booster.endTime - Date.now()) / 1000);
-    return `Active: ${Math.floor(remaining)}s`;
-  } else if (booster.usesLeft === 0 && booster.resetTime) {
-    const resetIn = Math.max(0, (booster.resetTime - Date.now()) / 1000);
-    const hours = Math.floor(resetIn / 3600);
-    const minutes = Math.floor((resetIn % 3600) / 60);
-    const seconds = Math.floor(resetIn % 60);
-    return `Resets in ${hours}h ${minutes}m ${seconds}s`;
-  }
-  return `${booster.usesLeft}/3 uses left`;
-};
+  const renderTimer = (boosterType) => {
+    const booster = dailyBoosters[boosterType];
+    if (boosterType === "tapperBoost" && booster.isActive) {
+      const remaining = Math.max(0, (booster.endTime - Date.now()) / 1000);
+      return `Active: ${Math.floor(remaining)}s`;
+    } else if (booster.usesLeft === 0 && booster.resetTime) {
+      const resetIn = Math.max(0, (booster.resetTime - Date.now()) / 1000);
+      const hours = Math.floor(resetIn / 3600);
+      const minutes = Math.floor((resetIn % 3600) / 60);
+      const seconds = Math.floor(resetIn % 60);
+      return `Resets in ${hours}h ${minutes}m ${seconds}s`;
+    }
+    return `${booster.usesLeft}/3 uses left`;
+  };
 
   const renderOverlay = () => {
     if (!activeOverlay) return null;
@@ -241,7 +260,7 @@ const renderTimer = (boosterType) => {
                         description:
                           booster.type === "tapperBoost"
                             ? "Multiply your tap income by X2 for 20 seconds."
-                            : "Instantly refill energy to max for 20 seconds.",
+                            : "Instantly refill energy to maximum.",
                         value: "Free",
                         ctaText: "Claim",
                         icon: booster.icon,
