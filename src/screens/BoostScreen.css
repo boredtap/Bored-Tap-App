@@ -322,8 +322,8 @@
   }
 
   .booster-frame {
-    width: 45%; /* Slightly smaller width for mobile */
-    min-width: 130px; /* Adjusted minimum width */
+    width: 50%; /* Slightly smaller width for mobile */
+    min-width: 150px; /* Adjusted minimum width */
     padding: 12px; /* Match existing mobile adjustment */
   }
 
