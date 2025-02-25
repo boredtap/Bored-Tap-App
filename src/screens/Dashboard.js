@@ -7,7 +7,7 @@ import "./Dashboard.css";
 const BASE_MAX_ELECTRIC_BOOST = 1000;
 const RECHARGE_TIMES = { 0: 3000, 1: 2500, 2: 2000, 3: 1500, 4: 1000, 5: 500 }; // Recharge times in seconds
 const AUTOBOT_TAP_INTERVAL = 1000; // 1 tap per second
-const TAP_DEBOUNCE_DELAY = 150; // Debounce delay in ms to prevent double taps
+const TAP_DEBOUNCE_DELAY = 200; // Increased debounce delay to prevent double taps
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -41,13 +41,15 @@ const Dashboard = () => {
           fullEnergy: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
         };
   });
+  const [isLoading, setIsLoading] = useState(true); // Added loading state
 
   // Refs for tracking tap counts, intervals, and audio
   const tapCountSinceLastUpdate = useRef(0);
   const autobotInterval = useRef(null);
   const rechargeInterval = useRef(null);
-  const tapTimeout = useRef(null); // For debouncing taps
-  const tapSoundRef = useRef(new Audio(`${process.env.PUBLIC_URL}/tap.mp3`)); // Reusable audio instance
+  const tapTimeout = useRef(null);
+  const tapSoundRef = useRef(new Audio(`${process.env.PUBLIC_URL}/tap.mp3`));
+  const isTapProcessed = useRef(false); // Flag to prevent double processing
 
   // Effect to initialize Telegram data on component mount
   useEffect(() => {
@@ -70,50 +72,54 @@ const Dashboard = () => {
     initTelegram();
   }, []);
 
-  // Effect to fetch profile and initialize boosters, handling local storage reset if needed
+  // Memoized fetch profile function to reduce redundant calls
+  const fetchProfile = useCallback(async () => {
+    setIsLoading(true);
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      navigate("/splash");
+      return;
+    }
+    try {
+      const response = await fetch("https://bt-coins.onrender.com/user/profile", {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      });
+      if (!response.ok) throw new Error("Failed to fetch profile");
+      const data = await response.json();
+      setProfile(data);
+      setTotalTaps(data.total_coins || 0);
+      setCurrentStreak(data.streak?.current_streak || 0);
+
+      if (data.total_coins === 0) {
+        const resetLocalStorage = () => {
+          localStorage.removeItem("dailyBoosters");
+          localStorage.removeItem("extraBoosters");
+          localStorage.removeItem("electricBoost");
+          localStorage.removeItem("lastActiveTime");
+          localStorage.removeItem("rechargingSpeedLevel");
+          localStorage.removeItem("lastBoostUpdateTime");
+          setDailyBoosters({
+            tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
+            fullEnergy: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
+          });
+          setElectricBoost(BASE_MAX_ELECTRIC_BOOST);
+          setMaxElectricBoost(BASE_MAX_ELECTRIC_BOOST);
+          setTapBoostLevel(0);
+          setHasAutobot(false);
+          setTotalTaps(0);
+        };
+        resetLocalStorage();
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [navigate]);
+
+  // Effect to fetch profile and handle boosters on mount
   useEffect(() => {
-    const fetchProfile = async () => {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        navigate("/splash");
-        return;
-      }
-      try {
-        const response = await fetch("https://bt-coins.onrender.com/user/profile", {
-          method: "GET",
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        });
-        if (!response.ok) throw new Error("Failed to fetch profile");
-        const data = await response.json();
-        setProfile(data);
-        setTotalTaps(data.total_coins);
-        setCurrentStreak(data.streak?.current_streak || 0);
-
-        if (data.total_coins === 0) {
-          const resetLocalStorage = () => {
-            localStorage.removeItem("dailyBoosters");
-            localStorage.removeItem("extraBoosters");
-            localStorage.removeItem("electricBoost");
-            localStorage.removeItem("lastActiveTime");
-            localStorage.removeItem("rechargingSpeedLevel");
-            localStorage.removeItem("lastBoostUpdateTime");
-            setDailyBoosters({
-              tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
-              fullEnergy: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
-            });
-            setElectricBoost(BASE_MAX_ELECTRIC_BOOST);
-            setMaxElectricBoost(BASE_MAX_ELECTRIC_BOOST);
-            setTapBoostLevel(0);
-            setHasAutobot(false);
-            setTotalTaps(0);
-          };
-          resetLocalStorage();
-        }
-      } catch (err) {
-        setError(err.message);
-      }
-    };
-
     fetchProfile();
     window.addEventListener("boosterUpgraded", () => {
       const savedBoosters = localStorage.getItem("extraBoosters");
@@ -133,9 +139,9 @@ const Dashboard = () => {
     localStorage.setItem("lastBoostUpdateTime", Date.now());
 
     return () => window.removeEventListener("boosterUpgraded", fetchProfile);
-  }, [navigate, maxElectricBoost]);
+  }, [fetchProfile, maxElectricBoost]);
 
-  // Function to apply effects of extra boosters based on their levels
+  // Function to apply effects of extra boosters
   const applyExtraBoosterEffects = (boosters) => {
     let newMaxElectricBoost = BASE_MAX_ELECTRIC_BOOST;
     let newTapBoostLevel = 0;
@@ -161,9 +167,9 @@ const Dashboard = () => {
     setElectricBoost((prev) => Math.min(prev, newMaxElectricBoost));
   };
 
-  // Effect to simulate offline autobot gains on component mount
+  // Effect to simulate offline autobot gains only after initial load
   useEffect(() => {
-    if (hasAutobot) {
+    if (hasAutobot && !isLoading) {
       const lastActive = localStorage.getItem("lastActiveTime");
       if (lastActive) {
         const timePassed = (Date.now() - parseInt(lastActive)) / 1000;
@@ -174,11 +180,11 @@ const Dashboard = () => {
       }
     }
     localStorage.setItem("lastActiveTime", Date.now());
-  }, [hasAutobot, tapBoostLevel]);
+  }, [hasAutobot, tapBoostLevel, isLoading]);
 
-  // Effect for autobot tapping, running continuously if owned
+  // Effect for autobot tapping, running only after load
   useEffect(() => {
-    if (hasAutobot) {
+    if (hasAutobot && !isLoading) {
       autobotInterval.current = setInterval(() => {
         const multiplier = (dailyBoosters.tapperBoost.isActive ? 2 : 1) + tapBoostLevel;
         setTotalTaps((prev) => prev + multiplier);
@@ -186,13 +192,13 @@ const Dashboard = () => {
       }, AUTOBOT_TAP_INTERVAL);
     }
     return () => clearInterval(autobotInterval.current);
-  }, [hasAutobot, dailyBoosters, tapBoostLevel]);
+  }, [hasAutobot, dailyBoosters, tapBoostLevel, isLoading]);
 
-  // Effect for energy recharge based on recharging speed level
+  // Effect for energy recharge
   useEffect(() => {
     const level = parseInt(localStorage.getItem("rechargingSpeedLevel") || "0");
     const rechargeTime = RECHARGE_TIMES[level];
-    const rechargeRate = maxElectricBoost / (rechargeTime * 1000); // per ms
+    const rechargeRate = maxElectricBoost / (rechargeTime * 1000);
 
     rechargeInterval.current = setInterval(() => {
       setElectricBoost((prev) => {
@@ -208,7 +214,7 @@ const Dashboard = () => {
     return () => clearInterval(rechargeInterval.current);
   }, [maxElectricBoost, dailyBoosters]);
 
-  // Async function to update backend with current tap count, wrapped in useCallback
+  // Async function to update backend with current tap count
   const updateBackend = useCallback(async () => {
     if (tapCountSinceLastUpdate.current === 0) return;
     try {
@@ -222,8 +228,9 @@ const Dashboard = () => {
       );
       if (response.ok) {
         const data = await response.json();
-        if (data.total_coins >= totalTaps) {
-          setTotalTaps(data.total_coins);
+        console.log("Backend response:", data);
+        if (data.total_coins >= 0) {
+          setTotalTaps(data.total_coins); // Ensure we trust backend total
         }
         tapCountSinceLastUpdate.current = 0;
       } else {
@@ -232,7 +239,7 @@ const Dashboard = () => {
     } catch (err) {
       console.error("Error syncing with backend:", err);
     }
-  }, [totalTaps]);
+  }, []);
 
   // Effect for immediate sync on component unmount
   useEffect(() => {
@@ -265,24 +272,19 @@ const Dashboard = () => {
     return () => clearInterval(intervalId);
   }, [dailyBoosters]);
 
-  // Tap handling function with corrected debounce logic
+  // Tap handling function with robust debounce and event prevention
   const handleTap = useCallback((event) => {
-    if (electricBoost === 0) return; // Prevent tap if no energy
+    event.preventDefault(); // Prevent default to avoid duplicate events
+    if (electricBoost === 0 || isTapProcessed.current) return;
 
-    // Clear any existing timeout to ensure new tap registers
-    if (tapTimeout.current) {
-      clearTimeout(tapTimeout.current);
-    }
-
-    const fingersCount = event.touches ? event.touches.length : 1; // Ensure single tap for mouse
+    isTapProcessed.current = true; // Mark tap as processed
+    const fingersCount = event.touches ? event.touches.length : 1;
     const tapperBoostActive = dailyBoosters.tapperBoost.isActive;
     const fullEnergyActive = dailyBoosters.fullEnergy.isActive;
     const multiplier = (tapperBoostActive ? 2 : 1) + tapBoostLevel;
     const coinsAdded = fingersCount * multiplier;
 
-    // Log to debug tap count
-    console.log("Coins added:", coinsAdded, "Fingers:", fingersCount);
-
+    console.log("Coins added:", coinsAdded);
     setTotalTaps((prev) => {
       const newTotal = prev + coinsAdded;
       console.log("New totalTaps:", newTotal);
@@ -316,20 +318,19 @@ const Dashboard = () => {
     setTapEffects((prevEffects) => [...prevEffects, newTapEffect]);
     setTimeout(() => setTapEffects((prev) => prev.filter((e) => e.id !== newTapEffect.id)), 1000);
 
-    // Play sound and debounce tap
     if (!tapSoundRef.current.paused) tapSoundRef.current.pause();
     tapSoundRef.current.currentTime = 0;
     tapSoundRef.current.volume = 0.2;
     tapSoundRef.current.play().catch((err) => console.error("Audio playback error:", err));
 
-    // Set debounce timeout to prevent rapid taps
     tapTimeout.current = setTimeout(() => {
-      tapTimeout.current = null;
+      isTapProcessed.current = false; // Allow next tap after debounce
     }, TAP_DEBOUNCE_DELAY);
   }, [electricBoost, dailyBoosters, tapBoostLevel, maxElectricBoost]);
 
   // Function to handle tap end and trigger immediate backend update
-  const handleTapEnd = () => {
+  const handleTapEnd = (event) => {
+    event.preventDefault(); // Prevent default to avoid duplicate triggers
     if (tapCountSinceLastUpdate.current > 0) {
       console.log("Syncing on tap end:", tapCountSinceLastUpdate.current);
       updateBackend();
@@ -337,6 +338,7 @@ const Dashboard = () => {
   };
 
   if (error) return <div className="error">{error}</div>;
+  if (isLoading) return <div className="loading">Loading...</div>;
 
   const { level = 1, level_name = "Beginner" } = profile || {};
 
