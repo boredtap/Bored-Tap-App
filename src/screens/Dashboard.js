@@ -265,18 +265,32 @@ const Dashboard = () => {
     return () => clearInterval(intervalId);
   }, [dailyBoosters]);
 
-  // Debounced tap handling function to prevent double taps and sound overlap
+  // Tap handling function with corrected debounce logic
   const handleTap = useCallback((event) => {
-    if (electricBoost === 0 || tapTimeout.current) return; // Prevent tap if energy is 0 or debouncing
+    if (electricBoost === 0) return; // Prevent tap if no energy
 
-    const fingersCount = event.touches?.length || 1;
+    // Clear any existing timeout to ensure new tap registers
+    if (tapTimeout.current) {
+      clearTimeout(tapTimeout.current);
+    }
+
+    const fingersCount = event.touches ? event.touches.length : 1; // Ensure single tap for mouse
     const tapperBoostActive = dailyBoosters.tapperBoost.isActive;
     const fullEnergyActive = dailyBoosters.fullEnergy.isActive;
     const multiplier = (tapperBoostActive ? 2 : 1) + tapBoostLevel;
     const coinsAdded = fingersCount * multiplier;
 
-    setTotalTaps((prev) => prev + coinsAdded);
+    // Log to debug tap count
+    console.log("Coins added:", coinsAdded, "Fingers:", fingersCount);
+
+    setTotalTaps((prev) => {
+      const newTotal = prev + coinsAdded;
+      console.log("New totalTaps:", newTotal);
+      return newTotal;
+    });
     tapCountSinceLastUpdate.current += coinsAdded;
+    console.log("tapCountSinceLastUpdate:", tapCountSinceLastUpdate.current);
+
     if (fullEnergyActive) {
       setElectricBoost(maxElectricBoost);
       localStorage.setItem("electricBoost", maxElectricBoost);
@@ -296,26 +310,28 @@ const Dashboard = () => {
       setBoostAnimation(false);
     }, 500);
 
-    const tapX = event.touches?.[0]?.clientX || event.clientX || 0;
-    const tapY = event.touches?.[0]?.clientY || event.clientY || 0;
+    const tapX = (event.touches ? event.touches[0].clientX : event.clientX) || 0;
+    const tapY = (event.touches ? event.touches[0].clientY : event.clientY) || 0;
     const newTapEffect = { id: Date.now(), x: tapX, y: tapY, count: coinsAdded };
     setTapEffects((prevEffects) => [...prevEffects, newTapEffect]);
     setTimeout(() => setTapEffects((prev) => prev.filter((e) => e.id !== newTapEffect.id)), 1000);
 
     // Play sound and debounce tap
-    if (!tapSoundRef.current.paused) tapSoundRef.current.pause(); // Stop any ongoing sound
-    tapSoundRef.current.currentTime = 0; // Reset to start
+    if (!tapSoundRef.current.paused) tapSoundRef.current.pause();
+    tapSoundRef.current.currentTime = 0;
     tapSoundRef.current.volume = 0.2;
     tapSoundRef.current.play().catch((err) => console.error("Audio playback error:", err));
 
+    // Set debounce timeout to prevent rapid taps
     tapTimeout.current = setTimeout(() => {
-      tapTimeout.current = null; // Clear debounce after delay
+      tapTimeout.current = null;
     }, TAP_DEBOUNCE_DELAY);
   }, [electricBoost, dailyBoosters, tapBoostLevel, maxElectricBoost]);
 
   // Function to handle tap end and trigger immediate backend update
   const handleTapEnd = () => {
     if (tapCountSinceLastUpdate.current > 0) {
+      console.log("Syncing on tap end:", tapCountSinceLastUpdate.current);
       updateBackend();
     }
   };
@@ -367,8 +383,8 @@ const Dashboard = () => {
           className={`big-tap-icon ${tapAnimation ? "tap-animation" : ""}`}
           onTouchStart={handleTap}
           onTouchEnd={handleTapEnd}
-          onMouseDown={handleTap} // Fallback for non-touch devices
-          onMouseUp={handleTapEnd} // Fallback for non-touch devices
+          onMouseDown={handleTap}
+          onMouseUp={handleTapEnd}
         >
           <img className="tap-logo-big" src={`${process.env.PUBLIC_URL}/logo.png`} alt="Big Tap Icon" />
         </div>
