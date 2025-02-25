@@ -92,6 +92,7 @@ const BoostScreen = () => {
       });
       if (!response.ok) throw new Error("Upgrade failed");
       await fetchProfileAndBoosters();
+      window.dispatchEvent(new Event("boosterUpgraded")); // Notify Dashboard
       handleOverlayClose();
     } catch (err) {
       setError(err.message);
