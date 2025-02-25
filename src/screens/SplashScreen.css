@@ -29,35 +29,23 @@
 
 .loader-bar {
   width: 100%;
-  max-width: 300px;
-  height: 14px;
-  background-color: white;
-  border-radius: 7px;
-  overflow: hidden;
+  height: 4px;
+  background: #ccc;
   position: relative;
+  overflow: hidden;
 }
-
-.loader-bar::before {
+.loader-bar::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
   width: 50%;
   height: 100%;
-  background-color: #F9B54C;
-  animation: loading 1.5s infinite ease-in-out;
+  background: #4caf50;
+  animation: loading 2s infinite ease-in-out;
 }
-
 @keyframes loading {
-  0% {
-    transform: translateX(-100%);
-  }
-  50% {
-    transform: translateX(100%);
-  }
-  100% {
-    transform: translateX(-100%);
-  }
+  0% { left: -50%; }
+  50% { left: 100%; }
+  100% { left: -50%; }
 }
 
 .error-container {

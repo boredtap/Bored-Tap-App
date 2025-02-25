@@ -5,7 +5,7 @@ import "./SplashScreen.css";
 const SplashScreen = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(null); 
 
   useEffect(() => {
     const initializeAuth = async () => {
