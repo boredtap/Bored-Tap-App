@@ -334,6 +334,24 @@ const Dashboard = () => {
     event.preventDefault(); // Prevent default to avoid duplicate triggers
   };
 
+  // Function to handle Full Energy booster
+  const handleFullEnergy = () => {
+    const booster = dailyBoosters.fullEnergy;
+    if (booster.usesLeft > 0) {
+      setElectricBoost(maxElectricBoost);
+      localStorage.setItem("electricBoost", maxElectricBoost);
+      setDailyBoosters((prev) => ({
+        ...prev,
+        fullEnergy: {
+          usesLeft: booster.usesLeft - 1,
+          isActive: false,
+          endTime: null,
+          resetTime: booster.usesLeft === 1 ? Date.now() + 24 * 60 * 60 * 1000 : booster.resetTime,
+        },
+      }));
+    }
+  };
+
   if (error) return <div className="error">{error}</div>;
 
   const { level = 1, level_name = "Beginner" } = profile || {};
@@ -398,9 +416,9 @@ const Dashboard = () => {
           <img src={`${process.env.PUBLIC_URL}/electric-icon.png`} alt="Electric Icon" className="electric-icon" />
           <span>{Math.floor(electricBoost)}/{maxElectricBoost}</span>
         </div>
-        <button className="boost-btn" onClick={() => navigate("/boost-screen")}>
+        <button className="boost-btn" onClick={handleFullEnergy}>
           <img src={`${process.env.PUBLIC_URL}/boostx2.png`} alt="Boost Icon" className="boost-icon" />
-          Boost
+          Full Energy
         </button>
       </div>
 

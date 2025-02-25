@@ -37,6 +37,7 @@
     cursor: pointer;
     color: #fff;
     position: relative;
+    gap: 8px;
   }
   
   .pagination-tab.active::after {

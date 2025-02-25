@@ -133,7 +133,8 @@ const BoostScreen = () => {
     return () => clearInterval(intervalId);
   }, []);
 
-  // Inside the `renderTimer` function, update the timer display logic:
+
+// Inside the `renderTimer` function, update the timer display logic:
 const renderTimer = (boosterType) => {
   const booster = dailyBoosters[boosterType];
   if (booster.isActive) {
