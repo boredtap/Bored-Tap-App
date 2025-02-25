@@ -33,7 +33,9 @@
   background: #ccc;
   position: relative;
   overflow: hidden;
+  border-radius: 25px;
 }
+
 .loader-bar::after {
   content: '';
   position: absolute;
