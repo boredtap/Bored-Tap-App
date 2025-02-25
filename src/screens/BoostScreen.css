@@ -61,8 +61,10 @@
 
 .daily-boosters-container {
   display: flex;
-  flex-direction: column;
-  gap: 24px;
+  flex-direction: row; /* Changed from column to row for horizontal layout */
+  gap: 16px; /* Reduced from 24px for tighter spacing */
+  overflow-x: auto; /* Allows horizontal scrolling if cards overflow */
+  width: 100%; /* Ensures container takes full width */
 }
 
 .booster-frame {
@@ -72,7 +74,10 @@
   display: flex;
   align-items: center;
   cursor: pointer;
+  width: 48%; /* Each card takes ~48% of container width to fit two side by side */
+  min-width: 150px; /* Minimum width to prevent squashing on small screens */
 }
+
 
 .booster-icon {
   width: 32px;
@@ -310,6 +315,16 @@
   .daily-boosters-title,
   .extra-boosters-title {
     font-size: 14px;
+  }
+
+  .daily-boosters-container {
+    gap: 12px; /* Slightly smaller gap for mobile */
+  }
+
+  .booster-frame {
+    width: 45%; /* Slightly smaller width for mobile */
+    min-width: 130px; /* Adjusted minimum width */
+    padding: 12px; /* Match existing mobile adjustment */
   }
 
   .booster-frame,
