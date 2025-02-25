@@ -21,7 +21,10 @@ const Dashboard = () => {
   const [profile, setProfile] = useState(null);
   const [error, setError] = useState(null);
   const [totalTaps, setTotalTaps] = useState(0);
-  const [electricBoost, setElectricBoost] = useState(BASE_MAX_ELECTRIC_BOOST);
+  const [electricBoost, setElectricBoost] = useState(() => {
+    const savedBoost = localStorage.getItem("electricBoost");
+    return savedBoost ? parseFloat(savedBoost) : BASE_MAX_ELECTRIC_BOOST;
+  });
   const [maxElectricBoost, setMaxElectricBoost] = useState(BASE_MAX_ELECTRIC_BOOST);
   const [tapBoostLevel, setTapBoostLevel] = useState(0);
   const [hasAutobot, setHasAutobot] = useState(false);
@@ -84,7 +87,6 @@ const Dashboard = () => {
         setTotalTaps(data.total_coins);
         setCurrentStreak(data.streak?.current_streak || 0);
 
-        // Reset local storage if the user is new
         if (data.total_coins === 0) {
           resetLocalStorage();
         }
@@ -98,7 +100,8 @@ const Dashboard = () => {
       localStorage.removeItem("extraBoosters");
       localStorage.removeItem("electricBoost");
       localStorage.removeItem("lastActiveTime");
-      localStorage.removeItem("rechargingSpeedLevel"); // Reset recharging speed if stored
+      localStorage.removeItem("rechargingSpeedLevel");
+      localStorage.removeItem("lastBoostUpdateTime");
       setDailyBoosters({
         tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
         fullEnergy: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
@@ -115,8 +118,22 @@ const Dashboard = () => {
       const savedBoosters = localStorage.getItem("extraBoosters");
       if (savedBoosters) applyExtraBoosterEffects(JSON.parse(savedBoosters));
     });
+
+    // Restore electric boost and simulate recharge on mount
+    const lastUpdateTime = localStorage.getItem("lastBoostUpdateTime");
+    const currentBoost = parseFloat(localStorage.getItem("electricBoost")) || BASE_MAX_ELECTRIC_BOOST;
+    if (lastUpdateTime && currentBoost < maxElectricBoost) {
+      const timeElapsed = (Date.now() - parseInt(lastUpdateTime)) / 1000; // in seconds
+      const level = parseInt(localStorage.getItem("rechargingSpeedLevel") || "0");
+      const rechargeTime = RECHARGE_TIMES[level];
+      const rechargeRate = maxElectricBoost / rechargeTime; // boost per second
+      const rechargeAmount = timeElapsed * rechargeRate;
+      setElectricBoost(Math.min(currentBoost + rechargeAmount, maxElectricBoost));
+    }
+    localStorage.setItem("lastBoostUpdateTime", Date.now());
+
     return () => window.removeEventListener("boosterUpgraded", fetchProfile);
-  }, [navigate]);
+  }, [navigate, maxElectricBoost]);
 
   // Apply extra booster effects
   const applyExtraBoosterEffects = (boosters) => {
@@ -180,7 +197,10 @@ const Dashboard = () => {
     rechargeInterval.current = setInterval(() => {
       setElectricBoost((prev) => {
         if (prev < maxElectricBoost && !dailyBoosters.fullEnergy.isActive) {
-          return Math.min(prev + rechargeRate * 1000, maxElectricBoost);
+          const newBoost = Math.min(prev + rechargeRate * 1000, maxElectricBoost);
+          localStorage.setItem("electricBoost", newBoost);
+          localStorage.setItem("lastBoostUpdateTime", Date.now());
+          return newBoost;
         }
         return prev;
       });
@@ -256,9 +276,15 @@ const Dashboard = () => {
     tapCountSinceLastUpdate.current += coinsAdded;
     if (fullEnergyActive) {
       setElectricBoost(maxElectricBoost);
+      localStorage.setItem("electricBoost", maxElectricBoost);
     } else {
-      setElectricBoost((prev) => Math.max(prev - fingersCount, 0));
+      setElectricBoost((prev) => {
+        const newBoost = Math.max(prev - fingersCount, 0);
+        localStorage.setItem("electricBoost", newBoost);
+        return newBoost;
+      });
     }
+    localStorage.setItem("lastBoostUpdateTime", Date.now());
 
     setTapAnimation(true);
     setBoostAnimation(true);
