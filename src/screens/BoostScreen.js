@@ -3,7 +3,7 @@ import Navigation from "../components/Navigation";
 import "./BoostScreen.css";
 
 // Configurable constants
-const BOOST_DURATION = 20000; // 20 seconds per booster use
+const BOOST_DURATION = 20000; // 20 seconds for Tapper Boost
 const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours for reset
 
 const BoostScreen = () => {
@@ -12,26 +12,43 @@ const BoostScreen = () => {
   const [boostersData, setBoostersData] = useState({ dailyBoosters: [], extraBoosters: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [syncCode, setSyncCode] = useState("");
+  const [inputSyncCode, setInputSyncCode] = useState("");
+  const [telegramUserId, setTelegramUserId] = useState("");
 
-  // Initialize daily boosters with a simplified structure
   const [dailyBoosters, setDailyBoosters] = useState(() => {
     const savedBoosters = localStorage.getItem("dailyBoosters");
     return savedBoosters
       ? JSON.parse(savedBoosters)
       : {
           tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
-          fullEnergy: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
+          fullEnergy: { usesLeft: 3, resetTime: null },
         };
   });
 
+  // Fetch Telegram user ID on mount
+  useEffect(() => {
+    const initTelegram = async () => {
+      try {
+        if (window.Telegram?.WebApp) {
+          const user = window.Telegram.WebApp.initDataUnsafe.user;
+          if (user) {
+            setTelegramUserId(user.id);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching Telegram user ID:", err);
+      }
+    };
+    initTelegram();
+  }, []);
+
   const handleOverlayClose = () => setActiveOverlay(null);
 
-  // Persist daily boosters to localStorage
   useEffect(() => {
     localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
   }, [dailyBoosters]);
 
-  // Fetch profile and boosters data
   const fetchProfileAndBoosters = useCallback(async () => {
     setLoading(true);
     try {
@@ -82,7 +99,6 @@ const BoostScreen = () => {
     fetchProfileAndBoosters();
   }, [fetchProfileAndBoosters]);
 
-  // Handle upgrade for extra boosters
   const handleUpgradeBoost = async (boosterId) => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -92,7 +108,7 @@ const BoostScreen = () => {
       });
       if (!response.ok) throw new Error("Upgrade failed");
       await fetchProfileAndBoosters();
-      window.dispatchEvent(new Event("boosterUpgraded")); // Notify Dashboard
+      window.dispatchEvent(new Event("boosterUpgraded"));
       handleOverlayClose();
     } catch (err) {
       setError(err.message);
@@ -100,37 +116,48 @@ const BoostScreen = () => {
     }
   };
 
-  // Handle claim for daily boosters
   const handleClaimDailyBooster = (boosterType) => {
     const booster = dailyBoosters[boosterType];
-    if (booster.usesLeft > 0 && !booster.isActive) {
+    if (booster.usesLeft > 0) {
       const now = Date.now();
-      setDailyBoosters((prev) => ({
-        ...prev,
-        [boosterType]: {
-          usesLeft: booster.usesLeft - 1,
-          isActive: true,
-          endTime: now + BOOST_DURATION,
-          resetTime: booster.usesLeft === 1 ? now + DAILY_RESET_INTERVAL : booster.resetTime,
-        },
-      }));
+      setDailyBoosters((prev) => {
+        const updated = { ...prev };
+        if (boosterType === "tapperBoost") {
+          updated.tapperBoost = {
+            usesLeft: booster.usesLeft - 1,
+            isActive: true,
+            endTime: now + BOOST_DURATION,
+            resetTime: booster.usesLeft === 1 ? now + DAILY_RESET_INTERVAL : booster.resetTime,
+          };
+        } else if (boosterType === "fullEnergy") {
+          updated.fullEnergy = {
+            usesLeft: booster.usesLeft - 1,
+            resetTime: booster.usesLeft === 1 ? now + DAILY_RESET_INTERVAL : booster.resetTime,
+          };
+          window.dispatchEvent(new Event("fullEnergyClaimed"));
+        }
+        return updated;
+      });
     }
     handleOverlayClose();
   };
 
-  // Real-time booster timer and reset logic
   useEffect(() => {
     const intervalId = setInterval(() => {
       setDailyBoosters((prev) => {
         const updated = { ...prev };
+        if (updated.tapperBoost.isActive && Date.now() >= updated.tapperBoost.endTime) {
+          updated.tapperBoost.isActive = false;
+        }
         ["tapperBoost", "fullEnergy"].forEach((type) => {
           const booster = updated[type];
-          if (booster.isActive && Date.now() >= booster.endTime) {
-            booster.isActive = false;
-          }
           if (booster.usesLeft === 0 && booster.resetTime && Date.now() >= booster.resetTime) {
             booster.usesLeft = 3;
             booster.resetTime = null;
+            if (type === "tapperBoost") {
+              booster.isActive = false;
+              booster.endTime = null;
+            }
           }
         });
         return updated;
@@ -139,10 +166,9 @@ const BoostScreen = () => {
     return () => clearInterval(intervalId);
   }, []);
 
-  // Render timer for daily boosters
   const renderTimer = (boosterType) => {
     const booster = dailyBoosters[boosterType];
-    if (booster.isActive) {
+    if (boosterType === "tapperBoost" && booster.isActive) {
       const remaining = Math.max(0, (booster.endTime - Date.now()) / 1000);
       return `Active: ${Math.floor(remaining)}s`;
     } else if (booster.usesLeft === 0 && booster.resetTime) {
@@ -150,6 +176,43 @@ const BoostScreen = () => {
       return `Resets in ${Math.floor(resetIn / 3600)}h ${Math.floor((resetIn % 3600) / 60)}m`;
     }
     return `${booster.usesLeft}/3 uses left`;
+  };
+
+  // Generate sync code
+  const generateSyncCode = () => {
+    const data = {
+      electricBoost: localStorage.getItem("electricBoost"),
+      dailyBoosters,
+      extraBoosters: localStorage.getItem("extraBoosters"),
+      lastBoostUpdateTime: localStorage.getItem("lastBoostUpdateTime"),
+      lastActiveTime: localStorage.getItem("lastActiveTime"),
+      rechargingSpeedLevel: localStorage.getItem("rechargingSpeedLevel"),
+      telegramUserId,
+    };
+    const code = btoa(JSON.stringify(data)); // Base64 encode
+    setSyncCode(code);
+  };
+
+  // Apply sync code
+  const applySyncCode = () => {
+    try {
+      const decoded = JSON.parse(atob(inputSyncCode));
+      if (decoded.telegramUserId === telegramUserId) {
+        localStorage.setItem("electricBoost", decoded.electricBoost);
+        localStorage.setItem("dailyBoosters", JSON.stringify(decoded.dailyBoosters));
+        localStorage.setItem("extraBoosters", decoded.extraBoosters);
+        localStorage.setItem("lastBoostUpdateTime", decoded.lastBoostUpdateTime);
+        localStorage.setItem("lastActiveTime", decoded.lastActiveTime);
+        localStorage.setItem("rechargingSpeedLevel", decoded.rechargingSpeedLevel);
+        setDailyBoosters(decoded.dailyBoosters);
+        setInputSyncCode("");
+        fetchProfileAndBoosters(); // Refresh data
+      } else {
+        alert("Sync code is invalid for this user.");
+      }
+    } catch (err) {
+      alert("Invalid sync code.");
+    }
   };
 
   const renderOverlay = () => {
@@ -228,7 +291,7 @@ const BoostScreen = () => {
                     icon: `${process.env.PUBLIC_URL}/electric-icon.png`,
                     usesLeft: dailyBoosters.fullEnergy.usesLeft,
                     timer: renderTimer("fullEnergy"),
-                    isActive: dailyBoosters.fullEnergy.isActive,
+                    isActive: false,
                   },
                 ].map((booster) => (
                   <div
@@ -243,7 +306,7 @@ const BoostScreen = () => {
                         description:
                           booster.type === "tapperBoost"
                             ? "Multiply your tap income by X2 for 20 seconds."
-                            : "Instantly refill energy to max for 20 seconds.",
+                            : "Instantly refill energy to max.",
                         value: "Free",
                         ctaText: "Claim",
                         icon: booster.icon,
@@ -253,7 +316,7 @@ const BoostScreen = () => {
                     <img src={booster.icon} alt={booster.title} className="booster-icon" />
                     <div className="booster-info">
                       <p className="booster-title">{booster.title}</p>
-                      <p className="booster-value">{booster.timer}</p> {/* Removed duplicate usesLeft */}
+                      <p className="booster-value">{booster.timer}</p>
                     </div>
                   </div>
                 ))}
@@ -299,6 +362,25 @@ const BoostScreen = () => {
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Sync Code Section */}
+            <div className="sync-section" style={{ marginTop: "20px", textAlign: "center" }}>
+              <p>Sync Across Devices</p>
+              <button onClick={generateSyncCode} style={{ margin: "10px" }}>
+                Generate Sync Code
+              </button>
+              {syncCode && (
+                <p style={{ wordBreak: "break-all" }}>Your Sync Code: {syncCode}</p>
+              )}
+              <input
+                type="text"
+                value={inputSyncCode}
+                onChange={(e) => setInputSyncCode(e.target.value)}
+                placeholder="Enter Sync Code"
+                style={{ margin: "10px", padding: "5px" }}
+              />
+              <button onClick={applySyncCode}>Apply Sync Code</button>
             </div>
           </>
         )}
