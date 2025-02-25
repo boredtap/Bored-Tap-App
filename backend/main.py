@@ -1,7 +1,7 @@
-from fastapi import FastAPI, Depends, Request
+from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from superuser.dashboard.admin_auth import get_current_admin
-from dependencies import get_user_profile, update_coins_in_db,get_user_by_id
+from dependencies import get_user_profile, update_coins_in_db,get_user_by_id, get_image as get_image_func
 from user_reg_and_prof_mngmnt.router import userApp
 from earn.router import earnApp
 from boosts.router import userExtraBoostApp
@@ -137,12 +137,21 @@ async def get_user_data(telegram_user_id: Annotated[str, Depends(get_current_use
     return user
 
 
-@app.get("/bored-tap/image", tags=["Global Routes"], deprecated=True)
-async def get_image(image_id: str, request: Request):
-    user_agent = request.headers.get("User-Agent")
-    referer = request.headers.get("Referer")
-    origin = request.headers.get("Origin")
+@app.get("/bored-tap/user_app/image", tags=["Global Routes"])
+async def get_image(
+    image_id: str, request: Request, user: Annotated[str, Depends(get_current_user)]):
+    # user_agent = request.headers.get("User-Agent")
+    # referer = request.headers.get("Referer")
+    # origin = request.headers.get("Origin")
 
-    print(user_agent)
-    print(referer)
-    print(origin)
+    # if origin not in origins:
+    #     raise HTTPException(
+    #         status_code=403,
+    #         detail="Access denied, not enough permissions"
+    #     )
+
+    if user:
+        return get_image_func(image_id)
+
+    # invalid image id
+    raise HTTPException(status_code=404, detail="Image not found")
