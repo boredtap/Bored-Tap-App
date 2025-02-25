@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./Dashboard.css";
@@ -7,7 +7,7 @@ import "./Dashboard.css";
 const BASE_MAX_ELECTRIC_BOOST = 1000;
 const RECHARGE_TIMES = { 0: 3000, 1: 2500, 2: 2000, 3: 1500, 4: 1000, 5: 500 }; // Recharge times in seconds
 const AUTOBOT_TAP_INTERVAL = 1000; // 1 tap per second
-const SYNC_INTERVAL = 2000; // Sync coins with backend every 2 seconds
+const TAP_DEBOUNCE_DELAY = 150; // Debounce delay in ms to prevent double taps
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -42,10 +42,12 @@ const Dashboard = () => {
         };
   });
 
-  // Refs for tracking tap counts and intervals
+  // Refs for tracking tap counts, intervals, and audio
   const tapCountSinceLastUpdate = useRef(0);
   const autobotInterval = useRef(null);
   const rechargeInterval = useRef(null);
+  const tapTimeout = useRef(null); // For debouncing taps
+  const tapSoundRef = useRef(new Audio(`${process.env.PUBLIC_URL}/tap.mp3`)); // Reusable audio instance
 
   // Effect to initialize Telegram data on component mount
   useEffect(() => {
@@ -88,7 +90,6 @@ const Dashboard = () => {
         setCurrentStreak(data.streak?.current_streak || 0);
 
         if (data.total_coins === 0) {
-          // Reset local storage for new users
           const resetLocalStorage = () => {
             localStorage.removeItem("dailyBoosters");
             localStorage.removeItem("extraBoosters");
@@ -119,7 +120,6 @@ const Dashboard = () => {
       if (savedBoosters) applyExtraBoosterEffects(JSON.parse(savedBoosters));
     });
 
-    // Restore and simulate energy recharge on mount
     const lastUpdateTime = localStorage.getItem("lastBoostUpdateTime");
     const currentBoost = parseFloat(localStorage.getItem("electricBoost")) || BASE_MAX_ELECTRIC_BOOST;
     if (lastUpdateTime && currentBoost < maxElectricBoost) {
@@ -208,42 +208,44 @@ const Dashboard = () => {
     return () => clearInterval(rechargeInterval.current);
   }, [maxElectricBoost, dailyBoosters]);
 
-  // Effect for syncing coin counts with backend periodically
-  useEffect(() => {
-    const updateBackend = async () => {
-      if (tapCountSinceLastUpdate.current === 0) return;
-      try {
-        const token = localStorage.getItem("accessToken");
-        const response = await fetch(
-          `https://bt-coins.onrender.com/update-coins?coins=${tapCountSinceLastUpdate.current}`,
-          {
-            method: "POST",
-            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          if (data.total_coins >= totalTaps) {
-            setTotalTaps(data.total_coins);
-          }
-          tapCountSinceLastUpdate.current = 0;
-        } else {
-          console.error("Backend sync failed");
+  // Async function to update backend with current tap count, wrapped in useCallback
+  const updateBackend = useCallback(async () => {
+    if (tapCountSinceLastUpdate.current === 0) return;
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch(
+        `https://bt-coins.onrender.com/update-coins?coins=${tapCountSinceLastUpdate.current}`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         }
-      } catch (err) {
-        console.error("Error syncing with backend:", err);
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data.total_coins >= totalTaps) {
+          setTotalTaps(data.total_coins);
+        }
+        tapCountSinceLastUpdate.current = 0;
+      } else {
+        console.error("Backend sync failed");
       }
-    };
-
-    const syncInterval = setInterval(() => {
-      if (tapCountSinceLastUpdate.current > 0) updateBackend();
-    }, SYNC_INTERVAL);
-    return () => clearInterval(syncInterval);
+    } catch (err) {
+      console.error("Error syncing with backend:", err);
+    }
   }, [totalTaps]);
 
-  // Effect for daily booster timers and reset logic, currently using a one-time timeout
+  // Effect for immediate sync on component unmount
   useEffect(() => {
-    const interval = () => {
+    return () => {
+      if (tapCountSinceLastUpdate.current > 0) {
+        updateBackend();
+      }
+    };
+  }, [updateBackend]);
+
+  // Effect for daily booster timers and reset logic
+  useEffect(() => {
+    const intervalId = setInterval(() => {
       setDailyBoosters((prev) => {
         const updated = { ...prev };
         ["tapperBoost", "fullEnergy"].forEach((type) => {
@@ -258,16 +260,15 @@ const Dashboard = () => {
         });
         return updated;
       });
-    };
-
-    const intervalId = setInterval(interval, 1000);
+    }, 1000);
     localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
     return () => clearInterval(intervalId);
   }, [dailyBoosters]);
 
-  // Tap handling function, currently considering fullEnergy active period incorrectly
-  const handleTap = (event) => {
-    if (electricBoost === 0) return;
+  // Debounced tap handling function to prevent double taps and sound overlap
+  const handleTap = useCallback((event) => {
+    if (electricBoost === 0 || tapTimeout.current) return; // Prevent tap if energy is 0 or debouncing
+
     const fingersCount = event.touches?.length || 1;
     const tapperBoostActive = dailyBoosters.tapperBoost.isActive;
     const fullEnergyActive = dailyBoosters.fullEnergy.isActive;
@@ -295,19 +296,28 @@ const Dashboard = () => {
       setBoostAnimation(false);
     }, 500);
 
-    const tapX = event.touches?.[0]?.clientX || event.clientX;
-    const tapY = event.touches?.[0]?.clientY || event.clientY;
+    const tapX = event.touches?.[0]?.clientX || event.clientX || 0;
+    const tapY = event.touches?.[0]?.clientY || event.clientY || 0;
     const newTapEffect = { id: Date.now(), x: tapX, y: tapY, count: coinsAdded };
     setTapEffects((prevEffects) => [...prevEffects, newTapEffect]);
     setTimeout(() => setTapEffects((prev) => prev.filter((e) => e.id !== newTapEffect.id)), 1000);
 
-    playTapSound();
-  };
+    // Play sound and debounce tap
+    if (!tapSoundRef.current.paused) tapSoundRef.current.pause(); // Stop any ongoing sound
+    tapSoundRef.current.currentTime = 0; // Reset to start
+    tapSoundRef.current.volume = 0.2;
+    tapSoundRef.current.play().catch((err) => console.error("Audio playback error:", err));
 
-  const playTapSound = () => {
-    const audio = new Audio(`${process.env.PUBLIC_URL}/tap.mp3`);
-    audio.volume = 0.3;
-    audio.play().catch((err) => console.error("Audio playback error:", err));
+    tapTimeout.current = setTimeout(() => {
+      tapTimeout.current = null; // Clear debounce after delay
+    }, TAP_DEBOUNCE_DELAY);
+  }, [electricBoost, dailyBoosters, tapBoostLevel, maxElectricBoost]);
+
+  // Function to handle tap end and trigger immediate backend update
+  const handleTapEnd = () => {
+    if (tapCountSinceLastUpdate.current > 0) {
+      updateBackend();
+    }
   };
 
   if (error) return <div className="error">{error}</div>;
@@ -356,7 +366,9 @@ const Dashboard = () => {
         <div
           className={`big-tap-icon ${tapAnimation ? "tap-animation" : ""}`}
           onTouchStart={handleTap}
-          onClick={handleTap}
+          onTouchEnd={handleTapEnd}
+          onMouseDown={handleTap} // Fallback for non-touch devices
+          onMouseUp={handleTapEnd} // Fallback for non-touch devices
         >
           <img className="tap-logo-big" src={`${process.env.PUBLIC_URL}/logo.png`} alt="Big Tap Icon" />
         </div>
