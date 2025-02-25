@@ -8,6 +8,7 @@ const BASE_MAX_ELECTRIC_BOOST = 1000;
 const RECHARGE_TIMES = { 0: 3000, 1: 2500, 2: 2000, 3: 1500, 4: 1000, 5: 500 }; // Recharge times in seconds
 const AUTOBOT_TAP_INTERVAL = 1000; // 1 tap per second
 const TAP_DEBOUNCE_DELAY = 200; // Increased debounce delay to prevent double taps
+const SYNC_DELAY = 1000; // 1-second delay before syncing taps to backend
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -41,13 +42,13 @@ const Dashboard = () => {
           fullEnergy: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
         };
   });
-  const [isLoading, setIsLoading] = useState(true);
 
   // Refs for tracking tap counts, intervals, and audio
   const tapCountSinceLastUpdate = useRef(0);
   const autobotInterval = useRef(null);
   const rechargeInterval = useRef(null);
   const tapTimeout = useRef(null);
+  const syncTimeout = useRef(null);
   const tapSoundRef = useRef(new Audio(`${process.env.PUBLIC_URL}/tap.mp3`));
   const isTapProcessed = useRef(false);
 
@@ -74,7 +75,6 @@ const Dashboard = () => {
 
   // Memoized fetch profile function to reduce redundant calls
   const fetchProfile = useCallback(async () => {
-    setIsLoading(true);
     const token = localStorage.getItem("accessToken");
     if (!token) {
       navigate("/splash");
@@ -113,8 +113,6 @@ const Dashboard = () => {
       }
     } catch (err) {
       setError(err.message);
-    } finally {
-      setIsLoading(false);
     }
   }, [navigate]);
 
@@ -167,9 +165,9 @@ const Dashboard = () => {
     setElectricBoost((prev) => Math.min(prev, newMaxElectricBoost));
   };
 
-  // Effect to simulate offline autobot gains only after initial load
+  // Effect to simulate offline autobot gains
   useEffect(() => {
-    if (hasAutobot && !isLoading) {
+    if (hasAutobot) {
       const lastActive = localStorage.getItem("lastActiveTime");
       if (lastActive) {
         const timePassed = (Date.now() - parseInt(lastActive)) / 1000;
@@ -180,11 +178,11 @@ const Dashboard = () => {
       }
     }
     localStorage.setItem("lastActiveTime", Date.now());
-  }, [hasAutobot, tapBoostLevel, isLoading]);
+  }, [hasAutobot, tapBoostLevel]);
 
-  // Effect for autobot tapping, running only after load
+  // Effect for autobot tapping
   useEffect(() => {
-    if (hasAutobot && !isLoading) {
+    if (hasAutobot) {
       autobotInterval.current = setInterval(() => {
         const multiplier = (dailyBoosters.tapperBoost.isActive ? 2 : 1) + tapBoostLevel;
         setTotalTaps((prev) => prev + multiplier);
@@ -192,7 +190,7 @@ const Dashboard = () => {
       }, AUTOBOT_TAP_INTERVAL);
     }
     return () => clearInterval(autobotInterval.current);
-  }, [hasAutobot, dailyBoosters, tapBoostLevel, isLoading]);
+  }, [hasAutobot, dailyBoosters, tapBoostLevel]);
 
   // Effect for energy recharge
   useEffect(() => {
@@ -202,7 +200,7 @@ const Dashboard = () => {
 
     rechargeInterval.current = setInterval(() => {
       setElectricBoost((prev) => {
-        if (prev < maxElectricBoost && !dailyBoosters.fullEnergy.isActive) {
+        if (prev < maxElectricBoost) {
           const newBoost = Math.min(prev + rechargeRate * 1000, maxElectricBoost);
           localStorage.setItem("electricBoost", newBoost);
           localStorage.setItem("lastBoostUpdateTime", Date.now());
@@ -212,7 +210,7 @@ const Dashboard = () => {
       });
     }, 1000);
     return () => clearInterval(rechargeInterval.current);
-  }, [maxElectricBoost, dailyBoosters]);
+  }, [maxElectricBoost]);
 
   // Async function to update backend with current tap count
   const updateBackend = useCallback(async () => {
@@ -280,7 +278,6 @@ const Dashboard = () => {
     isTapProcessed.current = true; // Mark tap as processed
     const fingersCount = event.touches ? event.touches.length : 1;
     const tapperBoostActive = dailyBoosters.tapperBoost.isActive;
-    const fullEnergyActive = dailyBoosters.fullEnergy.isActive;
     const multiplier = (tapperBoostActive ? 2 : 1) + tapBoostLevel;
     const coinsAdded = fingersCount * multiplier;
 
@@ -293,16 +290,11 @@ const Dashboard = () => {
     tapCountSinceLastUpdate.current += coinsAdded;
     console.log("tapCountSinceLastUpdate:", tapCountSinceLastUpdate.current);
 
-    if (fullEnergyActive) {
-      setElectricBoost(maxElectricBoost);
-      localStorage.setItem("electricBoost", maxElectricBoost);
-    } else {
-      setElectricBoost((prev) => {
-        const newBoost = Math.max(prev - fingersCount, 0);
-        localStorage.setItem("electricBoost", newBoost);
-        return newBoost;
-      });
-    }
+    setElectricBoost((prev) => {
+      const newBoost = Math.max(prev - fingersCount, 0);
+      localStorage.setItem("electricBoost", newBoost);
+      return newBoost;
+    });
     localStorage.setItem("lastBoostUpdateTime", Date.now());
 
     setTapAnimation(true);
@@ -326,19 +318,23 @@ const Dashboard = () => {
     tapTimeout.current = setTimeout(() => {
       isTapProcessed.current = false; // Allow next tap after debounce
     }, TAP_DEBOUNCE_DELAY);
-  }, [electricBoost, dailyBoosters, tapBoostLevel, maxElectricBoost]);
 
-  // Function to handle tap end and trigger immediate backend update
+    // Clear any existing sync timeout and set a new one
+    if (syncTimeout.current) clearTimeout(syncTimeout.current);
+    syncTimeout.current = setTimeout(() => {
+      if (tapCountSinceLastUpdate.current > 0) {
+        console.log("Syncing after 1 second:", tapCountSinceLastUpdate.current);
+        updateBackend();
+      }
+    }, SYNC_DELAY);
+  }, [electricBoost, dailyBoosters, tapBoostLevel, updateBackend]);
+
+  // Function to handle tap end
   const handleTapEnd = (event) => {
     event.preventDefault(); // Prevent default to avoid duplicate triggers
-    if (tapCountSinceLastUpdate.current > 0) {
-      console.log("Syncing on tap end:", tapCountSinceLastUpdate.current);
-      updateBackend();
-    }
   };
 
   if (error) return <div className="error">{error}</div>;
-  if (isLoading) return <div className="loading">Loading...</div>;
 
   const { level = 1, level_name = "Beginner" } = profile || {};
 

@@ -133,17 +133,21 @@ const BoostScreen = () => {
     return () => clearInterval(intervalId);
   }, []);
 
-  const renderTimer = (boosterType) => {
-    const booster = dailyBoosters[boosterType];
-    if (booster.isActive) {
-      const remaining = Math.max(0, (booster.endTime - Date.now()) / 1000);
-      return `Active: ${Math.floor(remaining)}s`;
-    } else if (booster.usesLeft === 0 && booster.resetTime) {
-      const resetIn = Math.max(0, (booster.resetTime - Date.now()) / 1000);
-      return `Resets in ${Math.floor(resetIn / 3600)}h ${Math.floor((resetIn % 3600) / 60)}m`;
-    }
-    return `${booster.usesLeft}/3 uses left`;
-  };
+  // Inside the `renderTimer` function, update the timer display logic:
+const renderTimer = (boosterType) => {
+  const booster = dailyBoosters[boosterType];
+  if (booster.isActive) {
+    const remaining = Math.max(0, (booster.endTime - Date.now()) / 1000);
+    return `Active: ${Math.floor(remaining)}s`;
+  } else if (booster.usesLeft === 0 && booster.resetTime) {
+    const resetIn = Math.max(0, (booster.resetTime - Date.now()) / 1000);
+    const hours = Math.floor(resetIn / 3600);
+    const minutes = Math.floor((resetIn % 3600) / 60);
+    const seconds = Math.floor(resetIn % 60);
+    return `Resets in ${hours}h ${minutes}m ${seconds}s`;
+  }
+  return `${booster.usesLeft}/3 uses left`;
+};
 
   const renderOverlay = () => {
     if (!activeOverlay) return null;
