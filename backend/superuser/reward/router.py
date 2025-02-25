@@ -1,12 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from io import BytesIO
-from PIL import Image
-from bson import ObjectId
 from fastapi import HTTPException
 from fastapi import APIRouter, Depends
 from superuser.dashboard.admin_auth import get_current_admin
 from superuser.reward.dependencies import (
     create_reward as create_reward_func,
+    set_datetime_to_utc,
     verify_beneficiaries,
     update_reward as update_reward_func,
     delete_reward as delete_reward_func,
@@ -58,6 +57,9 @@ async def create_reward(
 
     verify_beneficiaries(new_reward, clan, level, specific_users)
 
+    # set datetime timezone to UTC
+    new_reward.expiry_date = set_datetime_to_utc(new_reward.expiry_date)
+
     created_reward = create_reward_func(new_reward, image_bytes, image_filename)
 
     return created_reward
@@ -82,13 +84,17 @@ async def update_reward(
     # check incoming upload image type whether it is image or bytes
     try:
         img_name = reward_update.reward_image.filename
-        image_content = await reward_update.reward_image.read()
-        img_bytes = verify_image(image_content)
+        image_format = img_name.split(".")[1]
+        img_bytes = await reward_update.reward_image.read()
+        verify_image(image_format)
     except Exception as e:
         raise HTTPException(status_code=400, detail="Invalid image file. Please upload a valid image file.")
 
     verify_beneficiaries(reward_update, clan, level, specific_users)
     
+    # set datetime timezone to UTC
+    reward_update.expiry_date = set_datetime_to_utc(reward_update.expiry_date)
+
     updated_reward = update_reward_func(reward_update, img_bytes, img_name, reward_id)
 
     return updated_reward

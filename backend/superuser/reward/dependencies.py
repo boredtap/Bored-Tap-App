@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from io import BytesIO
+import stat
 from bson import ObjectId
 from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
@@ -45,6 +46,16 @@ def verify_beneficiaries(
 
         new_reward.beneficiary = users
 
+def set_datetime_to_utc(date_time: datetime):
+    # set datetime timezone to UTC
+    if date_time.tzinfo is None:
+        date_time = date_time.replace(hour=0, minute=0, second=0, tzinfo=timezone.utc)
+    else:
+        date_time = date_time.astimezone(timezone.utc)
+
+    return date_time
+
+
 
 # ------------------------------- CREATE REWARD ------------------------------ #
 def create_reward(reward: CreateReward, reward_image: bytes, image_name: str):
@@ -54,7 +65,7 @@ def create_reward(reward: CreateReward, reward_image: bytes, image_name: str):
         reward_title=reward.reward_title,
         reward=reward.reward,
         beneficiary=reward.beneficiary,
-        launch_date=reward.launch_date,
+        expiry_date=reward.expiry_date,
         status=Status.ONGOING,
         claim_rate=0,
         reward_image_id=str(image_id)
@@ -103,7 +114,7 @@ def update_reward(reward: UpdateReward, reward_image: bytes, img_name: str, rewa
                 "reward_title": reward.reward_title,
                 "reward": reward.reward,
                 "beneficiary": reward.beneficiary,
-                "launch_date": reward.launch_date,
+                "expiry_date": reward.expiry_date,
                 "reward_image_id": new_img_id,
             }
     }
@@ -122,7 +133,7 @@ def update_reward(reward: UpdateReward, reward_image: bytes, img_name: str, rewa
         reward_title=reward.reward_title,
         reward=reward.reward,
         beneficiary=reward.beneficiary,
-        launch_date=reward.launch_date,
+        expiry_date=reward.expiry_date,
         status=reward_data["status"],
         claim_rate=reward_data["claim_rate"],
         reward_image_id=str(new_img_id)
@@ -134,7 +145,7 @@ def delete_reward(reward_id: str):
     reward = rewards_collection.find_one({"_id": ObjectId(reward_id)})
 
     if not reward:
-        raise Exception("Reward not found.")
+        raise HTTPException(status_code=404, detail="Reward not found.")
     
     # delete reward image
     image_id = reward["reward_image_id"]
@@ -149,6 +160,26 @@ def delete_reward(reward_id: str):
     return True
 
 
+# ------------------------------- CALCULATE REWARD REMAINING TIME ------------------------------ #
+def reward_remaining_time(reward: dict):
+    """
+    Calculates the remaining time until the reward expires.
+
+    Args:
+        reward (dict): A dictionary containing the reward details, including the 'expiry_date'.
+
+    Returns:
+        timedelta: The remaining time until the reward's expiry date, calculated in days.
+    """
+    expiry_date: datetime = reward["expiry_date"]
+    exp = set_datetime_to_utc(expiry_date)
+    now = datetime.now(timezone.utc)
+    today = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+    
+    remaining_time = exp - today
+
+    return remaining_time
+
 # ------------------------------- GET REWARDS ------------------------------ #
 def get_rewards():
     rewards = rewards_collection.find({})
@@ -162,7 +193,7 @@ def get_rewards():
             reward_title=reward["reward_title"],
             reward=reward["reward"],
             beneficiary=reward["beneficiary"],  
-            launch_date=reward["launch_date"],
+            expiry_date=reward["expiry_date"],
             status=reward["status"],
             claim_rate=reward["claim_rate"],
             claim_count=reward["claim_count"],
@@ -175,19 +206,22 @@ def get_rewards_by_status(status: str):
     rewards = rewards_collection.find({"status": status})
 
     if not rewards:
-        raise Exception("No rewards found.")
+        raise HTTPException(status_code=404, detail="No rewards found.")
     
     for reward in rewards:
-        yield RewardsModelResponse(
-            id=str(reward["_id"]),
-            reward_title=reward["reward_title"],
-            reward=reward["reward"],
-            beneficiary=reward["beneficiary"],
-            launch_date=reward["launch_date"],
-            status=reward["status"],
-            claim_rate=reward["claim_rate"],
-            reward_image_id=reward["reward_image_id"]
-        )
+        remaining_time = reward_remaining_time(reward)
+
+        if remaining_time.days > timedelta(days=0, hours=0).days:
+            yield RewardsModelResponse(
+                id=str(reward["_id"]),
+                reward_title=reward["reward_title"],
+                reward=reward["reward"],
+                beneficiary=reward["beneficiary"],
+                expiry_date=reward["expiry_date"],
+                status=reward["status"],
+                claim_rate=reward["claim_rate"],
+                reward_image_id=str(reward["reward_image_id"])
+            )
 
 
 # ------------------------------- GET REWARDS BY DATE ------------------------------ #
@@ -198,13 +232,16 @@ def get_rewards_by_date(date: datetime):
         raise Exception("No rewards found.")
     
     for reward in rewards:
-        yield RewardsModelResponse(
-            id=str(reward["_id"]),
-            reward_title=reward["reward_title"],
-            reward=reward["reward"],
-            beneficiary=reward["beneficiary"],
-            launch_date=reward["launch_date"],
-            status=reward["status"],
-            claim_rate=reward["claim_rate"],
-            reward_image_id=reward["reward_image_id"]
-        )
+        remaining_time = reward_remaining_time(reward)
+
+        if remaining_time.days > timedelta(days=0, hours=0):
+            yield RewardsModelResponse(
+                id=str(reward["_id"]),
+                reward_title=reward["reward_title"],
+                reward=reward["reward"],
+                beneficiary=reward["beneficiary"],
+                expiry_date=reward["expiry_date"],
+                status=reward["status"],
+                claim_rate=reward["claim_rate"],
+                reward_image_id=reward["reward_image_id"]
+            )
