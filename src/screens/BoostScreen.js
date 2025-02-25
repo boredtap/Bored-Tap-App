@@ -49,7 +49,6 @@ const BoostScreen = () => {
       });
       if (!extraBoostersResponse.ok) throw new Error("Extra boosters fetch failed");
       const extraBoostersData = await extraBoostersResponse.json();
-      console.log("Fetched extra boosters:", extraBoostersData);
 
       const mappedExtraBoosters = extraBoostersData.map((booster) => ({
         id: booster.booster_id,
@@ -88,9 +87,8 @@ const BoostScreen = () => {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       });
       if (!response.ok) throw new Error("Upgrade failed");
-      console.log(`Upgraded booster ${boosterId}`);
       await fetchProfileAndBoosters();
-      window.dispatchEvent(new Event("boosterUpgraded"));
+      window.dispatchEvent(new Event("boosterUpgraded")); // Notify other components
       handleOverlayClose();
     } catch (err) {
       setError(err.message);
@@ -103,17 +101,19 @@ const BoostScreen = () => {
     if (booster.usesLeft > 0 && !booster.isActive) {
       const now = Date.now();
       if (boosterType === "fullEnergy") {
+        // Instantly dispatch event to refill energy
         window.dispatchEvent(new Event("fullEnergyClaimed"));
         setDailyBoosters((prev) => ({
           ...prev,
           [boosterType]: {
             usesLeft: booster.usesLeft - 1,
-            isActive: false,
+            isActive: false, // No timer for Full Energy
             endTime: null,
             resetTime: booster.usesLeft === 1 ? now + DAILY_RESET_INTERVAL : booster.resetTime,
           },
         }));
       } else {
+        // Tapper Boost retains 20-second timer
         setDailyBoosters((prev) => ({
           ...prev,
           [boosterType]: {
@@ -128,6 +128,7 @@ const BoostScreen = () => {
     handleOverlayClose();
   };
 
+  // Timer effect only for Tapper Boost
   useEffect(() => {
     const intervalId = setInterval(() => {
       setDailyBoosters((prev) => {
