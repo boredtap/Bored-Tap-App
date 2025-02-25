@@ -245,7 +245,7 @@ const Dashboard = () => {
     return () => {
       if (autobotInterval.current) clearInterval(autobotInterval.current);
     };
-  }, [hasAutobot, dailyBoosters.tapperBoost.isActive, tapBoostLevel, updateBackend]);
+  }, [hasAutobot, dailyBoosters.tapperBoost.isActive, tapBoostLevel]);
 
   // Effect for energy recharge with dynamic recharging speed
   useEffect(() => {
@@ -267,8 +267,8 @@ const Dashboard = () => {
     return () => clearInterval(rechargeInterval.current);
   }, [maxElectricBoost, rechargingSpeedLevel]);
 
-  // Async function to update backend with current tap count (moved above handleTap)
-  const updateBackend = useCallback(async () => {
+  // Async function to update backend with current tap count (defined as a regular function)
+  async function updateBackend() {
     if (tapCountSinceLastUpdate.current === 0) return;
     const tapsToSync = tapCountSinceLastUpdate.current;
     try {
@@ -290,7 +290,7 @@ const Dashboard = () => {
     } catch (err) {
       console.error("Error syncing with backend:", err);
     }
-  }, []);
+  }
 
   // Tap handling function
   const handleTap = useCallback(
@@ -337,7 +337,7 @@ const Dashboard = () => {
         updateBackend(); // Sync immediately after tap ends
       }, TAP_DEBOUNCE_DELAY);
     },
-    [electricBoost, dailyBoosters, tapBoostLevel, updateBackend]
+    [electricBoost, dailyBoosters, tapBoostLevel] // Removed updateBackend from deps
   );
 
   // Effect for immediate sync on component unmount
@@ -347,7 +347,7 @@ const Dashboard = () => {
         updateBackend();
       }
     };
-  }, [updateBackend]);
+  }, []); // No dependency on updateBackend since it's a regular function
 
   // Effect for daily booster timers
   useEffect(() => {
