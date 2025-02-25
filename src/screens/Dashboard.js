@@ -41,7 +41,7 @@ const Dashboard = () => {
           fullEnergy: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
         };
   });
-  const [isLoading, setIsLoading] = useState(true); // Added loading state
+  const [isLoading, setIsLoading] = useState(true);
 
   // Refs for tracking tap counts, intervals, and audio
   const tapCountSinceLastUpdate = useRef(0);
@@ -49,7 +49,7 @@ const Dashboard = () => {
   const rechargeInterval = useRef(null);
   const tapTimeout = useRef(null);
   const tapSoundRef = useRef(new Audio(`${process.env.PUBLIC_URL}/tap.mp3`));
-  const isTapProcessed = useRef(false); // Flag to prevent double processing
+  const isTapProcessed = useRef(false);
 
   // Effect to initialize Telegram data on component mount
   useEffect(() => {
