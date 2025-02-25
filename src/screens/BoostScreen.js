@@ -253,9 +253,7 @@ const BoostScreen = () => {
                     <img src={booster.icon} alt={booster.title} className="booster-icon" />
                     <div className="booster-info">
                       <p className="booster-title">{booster.title}</p>
-                      <p className="booster-value">
-                        {booster.usesLeft}/3 {booster.timer}
-                      </p>
+                      <p className="booster-value">{booster.timer}</p> {/* Removed duplicate usesLeft */}
                     </div>
                   </div>
                 ))}

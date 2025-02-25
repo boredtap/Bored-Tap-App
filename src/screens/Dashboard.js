@@ -87,9 +87,6 @@ const Dashboard = () => {
         // Reset local storage if the user is new
         if (data.total_coins === 0) {
           resetLocalStorage();
-        } else {
-          const savedBoosters = localStorage.getItem("extraBoosters");
-          if (savedBoosters) applyExtraBoosterEffects(JSON.parse(savedBoosters));
         }
       } catch (err) {
         setError(err.message);
@@ -100,18 +97,24 @@ const Dashboard = () => {
       localStorage.removeItem("dailyBoosters");
       localStorage.removeItem("extraBoosters");
       localStorage.removeItem("electricBoost");
-      localStorage.removeItem("lastActiveTime"); // Ensure Autobot offline gains reset
+      localStorage.removeItem("lastActiveTime");
+      localStorage.removeItem("rechargingSpeedLevel"); // Reset recharging speed if stored
       setDailyBoosters({
         tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
         fullEnergy: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
       });
       setElectricBoost(BASE_MAX_ELECTRIC_BOOST);
       setMaxElectricBoost(BASE_MAX_ELECTRIC_BOOST);
+      setTapBoostLevel(0);
+      setHasAutobot(false);
       setTotalTaps(0);
     };
 
     fetchProfile();
-    window.addEventListener("boosterUpgraded", fetchProfile);
+    window.addEventListener("boosterUpgraded", () => {
+      const savedBoosters = localStorage.getItem("extraBoosters");
+      if (savedBoosters) applyExtraBoosterEffects(JSON.parse(savedBoosters));
+    });
     return () => window.removeEventListener("boosterUpgraded", fetchProfile);
   }, [navigate]);
 
@@ -216,7 +219,7 @@ const Dashboard = () => {
       if (tapCountSinceLastUpdate.current > 0) updateBackend();
     }, SYNC_INTERVAL);
     return () => clearInterval(syncInterval);
-  }, [totalTaps]); // Include totalTaps as a dependency
+  }, [totalTaps]);
 
   // Daily booster timers and reset
   useEffect(() => {
