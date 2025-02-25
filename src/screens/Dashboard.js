@@ -4,20 +4,19 @@ import Navigation from "../components/Navigation";
 import "./Dashboard.css";
 
 // Simple debounce utility
-function debounce(func, wait) {
-  let timeout;
-  return function (...args) {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(this, args), wait);
-  };
-}
+// function debounce(func, wait) {
+//   let timeout;
+//   return function (...args) {
+//     clearTimeout(timeout);
+//     timeout = setTimeout(() => func.apply(this, args), wait);
+//   };
+// }
 
 // Configurable constants for game mechanics
 const BASE_MAX_ELECTRIC_BOOST = 1000;
 const RECHARGE_TIMES = { 0: 3000, 1: 2500, 2: 2000, 3: 1500, 4: 1000, 5: 500 }; // Recharge times in seconds
 const AUTOBOT_TAP_INTERVAL = 1000; // 1 tap per second
 const TAP_DEBOUNCE_DELAY = 200; // Debounce delay to prevent double taps
-const SYNC_DELAY = 1000; // 1-second delay before syncing taps to backend
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -61,7 +60,7 @@ const Dashboard = () => {
       ? JSON.parse(saved)
       : {
           tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
-          fullEnergy: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
+          fullEnergy: { usesLeft: 3, resetTime: null },
         };
   });
 
@@ -70,7 +69,6 @@ const Dashboard = () => {
   const autobotInterval = useRef(null);
   const rechargeInterval = useRef(null);
   const tapTimeout = useRef(null);
-  const syncTimeout = useRef(null);
   const tapSoundRef = useRef(new Audio(`${process.env.PUBLIC_URL}/tap.mp3`));
   const isTapProcessed = useRef(false);
 
@@ -95,8 +93,8 @@ const Dashboard = () => {
     initTelegram();
   }, []);
 
-  // Memoized fetch profile function with debounce outside useCallback
-  const fetchProfileBase = async () => {
+  // Fetch profile function without debounce
+  const fetchProfile = useCallback(async () => {
     const controller = new AbortController();
     const token = localStorage.getItem("accessToken");
     if (!token) {
@@ -128,7 +126,7 @@ const Dashboard = () => {
           localStorage.removeItem("lastBoostUpdateTime");
           setDailyBoosters({
             tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
-            fullEnergy: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
+            fullEnergy: { usesLeft: 3, resetTime: null },
           });
           setElectricBoost(BASE_MAX_ELECTRIC_BOOST);
           setMaxElectricBoost(BASE_MAX_ELECTRIC_BOOST);
@@ -143,10 +141,7 @@ const Dashboard = () => {
       if (err.name !== "AbortError") setError(err.message);
     }
     return () => controller.abort();
-  };
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const fetchProfile = useCallback(debounce(fetchProfileBase, 1000), [navigate]);
+  }, [navigate]);
 
   // Memoized function to apply booster effects
   const applyExtraBoosterEffects = useCallback(
@@ -205,6 +200,7 @@ const Dashboard = () => {
     window.addEventListener("fullEnergyClaimed", () => {
       setElectricBoost(maxElectricBoost);
       localStorage.setItem("electricBoost", maxElectricBoost);
+      localStorage.setItem("lastBoostUpdateTime", Date.now());
     });
 
     const lastUpdateTime = localStorage.getItem("lastBoostUpdateTime");
@@ -252,10 +248,14 @@ const Dashboard = () => {
         const multiplier = (dailyBoosters.tapperBoost.isActive ? 2 : 1) + tapBoostLevel;
         setTotalTaps((prev) => prev + multiplier);
         tapCountSinceLastUpdate.current += multiplier;
+        updateBackend(); // Sync immediately after autobot tap
       }, AUTOBOT_TAP_INTERVAL);
     }
-    return () => clearInterval(autobotInterval.current);
-  }, [hasAutobot, dailyBoosters.tapperBoost.isActive, tapBoostLevel]);
+    return () => {
+      if (autobotInterval.current) clearInterval(autobotInterval.current);
+    };
+  // eslint-disable-next-line no-use-before-define
+  }, [hasAutobot, dailyBoosters.tapperBoost.isActive, tapBoostLevel, updateBackend]);
 
   // Effect for energy recharge with dynamic recharging speed
   useEffect(() => {
@@ -327,6 +327,10 @@ const Dashboard = () => {
           if (booster.usesLeft === 0 && booster.resetTime && Date.now() >= booster.resetTime) {
             booster.usesLeft = 3;
             booster.resetTime = null;
+            if (type === "tapperBoost") {
+              booster.isActive = false;
+              booster.endTime = null;
+            }
           }
         });
         return updated;
@@ -378,14 +382,8 @@ const Dashboard = () => {
 
       tapTimeout.current = setTimeout(() => {
         isTapProcessed.current = false;
+        updateBackend(); // Sync immediately after tap ends
       }, TAP_DEBOUNCE_DELAY);
-
-      if (syncTimeout.current) clearTimeout(syncTimeout.current);
-      syncTimeout.current = setTimeout(() => {
-        if (tapCountSinceLastUpdate.current > 0) {
-          updateBackend();
-        }
-      }, SYNC_DELAY);
     },
     [electricBoost, dailyBoosters, tapBoostLevel, updateBackend]
   );

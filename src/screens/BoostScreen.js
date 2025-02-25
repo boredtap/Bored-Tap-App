@@ -2,15 +2,6 @@ import React, { useState, useEffect, useCallback } from "react";
 import Navigation from "../components/Navigation";
 import "./BoostScreen.css";
 
-// Simple debounce utility
-function debounce(func, wait) {
-  let timeout;
-  return function (...args) {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(this, args), wait);
-  };
-}
-
 // Configurable constants for booster duration and daily reset
 const BOOST_DURATION = 20000; // 20 seconds for Tapper Boost
 const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours for reset
@@ -28,7 +19,7 @@ const BoostScreen = () => {
       ? JSON.parse(savedBoosters)
       : {
           tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
-          fullEnergy: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
+          fullEnergy: { usesLeft: 3, resetTime: null }, // Removed isActive and endTime
         };
   });
 
@@ -38,8 +29,8 @@ const BoostScreen = () => {
     localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
   }, [dailyBoosters]);
 
-  // Memoized fetch profile and boosters function with debounce outside useCallback
-  const fetchProfileAndBoostersBase = async () => {
+  // Fetch profile and boosters without debounce
+  const fetchProfileAndBoosters = useCallback(async () => {
     const controller = new AbortController();
     setLoading(true);
     try {
@@ -63,20 +54,41 @@ const BoostScreen = () => {
       if (!extraBoostersResponse.ok) throw new Error("Extra boosters fetch failed");
       const extraBoostersData = await extraBoostersResponse.json();
 
-      const mappedExtraBoosters = extraBoostersData.map((booster) => ({
-        id: booster.booster_id,
-        title: booster.name,
-        description: booster.description,
-        value: booster.upgrade_cost.toString(),
-        level: booster.level === "-" ? "Not Owned" : `Level ${booster.level}`,
-        ctaText: booster.level === "-" ? "Buy" : "Upgrade",
-        altCTA: totalTaps < booster.upgrade_cost ? "Insufficient Funds" : null,
-        actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
-        icon: `${process.env.PUBLIC_URL}/extra-booster-icon.png`,
-        imageId: booster.image_id,
-        rawLevel: booster.level,
-        effect: booster.effect,
-      }));
+      // Fetch booster icons dynamically
+      const mappedExtraBoosters = await Promise.all(
+        extraBoostersData.map(async (booster) => {
+          let iconUrl = `${process.env.PUBLIC_URL}/extra-booster-icon.png`; // Fallback
+          try {
+            const iconResponse = await fetch(
+              `https://bt-coins.onrender.com/bored-tap/user_app/image?image_id=${booster.image_id}`,
+              {
+                method: "GET",
+                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+              }
+            );
+            if (iconResponse.ok) {
+              const blob = await iconResponse.blob();
+              iconUrl = URL.createObjectURL(blob);
+            }
+          } catch (err) {
+            console.error(`Failed to fetch icon for ${booster.name}:`, err);
+          }
+          return {
+            id: booster.booster_id,
+            title: booster.name,
+            description: booster.description,
+            value: booster.upgrade_cost.toString(),
+            level: booster.level === "-" ? "Not Owned" : `Level ${booster.level}`,
+            ctaText: booster.level === "-" ? "Buy" : "Upgrade",
+            altCTA: (profileData.total_coins || 0) < booster.upgrade_cost ? "Insufficient Funds" : null,
+            actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
+            icon: iconUrl,
+            imageId: booster.image_id,
+            rawLevel: booster.level,
+            effect: booster.effect,
+          };
+        })
+      );
 
       setBoostersData({ extraBoosters: mappedExtraBoosters });
       localStorage.setItem("extraBoosters", JSON.stringify(mappedExtraBoosters));
@@ -86,10 +98,7 @@ const BoostScreen = () => {
       setLoading(false);
     }
     return () => controller.abort();
-  };
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const fetchProfileAndBoosters = useCallback(debounce(fetchProfileAndBoostersBase, 1000), []);
+  }, []); // No dependencies since we removed debounce reliance on totalTaps
 
   useEffect(() => {
     fetchProfileAndBoosters();
@@ -103,40 +112,37 @@ const BoostScreen = () => {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       });
       if (!response.ok) throw new Error("Upgrade failed");
-      await fetchProfileAndBoosters();
+      await fetchProfileAndBoosters(); // Immediate fetch after upgrade
       window.dispatchEvent(new Event("boosterUpgraded"));
       handleOverlayClose();
     } catch (err) {
       setError(err.message);
+      console.error("Upgrade error:", err);
     }
   };
 
   const handleClaimDailyBooster = (boosterType) => {
     const booster = dailyBoosters[boosterType];
-    if (booster.usesLeft > 0 && !booster.isActive) {
+    if (booster.usesLeft > 0) {
       const now = Date.now();
-      if (boosterType === "fullEnergy") {
-        window.dispatchEvent(new Event("fullEnergyClaimed"));
-        setDailyBoosters((prev) => ({
-          ...prev,
-          [boosterType]: {
-            usesLeft: booster.usesLeft - 1,
-            isActive: false,
-            endTime: null,
-            resetTime: booster.usesLeft === 1 ? now + DAILY_RESET_INTERVAL : booster.resetTime,
-          },
-        }));
-      } else {
-        setDailyBoosters((prev) => ({
-          ...prev,
-          [boosterType]: {
+      setDailyBoosters((prev) => {
+        const updated = { ...prev };
+        if (boosterType === "tapperBoost") {
+          updated.tapperBoost = {
             usesLeft: booster.usesLeft - 1,
             isActive: true,
             endTime: now + BOOST_DURATION,
             resetTime: booster.usesLeft === 1 ? now + DAILY_RESET_INTERVAL : booster.resetTime,
-          },
-        }));
-      }
+          };
+        } else if (boosterType === "fullEnergy") {
+          updated.fullEnergy = {
+            usesLeft: booster.usesLeft - 1,
+            resetTime: booster.usesLeft === 1 ? now + DAILY_RESET_INTERVAL : booster.resetTime,
+          };
+          window.dispatchEvent(new Event("fullEnergyClaimed"));
+        }
+        return updated;
+      });
     }
     handleOverlayClose();
   };
@@ -156,6 +162,10 @@ const BoostScreen = () => {
           if (booster.usesLeft === 0 && booster.resetTime && Date.now() >= booster.resetTime) {
             booster.usesLeft = 3;
             booster.resetTime = null;
+            if (type === "tapperBoost") {
+              booster.isActive = false;
+              booster.endTime = null;
+            }
           }
         });
         return updated;
@@ -255,7 +265,7 @@ const BoostScreen = () => {
                     icon: `${process.env.PUBLIC_URL}/electric-icon.png`,
                     usesLeft: dailyBoosters.fullEnergy.usesLeft,
                     timer: renderTimer("fullEnergy"),
-                    isActive: dailyBoosters.fullEnergy.isActive,
+                    isActive: false,
                   },
                 ].map((booster) => (
                   <div
