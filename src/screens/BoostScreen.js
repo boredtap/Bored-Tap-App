@@ -23,46 +23,12 @@ const BoostScreen = () => {
         };
   });
 
+  // Handle closing the overlay
   const handleOverlayClose = () => {
     setActiveOverlay(null);
   };
 
-  useEffect(() => {
-    const savedBoosters = localStorage.getItem("dailyBoosters");
-    if (savedBoosters) {
-      setDailyBoosters(JSON.parse(savedBoosters));
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
-  }, [dailyBoosters]);
-
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setDailyBoosters((prev) => {
-        const updated = { ...prev };
-        ["tapperBoost", "fullEnergy"].forEach((type) => {
-          const booster = updated[type];
-          if (booster.timers.length > 0) {
-            const nextTimer = booster.timers[0];
-            if (Date.now() >= nextTimer.endTime) {
-              if (booster.isActive) {
-                booster.isActive = false;
-                booster.timers.shift();
-              } else if (booster.usesLeft === 0) {
-                booster.usesLeft = 3;
-                booster.timers = [];
-              }
-            }
-          }
-        });
-        return updated;
-      });
-    }, 1000);
-    return () => clearInterval(intervalId);
-  }, []);
-
+  // Fetch profile and boosters data
   const fetchProfileAndBoosters = useCallback(async () => {
     setLoading(true);
     try {
@@ -109,10 +75,17 @@ const BoostScreen = () => {
     }
   }, [totalTaps]);
 
+  // Fetch profile and boosters on component mount
   useEffect(() => {
     fetchProfileAndBoosters();
   }, [fetchProfileAndBoosters]);
 
+  // Save daily boosters to localStorage
+  useEffect(() => {
+    localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
+  }, [dailyBoosters]);
+
+  // Handle upgrading a booster
   const handleUpgradeBoost = async (boosterId) => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -129,6 +102,7 @@ const BoostScreen = () => {
     }
   };
 
+  // Handle claiming a daily booster
   const handleClaimDailyBooster = (boosterType) => {
     const booster = dailyBoosters[boosterType];
     if (booster.usesLeft > 0) {
@@ -154,6 +128,7 @@ const BoostScreen = () => {
     handleOverlayClose();
   };
 
+  // Render the timer for a booster
   const renderTimer = (boosterType) => {
     const booster = dailyBoosters[boosterType];
     const timers = booster.timers;
@@ -177,6 +152,7 @@ const BoostScreen = () => {
     return "";
   };
 
+  // Render the overlay for booster details
   const renderOverlay = () => {
     if (!activeOverlay) return null;
     const { type, title, description, value, level, ctaText, altCTA, id, icon } = activeOverlay;
