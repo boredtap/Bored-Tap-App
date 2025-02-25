@@ -3,6 +3,15 @@ import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./Dashboard.css";
 
+// Simple debounce utility
+function debounce(func, wait) {
+  let timeout;
+  return function (...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
+}
+
 // Configurable constants for game mechanics
 const BASE_MAX_ELECTRIC_BOOST = 1000;
 const RECHARGE_TIMES = { 0: 3000, 1: 2500, 2: 2000, 3: 1500, 4: 1000, 5: 500 }; // Recharge times in seconds
@@ -26,9 +35,22 @@ const Dashboard = () => {
     const savedBoost = localStorage.getItem("electricBoost");
     return savedBoost ? parseFloat(savedBoost) : BASE_MAX_ELECTRIC_BOOST;
   });
-  const [maxElectricBoost, setMaxElectricBoost] = useState(BASE_MAX_ELECTRIC_BOOST);
-  const [tapBoostLevel, setTapBoostLevel] = useState(0);
-  const [hasAutobot, setHasAutobot] = useState(false);
+  const [maxElectricBoost, setMaxElectricBoost] = useState(() => {
+    const savedMax = localStorage.getItem("maxElectricBoost");
+    return savedMax ? parseInt(savedMax) : BASE_MAX_ELECTRIC_BOOST;
+  });
+  const [tapBoostLevel, setTapBoostLevel] = useState(() => {
+    const savedLevel = localStorage.getItem("tapBoostLevel");
+    return savedLevel ? parseInt(savedLevel) : 0;
+  });
+  const [rechargingSpeedLevel, setRechargingSpeedLevel] = useState(() => {
+    const savedLevel = localStorage.getItem("rechargingSpeedLevel");
+    return savedLevel ? parseInt(savedLevel) : 0;
+  });
+  const [hasAutobot, setHasAutobot] = useState(() => {
+    const savedAutobot = localStorage.getItem("hasAutobot");
+    return savedAutobot === "true";
+  });
   const [tapAnimation, setTapAnimation] = useState(false);
   const [boostAnimation, setBoostAnimation] = useState(false);
   const [tapEffects, setTapEffects] = useState([]);
@@ -73,8 +95,9 @@ const Dashboard = () => {
     initTelegram();
   }, []);
 
-  // Memoized fetch profile function
-  const fetchProfile = useCallback(async () => {
+  // Memoized fetch profile function with debounce outside useCallback
+  const fetchProfileBase = async () => {
+    const controller = new AbortController();
     const token = localStorage.getItem("accessToken");
     if (!token) {
       navigate("/splash");
@@ -84,6 +107,7 @@ const Dashboard = () => {
       const response = await fetch("https://bt-coins.onrender.com/user/profile", {
         method: "GET",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        signal: controller.signal,
       });
       if (!response.ok) throw new Error("Failed to fetch profile");
       const data = await response.json();
@@ -96,8 +120,11 @@ const Dashboard = () => {
           localStorage.removeItem("dailyBoosters");
           localStorage.removeItem("extraBoosters");
           localStorage.removeItem("electricBoost");
-          localStorage.removeItem("lastActiveTime");
+          localStorage.removeItem("maxElectricBoost");
+          localStorage.removeItem("tapBoostLevel");
           localStorage.removeItem("rechargingSpeedLevel");
+          localStorage.removeItem("hasAutobot");
+          localStorage.removeItem("lastActiveTime");
           localStorage.removeItem("lastBoostUpdateTime");
           setDailyBoosters({
             tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
@@ -106,29 +133,78 @@ const Dashboard = () => {
           setElectricBoost(BASE_MAX_ELECTRIC_BOOST);
           setMaxElectricBoost(BASE_MAX_ELECTRIC_BOOST);
           setTapBoostLevel(0);
+          setRechargingSpeedLevel(0);
           setHasAutobot(false);
           setTotalTaps(0);
         };
         resetLocalStorage();
       }
     } catch (err) {
-      setError(err.message);
+      if (err.name !== "AbortError") setError(err.message);
     }
-  }, [navigate]);
+    return () => controller.abort();
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const fetchProfile = useCallback(debounce(fetchProfileBase, 1000), [navigate]);
+
+  // Memoized function to apply booster effects
+  const applyExtraBoosterEffects = useCallback(
+    (boosters) => {
+      let newMaxElectricBoost = BASE_MAX_ELECTRIC_BOOST;
+      let newTapBoostLevel = 0;
+      let newRechargingSpeedLevel = 0;
+      let autobotOwned = false;
+
+      boosters.forEach((booster) => {
+        switch (booster.title.toLowerCase()) {
+          case "boost":
+            newTapBoostLevel = parseInt(booster.rawLevel) || 0;
+            break;
+          case "multiplier":
+            newMaxElectricBoost += 500 * (parseInt(booster.rawLevel) || 0);
+            break;
+          case "recharging speed":
+            newRechargingSpeedLevel = parseInt(booster.rawLevel) || 0;
+            break;
+          case "auto-bot tapping":
+            autobotOwned = booster.rawLevel !== "-";
+            break;
+          default:
+            break;
+        }
+      });
+
+      setMaxElectricBoost(newMaxElectricBoost);
+      localStorage.setItem("maxElectricBoost", newMaxElectricBoost);
+      setTapBoostLevel(newTapBoostLevel);
+      localStorage.setItem("tapBoostLevel", newTapBoostLevel);
+      setRechargingSpeedLevel(newRechargingSpeedLevel);
+      localStorage.setItem("rechargingSpeedLevel", newRechargingSpeedLevel);
+      setHasAutobot(autobotOwned);
+      localStorage.setItem("hasAutobot", autobotOwned);
+      setElectricBoost((prev) => Math.min(prev, newMaxElectricBoost));
+      localStorage.setItem("electricBoost", Math.min(electricBoost, newMaxElectricBoost));
+    },
+    [electricBoost]
+  );
 
   // Effect to fetch profile and handle boosters on mount
   useEffect(() => {
     fetchProfile();
-    window.addEventListener("boosterUpgraded", () => {
-      const savedBoosters = localStorage.getItem("extraBoosters");
-      if (savedBoosters) applyExtraBoosterEffects(JSON.parse(savedBoosters));
-    });
 
-    // Listen for Full Energy claim to instantly refill energy
+    const handleBoosterUpgraded = () => {
+      const savedBoosters = localStorage.getItem("extraBoosters");
+      if (savedBoosters) {
+        applyExtraBoosterEffects(JSON.parse(savedBoosters));
+        fetchProfile();
+      }
+    };
+    window.addEventListener("boosterUpgraded", handleBoosterUpgraded);
+
     window.addEventListener("fullEnergyClaimed", () => {
       setElectricBoost(maxElectricBoost);
       localStorage.setItem("electricBoost", maxElectricBoost);
-      console.log("Full Energy claimed, electricBoost set to:", maxElectricBoost);
     });
 
     const lastUpdateTime = localStorage.getItem("lastBoostUpdateTime");
@@ -140,40 +216,18 @@ const Dashboard = () => {
       const rechargeRate = maxElectricBoost / rechargeTime;
       const rechargeAmount = timeElapsed * rechargeRate;
       setElectricBoost(Math.min(currentBoost + rechargeAmount, maxElectricBoost));
+      localStorage.setItem("electricBoost", Math.min(currentBoost + rechargeAmount, maxElectricBoost));
     }
     localStorage.setItem("lastBoostUpdateTime", Date.now());
 
+    const savedBoosters = localStorage.getItem("extraBoosters");
+    if (savedBoosters) applyExtraBoosterEffects(JSON.parse(savedBoosters));
+
     return () => {
-      window.removeEventListener("boosterUpgraded", fetchProfile);
+      window.removeEventListener("boosterUpgraded", handleBoosterUpgraded);
       window.removeEventListener("fullEnergyClaimed", () => {});
     };
-  }, [fetchProfile, maxElectricBoost]);
-
-  // Function to apply effects of extra boosters
-  const applyExtraBoosterEffects = (boosters) => {
-    let newMaxElectricBoost = BASE_MAX_ELECTRIC_BOOST;
-    let newTapBoostLevel = 0;
-    let autobotOwned = false;
-    boosters.forEach((booster) => {
-      switch (booster.title.toLowerCase()) {
-        case "boost":
-          newTapBoostLevel = parseInt(booster.rawLevel) || 0;
-          break;
-        case "multiplier":
-          newMaxElectricBoost += 500 * (parseInt(booster.rawLevel) || 0);
-          break;
-        case "auto-bot tapping":
-          autobotOwned = booster.rawLevel !== "-";
-          break;
-        default:
-          break;
-      }
-    });
-    setMaxElectricBoost(newMaxElectricBoost);
-    setTapBoostLevel(newTapBoostLevel);
-    setHasAutobot(autobotOwned);
-    setElectricBoost((prev) => Math.min(prev, newMaxElectricBoost));
-  };
+  }, [fetchProfile, maxElectricBoost, applyExtraBoosterEffects]);
 
   // Effect to simulate offline autobot gains
   useEffect(() => {
@@ -193,6 +247,7 @@ const Dashboard = () => {
   // Effect for autobot tapping
   useEffect(() => {
     if (hasAutobot) {
+      if (autobotInterval.current) clearInterval(autobotInterval.current);
       autobotInterval.current = setInterval(() => {
         const multiplier = (dailyBoosters.tapperBoost.isActive ? 2 : 1) + tapBoostLevel;
         setTotalTaps((prev) => prev + multiplier);
@@ -200,12 +255,12 @@ const Dashboard = () => {
       }, AUTOBOT_TAP_INTERVAL);
     }
     return () => clearInterval(autobotInterval.current);
-  }, [hasAutobot, dailyBoosters, tapBoostLevel]);
+  }, [hasAutobot, dailyBoosters.tapperBoost.isActive, tapBoostLevel]);
 
-  // Effect for energy recharge
+  // Effect for energy recharge with dynamic recharging speed
   useEffect(() => {
-    const level = parseInt(localStorage.getItem("rechargingSpeedLevel") || "0");
-    const rechargeTime = RECHARGE_TIMES[level];
+    if (rechargeInterval.current) clearInterval(rechargeInterval.current);
+    const rechargeTime = RECHARGE_TIMES[rechargingSpeedLevel] || RECHARGE_TIMES[0];
     const rechargeRate = maxElectricBoost / (rechargeTime * 1000);
 
     rechargeInterval.current = setInterval(() => {
@@ -220,12 +275,12 @@ const Dashboard = () => {
       });
     }, 1000);
     return () => clearInterval(rechargeInterval.current);
-  }, [maxElectricBoost]);
+  }, [maxElectricBoost, rechargingSpeedLevel]);
 
   // Async function to update backend with current tap count
   const updateBackend = useCallback(async () => {
     if (tapCountSinceLastUpdate.current === 0) return;
-    const tapsToSync = tapCountSinceLastUpdate.current; // Capture current value
+    const tapsToSync = tapCountSinceLastUpdate.current;
     try {
       const token = localStorage.getItem("accessToken");
       const response = await fetch(
@@ -237,13 +292,10 @@ const Dashboard = () => {
       );
       if (response.ok) {
         const data = await response.json();
-        console.log("Backend response:", data);
         if (data.total_coins >= 0) {
-          setTotalTaps(data.total_coins); // Trust backend total
-          tapCountSinceLastUpdate.current = 0; // Reset only after successful sync
+          setTotalTaps(data.total_coins);
+          tapCountSinceLastUpdate.current = 0;
         }
-      } else {
-        console.error("Backend sync failed");
       }
     } catch (err) {
       console.error("Error syncing with backend:", err);
@@ -259,7 +311,7 @@ const Dashboard = () => {
     };
   }, [updateBackend]);
 
-  // Effect for daily booster timers (only Tapper Boost)
+  // Effect for daily booster timers
   useEffect(() => {
     const intervalId = setInterval(() => {
       setDailyBoosters((prev) => {
@@ -284,64 +336,59 @@ const Dashboard = () => {
     return () => clearInterval(intervalId);
   }, [dailyBoosters]);
 
-  // Tap handling function with corrected coin calculation
-  const handleTap = useCallback((event) => {
-    event.preventDefault();
-    if (electricBoost === 0 || isTapProcessed.current) return;
+  // Tap handling function
+  const handleTap = useCallback(
+    (event) => {
+      event.preventDefault();
+      if (electricBoost === 0 || isTapProcessed.current) return;
 
-    isTapProcessed.current = true;
-    const fingersCount = event.touches ? event.touches.length : 1;
-    const tapperBoostActive = dailyBoosters.tapperBoost.isActive;
-    const multiplier = (tapperBoostActive ? 2 : 1) + tapBoostLevel;
-    const coinsAdded = fingersCount * multiplier;
+      isTapProcessed.current = true;
+      const fingersCount = event.touches ? event.touches.length : 1;
+      const tapperBoostActive = dailyBoosters.tapperBoost.isActive;
+      const multiplier = (tapperBoostActive ? 2 : 1) + tapBoostLevel;
+      const coinsAdded = fingersCount * multiplier;
 
-    console.log("Coins added:", coinsAdded);
-    setTotalTaps((prev) => {
-      const newTotal = prev + coinsAdded;
-      console.log("New totalTaps:", newTotal);
-      return newTotal;
-    });
-    tapCountSinceLastUpdate.current += coinsAdded;
-    console.log("tapCountSinceLastUpdate:", tapCountSinceLastUpdate.current);
+      setTotalTaps((prev) => prev + coinsAdded);
+      tapCountSinceLastUpdate.current += coinsAdded;
 
-    setElectricBoost((prev) => {
-      const newBoost = Math.max(prev - fingersCount, 0);
-      localStorage.setItem("electricBoost", newBoost);
-      return newBoost;
-    });
-    localStorage.setItem("lastBoostUpdateTime", Date.now());
+      setElectricBoost((prev) => {
+        const newBoost = Math.max(prev - fingersCount, 0);
+        localStorage.setItem("electricBoost", newBoost);
+        return newBoost;
+      });
+      localStorage.setItem("lastBoostUpdateTime", Date.now());
 
-    setTapAnimation(true);
-    setBoostAnimation(true);
-    setTimeout(() => {
-      setTapAnimation(false);
-      setBoostAnimation(false);
-    }, 500);
+      setTapAnimation(true);
+      setBoostAnimation(true);
+      setTimeout(() => {
+        setTapAnimation(false);
+        setBoostAnimation(false);
+      }, 500);
 
-    const tapX = (event.touches ? event.touches[0].clientX : event.clientX) || 0;
-    const tapY = (event.touches ? event.touches[0].clientY : event.clientY) || 0;
-    const newTapEffect = { id: Date.now(), x: tapX, y: tapY, count: coinsAdded };
-    setTapEffects((prevEffects) => [...prevEffects, newTapEffect]);
-    setTimeout(() => setTapEffects((prev) => prev.filter((e) => e.id !== newTapEffect.id)), 1000);
+      const tapX = (event.touches ? event.touches[0].clientX : event.clientX) || 0;
+      const tapY = (event.touches ? event.touches[0].clientY : event.clientY) || 0;
+      const newTapEffect = { id: Date.now(), x: tapX, y: tapY, count: coinsAdded };
+      setTapEffects((prevEffects) => [...prevEffects, newTapEffect]);
+      setTimeout(() => setTapEffects((prev) => prev.filter((e) => e.id !== newTapEffect.id)), 1000);
 
-    if (!tapSoundRef.current.paused) tapSoundRef.current.pause();
-    tapSoundRef.current.currentTime = 0;
-    tapSoundRef.current.volume = 0.2;
-    tapSoundRef.current.play().catch((err) => console.error("Audio playback error:", err));
+      if (!tapSoundRef.current.paused) tapSoundRef.current.pause();
+      tapSoundRef.current.currentTime = 0;
+      tapSoundRef.current.volume = 0.2;
+      tapSoundRef.current.play().catch((err) => console.error("Audio playback error:", err));
 
-    tapTimeout.current = setTimeout(() => {
-      isTapProcessed.current = false;
-    }, TAP_DEBOUNCE_DELAY);
+      tapTimeout.current = setTimeout(() => {
+        isTapProcessed.current = false;
+      }, TAP_DEBOUNCE_DELAY);
 
-    // Sync after a delay, but only if no new taps occur
-    if (syncTimeout.current) clearTimeout(syncTimeout.current);
-    syncTimeout.current = setTimeout(() => {
-      if (tapCountSinceLastUpdate.current > 0) {
-        console.log("Syncing after 1 second:", tapCountSinceLastUpdate.current);
-        updateBackend();
-      }
-    }, SYNC_DELAY);
-  }, [electricBoost, dailyBoosters, tapBoostLevel, updateBackend]);
+      if (syncTimeout.current) clearTimeout(syncTimeout.current);
+      syncTimeout.current = setTimeout(() => {
+        if (tapCountSinceLastUpdate.current > 0) {
+          updateBackend();
+        }
+      }, SYNC_DELAY);
+    },
+    [electricBoost, dailyBoosters, tapBoostLevel, updateBackend]
+  );
 
   const handleTapEnd = (event) => {
     event.preventDefault();

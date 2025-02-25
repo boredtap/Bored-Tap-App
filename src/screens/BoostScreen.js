@@ -2,6 +2,15 @@ import React, { useState, useEffect, useCallback } from "react";
 import Navigation from "../components/Navigation";
 import "./BoostScreen.css";
 
+// Simple debounce utility
+function debounce(func, wait) {
+  let timeout;
+  return function (...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
+}
+
 // Configurable constants for booster duration and daily reset
 const BOOST_DURATION = 20000; // 20 seconds for Tapper Boost
 const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours for reset
@@ -29,7 +38,9 @@ const BoostScreen = () => {
     localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
   }, [dailyBoosters]);
 
-  const fetchProfileAndBoosters = useCallback(async () => {
+  // Memoized fetch profile and boosters function with debounce outside useCallback
+  const fetchProfileAndBoostersBase = async () => {
+    const controller = new AbortController();
     setLoading(true);
     try {
       const token = localStorage.getItem("accessToken");
@@ -38,6 +49,7 @@ const BoostScreen = () => {
       const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
         method: "GET",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        signal: controller.signal,
       });
       if (!profileResponse.ok) throw new Error("Profile fetch failed");
       const profileData = await profileResponse.json();
@@ -46,6 +58,7 @@ const BoostScreen = () => {
       const extraBoostersResponse = await fetch("https://bt-coins.onrender.com/user/boost/extra_boosters", {
         method: "GET",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        signal: controller.signal,
       });
       if (!extraBoostersResponse.ok) throw new Error("Extra boosters fetch failed");
       const extraBoostersData = await extraBoostersResponse.json();
@@ -68,12 +81,15 @@ const BoostScreen = () => {
       setBoostersData({ extraBoosters: mappedExtraBoosters });
       localStorage.setItem("extraBoosters", JSON.stringify(mappedExtraBoosters));
     } catch (err) {
-      setError(err.message);
-      console.error("Error fetching data:", err);
+      if (err.name !== "AbortError") setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [totalTaps]);
+    return () => controller.abort();
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const fetchProfileAndBoosters = useCallback(debounce(fetchProfileAndBoostersBase, 1000), []);
 
   useEffect(() => {
     fetchProfileAndBoosters();
@@ -88,11 +104,10 @@ const BoostScreen = () => {
       });
       if (!response.ok) throw new Error("Upgrade failed");
       await fetchProfileAndBoosters();
-      window.dispatchEvent(new Event("boosterUpgraded")); // Notify other components
+      window.dispatchEvent(new Event("boosterUpgraded"));
       handleOverlayClose();
     } catch (err) {
       setError(err.message);
-      console.error("Upgrade error:", err);
     }
   };
 
@@ -101,19 +116,17 @@ const BoostScreen = () => {
     if (booster.usesLeft > 0 && !booster.isActive) {
       const now = Date.now();
       if (boosterType === "fullEnergy") {
-        // Instantly dispatch event to refill energy
         window.dispatchEvent(new Event("fullEnergyClaimed"));
         setDailyBoosters((prev) => ({
           ...prev,
           [boosterType]: {
             usesLeft: booster.usesLeft - 1,
-            isActive: false, // No timer for Full Energy
+            isActive: false,
             endTime: null,
             resetTime: booster.usesLeft === 1 ? now + DAILY_RESET_INTERVAL : booster.resetTime,
           },
         }));
       } else {
-        // Tapper Boost retains 20-second timer
         setDailyBoosters((prev) => ({
           ...prev,
           [boosterType]: {
@@ -128,7 +141,6 @@ const BoostScreen = () => {
     handleOverlayClose();
   };
 
-  // Timer effect only for Tapper Boost
   useEffect(() => {
     const intervalId = setInterval(() => {
       setDailyBoosters((prev) => {
