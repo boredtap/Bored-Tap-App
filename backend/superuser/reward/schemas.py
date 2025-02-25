@@ -40,7 +40,7 @@ class Beneficiary(str, Enum):
 class CreateReward(BaseModel):
     reward_title: Annotated[str, Form(description="Reward title")]
     reward: Annotated[int, Form(description="Reward amount")]
-    launch_date: Annotated[datetime, Form(description="Launch date")]
+    expiry_date: Annotated[datetime, Form(description="Launch date")]
     beneficiary: Annotated[Beneficiary, Form(description="Beneficiary")]
     reward_image: Annotated[UploadFile, Form(description="Upload reward image", media_type="multipart/form-data")]
 

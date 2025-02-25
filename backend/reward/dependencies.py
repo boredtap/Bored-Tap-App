@@ -80,5 +80,5 @@ def my_claimed_rewards(telegram_user_id: str):
                 reward_id=str(reward["_id"]),
                 reward_title=reward["reward_title"],
                 reward=reward["reward"],
-                reward_image_id=reward["reward_image_id"]
+                reward_image_id=str(reward["reward_image_id"])
                 )

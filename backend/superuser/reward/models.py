@@ -9,7 +9,7 @@ class RewardsModel(BaseModel):
     reward_title: str
     reward: int
     beneficiary: list[str]
-    launch_date: datetime
+    expiry_date: datetime
     status: str
     claim_count: int = 0
     claim_rate: int
