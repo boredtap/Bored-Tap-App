@@ -3,15 +3,6 @@ import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./Dashboard.css";
 
-// Simple debounce utility
-// function debounce(func, wait) {
-//   let timeout;
-//   return function (...args) {
-//     clearTimeout(timeout);
-//     timeout = setTimeout(() => func.apply(this, args), wait);
-//   };
-// }
-
 // Configurable constants for game mechanics
 const BASE_MAX_ELECTRIC_BOOST = 1000;
 const RECHARGE_TIMES = { 0: 3000, 1: 2500, 2: 2000, 3: 1500, 4: 1000, 5: 500 }; // Recharge times in seconds
@@ -254,7 +245,6 @@ const Dashboard = () => {
     return () => {
       if (autobotInterval.current) clearInterval(autobotInterval.current);
     };
-  // eslint-disable-next-line no-use-before-define
   }, [hasAutobot, dailyBoosters.tapperBoost.isActive, tapBoostLevel, updateBackend]);
 
   // Effect for energy recharge with dynamic recharging speed
@@ -277,7 +267,7 @@ const Dashboard = () => {
     return () => clearInterval(rechargeInterval.current);
   }, [maxElectricBoost, rechargingSpeedLevel]);
 
-  // Async function to update backend with current tap count
+  // Async function to update backend with current tap count (moved above handleTap)
   const updateBackend = useCallback(async () => {
     if (tapCountSinceLastUpdate.current === 0) return;
     const tapsToSync = tapCountSinceLastUpdate.current;
@@ -301,44 +291,6 @@ const Dashboard = () => {
       console.error("Error syncing with backend:", err);
     }
   }, []);
-
-  // Effect for immediate sync on component unmount
-  useEffect(() => {
-    return () => {
-      if (tapCountSinceLastUpdate.current > 0) {
-        updateBackend();
-      }
-    };
-  }, [updateBackend]);
-
-  // Effect for daily booster timers
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setDailyBoosters((prev) => {
-        const updated = { ...prev };
-        ["tapperBoost"].forEach((type) => {
-          const booster = updated[type];
-          if (booster.isActive && Date.now() >= booster.endTime) {
-            booster.isActive = false;
-          }
-        });
-        ["tapperBoost", "fullEnergy"].forEach((type) => {
-          const booster = updated[type];
-          if (booster.usesLeft === 0 && booster.resetTime && Date.now() >= booster.resetTime) {
-            booster.usesLeft = 3;
-            booster.resetTime = null;
-            if (type === "tapperBoost") {
-              booster.isActive = false;
-              booster.endTime = null;
-            }
-          }
-        });
-        return updated;
-      });
-    }, 1000);
-    localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
-    return () => clearInterval(intervalId);
-  }, [dailyBoosters]);
 
   // Tap handling function
   const handleTap = useCallback(
@@ -387,6 +339,44 @@ const Dashboard = () => {
     },
     [electricBoost, dailyBoosters, tapBoostLevel, updateBackend]
   );
+
+  // Effect for immediate sync on component unmount
+  useEffect(() => {
+    return () => {
+      if (tapCountSinceLastUpdate.current > 0) {
+        updateBackend();
+      }
+    };
+  }, [updateBackend]);
+
+  // Effect for daily booster timers
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setDailyBoosters((prev) => {
+        const updated = { ...prev };
+        ["tapperBoost"].forEach((type) => {
+          const booster = updated[type];
+          if (booster.isActive && Date.now() >= booster.endTime) {
+            booster.isActive = false;
+          }
+        });
+        ["tapperBoost", "fullEnergy"].forEach((type) => {
+          const booster = updated[type];
+          if (booster.usesLeft === 0 && booster.resetTime && Date.now() >= booster.resetTime) {
+            booster.usesLeft = 3;
+            booster.resetTime = null;
+            if (type === "tapperBoost") {
+              booster.isActive = false;
+              booster.endTime = null;
+            }
+          }
+        });
+        return updated;
+      });
+    }, 1000);
+    localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
+    return () => clearInterval(intervalId);
+  }, [dailyBoosters]);
 
   const handleTapEnd = (event) => {
     event.preventDefault();
