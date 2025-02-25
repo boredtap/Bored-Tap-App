@@ -4,7 +4,7 @@
   color: #fff;
   min-height: 100vh;
   padding: 80px 16px;
-  padding-top: 0px;
+  padding-top: 16px;
   font-family: "Roboto", sans-serif;
   position: relative;
   display: flex;
@@ -21,8 +21,8 @@
   }
   
   .leaderboard-icon {
-    width: 100px;
-    height: 100px;
+    width: 64px;
+    height: 64px;
   }
   
   /* Pagination */
