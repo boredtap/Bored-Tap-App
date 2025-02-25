@@ -2,18 +2,25 @@ import React, { useState, useEffect, useCallback } from "react";
 import Navigation from "../components/Navigation";
 import "./BoostScreen.css";
 
-// Configurable constants
+// Configurable constants for booster duration and daily reset
 const BOOST_DURATION = 20000; // 20 seconds per booster use
 const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours for reset
 
 const BoostScreen = () => {
+  // State to manage the active overlay for displaying booster details
   const [activeOverlay, setActiveOverlay] = useState(null);
+  
+  // State to track and display the user's total taps
   const [totalTaps, setTotalTaps] = useState(0);
+  
+  // State to hold both daily and extra boosters data
   const [boostersData, setBoostersData] = useState({ dailyBoosters: [], extraBoosters: [] });
+  
+  // State for loading and error handling during data fetching
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Initialize daily boosters with a simplified structure
+  // Initialize daily boosters from local storage, defaulting to 3 uses each if not present
   const [dailyBoosters, setDailyBoosters] = useState(() => {
     const savedBoosters = localStorage.getItem("dailyBoosters");
     return savedBoosters
@@ -24,20 +31,22 @@ const BoostScreen = () => {
         };
   });
 
+  // Function to close the overlay when user cancels or completes action
   const handleOverlayClose = () => setActiveOverlay(null);
 
-  // Persist daily boosters to localStorage
+  // Effect to persist daily boosters state to local storage on change
   useEffect(() => {
     localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
   }, [dailyBoosters]);
 
-  // Fetch profile and boosters data
+  // Callback function to fetch user profile and extra boosters data from backend
   const fetchProfileAndBoosters = useCallback(async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) throw new Error("No access token found");
 
+      // Fetch user profile to get total taps
       const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
         method: "GET",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -46,6 +55,7 @@ const BoostScreen = () => {
       const profileData = await profileResponse.json();
       setTotalTaps(profileData.total_coins || 0);
 
+      // Fetch extra boosters data
       const extraBoostersResponse = await fetch("https://bt-coins.onrender.com/user/boost/extra_boosters", {
         method: "GET",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -53,6 +63,7 @@ const BoostScreen = () => {
       if (!extraBoostersResponse.ok) throw new Error("Extra boosters fetch failed");
       const extraBoostersData = await extraBoostersResponse.json();
 
+      // Map extra boosters for display, handling ownership and costs
       const mappedExtraBoosters = extraBoostersData.map((booster) => ({
         id: booster.booster_id,
         title: booster.name,
@@ -78,11 +89,12 @@ const BoostScreen = () => {
     }
   }, [totalTaps]);
 
+  // Effect to trigger data fetch on component mount
   useEffect(() => {
     fetchProfileAndBoosters();
   }, [fetchProfileAndBoosters]);
 
-  // Handle upgrade for extra boosters
+  // Function to handle upgrading extra boosters via backend API
   const handleUpgradeBoost = async (boosterId) => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -92,7 +104,7 @@ const BoostScreen = () => {
       });
       if (!response.ok) throw new Error("Upgrade failed");
       await fetchProfileAndBoosters();
-      window.dispatchEvent(new Event("boosterUpgraded")); // Notify Dashboard
+      window.dispatchEvent(new Event("boosterUpgraded")); // Notify other components like Dashboard
       handleOverlayClose();
     } catch (err) {
       setError(err.message);
@@ -100,7 +112,7 @@ const BoostScreen = () => {
     }
   };
 
-  // Handle claim for daily boosters
+  // Function to handle claiming daily boosters, updating uses and activation
   const handleClaimDailyBooster = (boosterType) => {
     const booster = dailyBoosters[boosterType];
     if (booster.usesLeft > 0 && !booster.isActive) {
@@ -118,7 +130,7 @@ const BoostScreen = () => {
     handleOverlayClose();
   };
 
-  // Real-time booster timer and reset logic
+  // Effect for real-time booster timer and reset logic, checking every second
   useEffect(() => {
     const intervalId = setInterval(() => {
       setDailyBoosters((prev) => {
@@ -139,7 +151,7 @@ const BoostScreen = () => {
     return () => clearInterval(intervalId);
   }, []);
 
-  // Render timer for daily boosters
+  // Function to render the timer display for daily boosters based on their state
   const renderTimer = (boosterType) => {
     const booster = dailyBoosters[boosterType];
     if (booster.isActive) {
@@ -152,6 +164,7 @@ const BoostScreen = () => {
     return `${booster.usesLeft}/3 uses left`;
   };
 
+  // Function to render the overlay for detailed booster information and actions
   const renderOverlay = () => {
     if (!activeOverlay) return null;
     const { type, title, description, value, level, ctaText, altCTA, id, icon } = activeOverlay;
@@ -253,7 +266,7 @@ const BoostScreen = () => {
                     <img src={booster.icon} alt={booster.title} className="booster-icon" />
                     <div className="booster-info">
                       <p className="booster-title">{booster.title}</p>
-                      <p className="booster-value">{booster.timer}</p> {/* Removed duplicate usesLeft */}
+                      <p className="booster-value">{booster.timer}</p>
                     </div>
                   </div>
                 ))}

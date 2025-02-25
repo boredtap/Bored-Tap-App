@@ -3,16 +3,16 @@ import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./Dashboard.css";
 
-// Configurable constants
+// Configurable constants for game mechanics
 const BASE_MAX_ELECTRIC_BOOST = 1000;
-const RECHARGE_TIMES = { 0: 3000, 1: 2500, 2: 2000, 3: 1500, 4: 1000, 5: 500 }; // in seconds
+const RECHARGE_TIMES = { 0: 3000, 1: 2500, 2: 2000, 3: 1500, 4: 1000, 5: 500 }; // Recharge times in seconds
 const AUTOBOT_TAP_INTERVAL = 1000; // 1 tap per second
-const SYNC_INTERVAL = 2000; // Sync every 2 seconds
+const SYNC_INTERVAL = 2000; // Sync coins with backend every 2 seconds
 
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  // State management
+  // State management for user data, profile, and game mechanics
   const [telegramData, setTelegramData] = useState({
     telegram_user_id: "",
     username: "User",
@@ -42,12 +42,12 @@ const Dashboard = () => {
         };
   });
 
-  // Refs for tracking
+  // Refs for tracking tap counts and intervals
   const tapCountSinceLastUpdate = useRef(0);
   const autobotInterval = useRef(null);
   const rechargeInterval = useRef(null);
 
-  // Fetch Telegram data on mount
+  // Effect to initialize Telegram data on component mount
   useEffect(() => {
     const initTelegram = async () => {
       try {
@@ -68,7 +68,7 @@ const Dashboard = () => {
     initTelegram();
   }, []);
 
-  // Fetch profile and initialize boosters
+  // Effect to fetch profile and initialize boosters, handling local storage reset if needed
   useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem("accessToken");
@@ -88,29 +88,29 @@ const Dashboard = () => {
         setCurrentStreak(data.streak?.current_streak || 0);
 
         if (data.total_coins === 0) {
+          // Reset local storage for new users
+          const resetLocalStorage = () => {
+            localStorage.removeItem("dailyBoosters");
+            localStorage.removeItem("extraBoosters");
+            localStorage.removeItem("electricBoost");
+            localStorage.removeItem("lastActiveTime");
+            localStorage.removeItem("rechargingSpeedLevel");
+            localStorage.removeItem("lastBoostUpdateTime");
+            setDailyBoosters({
+              tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
+              fullEnergy: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
+            });
+            setElectricBoost(BASE_MAX_ELECTRIC_BOOST);
+            setMaxElectricBoost(BASE_MAX_ELECTRIC_BOOST);
+            setTapBoostLevel(0);
+            setHasAutobot(false);
+            setTotalTaps(0);
+          };
           resetLocalStorage();
         }
       } catch (err) {
         setError(err.message);
       }
-    };
-
-    const resetLocalStorage = () => {
-      localStorage.removeItem("dailyBoosters");
-      localStorage.removeItem("extraBoosters");
-      localStorage.removeItem("electricBoost");
-      localStorage.removeItem("lastActiveTime");
-      localStorage.removeItem("rechargingSpeedLevel");
-      localStorage.removeItem("lastBoostUpdateTime");
-      setDailyBoosters({
-        tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
-        fullEnergy: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
-      });
-      setElectricBoost(BASE_MAX_ELECTRIC_BOOST);
-      setMaxElectricBoost(BASE_MAX_ELECTRIC_BOOST);
-      setTapBoostLevel(0);
-      setHasAutobot(false);
-      setTotalTaps(0);
     };
 
     fetchProfile();
@@ -119,14 +119,14 @@ const Dashboard = () => {
       if (savedBoosters) applyExtraBoosterEffects(JSON.parse(savedBoosters));
     });
 
-    // Restore electric boost and simulate recharge on mount
+    // Restore and simulate energy recharge on mount
     const lastUpdateTime = localStorage.getItem("lastBoostUpdateTime");
     const currentBoost = parseFloat(localStorage.getItem("electricBoost")) || BASE_MAX_ELECTRIC_BOOST;
     if (lastUpdateTime && currentBoost < maxElectricBoost) {
-      const timeElapsed = (Date.now() - parseInt(lastUpdateTime)) / 1000; // in seconds
+      const timeElapsed = (Date.now() - parseInt(lastUpdateTime)) / 1000;
       const level = parseInt(localStorage.getItem("rechargingSpeedLevel") || "0");
       const rechargeTime = RECHARGE_TIMES[level];
-      const rechargeRate = maxElectricBoost / rechargeTime; // boost per second
+      const rechargeRate = maxElectricBoost / rechargeTime;
       const rechargeAmount = timeElapsed * rechargeRate;
       setElectricBoost(Math.min(currentBoost + rechargeAmount, maxElectricBoost));
     }
@@ -135,7 +135,7 @@ const Dashboard = () => {
     return () => window.removeEventListener("boosterUpgraded", fetchProfile);
   }, [navigate, maxElectricBoost]);
 
-  // Apply extra booster effects
+  // Function to apply effects of extra boosters based on their levels
   const applyExtraBoosterEffects = (boosters) => {
     let newMaxElectricBoost = BASE_MAX_ELECTRIC_BOOST;
     let newTapBoostLevel = 0;
@@ -161,7 +161,7 @@ const Dashboard = () => {
     setElectricBoost((prev) => Math.min(prev, newMaxElectricBoost));
   };
 
-  // Simulate offline Autobot gains
+  // Effect to simulate offline autobot gains on component mount
   useEffect(() => {
     if (hasAutobot) {
       const lastActive = localStorage.getItem("lastActiveTime");
@@ -176,7 +176,7 @@ const Dashboard = () => {
     localStorage.setItem("lastActiveTime", Date.now());
   }, [hasAutobot, tapBoostLevel]);
 
-  // Autobot tapping
+  // Effect for autobot tapping, running continuously if owned
   useEffect(() => {
     if (hasAutobot) {
       autobotInterval.current = setInterval(() => {
@@ -188,7 +188,7 @@ const Dashboard = () => {
     return () => clearInterval(autobotInterval.current);
   }, [hasAutobot, dailyBoosters, tapBoostLevel]);
 
-  // Energy recharge
+  // Effect for energy recharge based on recharging speed level
   useEffect(() => {
     const level = parseInt(localStorage.getItem("rechargingSpeedLevel") || "0");
     const rechargeTime = RECHARGE_TIMES[level];
@@ -208,7 +208,7 @@ const Dashboard = () => {
     return () => clearInterval(rechargeInterval.current);
   }, [maxElectricBoost, dailyBoosters]);
 
-  // Sync coins with backend
+  // Effect for syncing coin counts with backend periodically
   useEffect(() => {
     const updateBackend = async () => {
       if (tapCountSinceLastUpdate.current === 0) return;
@@ -241,14 +241,14 @@ const Dashboard = () => {
     return () => clearInterval(syncInterval);
   }, [totalTaps]);
 
-  // Daily booster timers and reset
+  // Effect for daily booster timers and reset logic, currently using a one-time timeout
   useEffect(() => {
-    const interval = setInterval(() => {
+    const interval = () => {
       setDailyBoosters((prev) => {
         const updated = { ...prev };
         ["tapperBoost", "fullEnergy"].forEach((type) => {
           const booster = updated[type];
-          if (booster.isActive && Date.now() >= booster.endTime) {
+          if (type === "tapperBoost" && booster.isActive && Date.now() >= booster.endTime) {
             booster.isActive = false;
           }
           if (booster.usesLeft === 0 && booster.resetTime && Date.now() >= booster.resetTime) {
@@ -258,14 +258,16 @@ const Dashboard = () => {
         });
         return updated;
       });
-    }, 1000);
+    };
+
+    const intervalId = setInterval(interval, 1000);
     localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
-    return () => clearInterval(interval);
+    return () => clearInterval(intervalId);
   }, [dailyBoosters]);
 
-  // Tap handling
+  // Tap handling function, currently considering fullEnergy active period incorrectly
   const handleTap = (event) => {
-    if (electricBoost === 0 && !dailyBoosters.fullEnergy.isActive) return;
+    if (electricBoost === 0) return;
     const fingersCount = event.touches?.length || 1;
     const tapperBoostActive = dailyBoosters.tapperBoost.isActive;
     const fullEnergyActive = dailyBoosters.fullEnergy.isActive;
