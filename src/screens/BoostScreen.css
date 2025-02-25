@@ -74,7 +74,7 @@
   display: flex;
   align-items: center;
   cursor: pointer;
-  width: 48%; /* Each card takes ~48% of container width to fit two side by side */
+  width: 50%; /* Each card takes ~48% of container width to fit two side by side */
   min-width: 150px; /* Minimum width to prevent squashing on small screens */
 }
 
@@ -318,7 +318,7 @@
   }
 
   .daily-boosters-container {
-    gap: 12px; /* Slightly smaller gap for mobile */
+    gap: 16px; /* Slightly smaller gap for mobile */
   }
 
   .booster-frame {
