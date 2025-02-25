@@ -1,4 +1,8 @@
+from database_connection import fs
 from datetime import datetime, tzinfo, timezone
+from io import BytesIO
+from bson import ObjectId
+from fastapi.responses import StreamingResponse
 from superuser.dashboard.admin_auth import verify_password
 from superuser.dashboard.schemas import AdminProfile as schemasAdminProfile, LeaderboardData, LevelDataInfo, NewUserData, RecentActivityData
 from database_connection import user_collection, coin_stats
@@ -320,3 +324,11 @@ def get_users_level_data() -> dict:
         level_data_list.append(data)
 
     return level_data_list
+
+
+# ------------------------------------- get image -------------------------------------
+def get_image(image_id: str):
+    image = fs.get(ObjectId(image_id))
+    image_buffer = BytesIO(image.read())
+    image_buffer.seek(0)
+    return StreamingResponse(image_buffer, media_type="image/jpeg")

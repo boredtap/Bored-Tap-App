@@ -1,4 +1,8 @@
+from database_connection import fs
 from datetime import date, datetime
+from io import BytesIO
+from bson import ObjectId
+from fastapi.responses import StreamingResponse
 from models import CoinStats
 from database_connection import user_collection, invites_ref, coin_stats
 from user_reg_and_prof_mngmnt.schemas import InviteeData, Update, UserProfile
@@ -37,19 +41,16 @@ def update_coins_in_db(telegram_user_id: str, coins: int):
 
     # update level
     new_level = update_level_logic(telegram_user_id)
-    level_update_operation = {'$set':
-        {'level': new_level['level']}
+    level_update_operation = {
+        '$set': {
+            'level': new_level['level'],
+            'level_name': new_level['level_name']
+        }
     }
 
-    # update level name
-    level_name_update_operation = {'$set':
-        {'level_name': new_level['level_name']}
-    }
-
-    level_name_update_result = user_collection.update_one(query, level_name_update_operation)
     level_update_result = user_collection.update_one(query, level_update_operation)
 
-    if level_update_result.modified_count == 1:
+    if level_update_result.modified_count:
         level_update_result = True
     else:
         level_update_result = False
@@ -62,6 +63,7 @@ def update_coins_in_db(telegram_user_id: str, coins: int):
         'my_result': my_result,
         'level_update_result': level_update_result
     }
+
 
 def update_coin_stats(telegram_user_id: str, coins_tapped:int):
     # today's date
@@ -121,6 +123,7 @@ def get_user_by_id(telegram_user_id: str) -> Update:
         )
         return user_data
     return None
+
 
 def update_level_logic(telegram_user_id: str):
     user = get_user_by_id(telegram_user_id)
@@ -193,3 +196,10 @@ def get_user_profile(telegram_user_id: str) -> UserProfile:
         )
         return user_data
     return None
+
+
+def get_image(image_id: str):
+    image = fs.get(ObjectId(image_id))
+    image_buffer = BytesIO(image.read())
+    image_buffer.seek(0)
+    return StreamingResponse(image_buffer, media_type="image/jpeg")
