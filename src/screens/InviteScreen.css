@@ -160,7 +160,7 @@
 }
 
 .invite-cta-button {
-  width: 100%;
+  width: 75%;
   max-width: 360px;
   height: 50px;
   display: flex;
@@ -334,6 +334,7 @@
     font-size: 14px;
     font-weight: 500;
     margin-bottom: 10px;
+    width: 75%;
 
   }
 
