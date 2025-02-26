@@ -50,7 +50,7 @@ const WalletScreen = () => {
                 className="wallet-gif"
               />
 
-              Telegram wallet link card
+              {/* Telegram wallet link card
               <div className="wallet-data-card">
                 <img
                   src={`${process.env.PUBLIC_URL}/wallet.png`}
@@ -63,9 +63,9 @@ const WalletScreen = () => {
                   alt="Telegram Icon"
                   className="data-card-icon"
                 />
-              </div>
+              </div> */}
 
-              {/* Wallet selection options */}
+              {/* Wallet selection options
               <div className="wallet-selection">
                 {[
                   { name: "Tonkeeper", icon: "tonkeeper.png" },
@@ -86,7 +86,7 @@ const WalletScreen = () => {
                     <p className="wallet-frame-text">{wallet.name}</p>
                   </div>
                 ))}
-              </div>
+              </div> */}
             </>
           ) : (
             <>

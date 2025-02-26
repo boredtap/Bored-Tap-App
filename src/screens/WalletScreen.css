@@ -47,8 +47,8 @@
 
 /* GIF animation below description */
 .wallet-gif {
-  width: 120px; /* "Little big" size */
-  height: 120px;
+  width: 300px; /* "Little big" size */
+  height: 300px;
   margin: 0 auto 24px;
   display: block;
 }
@@ -168,8 +168,8 @@
   }
 
   .wallet-gif {
-    width: 100px;
-    height: 100px;
+    width: 200px;
+    height: 200px;
     margin-bottom: 20px;
   }
 
