@@ -151,7 +151,7 @@
 /* Floating CTA container */
 .cta-container {
   position: fixed;
-  bottom: 80px; /* Above navigation */
+  bottom: 80px;
   left: 0;
   right: 0;
   display: flex;
@@ -160,18 +160,25 @@
 }
 
 .cta-button {
-  background-color: #fff;
-  color: #000;
+  background-color: #414141; /* Inactive state */
+  color: #fff;
   border: none;
   border-radius: 8px;
   padding: 10px 20px;
   font-weight: bold;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  text-align: center;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.cta-button.active {
+  background-color: #fff; /* Active state */
+  color: #000;
 }
 
 .cta-button:hover {
   background-color: #e6e6e6;
+  color: #000;
 }
 
 /* Overlay for sharing options */
@@ -323,10 +330,6 @@
     padding: 8px 16px;
   }
 
-  .overlay-card {
-    padding: 15px;
-  }
-
   .overlay-title {
     font-size: 16px;
   }
@@ -367,6 +370,7 @@
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
+    gap: 15px;
   }
 
   .overlay-cta-button {

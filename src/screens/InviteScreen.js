@@ -3,7 +3,7 @@ import Navigation from "../components/Navigation";
 import "./InviteScreen.css";
 
 /**
- * InviteScreen component for inviting friends and displaying invited friends list.
+ * InviteScreen component for inviting friends via Telegram and displaying invited friends list.
  * Fetches user profile and QR code, provides an invite link, and integrates sharing options.
  */
 const InviteScreen = () => {
@@ -72,22 +72,20 @@ const InviteScreen = () => {
     alert("Invite link copied to clipboard!");
   };
 
-  // Handle sharing via Web Share API or fallbacks
-  const handleShare = () => {
-    const shareData = {
-      title: "Join me on Bored Tap!",
-      text: "Play Bored Tap and earn BT Coins with me! Use my invite link:",
-      url: inviteLink,
-    };
+  // Handle Telegram-specific sharing
+  const handleTelegramShare = () => {
+    const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent(
+      "Join me on Bored Tap and earn BT Coins!"
+    )}`;
+    window.open(telegramUrl, "_blank");
+  };
 
-    if (navigator.share) {
-      // Use Web Share API if available (native sharing on mobile)
-      navigator.share(shareData).catch((err) => console.error("Error sharing:", err));
-    } else {
-      // Fallback: Open WhatsApp as a default, with manual options in overlay
-      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareData.text + " " + shareData.url)}`;
-      window.open(whatsappUrl, "_blank");
-    }
+  // Handle WhatsApp sharing
+  const handleWhatsAppShare = () => {
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(
+      "Join me on Bored Tap! " + inviteLink
+    )}`;
+    window.open(whatsappUrl, "_blank");
   };
 
   // Toggle overlay visibility
@@ -153,7 +151,7 @@ const InviteScreen = () => {
 
       {/* Floating CTA button */}
       <div className="cta-container">
-        <button className="cta-button" onClick={toggleOverlay}>
+        <button className="cta-button active" onClick={toggleOverlay}>
           Invite a Friend
         </button>
       </div>
@@ -180,32 +178,11 @@ const InviteScreen = () => {
               />
               <p className="overlay-text">Share via:</p>
               <div className="share-options">
-                <button className="overlay-cta-button" onClick={handleShare}>
-                  Share (Native)
+                <button className="overlay-cta-button" onClick={handleTelegramShare}>
+                  Telegram
                 </button>
-                <button
-                  className="overlay-cta-button"
-                  onClick={() =>
-                    window.open(
-                      `https://wa.me/?text=${encodeURIComponent(
-                        "Join me on Bored Tap! " + inviteLink
-                      )}`,
-                      "_blank"
-                    )
-                  }
-                >
+                <button className="overlay-cta-button" onClick={handleWhatsAppShare}>
                   WhatsApp
-                </button>
-                <button
-                  className="overlay-cta-button"
-                  onClick={() =>
-                    window.open(
-                      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(inviteLink)}`,
-                      "_blank"
-                    )
-                  }
-                >
-                  Facebook
                 </button>
                 <button className="overlay-cta-button" onClick={handleCopy}>
                   Copy Link
