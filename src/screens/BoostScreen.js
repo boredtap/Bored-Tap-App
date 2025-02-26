@@ -2,9 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import Navigation from "../components/Navigation";
 import "./BoostScreen.css";
 
-// Configurable constants for booster duration and daily reset
-const BOOST_DURATION = 20000; // 20 seconds per booster use
-const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours for reset
+const BOOST_DURATION = 20000; // 20 seconds for Tapper Boost only
+const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
 
 const BoostScreen = () => {
   const [activeOverlay, setActiveOverlay] = useState(null);
@@ -19,7 +18,7 @@ const BoostScreen = () => {
       ? JSON.parse(savedBoosters)
       : {
           tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
-          fullEnergy: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
+          fullEnergy: { usesLeft: 3, isActive: false, resetTime: null }, // No endTime
         };
   });
 
@@ -57,7 +56,7 @@ const BoostScreen = () => {
         value: booster.upgrade_cost.toString(),
         level: booster.level === "-" ? "Not Owned" : `Level ${booster.level}`,
         ctaText: booster.level === "-" ? "Buy" : "Upgrade",
-        altCTA: totalTaps < booster.upgrade_cost ? "Insufficient Funds" : null,
+        altCTA: (profileData.total_coins || 0) < booster.upgrade_cost ? "Insufficient Funds" : null,
         actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
         icon: `${process.env.PUBLIC_URL}/extra-booster-icon.png`,
         imageId: booster.image_id,
@@ -69,11 +68,10 @@ const BoostScreen = () => {
       localStorage.setItem("extraBoosters", JSON.stringify(mappedExtraBoosters));
     } catch (err) {
       setError(err.message);
-      console.error("Error fetching data:", err);
     } finally {
       setLoading(false);
     }
-  }, [totalTaps]);
+  }, []);
 
   useEffect(() => {
     fetchProfileAndBoosters();
@@ -92,7 +90,6 @@ const BoostScreen = () => {
       handleOverlayClose();
     } catch (err) {
       setError(err.message);
-      console.error("Upgrade error:", err);
     }
   };
 
@@ -100,15 +97,25 @@ const BoostScreen = () => {
     const booster = dailyBoosters[boosterType];
     if (booster.usesLeft > 0 && !booster.isActive) {
       const now = Date.now();
-      setDailyBoosters((prev) => ({
-        ...prev,
-        [boosterType]: {
-          usesLeft: booster.usesLeft - 1,
-          isActive: true,
-          endTime: now + BOOST_DURATION,
-          resetTime: booster.usesLeft === 1 ? now + DAILY_RESET_INTERVAL : booster.resetTime,
-        },
-      }));
+      setDailyBoosters((prev) => {
+        const updated = { ...prev };
+        if (boosterType === "tapperBoost") {
+          updated.tapperBoost = {
+            usesLeft: booster.usesLeft - 1,
+            isActive: true,
+            endTime: now + BOOST_DURATION,
+            resetTime: booster.usesLeft === 1 ? now + DAILY_RESET_INTERVAL : booster.resetTime,
+          };
+        } else if (boosterType === "fullEnergy") {
+          updated.fullEnergy = {
+            usesLeft: booster.usesLeft - 1,
+            isActive: true, // Instant effect, no countdown
+            resetTime: booster.usesLeft === 1 ? now + DAILY_RESET_INTERVAL : booster.resetTime,
+          };
+          window.dispatchEvent(new Event("fullEnergyClaimed")); // Trigger immediate refill
+        }
+        return updated;
+      });
     }
     handleOverlayClose();
   };
@@ -117,14 +124,15 @@ const BoostScreen = () => {
     const intervalId = setInterval(() => {
       setDailyBoosters((prev) => {
         const updated = { ...prev };
+        if (updated.tapperBoost.isActive && Date.now() >= updated.tapperBoost.endTime) {
+          updated.tapperBoost.isActive = false;
+        }
         ["tapperBoost", "fullEnergy"].forEach((type) => {
           const booster = updated[type];
-          if (booster.isActive && Date.now() >= booster.endTime) {
-            booster.isActive = false;
-          }
           if (booster.usesLeft === 0 && booster.resetTime && Date.now() >= booster.resetTime) {
             booster.usesLeft = 3;
             booster.resetTime = null;
+            booster.isActive = false;
           }
         });
         return updated;
@@ -133,21 +141,20 @@ const BoostScreen = () => {
     return () => clearInterval(intervalId);
   }, []);
 
-  // Inside the `renderTimer` function, update the timer display logic:
-const renderTimer = (boosterType) => {
-  const booster = dailyBoosters[boosterType];
-  if (booster.isActive) {
-    const remaining = Math.max(0, (booster.endTime - Date.now()) / 1000);
-    return `Active: ${Math.floor(remaining)}s`;
-  } else if (booster.usesLeft === 0 && booster.resetTime) {
-    const resetIn = Math.max(0, (booster.resetTime - Date.now()) / 1000);
-    const hours = Math.floor(resetIn / 3600);
-    const minutes = Math.floor((resetIn % 3600) / 60);
-    const seconds = Math.floor(resetIn % 60);
-    return `Resets in ${hours}h ${minutes}m ${seconds}s`;
-  }
-  return `${booster.usesLeft}/3 uses left`;
-};
+  const renderTimer = (boosterType) => {
+    const booster = dailyBoosters[boosterType];
+    if (boosterType === "tapperBoost" && booster.isActive) {
+      const remaining = Math.max(0, (booster.endTime - Date.now()) / 1000);
+      return `Active: ${Math.floor(remaining)}s`;
+    } else if (booster.usesLeft === 0 && booster.resetTime) {
+      const resetIn = Math.max(0, (booster.resetTime - Date.now()) / 1000);
+      const hours = Math.floor(resetIn / 3600);
+      const minutes = Math.floor((resetIn % 3600) / 60);
+      const seconds = Math.floor(resetIn % 60);
+      return `Resets in ${hours}h ${minutes}m ${seconds}s`;
+    }
+    return `${booster.usesLeft}/3 uses left`;
+  };
 
   const renderOverlay = () => {
     if (!activeOverlay) return null;
@@ -240,7 +247,7 @@ const renderTimer = (boosterType) => {
                         description:
                           booster.type === "tapperBoost"
                             ? "Multiply your tap income by X2 for 20 seconds."
-                            : "Instantly refill energy to max for 20 seconds.",
+                            : "Instantly refill energy to maximum.",
                         value: "Free",
                         ctaText: "Claim",
                         icon: booster.icon,
