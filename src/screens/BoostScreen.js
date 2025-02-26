@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import Navigation from "../components/Navigation";
 import "./BoostScreen.css";
 
-// Configurable constants for booster duration and daily reset
+// Configurable constants for booster timing
 const BOOST_DURATION = 20000; // 20 seconds for Tapper Boost
 const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours for reset
 
@@ -12,24 +12,26 @@ const BoostScreen = () => {
   const [boostersData, setBoostersData] = useState({ dailyBoosters: [], extraBoosters: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const [toastMessage, setToastMessage] = useState(null); // New state for upgrade toast
   const [dailyBoosters, setDailyBoosters] = useState(() => {
     const savedBoosters = localStorage.getItem("dailyBoosters");
     return savedBoosters
       ? JSON.parse(savedBoosters)
       : {
           tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
-          fullEnergy: { usesLeft: 3, resetTime: null }, // Removed isActive and endTime
+          fullEnergy: { usesLeft: 3, resetTime: null },
         };
   });
 
+  // Close overlay handler
   const handleOverlayClose = () => setActiveOverlay(null);
 
+  // Persist daily boosters to localStorage
   useEffect(() => {
     localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
   }, [dailyBoosters]);
 
-  // Fetch profile and boosters without debounce
+  // Fetch profile and booster data from backend
   const fetchProfileAndBoosters = useCallback(async () => {
     const controller = new AbortController();
     setLoading(true);
@@ -54,17 +56,14 @@ const BoostScreen = () => {
       if (!extraBoostersResponse.ok) throw new Error("Extra boosters fetch failed");
       const extraBoostersData = await extraBoostersResponse.json();
 
-      // Fetch booster icons dynamically
+      // Map extra boosters with dynamic icons
       const mappedExtraBoosters = await Promise.all(
         extraBoostersData.map(async (booster) => {
-          let iconUrl = `${process.env.PUBLIC_URL}/extra-booster-icon.png`; // Fallback
+          let iconUrl = `${process.env.PUBLIC_URL}/extra-booster-icon.png`;
           try {
             const iconResponse = await fetch(
               `https://bt-coins.onrender.com/bored-tap/user_app/image?image_id=${booster.image_id}`,
-              {
-                method: "GET",
-                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-              }
+              { headers: { Authorization: `Bearer ${token}` } }
             );
             if (iconResponse.ok) {
               const blob = await iconResponse.blob();
@@ -98,12 +97,14 @@ const BoostScreen = () => {
       setLoading(false);
     }
     return () => controller.abort();
-  }, []); // No dependencies since we removed debounce reliance on totalTaps
+  }, []);
 
+  // Initial fetch on mount
   useEffect(() => {
     fetchProfileAndBoosters();
   }, [fetchProfileAndBoosters]);
 
+  // Upgrade an extra booster and show toast
   const handleUpgradeBoost = async (boosterId) => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -112,8 +113,10 @@ const BoostScreen = () => {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       });
       if (!response.ok) throw new Error("Upgrade failed");
-      await fetchProfileAndBoosters(); // Immediate fetch after upgrade
+      await fetchProfileAndBoosters();
       window.dispatchEvent(new Event("boosterUpgraded"));
+      setToastMessage("Booster upgraded successfully!");
+      setTimeout(() => setToastMessage(null), 3000); // Clear toast after 3 seconds
       handleOverlayClose();
     } catch (err) {
       setError(err.message);
@@ -121,6 +124,7 @@ const BoostScreen = () => {
     }
   };
 
+  // Claim a daily booster
   const handleClaimDailyBooster = (boosterType) => {
     const booster = dailyBoosters[boosterType];
     if (booster.usesLeft > 0) {
@@ -147,16 +151,14 @@ const BoostScreen = () => {
     handleOverlayClose();
   };
 
+  // Manage daily booster timers
   useEffect(() => {
     const intervalId = setInterval(() => {
       setDailyBoosters((prev) => {
         const updated = { ...prev };
-        ["tapperBoost"].forEach((type) => {
-          const booster = updated[type];
-          if (booster.isActive && Date.now() >= booster.endTime) {
-            booster.isActive = false;
-          }
-        });
+        if (updated.tapperBoost.isActive && Date.now() >= updated.tapperBoost.endTime) {
+          updated.tapperBoost.isActive = false;
+        }
         ["tapperBoost", "fullEnergy"].forEach((type) => {
           const booster = updated[type];
           if (booster.usesLeft === 0 && booster.resetTime && Date.now() >= booster.resetTime) {
@@ -174,6 +176,7 @@ const BoostScreen = () => {
     return () => clearInterval(intervalId);
   }, []);
 
+  // Render timer text for daily boosters
   const renderTimer = (boosterType) => {
     const booster = dailyBoosters[boosterType];
     if (boosterType === "tapperBoost" && booster.isActive) {
@@ -189,6 +192,7 @@ const BoostScreen = () => {
     return `${booster.usesLeft}/3 uses left`;
   };
 
+  // Render overlay for booster details
   const renderOverlay = () => {
     if (!activeOverlay) return null;
     const { type, title, description, value, level, ctaText, altCTA, id, icon } = activeOverlay;
@@ -342,6 +346,7 @@ const BoostScreen = () => {
       </div>
 
       {renderOverlay()}
+      {toastMessage && <div className="toast-message">{toastMessage}</div>}
       <Navigation />
     </div>
   );
