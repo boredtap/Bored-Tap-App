@@ -63,8 +63,8 @@
 
 .rewards-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(60px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(4, minmax(70px, 1fr));
+  gap: 10px; /* Equal horizontal and vertical gap */
   justify-items: center;
   margin: 0 auto;
   max-width: 400px;
@@ -78,7 +78,7 @@
   padding: 10px;
   border-radius: 4px;
   text-align: center;
-  width: 70px;
+  width: 80px; /* Increased from 70px */
   height: 100px;
   box-sizing: border-box;
   background-color: #414141;
@@ -271,12 +271,12 @@
   }
 
   .rewards-grid {
-    grid-template-columns: repeat(4, minmax(50px, 1fr));
-    gap: 6px;
+    grid-template-columns: repeat(4, minmax(60px, 1fr));
+    gap: 8px;
   }
 
   .reward-frame {
-    width: 60px;
+    width: 70px; /* Adjusted for mobile */
     height: 90px;
     padding: 8px;
   }
@@ -337,7 +337,7 @@
   }
 
   .reward-frame {
-    width: 80px;
+    width: 90px; /* Increased from 80px for desktop */
     height: 110px;
   }
 

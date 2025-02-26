@@ -34,24 +34,14 @@ const RewardFrame = ({ day, reward, isActive, isClaimed, onClick }) => {
  * Fetches user profile, tracks claimed days, and shows eligibility status with an overlay.
  */
 const DailyStreakScreen = () => {
-  // State for tracking the current active day
   const [currentDay, setCurrentDay] = useState(1);
-  // State for tracking claimed days
   const [claimedDays, setClaimedDays] = useState([]);
-  // State for user profile data
   const [profile, setProfile] = useState(null);
-  // State for local coin count
   const [localTotalCoins, setLocalTotalCoins] = useState(0);
-  // State for showing ineligibility overlay
   const [showOverlay, setShowOverlay] = useState(false);
-  // State for countdown time (mocked for now)
-  const [countdownTime, setCountdownTime] = useState("5:27 PM");
+  const [countdownTime, setCountdownTime] = useState("12:59 PM"); // Mocked for now
 
-  // Fetch user profile on mount
   useEffect(() => {
-    /**
-     * Fetches user profile data from the backend to initialize streak and coin information.
-     */
     const fetchProfile = async () => {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
@@ -78,7 +68,6 @@ const DailyStreakScreen = () => {
     fetchProfile();
   }, []);
 
-  // Predefined rewards for each day
   const rewards = [
     { day: "Day 1", reward: "500" },
     { day: "Day 2", reward: "1000" },
@@ -90,7 +79,6 @@ const DailyStreakScreen = () => {
     { day: "Ultimate", reward: "5000" },
   ];
 
-  // Handle claiming a daily reward
   const handleClaim = async () => {
     if (!claimedDays.includes(currentDay)) {
       try {
@@ -111,12 +99,11 @@ const DailyStreakScreen = () => {
         const streakData = await response.json();
 
         if (streakData.message === "Streak not updated") {
-          setCountdownTime(streakData.Countdown || "5:27 PM"); // Mocked for now
+          setCountdownTime(streakData.Countdown || "12:59 PM"); // Mocked for now
           setShowOverlay(true);
           return;
         }
 
-        // Update state with successful claim
         setClaimedDays([...claimedDays, currentDay]);
         setProfile((prev) => ({
           ...prev,
@@ -132,12 +119,11 @@ const DailyStreakScreen = () => {
         setCurrentDay((prevDay) => prevDay + 1);
       } catch (err) {
         console.error("Error claiming reward:", err);
-        setShowOverlay(true); // Show overlay on error for now
+        setShowOverlay(true);
       }
     }
   };
 
-  // Close the ineligibility overlay
   const handleCloseOverlay = () => setShowOverlay(false);
 
   const profileInfo = profile ? `Current Coins: ${localTotalCoins.toLocaleString()}` : "Loading profile...";
