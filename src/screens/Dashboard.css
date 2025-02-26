@@ -27,15 +27,15 @@
   align-items: center;
   justify-content: flex-start;
   gap: 10px;
-  cursor: pointer; /* Indicate clickable area */
+  cursor: pointer;
   transition: background-color 0.2s ease-in-out;
 }
 
 .profile1-section img {
-  width: 30px; /* Fixed size for profile picture */
+  width: 30px;
   height: 30px;
-  border-radius: 50%; /* Circular profile picture */
-  object-fit: cover; /* Ensures the image fits without distortion */
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .profile1-info {
@@ -45,14 +45,14 @@
 }
 
 .profile1-username {
-  font-size: 16px; /* Same as streak text */
+  font-size: 16px;
   color: white;
-  font-weight: bold; /* Made bold */
+  font-weight: bold;
 }
 
 .profile1-level {
-  font-size: 14px; /* Same as streak days */
-  color: orange; /* Matches streak days */
+  font-size: 14px;
+  color: orange;
 }
 
 /* Streak Section */
@@ -80,14 +80,14 @@
 }
 
 .streak-text {
-  font-size: 16px; /* Same as profile username */
-  color: white; /* Same as profile username */
+  font-size: 16px;
+  color: white;
   margin: 0;
 }
 
 .streak-days {
-  font-size: 14px; /* Same as profile level */
-  color: orange; /* Same as profile level */
+  font-size: 14px;
+  color: orange;
   margin: 0;
 }
 
@@ -130,36 +130,12 @@
   text-align: center;
 }
 
-/* Glow effect when Tapper Boost is active */
-.tapper-boost-active {
-  box-shadow: 0 0 15px #ffd700;
-  animation: glow 1s infinite alternate;
-}
-
-@keyframes glow {
-  from { box-shadow: 0 0 10px #ffd700; }
-  to { box-shadow: 0 0 20px #ffd700; }
-}
-
-/* Low energy warning style */
-.low-energy-warning {
-  color: #ff4444;
-  font-size: 12px;
-  margin-left: 8px;
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
-}
-
 /* Total Taps Section */
 .total-taps-section {
   text-align: center;
   margin-top: 16px;
   gap: 8px;
+  position: relative; /* For tap effects positioning */
 }
 
 .total-taps-text {
@@ -187,10 +163,6 @@
   margin: 0 auto;
   display: block;
   transition: transform 0.2s ease-in-out;
-}
-
-.big-tap-icon.tap-animation img {
-  transform: rotateX(10deg) rotateY(10deg) scale(1.0);
 }
 
 /* Electric Boost Section */
@@ -235,27 +207,16 @@
   object-fit: contain;
 }
 
-/* Tap Animation */
-.tap-bonus {
-  position: absolute;
-  color: #fff;
-  font-size: 24px;
-  font-weight: bold;
-  pointer-events: none;
-  z-index: 10;
-  animation: float-up 0.5s ease-out forwards;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
-}
-
-/* Floating "+1" Animation */
+/* Tap Effect Styling */
 .tap-effect {
   position: absolute;
   font-size: 18px;
   font-weight: bold;
-  color: white;
-  animation: float-up 1s ease-out forwards, fade-out 1s ease-out forwards;
+  color: #fff;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
   pointer-events: none;
   z-index: 10;
+  animation: float-up 1s ease-out forwards;
 }
 
 @keyframes float-up {
@@ -269,105 +230,32 @@
   }
 }
 
-/* Big Tap Icon Animation */
-.big-tap-icon {
-  position: relative;
-  cursor: pointer;
-  animation: tap-scale 0.2s ease-in-out;
-}
-
-@keyframes tap-scale {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-/* Boost Animation */
-.boost-animation {
-  animation: pulse 0.3s ease-in-out;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-/* Floating Tap Animation */
-.tap-effect {
-  position: absolute;
-  font-size: 18px;
-  color: #fff;
-  font-weight: bold;
-  /* animation: float-up 1s ease-out forwards, fade-out 1s ease-out forwards; */
-  pointer-events: none;
-}
-
-/* @keyframes float-up {
-  0% {
-    transform: translateY(0);
-  }
-  100% {
-    transform: translateY(-50px);
-  }
-}
-
-@keyframes fade-out {
-  0% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-} */
-
-/* Tap Logo Animation */
-.big-tap-icon {
-  position: relative;
-  cursor: pointer;
-  animation: tap-scale 0.2 ease-in-out;
-}
-
-@keyframes tap-scale {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
 /* Media Queries for Responsiveness */
 @media (max-width: 600px) {
   .profile1-username {
-    font-size: 14px; /* Slightly smaller for mobile */
-    font-weight: bold; /* Made bold */
+    font-size: 14px;
+    font-weight: bold;
   }
 
   .streak-text {
-    font-size: 14px; /* Slightly smaller for mobile */
+    font-size: 14px;
   }
 
-  .profile1-level, .streak-days {
+  .profile1-level,
+  .streak-days {
     font-size: 12px;
   }
+
   .big-tap-icon img {
-    width: 280px; /* Smaller tap icon for mobile */
+    width: 280px;
     height: 280px;
+  }
+
+  .total-taps-count {
+    font-size: 28px;
+  }
+
+  .tap-effect {
+    font-size: 16px;
   }
 }

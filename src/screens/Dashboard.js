@@ -385,28 +385,55 @@
 
 // export default Dashboard;
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./Dashboard.css";
 
 /**
- * Dashboard component displaying the main UI with navigation links.
- * No game mechanics or state management, just static layout and links.
+ * Dashboard component displaying the main UI with tapping interaction and navigation links.
+ * Handles tap events to increment total taps and show tap effects locally.
  */
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  // Mock static data for UI display
+  // Static mock data for UI display
   const telegramData = {
     username: "User",
     image_url: `${process.env.PUBLIC_URL}/profile-picture.png`,
   };
   const profile = { level: 1, level_name: "Beginner" };
-  const totalTaps = 0;
+  const currentStreak = 0;
   const electricBoost = 1000;
   const maxElectricBoost = 1000;
-  const currentStreak = 0;
+
+  // State for total taps and tap effects
+  const [totalTaps, setTotalTaps] = useState(0);
+  const [tapEffects, setTapEffects] = useState([]);
+
+  /**
+   * Handles tap events on the big tap icon, incrementing total taps and showing a +1 effect.
+   * @param {Object} event - The tap or click event object.
+   */
+  const handleTap = (event) => {
+    event.preventDefault(); // Prevent default behavior for touch/mouse events
+
+    // Increment total taps by 1
+    setTotalTaps((prev) => prev + 1);
+
+    // Get tap coordinates
+    const tapX = (event.touches ? event.touches[0].clientX : event.clientX) || 0;
+    const tapY = (event.touches ? event.touches[0].clientY : event.clientY) || 0;
+
+    // Add tap effect at the tap location
+    const newTapEffect = { id: Date.now(), x: tapX, y: tapY };
+    setTapEffects((prevEffects) => [...prevEffects, newTapEffect]);
+
+    // Remove the tap effect after 1 second
+    setTimeout(() => {
+      setTapEffects((prev) => prev.filter((e) => e.id !== newTapEffect.id));
+    }, 1000);
+  };
 
   return (
     <div className="dashboard-container">
@@ -450,9 +477,23 @@ const Dashboard = () => {
           <img className="tap-logo-small" src={`${process.env.PUBLIC_URL}/logo.png`} alt="Small Icon" />
           <span>{totalTaps.toLocaleString()}</span>
         </div>
-        <div className="big-tap-icon">
+        <div
+          className="big-tap-icon"
+          onTouchStart={handleTap}
+          onMouseDown={handleTap}
+        >
           <img className="tap-logo-big" src={`${process.env.PUBLIC_URL}/logo.png`} alt="Big Tap Icon" />
         </div>
+        {/* Tap Effects */}
+        {tapEffects.map((effect) => (
+          <div
+            key={effect.id}
+            className="tap-effect"
+            style={{ top: effect.y, left: effect.x }}
+          >
+            +1
+          </div>
+        ))}
       </div>
 
       {/* Electric Boost Section */}
