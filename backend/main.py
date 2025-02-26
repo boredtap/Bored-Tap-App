@@ -1,7 +1,13 @@
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from superuser.dashboard.admin_auth import get_current_admin
-from dependencies import get_user_profile, update_coins_in_db,get_user_by_id, get_image as get_image_func
+from database_connection import redis_cache
+from dependencies import (
+    get_user_profile,
+    update_coins_in_db,
+    get_user_by_id,
+    get_image as get_image_func
+)
+from superuser.level.dependencies import get_levels as get_levels_func
 from user_reg_and_prof_mngmnt.router import userApp
 from earn.router import earnApp
 from boosts.router import userExtraBoostApp
@@ -66,21 +72,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(userApp)
-app.include_router(earnApp)
-app.include_router(userExtraBoostApp)
-app.include_router(taskApp)
-app.include_router(inviteApp)
-app.include_router(bot_interactions)
-app.include_router(adminDashboard)
-app.include_router(task_router)
-app.include_router(rewardApp)
-app.include_router(challenge_router)
-app.include_router(adminLeaderboard)
-app.include_router(boostApp)
-app.include_router(levelApp)
-app.include_router(userMgtApp)
-app.include_router(securityApp)
+all_routers = [
+    userApp, earnApp, userExtraBoostApp, taskApp, inviteApp, bot_interactions, 
+    adminDashboard, task_router, rewardApp, challenge_router, adminLeaderboard,
+    boostApp, levelApp, userMgtApp, securityApp
+]
+
+# include all routers
+for router_app in all_routers:
+    app.include_router(router_app)
+
 
 
 @app.get('/', tags=["Global Routes"])
@@ -124,7 +125,8 @@ async def update_coins(telegram_user_id: Annotated[str, Depends(get_current_user
 
 # get user data
 @app.get('/user/profile', tags=["Global Routes"], response_model=UserProfile)
-async def get_user_data(telegram_user_id: Annotated[str, Depends(get_current_user)]) -> UserProfile:
+@redis_cache()
+async def get_user_data(telegram_user_id: Annotated[str, Depends(get_current_user)], request: Request) -> UserProfile:
     """Get full user profile information
 
     Args:
@@ -137,6 +139,14 @@ async def get_user_data(telegram_user_id: Annotated[str, Depends(get_current_use
     return user
 
 
+# get levels
+@app.get("/bored-tap/levels", tags=["Global Routes"])
+async def get_levels():
+
+    return get_levels_func()
+
+
+# get user image
 @app.get("/bored-tap/user_app/image", tags=["Global Routes"])
 async def get_image(
     image_id: str, request: Request, user: Annotated[str, Depends(get_current_user)]):
