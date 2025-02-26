@@ -2,12 +2,24 @@ import React, { useState, useEffect } from "react";
 import Navigation from "../components/Navigation";
 import "./Leaderboard.css";
 
+/**
+ * Leaderboard component displaying user rankings across different time periods.
+ * Fetches data for Daily, Weekly, Monthly, and All Time leaderboards, and shows the current user's position.
+ */
 const Leaderboard = () => {
+  // State for active tab (Daily, Weekly, Monthly, All Time)
   const [activeTab, setActiveTab] = useState("Daily");
+  // State for leaderboard data, structured as { period: [entries] }
   const [leaderboardData, setLeaderboardData] = useState({});
+  // State for current user's profile data
   const [currentUser, setCurrentUser] = useState(null);
 
+  // Effect to fetch leaderboard data and user profile on mount
   useEffect(() => {
+    /**
+     * Fetches leaderboard data for all periods and the current user's profile.
+     * Updates state with fetched data or logs errors if fetch fails.
+     */
     const fetchLeaderboardData = async () => {
       const token = localStorage.getItem("accessToken");
       if (!token) {
@@ -16,18 +28,23 @@ const Leaderboard = () => {
       }
 
       try {
+        // Define periods to fetch
         const periods = ["Daily", "Weekly", "Monthly", "All Time"];
         const fetchedData = {};
 
-        for (let period of periods) {
+        // Fetch leaderboard data for each period
+        for (const period of periods) {
           const category = period.toLowerCase().replace(" ", "_");
-          const response = await fetch(`https://bt-coins.onrender.com/user/leaderboard?category=${category}`, {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          });
+          const response = await fetch(
+            `https://bt-coins.onrender.com/user/leaderboard?category=${category}`,
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
 
           if (!response.ok) {
             throw new Error(`Failed to fetch ${period} leaderboard`);
@@ -39,7 +56,7 @@ const Leaderboard = () => {
 
         setLeaderboardData(fetchedData);
 
-        // Fetch current user profile
+        // Fetch current user's profile
         const userResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
           method: "GET",
           headers: {
@@ -54,12 +71,12 @@ const Leaderboard = () => {
 
         const userData = await userResponse.json();
         setCurrentUser({
-          username: userData.username,
-          level: userData.level,
+          username: userData.username || "Unknown",
+          level: userData.level || 1,
           position: userData.rank || null,
           value: userData.total_coins || 0,
           image_url: userData.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
-          telegram_user_id: userData.telegram_user_id,
+          telegram_user_id: userData.telegram_user_id || "",
         });
       } catch (err) {
         console.error("Error fetching leaderboard data:", err);
@@ -69,15 +86,17 @@ const Leaderboard = () => {
     fetchLeaderboardData();
   }, []);
 
+  // Handler to switch between leaderboard tabs
   const handleTabClick = (tab) => {
     setActiveTab(tab);
   };
 
+  // Get current leaderboard data based on active tab
   const currentLeaderboard = leaderboardData[activeTab] || [];
 
   return (
     <div className="leaderboard-screen">
-      {/* Header Section */}
+      {/* Header with leaderboard icon */}
       <div className="leaderboard-header">
         <img
           src={`${process.env.PUBLIC_URL}/leaderboard12-icon.png`}
@@ -86,7 +105,7 @@ const Leaderboard = () => {
         />
       </div>
 
-      {/* Pagination Tabs */}
+      {/* Pagination tabs for switching periods */}
       <div className="pagination">
         {Object.keys(leaderboardData).map((tab) => (
           <span
@@ -99,7 +118,7 @@ const Leaderboard = () => {
         ))}
       </div>
 
-      {/* Leaderboard Cards */}
+      {/* Leaderboard entries */}
       {currentLeaderboard.length === 0 ? (
         <p className="no-leaderboard">No leaderboard entries available yet.</p>
       ) : (
@@ -112,33 +131,33 @@ const Leaderboard = () => {
               <div className="leaderboard-left">
                 <img
                   src={entry.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`}
-                  alt="Profile"
+                  alt={`${entry.username}'s Profile`}
                   className="leaderboard-logo round-frame"
                 />
                 <div className="leaderboard-info">
                   <p className="leaderboard-title">
-                    {entry.username} <span className="level">.Lvl {entry.level}</span>
+                    {entry.username} <span className="level">.Lvl {entry.level || 1}</span>
                   </p>
-                  <p className="leaderboard-value">{entry.coins_earned} BT Coin</p>
+                  <p className="leaderboard-value">{entry.coins_earned || 0} BT Coin</p>
                 </div>
               </div>
               <div className="leaderboard-right">
                 {index === 0 ? (
                   <img
                     src={`${process.env.PUBLIC_URL}/first-icon.png`}
-                    alt="1st Icon"
+                    alt="1st Place"
                     className="leaderboard-right-icon"
                   />
                 ) : index === 1 ? (
                   <img
                     src={`${process.env.PUBLIC_URL}/second-icon.png`}
-                    alt="2nd Icon"
+                    alt="2nd Place"
                     className="leaderboard-right-icon"
                   />
                 ) : index === 2 ? (
                   <img
                     src={`${process.env.PUBLIC_URL}/third-icon.png`}
-                    alt="3rd Icon"
+                    alt="3rd Place"
                     className="leaderboard-right-icon"
                   />
                 ) : (
@@ -150,22 +169,20 @@ const Leaderboard = () => {
         </div>
       )}
 
-      {/* Floating Card for the Current User */}
+      {/* Floating card for current user */}
       {currentUser && (
         <div className="floating-card">
           <div className="leaderboard-left">
             <img
               src={currentUser.image_url}
-              alt="Profile"
+              alt={`${currentUser.username}'s Profile`}
               className="leaderboard-logo round-frame"
             />
             <div className="leaderboard-info">
               <p className="leaderboard-title black-text">
                 {currentUser.username} <span className="level black-text">.Lvl {currentUser.level}</span>
               </p>
-              <p className="leaderboard-value black-text">
-                {currentUser.value} BT Coin
-              </p>
+              <p className="leaderboard-value black-text">{currentUser.value} BT Coin</p>
             </div>
           </div>
           <div className="leaderboard-right">
@@ -201,7 +218,6 @@ const Leaderboard = () => {
         </div>
       )}
 
-      {/* Navigation */}
       <Navigation />
     </div>
   );
