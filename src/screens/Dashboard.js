@@ -57,7 +57,7 @@ const Dashboard = () => {
   });
   const [showLowEnergyWarning, setShowLowEnergyWarning] = useState(false);
 
-  // Refs for tracking intervals and audio
+  // Refs for tracking intervals, audio, and tap processing
   const tapCountSinceLastUpdate = useRef(0);
   const autobotInterval = useRef(null);
   const rechargeInterval = useRef(null);
@@ -81,16 +81,17 @@ const Dashboard = () => {
         }
       } catch (err) {
         console.error("Error syncing Telegram data:", err);
+        setError("Failed to initialize Telegram data");
       }
     };
     initTelegram();
   }, []);
 
-  // Fetch user profile from backend
+  // Fetch user profile from backend with auth handling
   const fetchProfile = useCallback(async () => {
-    const controller = new AbortController();
     const token = localStorage.getItem("accessToken");
     if (!token) {
+      setError("No access token found. Please log in.");
       navigate("/splash");
       return;
     }
@@ -98,15 +99,21 @@ const Dashboard = () => {
       const response = await fetch("https://bt-coins.onrender.com/user/profile", {
         method: "GET",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        signal: controller.signal,
       });
-      if (!response.ok) throw new Error("Failed to fetch profile");
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError("Session expired. Please log in again.");
+          localStorage.removeItem("accessToken");
+          navigate("/splash");
+          return;
+        }
+        throw new Error(`Failed to fetch profile: ${await response.text()}`);
+      }
       const data = await response.json();
       setProfile(data);
       setTotalTaps(data.total_coins || 0);
       setCurrentStreak(data.streak?.current_streak || 0);
 
-      // Reset local state if backend reports zero coins (new user scenario)
       if (data.total_coins === 0) {
         localStorage.removeItem("dailyBoosters");
         localStorage.removeItem("extraBoosters");
@@ -129,12 +136,11 @@ const Dashboard = () => {
         setTotalTaps(0);
       }
     } catch (err) {
-      if (err.name !== "AbortError") setError(err.message);
+      setError(err.message);
     }
-    return () => controller.abort();
   }, [navigate]);
 
-  // Apply extra booster effects based on purchased upgrades
+  // Apply extra booster effects
   const applyExtraBoosterEffects = useCallback(
     (boosters) => {
       let newMaxElectricBoost = BASE_MAX_ELECTRIC_BOOST;
@@ -175,7 +181,7 @@ const Dashboard = () => {
     [electricBoost]
   );
 
-  // Handle profile fetch, booster events, and offline recharge on mount
+  // Handle profile fetch and booster events
   useEffect(() => {
     fetchProfile();
 
@@ -231,6 +237,44 @@ const Dashboard = () => {
     localStorage.setItem("lastActiveTime", Date.now());
   }, [hasAutobot, tapBoostLevel]);
 
+  // Memoize updateBackend to include in handleTap dependencies
+  const updateBackend = useCallback(async () => {
+    if (tapCountSinceLastUpdate.current === 0) return;
+    const tapsToSync = tapCountSinceLastUpdate.current;
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        setError("No access token found. Please log in.");
+        navigate("/splash");
+        return;
+      }
+      const response = await fetch(
+        `https://bt-coins.onrender.com/update-coins?coins=${tapsToSync}`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        }
+      );
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError("Session expired. Please log in again.");
+          localStorage.removeItem("accessToken");
+          navigate("/splash");
+          return;
+        }
+        throw new Error(`Failed to sync coins: ${await response.text()}`);
+      }
+      const data = await response.json();
+      if (data.total_coins >= 0) {
+        setTotalTaps(data.total_coins);
+        tapCountSinceLastUpdate.current = 0;
+      }
+    } catch (err) {
+      console.error("Error syncing with backend:", err);
+      setError(err.message);
+    }
+  }, [navigate, setError, setTotalTaps]); // Dependencies for updateBackend
+
   // Autobot tapping interval
   useEffect(() => {
     if (hasAutobot) {
@@ -245,7 +289,7 @@ const Dashboard = () => {
     return () => {
       if (autobotInterval.current) clearInterval(autobotInterval.current);
     };
-  }, [hasAutobot, dailyBoosters.tapperBoost.isActive, tapBoostLevel]);
+  }, [hasAutobot, dailyBoosters.tapperBoost.isActive, tapBoostLevel, updateBackend]);
 
   // Energy recharge with dynamic speed
   useEffect(() => {
@@ -259,7 +303,6 @@ const Dashboard = () => {
           const newBoost = Math.min(prev + rechargeRate * 1000, maxElectricBoost);
           localStorage.setItem("electricBoost", newBoost);
           localStorage.setItem("lastBoostUpdateTime", Date.now());
-          // Check for low energy warning
           setShowLowEnergyWarning(newBoost < maxElectricBoost * LOW_ENERGY_THRESHOLD);
           return newBoost;
         }
@@ -269,31 +312,6 @@ const Dashboard = () => {
     }, 1000);
     return () => clearInterval(rechargeInterval.current);
   }, [maxElectricBoost, rechargingSpeedLevel]);
-
-  // Sync tap count with backend
-  async function updateBackend() {
-    if (tapCountSinceLastUpdate.current === 0) return;
-    const tapsToSync = tapCountSinceLastUpdate.current;
-    try {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch(
-        `https://bt-coins.onrender.com/update-coins?coins=${tapsToSync}`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        if (data.total_coins >= 0) {
-          setTotalTaps(data.total_coins);
-          tapCountSinceLastUpdate.current = 0;
-        }
-      }
-    } catch (err) {
-      console.error("Error syncing with backend:", err);
-    }
-  }
 
   // Handle tap events with multiplier and animations
   const handleTap = useCallback(
@@ -331,17 +349,18 @@ const Dashboard = () => {
       setTapEffects((prevEffects) => [...prevEffects, newTapEffect]);
       setTimeout(() => setTapEffects((prev) => prev.filter((e) => e.id !== newTapEffect.id)), 1000);
 
-      tapSoundRef.current.pause();
-      tapSoundRef.current.currentTime = 0;
-      tapSoundRef.current.volume = 0.2;
-      tapSoundRef.current.play().catch((err) => console.error("Audio playback error:", err));
+      if (tapSoundRef.current.paused) {
+        tapSoundRef.current.currentTime = 0;
+        tapSoundRef.current.volume = 0.2;
+        tapSoundRef.current.play().catch((err) => console.error("Audio playback error:", err));
+      }
 
       tapTimeout.current = setTimeout(() => {
         isTapProcessed.current = false;
         updateBackend();
       }, TAP_DEBOUNCE_DELAY);
     },
-    [electricBoost, dailyBoosters, tapBoostLevel, maxElectricBoost]
+    [electricBoost, dailyBoosters, tapBoostLevel, maxElectricBoost, updateBackend] // Include updateBackend
   );
 
   // Sync on component unmount
@@ -349,7 +368,7 @@ const Dashboard = () => {
     return () => {
       if (tapCountSinceLastUpdate.current > 0) updateBackend();
     };
-  }, []);
+  }, [updateBackend]);
 
   // Manage daily booster timers
   useEffect(() => {
@@ -379,7 +398,14 @@ const Dashboard = () => {
 
   const handleTapEnd = (event) => event.preventDefault();
 
-  if (error) return <div className="error">{error}</div>;
+  if (error) {
+    return (
+      <div className="dashboard-container">
+        <div className="error">{error}</div>
+        <button onClick={() => navigate("/splash")}>Back to Login</button>
+      </div>
+    );
+  }
 
   const { level = 1, level_name = "Beginner" } = profile || {};
 

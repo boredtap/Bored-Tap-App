@@ -8,10 +8,17 @@ const SplashScreen = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const initializeAuth = async () => {
+    // Initialize authentication with retry logic for Telegram WebApp
+    const initializeAuth = async (retries = 3) => {
       try {
+        // Check if Telegram WebApp is available, retry if not
         if (!window.Telegram?.WebApp) {
-          throw new Error("Telegram WebApp not initialized");
+          if (retries > 0) {
+            console.log(`Telegram WebApp not ready, retrying (${retries} left)...`);
+            await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1s
+            return initializeAuth(retries - 1);
+          }
+          throw new Error("Telegram WebApp failed to initialize after retries");
         }
 
         const webApp = window.Telegram.WebApp;
@@ -25,7 +32,7 @@ const SplashScreen = () => {
         const telegramUserId = String(userData.id);
         const imageUrl = userData.photo_url || "";
 
-        // Attempt sign-in
+        // Attempt to sign in with Telegram credentials
         const signInResponse = await fetch("https://bt-coins.onrender.com/signin", {
           method: "POST",
           headers: {
@@ -34,7 +41,7 @@ const SplashScreen = () => {
           },
           body: new URLSearchParams({
             username,
-            password: telegramUserId,
+            password: telegramUserId, // Using telegramUserId as password
           }),
         });
 
@@ -43,10 +50,11 @@ const SplashScreen = () => {
           handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl });
           return;
         } else {
-          console.log("Sign-in failed:", signInResponse.status, await signInResponse.text());
+          const errorText = await signInResponse.text();
+          console.log("Sign-in failed:", signInResponse.status, errorText);
         }
 
-        // Register if sign-in fails
+        // If sign-in fails, register the user
         const signUpResponse = await fetch("https://bt-coins.onrender.com/sign-up", {
           method: "POST",
           headers: {
@@ -64,7 +72,7 @@ const SplashScreen = () => {
           throw new Error(`Registration failed: ${await signUpResponse.text()}`);
         }
 
-        // Retry sign-in after registration
+        // Retry sign-in after successful registration
         const signInAfterRegResponse = await fetch("https://bt-coins.onrender.com/signin", {
           method: "POST",
           headers: {
@@ -91,17 +99,19 @@ const SplashScreen = () => {
       }
     };
 
+    // Handle successful authentication by storing token and navigating
     const handleSuccessfulAuth = (authData, userInfo) => {
       localStorage.setItem("accessToken", authData.access_token);
       localStorage.setItem("tokenType", authData.token_type);
       localStorage.setItem("telegramUser", JSON.stringify(userInfo));
-      console.log("Token stored:", authData.access_token); // Debug token
+      console.log("Authentication successful, token stored:", authData.access_token);
       navigate("/dashboard");
     };
 
     initializeAuth();
   }, [navigate]);
 
+  // Retry authentication on user request
   const handleRetry = () => {
     setError(null);
     setLoading(true);

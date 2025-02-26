@@ -12,7 +12,7 @@ const BoostScreen = () => {
   const [boostersData, setBoostersData] = useState({ dailyBoosters: [], extraBoosters: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [toastMessage, setToastMessage] = useState(null); // New state for upgrade toast
+  const [toastMessage, setToastMessage] = useState(null);
   const [dailyBoosters, setDailyBoosters] = useState(() => {
     const savedBoosters = localStorage.getItem("dailyBoosters");
     return savedBoosters
@@ -31,7 +31,7 @@ const BoostScreen = () => {
     localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
   }, [dailyBoosters]);
 
-  // Fetch profile and booster data from backend
+  // Fetch profile and boosters with error handling
   const fetchProfileAndBoosters = useCallback(async () => {
     const controller = new AbortController();
     setLoading(true);
@@ -44,7 +44,7 @@ const BoostScreen = () => {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         signal: controller.signal,
       });
-      if (!profileResponse.ok) throw new Error("Profile fetch failed");
+      if (!profileResponse.ok) throw new Error(`Profile fetch failed: ${await profileResponse.text()}`);
       const profileData = await profileResponse.json();
       setTotalTaps(profileData.total_coins || 0);
 
@@ -56,18 +56,23 @@ const BoostScreen = () => {
       if (!extraBoostersResponse.ok) throw new Error("Extra boosters fetch failed");
       const extraBoostersData = await extraBoostersResponse.json();
 
-      // Map extra boosters with dynamic icons
+      // Map extra boosters with fallback icons
       const mappedExtraBoosters = await Promise.all(
         extraBoostersData.map(async (booster) => {
           let iconUrl = `${process.env.PUBLIC_URL}/extra-booster-icon.png`;
           try {
             const iconResponse = await fetch(
               `https://bt-coins.onrender.com/bored-tap/user_app/image?image_id=${booster.image_id}`,
-              { headers: { Authorization: `Bearer ${token}` } }
+              {
+                headers: { Authorization: `Bearer ${token}` },
+                signal: controller.signal,
+              }
             );
             if (iconResponse.ok) {
               const blob = await iconResponse.blob();
               iconUrl = URL.createObjectURL(blob);
+            } else {
+              console.warn(`Icon fetch failed for ${booster.name}: ${iconResponse.status}`);
             }
           } catch (err) {
             console.error(`Failed to fetch icon for ${booster.name}:`, err);
@@ -104,7 +109,7 @@ const BoostScreen = () => {
     fetchProfileAndBoosters();
   }, [fetchProfileAndBoosters]);
 
-  // Upgrade an extra booster and show toast
+  // Upgrade an extra booster with toast feedback
   const handleUpgradeBoost = async (boosterId) => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -112,11 +117,11 @@ const BoostScreen = () => {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       });
-      if (!response.ok) throw new Error("Upgrade failed");
+      if (!response.ok) throw new Error(`Upgrade failed: ${await response.text()}`);
       await fetchProfileAndBoosters();
       window.dispatchEvent(new Event("boosterUpgraded"));
       setToastMessage("Booster upgraded successfully!");
-      setTimeout(() => setToastMessage(null), 3000); // Clear toast after 3 seconds
+      setTimeout(() => setToastMessage(null), 3000);
       handleOverlayClose();
     } catch (err) {
       setError(err.message);
@@ -233,6 +238,16 @@ const BoostScreen = () => {
     );
   };
 
+  // Render error state if present
+  if (error) {
+    return (
+      <div className="boost-screen">
+        <p className="error-message">Error: {error}</p>
+        <button onClick={() => window.location.reload()}>Retry</button>
+      </div>
+    );
+  }
+
   return (
     <div className="boost-screen">
       <div className="boost-body">
@@ -247,8 +262,6 @@ const BoostScreen = () => {
 
         {loading ? (
           <p className="loading-message">Fetching Boosters...</p>
-        ) : error ? (
-          <p className="error-message">Error: {error}</p>
         ) : (
           <>
             <div className="daily-boosters-section">
