@@ -135,7 +135,6 @@
   text-align: center;
   margin-top: 16px;
   gap: 8px;
-  position: relative; /* For tap effects positioning */
 }
 
 .total-taps-text {
@@ -155,6 +154,11 @@
 .tap-logo-small {
   width: 30px;
   height: 30px;
+}
+
+.big-tap-icon {
+  position: relative; /* For tap effects positioning */
+  cursor: pointer;
 }
 
 .big-tap-icon img {

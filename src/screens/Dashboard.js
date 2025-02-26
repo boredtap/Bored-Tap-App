@@ -392,7 +392,7 @@ import "./Dashboard.css";
 
 /**
  * Dashboard component displaying the main UI with tapping interaction and navigation links.
- * Handles tap events to increment total taps and show tap effects locally.
+ * Handles tap events to increment total taps and show a single +1 effect at the touch point.
  */
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -410,28 +410,35 @@ const Dashboard = () => {
   // State for total taps and tap effects
   const [totalTaps, setTotalTaps] = useState(0);
   const [tapEffects, setTapEffects] = useState([]);
+  const [isTapping, setIsTapping] = useState(false); // To prevent multiple taps
 
   /**
-   * Handles tap events on the big tap icon, incrementing total taps and showing a +1 effect.
+   * Handles tap events on the big tap icon, incrementing total taps and showing a single +1 effect.
    * @param {Object} event - The tap or click event object.
    */
   const handleTap = (event) => {
-    event.preventDefault(); // Prevent default behavior for touch/mouse events
+    event.preventDefault(); // Prevent default behavior
+
+    if (isTapping) return; // Prevent multiple taps during processing
+
+    setIsTapping(true);
 
     // Increment total taps by 1
     setTotalTaps((prev) => prev + 1);
 
-    // Get tap coordinates
-    const tapX = (event.touches ? event.touches[0].clientX : event.clientX) || 0;
-    const tapY = (event.touches ? event.touches[0].clientY : event.clientY) || 0;
+    // Get tap coordinates relative to the tap icon
+    const tapIcon = event.currentTarget.getBoundingClientRect();
+    const tapX = (event.touches ? event.touches[0].clientX : event.clientX) - tapIcon.left;
+    const tapY = (event.touches ? event.touches[0].clientY : event.clientY) - tapIcon.top;
 
-    // Add tap effect at the tap location
+    // Add a single tap effect at the touch point
     const newTapEffect = { id: Date.now(), x: tapX, y: tapY };
-    setTapEffects((prevEffects) => [...prevEffects, newTapEffect]);
+    setTapEffects([newTapEffect]); // Replace existing effects with the new one
 
-    // Remove the tap effect after 1 second
+    // Remove the tap effect after 1 second and reset tapping state
     setTimeout(() => {
-      setTapEffects((prev) => prev.filter((e) => e.id !== newTapEffect.id));
+      setTapEffects([]);
+      setIsTapping(false);
     }, 1000);
   };
 
@@ -483,17 +490,17 @@ const Dashboard = () => {
           onMouseDown={handleTap}
         >
           <img className="tap-logo-big" src={`${process.env.PUBLIC_URL}/logo.png`} alt="Big Tap Icon" />
+          {/* Tap Effects */}
+          {tapEffects.map((effect) => (
+            <div
+              key={effect.id}
+              className="tap-effect"
+              style={{ top: `${effect.y}px`, left: `${effect.x}px` }}
+            >
+              +1
+            </div>
+          ))}
         </div>
-        {/* Tap Effects */}
-        {tapEffects.map((effect) => (
-          <div
-            key={effect.id}
-            className="tap-effect"
-            style={{ top: effect.y, left: effect.x }}
-          >
-            +1
-          </div>
-        ))}
       </div>
 
       {/* Electric Boost Section */}
