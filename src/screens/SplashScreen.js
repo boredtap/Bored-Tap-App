@@ -5,7 +5,7 @@ import "./SplashScreen.css";
 const SplashScreen = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null); 
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -25,20 +25,16 @@ const SplashScreen = () => {
         const telegramUserId = String(userData.id);
         const imageUrl = userData.photo_url || "";
 
-        // First try to sign in
+        // Attempt sign-in
         const signInResponse = await fetch("https://bt-coins.onrender.com/signin", {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
-            "accept": "application/json",
+            "Accept": "application/json",
           },
           body: new URLSearchParams({
-            grant_type: "password",
             username,
             password: telegramUserId,
-            scope: "",
-            client_id: "string",
-            client_secret: "string",
           }),
         });
 
@@ -46,14 +42,16 @@ const SplashScreen = () => {
           const authData = await signInResponse.json();
           handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl });
           return;
+        } else {
+          console.log("Sign-in failed:", signInResponse.status, await signInResponse.text());
         }
 
-        // If sign-in fails, register the user
+        // Register if sign-in fails
         const signUpResponse = await fetch("https://bt-coins.onrender.com/sign-up", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "accept": "application/json",
+            "Accept": "application/json",
           },
           body: JSON.stringify({
             telegram_user_id: telegramUserId,
@@ -63,28 +61,24 @@ const SplashScreen = () => {
         });
 
         if (!signUpResponse.ok) {
-          throw new Error("Registration failed");
+          throw new Error(`Registration failed: ${await signUpResponse.text()}`);
         }
 
-        // Sign in after successful registration
+        // Retry sign-in after registration
         const signInAfterRegResponse = await fetch("https://bt-coins.onrender.com/signin", {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
-            "accept": "application/json",
+            "Accept": "application/json",
           },
           body: new URLSearchParams({
-            grant_type: "password",
             username,
             password: telegramUserId,
-            scope: "",
-            client_id: "string",
-            client_secret: "string",
           }),
         });
 
         if (!signInAfterRegResponse.ok) {
-          throw new Error("Failed to sign in after registration");
+          throw new Error(`Sign-in after registration failed: ${await signInAfterRegResponse.text()}`);
         }
 
         const authData = await signInAfterRegResponse.json();
@@ -101,6 +95,7 @@ const SplashScreen = () => {
       localStorage.setItem("accessToken", authData.access_token);
       localStorage.setItem("tokenType", authData.token_type);
       localStorage.setItem("telegramUser", JSON.stringify(userInfo));
+      console.log("Token stored:", authData.access_token); // Debug token
       navigate("/dashboard");
     };
 
