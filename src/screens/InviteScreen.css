@@ -160,16 +160,16 @@
 }
 
 .invite-cta-button {
+  width: 100%;
+  padding: 12px;
   background-color: #fff;
   color: #000;
   border: none;
-  border-radius: 8px; /* Changed to 8px */
-  padding: 6px 12px;
-  font-weight: bold;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
   cursor: pointer;
-  text-align: center; /* Centralized text */
   transition: background-color 0.3s ease;
-  width: 100%; /* 100% width */
 }
 
 .invite-cta-button:hover {
@@ -302,10 +302,13 @@
 
   .invite-title {
     font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 10px;
   }
 
   .invite-subtitle {
-    font-size: 14px;
+    font-size: 12px;
+    margin-bottom: 10px;
   }
 
   .invite-link-card {
@@ -322,7 +325,11 @@
   }
 
   .invite-cta-button {
-    padding: 6px 12px; /* Match reward-cta */
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 10px;
+
   }
 
   .overlay-title {
