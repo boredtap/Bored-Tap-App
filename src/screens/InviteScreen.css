@@ -152,8 +152,8 @@
 .cta-container {
   position: fixed;
   bottom: 80px;
-  left: 0;
-  right: 0;
+  left: 16px; /* Adjusted for padding */
+  right: 16px; /* Adjusted for padding */
   display: flex;
   justify-content: center;
   z-index: 10;
@@ -163,12 +163,13 @@
   background-color: #fff;
   color: #000;
   border: none;
-  border-radius: 25px;
+  border-radius: 8px; /* Changed to 8px */
   padding: 6px 12px;
   font-weight: bold;
   cursor: pointer;
   text-align: center; /* Centralized text */
   transition: background-color 0.3s ease;
+  width: 100%; /* 100% width */
 }
 
 .invite-cta-button:hover {
@@ -370,5 +371,10 @@
   .overlay-cta-button {
     width: auto;
     min-width: 120px;
+  }
+
+  .invite-cta-button {
+    padding: 6px 12px; /* Match reward-cta */
+    max-width: 300px; /* Optional: cap width on large screens */
   }
 }
