@@ -3,23 +3,25 @@ import Navigation from "../components/Navigation";
 import CTAButton from "../components/CTAButton";
 import "./DailyStreakScreen.css";
 
+/**
+ * RewardFrame component for displaying individual daily streak rewards.
+ * @param {string} day - The day label (e.g., "Day 1")
+ * @param {string} reward - The reward value (e.g., "500")
+ * @param {boolean} isActive - Whether this day is currently claimable
+ * @param {boolean} isClaimed - Whether this day has been claimed
+ * @param {Function} onClick - Click handler for claiming the reward
+ */
 const RewardFrame = ({ day, reward, isActive, isClaimed, onClick }) => {
   return (
     <div
-      className={`reward-frame ${isActive ? "active" : ""} ${
-        isClaimed ? "claimed" : ""
-      }`}
+      className={`reward-frame ${isActive ? "active" : ""} ${isClaimed ? "claimed" : ""}`}
       onClick={isActive && !isClaimed ? onClick : undefined}
-      style={isActive && !isClaimed ? { cursor: 'pointer' } : { cursor: 'not-allowed' }}
+      style={isActive && !isClaimed ? { cursor: "pointer" } : { cursor: "not-allowed" }}
     >
       <p className="frame-day">{day}</p>
       <img
-        src={
-          isClaimed
-            ? `${process.env.PUBLIC_URL}/tick.png`
-            : `${process.env.PUBLIC_URL}/logo.png`
-        }
-        alt="Icon"
+        src={isClaimed ? `${process.env.PUBLIC_URL}/tick.png` : `${process.env.PUBLIC_URL}/logo.png`}
+        alt={isClaimed ? "Claimed" : "Reward"}
         className="frame-icon"
       />
       <p className="frame-reward">{reward}</p>
@@ -27,13 +29,29 @@ const RewardFrame = ({ day, reward, isActive, isClaimed, onClick }) => {
   );
 };
 
+/**
+ * DailyStreakScreen component for managing and displaying the daily streak feature.
+ * Fetches user profile, tracks claimed days, and shows eligibility status with an overlay.
+ */
 const DailyStreakScreen = () => {
-  const [currentDay, setCurrentDay] = useState(1); // Current active day
+  // State for tracking the current active day
+  const [currentDay, setCurrentDay] = useState(1);
+  // State for tracking claimed days
   const [claimedDays, setClaimedDays] = useState([]);
+  // State for user profile data
   const [profile, setProfile] = useState(null);
-  const [localTotalCoins, setLocalTotalCoins] = useState(0); // New state to track coins locally
+  // State for local coin count
+  const [localTotalCoins, setLocalTotalCoins] = useState(0);
+  // State for showing ineligibility overlay
+  const [showOverlay, setShowOverlay] = useState(false);
+  // State for countdown time (mocked for now)
+  const [countdownTime, setCountdownTime] = useState("5:27 PM");
 
+  // Fetch user profile on mount
   useEffect(() => {
+    /**
+     * Fetches user profile data from the backend to initialize streak and coin information.
+     */
     const fetchProfile = async () => {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
@@ -50,9 +68,9 @@ const DailyStreakScreen = () => {
         const data = await response.json();
         setProfile(data);
         const lastClaimedDay = Math.max(...(data.streak.claimed_days || [0]));
-        setCurrentDay(lastClaimedDay + 1); // +1 to show the next day as active
+        setCurrentDay(lastClaimedDay + 1);
         setClaimedDays(data.streak.claimed_days || []);
-        setLocalTotalCoins(data.total_coins); // Initialize local coin count
+        setLocalTotalCoins(data.total_coins);
       } catch (err) {
         console.error("Error fetching profile:", err);
       }
@@ -60,6 +78,7 @@ const DailyStreakScreen = () => {
     fetchProfile();
   }, []);
 
+  // Predefined rewards for each day
   const rewards = [
     { day: "Day 1", reward: "500" },
     { day: "Day 2", reward: "1000" },
@@ -71,6 +90,7 @@ const DailyStreakScreen = () => {
     { day: "Ultimate", reward: "5000" },
   ];
 
+  // Handle claiming a daily reward
   const handleClaim = async () => {
     if (!claimedDays.includes(currentDay)) {
       try {
@@ -87,45 +107,44 @@ const DailyStreakScreen = () => {
           },
           body: JSON.stringify({ telegram_user_id: profile?.telegram_user_id }),
         });
-        if (!response.ok) {
-          throw new Error('Failed to claim reward');
-        }
+        if (!response.ok) throw new Error("Failed to claim reward");
         const streakData = await response.json();
-  
+
         if (streakData.message === "Streak not updated") {
-          console.log(streakData.Countdown);
-          alert(`Streak not updated. ${streakData.Countdown}`);
+          setCountdownTime(streakData.Countdown || "5:27 PM"); // Mocked for now
+          setShowOverlay(true);
           return;
         }
-  
-        // Update local state based on backend response
+
+        // Update state with successful claim
         setClaimedDays([...claimedDays, currentDay]);
-        setProfile(prev => ({
+        setProfile((prev) => ({
           ...prev,
-          total_coins: streakData.total_coins || prev.total_coins, // Assuming this is provided by the backend
+          total_coins: streakData.total_coins || prev.total_coins,
           streak: {
             ...prev.streak,
             current_streak: streakData.current_streak,
             longest_streak: streakData.longest_streak,
-            claimed_days: [...(prev.streak.claimed_days || []), currentDay]
+            claimed_days: [...(prev.streak.claimed_days || []), currentDay],
           },
         }));
-        setLocalTotalCoins(streakData.total_coins || profile.total_coins); // Update local coin count
-        setCurrentDay(prevDay => prevDay + 1); // Move to the next day after claiming
-        console.log("Claim successful:", streakData);
+        setLocalTotalCoins(streakData.total_coins || profile.total_coins);
+        setCurrentDay((prevDay) => prevDay + 1);
       } catch (err) {
         console.error("Error claiming reward:", err);
-        alert("Error claiming reward. Please try again.");
+        setShowOverlay(true); // Show overlay on error for now
       }
     }
   };
 
-  // Example usage of profile in rendering
-  const profileInfo = profile ? `Current Coins: ${localTotalCoins}` : "Loading profile...";
+  // Close the ineligibility overlay
+  const handleCloseOverlay = () => setShowOverlay(false);
+
+  const profileInfo = profile ? `Current Coins: ${localTotalCoins.toLocaleString()}` : "Loading profile...";
 
   return (
     <div className="daily-streak-screen">
-      {/* Top Section */}
+      {/* Header with streak icon and text */}
       <div className="streak-header">
         <img
           src={`${process.env.PUBLIC_URL}/streak.png`}
@@ -136,12 +155,12 @@ const DailyStreakScreen = () => {
         <p className="streak-subtitle">Claim your daily bonuses!</p>
       </div>
 
-      {/* Display profile info */}
+      {/* Profile info display */}
       <div className="profile-info-display">
         <p>{profileInfo}</p>
       </div>
 
-      {/* Daily Rewards Section */}
+      {/* Daily rewards section */}
       <div className="daily-rewards">
         <p className="daily-rewards-title">Daily Rewards</p>
         <div className="rewards-grid">
@@ -156,20 +175,48 @@ const DailyStreakScreen = () => {
             />
           ))}
         </div>
-        <p className="rewards-note">
-          Come back tomorrow to pick up your next reward
-        </p>
+        <p className="rewards-note">Come back tomorrow to pick up your next reward</p>
       </div>
 
-      {/* CTA Button */}
-      <center><div className="cta-container2">
+      {/* CTA button */}
+      <div className="cta-container">
         <CTAButton
           isActive={!claimedDays.includes(currentDay)}
-          text={claimedDays.includes(currentDay) ? "Come back tomorrow" : "Claim Reward"}
+          text={claimedDays.includes(currentDay) ? "Come Back Tomorrow" : "Claim Reward"}
           onClick={handleClaim}
-          style={{ textAlign: 'center' }}
         />
-      </div></center>
+      </div>
+
+      {/* Overlay for ineligibility */}
+      {showOverlay && (
+        <div className="overlay-container">
+          <div className={`streak-overlay ${showOverlay ? "slide-in" : "slide-out"}`}>
+            <div className="overlay-header">
+              <h2 className="overlay-title">Daily Streak</h2>
+              <img
+                src={`${process.env.PUBLIC_URL}/cancel.png`}
+                alt="Close"
+                className="overlay-cancel"
+                onClick={handleCloseOverlay}
+              />
+            </div>
+            <div className="overlay-divider"></div>
+            <div className="overlay-content">
+              <img
+                src={`${process.env.PUBLIC_URL}/streak.png`}
+                alt="Streak Icon"
+                className="overlay-streak-icon"
+              />
+              <p className="overlay-text">Streak Not Updated</p>
+              <p className="overlay-subtext">Check again by this time tomorrow</p>
+              <p className="overlay-time">{countdownTime}</p>
+              <button className="overlay-cta-button" onClick={handleCloseOverlay}>
+                Ok
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Navigation />
     </div>
