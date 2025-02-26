@@ -87,54 +87,8 @@ const Dashboard = () => {
   }, []);
 
   // Fetch user profile from backend
-  // const fetchProfile = useCallback(async () => {
-  //   const controller = new AbortController();
-  //   const token = localStorage.getItem("accessToken");
-  //   if (!token) {
-  //     navigate("/splash");
-  //     return;
-  //   }
-  //   try {
-  //     const response = await fetch("https://bt-coins.onrender.com/user/profile", {
-  //       method: "GET",
-  //       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-  //       signal: controller.signal,
-  //     });
-  //     if (!response.ok) throw new Error("Failed to fetch profile");
-  //     const data = await response.json();
-  //     setProfile(data);
-  //     setTotalTaps(data.total_coins || 0);
-  //     setCurrentStreak(data.streak?.current_streak || 0);
-
-  //     // Reset local state if backend reports zero coins (new user scenario)
-  //     if (data.total_coins === 0) {
-  //       localStorage.removeItem("dailyBoosters");
-  //       localStorage.removeItem("extraBoosters");
-  //       localStorage.removeItem("electricBoost");
-  //       localStorage.removeItem("maxElectricBoost");
-  //       localStorage.removeItem("tapBoostLevel");
-  //       localStorage.removeItem("rechargingSpeedLevel");
-  //       localStorage.removeItem("hasAutobot");
-  //       localStorage.removeItem("lastActiveTime");
-  //       localStorage.removeItem("lastBoostUpdateTime");
-  //       setDailyBoosters({
-  //         tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
-  //         fullEnergy: { usesLeft: 3, resetTime: null },
-  //       });
-  //       setElectricBoost(BASE_MAX_ELECTRIC_BOOST);
-  //       setMaxElectricBoost(BASE_MAX_ELECTRIC_BOOST);
-  //       setTapBoostLevel(0);
-  //       setRechargingSpeedLevel(0);
-  //       setHasAutobot(false);
-  //       setTotalTaps(0);
-  //     }
-  //   } catch (err) {
-  //     if (err.name !== "AbortError") setError(err.message);
-  //   }
-  //   return () => controller.abort();
-  // }, [navigate]);
-
   const fetchProfile = useCallback(async () => {
+    const controller = new AbortController();
     const token = localStorage.getItem("accessToken");
     if (!token) {
       navigate("/splash");
@@ -144,33 +98,40 @@ const Dashboard = () => {
       const response = await fetch("https://bt-coins.onrender.com/user/profile", {
         method: "GET",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        signal: controller.signal,
       });
       if (!response.ok) throw new Error("Failed to fetch profile");
       const data = await response.json();
       setProfile(data);
       setTotalTaps(data.total_coins || 0);
       setCurrentStreak(data.streak?.current_streak || 0);
-  
-      // Enhanced reset condition (example: if backend sends isDeleted flag)
-      if (data.total_coins === 0 || data.isDeleted) { // Add isDeleted if applicable
-        const resetLocalStorage = () => {
-          localStorage.clear(); // More thorough reset
-          setDailyBoosters({
-            tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
-            fullEnergy: { usesLeft: 3, resetTime: null },
-          });
-          setElectricBoost(BASE_MAX_ELECTRIC_BOOST);
-          setMaxElectricBoost(BASE_MAX_ELECTRIC_BOOST);
-          setTapBoostLevel(0);
-          setRechargingSpeedLevel(0);
-          setHasAutobot(false);
-          setTotalTaps(0);
-        };
-        resetLocalStorage();
+
+      // Reset local state if backend reports zero coins (new user scenario)
+      if (data.total_coins === 0) {
+        localStorage.removeItem("dailyBoosters");
+        localStorage.removeItem("extraBoosters");
+        localStorage.removeItem("electricBoost");
+        localStorage.removeItem("maxElectricBoost");
+        localStorage.removeItem("tapBoostLevel");
+        localStorage.removeItem("rechargingSpeedLevel");
+        localStorage.removeItem("hasAutobot");
+        localStorage.removeItem("lastActiveTime");
+        localStorage.removeItem("lastBoostUpdateTime");
+        setDailyBoosters({
+          tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
+          fullEnergy: { usesLeft: 3, resetTime: null },
+        });
+        setElectricBoost(BASE_MAX_ELECTRIC_BOOST);
+        setMaxElectricBoost(BASE_MAX_ELECTRIC_BOOST);
+        setTapBoostLevel(0);
+        setRechargingSpeedLevel(0);
+        setHasAutobot(false);
+        setTotalTaps(0);
       }
     } catch (err) {
-      setError(err.message);
+      if (err.name !== "AbortError") setError(err.message);
     }
+    return () => controller.abort();
   }, [navigate]);
 
   // Apply extra booster effects based on purchased upgrades
