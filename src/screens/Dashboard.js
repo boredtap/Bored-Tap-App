@@ -237,8 +237,47 @@ const Dashboard = () => {
     localStorage.setItem("lastActiveTime", Date.now());
   }, [hasAutobot, tapBoostLevel]);
 
-  // Memoize updateBackend to include in handleTap dependencies
-  const updateBackend = useCallback(async () => {
+  // Autobot tapping interval
+  useEffect(() => {
+    if (hasAutobot) {
+      if (autobotInterval.current) clearInterval(autobotInterval.current);
+      autobotInterval.current = setInterval(() => {
+        const multiplier = (dailyBoosters.tapperBoost.isActive ? 2 : 1) + tapBoostLevel;
+        setTotalTaps((prev) => prev + multiplier);
+        tapCountSinceLastUpdate.current += multiplier;
+        updateBackend();
+      }, AUTOBOT_TAP_INTERVAL);
+    }
+    return () => {
+      if (autobotInterval.current) clearInterval(autobotInterval.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasAutobot, dailyBoosters.tapperBoost.isActive, tapBoostLevel]);
+
+  // Energy recharge with dynamic speed
+  useEffect(() => {
+    if (rechargeInterval.current) clearInterval(rechargeInterval.current);
+    const rechargeTime = RECHARGE_TIMES[rechargingSpeedLevel] || RECHARGE_TIMES[0];
+    const rechargeRate = maxElectricBoost / (rechargeTime * 1000);
+
+    rechargeInterval.current = setInterval(() => {
+      setElectricBoost((prev) => {
+        if (prev < maxElectricBoost) {
+          const newBoost = Math.min(prev + rechargeRate * 1000, maxElectricBoost);
+          localStorage.setItem("electricBoost", newBoost);
+          localStorage.setItem("lastBoostUpdateTime", Date.now());
+          setShowLowEnergyWarning(newBoost < maxElectricBoost * LOW_ENERGY_THRESHOLD);
+          return newBoost;
+        }
+        setShowLowEnergyWarning(false);
+        return prev;
+      });
+    }, 1000);
+    return () => clearInterval(rechargeInterval.current);
+  }, [maxElectricBoost, rechargingSpeedLevel]);
+
+  // Sync tap count with backend and handle auth errors
+  async function updateBackend() {
     if (tapCountSinceLastUpdate.current === 0) return;
     const tapsToSync = tapCountSinceLastUpdate.current;
     try {
@@ -273,47 +312,10 @@ const Dashboard = () => {
       console.error("Error syncing with backend:", err);
       setError(err.message);
     }
-  }, [navigate, setError, setTotalTaps]); // Dependencies for updateBackend
-
-  // Autobot tapping interval
-  useEffect(() => {
-    if (hasAutobot) {
-      if (autobotInterval.current) clearInterval(autobotInterval.current);
-      autobotInterval.current = setInterval(() => {
-        const multiplier = (dailyBoosters.tapperBoost.isActive ? 2 : 1) + tapBoostLevel;
-        setTotalTaps((prev) => prev + multiplier);
-        tapCountSinceLastUpdate.current += multiplier;
-        updateBackend();
-      }, AUTOBOT_TAP_INTERVAL);
-    }
-    return () => {
-      if (autobotInterval.current) clearInterval(autobotInterval.current);
-    };
-  }, [hasAutobot, dailyBoosters.tapperBoost.isActive, tapBoostLevel, updateBackend]);
-
-  // Energy recharge with dynamic speed
-  useEffect(() => {
-    if (rechargeInterval.current) clearInterval(rechargeInterval.current);
-    const rechargeTime = RECHARGE_TIMES[rechargingSpeedLevel] || RECHARGE_TIMES[0];
-    const rechargeRate = maxElectricBoost / (rechargeTime * 1000);
-
-    rechargeInterval.current = setInterval(() => {
-      setElectricBoost((prev) => {
-        if (prev < maxElectricBoost) {
-          const newBoost = Math.min(prev + rechargeRate * 1000, maxElectricBoost);
-          localStorage.setItem("electricBoost", newBoost);
-          localStorage.setItem("lastBoostUpdateTime", Date.now());
-          setShowLowEnergyWarning(newBoost < maxElectricBoost * LOW_ENERGY_THRESHOLD);
-          return newBoost;
-        }
-        setShowLowEnergyWarning(false);
-        return prev;
-      });
-    }, 1000);
-    return () => clearInterval(rechargeInterval.current);
-  }, [maxElectricBoost, rechargingSpeedLevel]);
+  }
 
   // Handle tap events with multiplier and animations
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleTap = useCallback(
     (event) => {
       event.preventDefault();
@@ -360,7 +362,7 @@ const Dashboard = () => {
         updateBackend();
       }, TAP_DEBOUNCE_DELAY);
     },
-    [electricBoost, dailyBoosters, tapBoostLevel, maxElectricBoost, updateBackend] // Include updateBackend
+    [electricBoost, dailyBoosters, tapBoostLevel, maxElectricBoost] // Stable dependencies
   );
 
   // Sync on component unmount
@@ -368,7 +370,8 @@ const Dashboard = () => {
     return () => {
       if (tapCountSinceLastUpdate.current > 0) updateBackend();
     };
-  }, [updateBackend]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Manage daily booster timers
   useEffect(() => {
