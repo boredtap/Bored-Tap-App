@@ -8,17 +8,10 @@ const SplashScreen = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Initialize authentication with retry logic for Telegram WebApp
-    const initializeAuth = async (retries = 3) => {
+    const initializeAuth = async () => {
       try {
-        // Check if Telegram WebApp is available, retry if not
         if (!window.Telegram?.WebApp) {
-          if (retries > 0) {
-            console.log(`Telegram WebApp not ready, retrying (${retries} left)...`);
-            await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1s
-            return initializeAuth(retries - 1);
-          }
-          throw new Error("Telegram WebApp failed to initialize after retries");
+          throw new Error("Telegram WebApp not initialized");
         }
 
         const webApp = window.Telegram.WebApp;
@@ -32,16 +25,20 @@ const SplashScreen = () => {
         const telegramUserId = String(userData.id);
         const imageUrl = userData.photo_url || "";
 
-        // Attempt to sign in with Telegram credentials
+        // First try to sign in
         const signInResponse = await fetch("https://bt-coins.onrender.com/signin", {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
-            "Accept": "application/json",
+            "accept": "application/json",
           },
           body: new URLSearchParams({
+            grant_type: "password",
             username,
-            password: telegramUserId, // Using telegramUserId as password
+            password: telegramUserId,
+            scope: "",
+            client_id: "string",
+            client_secret: "string",
           }),
         });
 
@@ -49,9 +46,6 @@ const SplashScreen = () => {
           const authData = await signInResponse.json();
           handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl });
           return;
-        } else {
-          const errorText = await signInResponse.text();
-          console.log("Sign-in failed:", signInResponse.status, errorText);
         }
 
         // If sign-in fails, register the user
@@ -59,7 +53,7 @@ const SplashScreen = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Accept": "application/json",
+            "accept": "application/json",
           },
           body: JSON.stringify({
             telegram_user_id: telegramUserId,
@@ -69,24 +63,28 @@ const SplashScreen = () => {
         });
 
         if (!signUpResponse.ok) {
-          throw new Error(`Registration failed: ${await signUpResponse.text()}`);
+          throw new Error("Registration failed");
         }
 
-        // Retry sign-in after successful registration
+        // Sign in after successful registration
         const signInAfterRegResponse = await fetch("https://bt-coins.onrender.com/signin", {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
-            "Accept": "application/json",
+            "accept": "application/json",
           },
           body: new URLSearchParams({
+            grant_type: "password",
             username,
             password: telegramUserId,
+            scope: "",
+            client_id: "string",
+            client_secret: "string",
           }),
         });
 
         if (!signInAfterRegResponse.ok) {
-          throw new Error(`Sign-in after registration failed: ${await signInAfterRegResponse.text()}`);
+          throw new Error("Failed to sign in after registration");
         }
 
         const authData = await signInAfterRegResponse.json();
@@ -99,19 +97,16 @@ const SplashScreen = () => {
       }
     };
 
-    // Handle successful authentication by storing token and navigating
     const handleSuccessfulAuth = (authData, userInfo) => {
       localStorage.setItem("accessToken", authData.access_token);
       localStorage.setItem("tokenType", authData.token_type);
       localStorage.setItem("telegramUser", JSON.stringify(userInfo));
-      console.log("Authentication successful, token stored:", authData.access_token);
       navigate("/dashboard");
     };
 
     initializeAuth();
   }, [navigate]);
 
-  // Retry authentication on user request
   const handleRetry = () => {
     setError(null);
     setLoading(true);
