@@ -31,17 +31,32 @@ const RewardFrame = ({ day, reward, isActive, isClaimed, onClick }) => {
 
 /**
  * DailyStreakScreen component for managing and displaying the daily streak feature.
- * Fetches user profile, tracks claimed days, and shows eligibility status with an overlay.
+ * Persists streak state across navigation and syncs with backend data.
  */
 const DailyStreakScreen = () => {
-  const [currentDay, setCurrentDay] = useState(1);
-  const [claimedDays, setClaimedDays] = useState([]);
+  // State for tracking the current active day, initialized from localStorage
+  const [currentDay, setCurrentDay] = useState(() => {
+    return parseInt(localStorage.getItem("currentDay")) || 1;
+  });
+  // State for tracking claimed days, initialized from localStorage
+  const [claimedDays, setClaimedDays] = useState(() => {
+    return JSON.parse(localStorage.getItem("claimedDays")) || [];
+  });
+  // State for user profile data
   const [profile, setProfile] = useState(null);
+  // State for local coin count
   const [localTotalCoins, setLocalTotalCoins] = useState(0);
+  // State for showing ineligibility overlay
   const [showOverlay, setShowOverlay] = useState(false);
-  const [countdownTime, setCountdownTime] = useState("12:59 PM"); // Mocked for now
+  // State for countdown time (mocked for now)
+  const [countdownTime, setCountdownTime] = useState("12:59 PM");
 
+  // Fetch user profile on mount and sync with local storage
   useEffect(() => {
+    /**
+     * Fetches user profile data from the backend to initialize streak and coin information.
+     * Syncs with local storage to maintain state across navigation, prioritizing local state post-claim.
+     */
     const fetchProfile = async () => {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
@@ -57,10 +72,19 @@ const DailyStreakScreen = () => {
         if (!response.ok) throw new Error("Failed to fetch profile");
         const data = await response.json();
         setProfile(data);
-        const lastClaimedDay = Math.max(...(data.streak.claimed_days || [0]));
-        setCurrentDay(lastClaimedDay + 1);
-        setClaimedDays(data.streak.claimed_days || []);
         setLocalTotalCoins(data.total_coins);
+
+        // Sync local state with backend only if local data is outdated
+        const storedClaimedDays = JSON.parse(localStorage.getItem("claimedDays")) || [];
+        const backendClaimedDays = data.streak.claimed_days || [];
+        const backendLastClaimedDay = Math.max(...backendClaimedDays, 0);
+
+        if (storedClaimedDays.length <= backendClaimedDays.length) {
+          setClaimedDays(backendClaimedDays);
+          setCurrentDay(backendLastClaimedDay + 1);
+          localStorage.setItem("claimedDays", JSON.stringify(backendClaimedDays));
+          localStorage.setItem("currentDay", backendLastClaimedDay + 1);
+        }
       } catch (err) {
         console.error("Error fetching profile:", err);
       }
@@ -68,6 +92,7 @@ const DailyStreakScreen = () => {
     fetchProfile();
   }, []);
 
+  // Predefined rewards for each day
   const rewards = [
     { day: "Day 1", reward: "500" },
     { day: "Day 2", reward: "1000" },
@@ -79,6 +104,9 @@ const DailyStreakScreen = () => {
     { day: "Ultimate", reward: "5000" },
   ];
 
+  /**
+   * Handles claiming a daily reward, updating state and persisting to local storage.
+   */
   const handleClaim = async () => {
     if (!claimedDays.includes(currentDay)) {
       try {
@@ -104,7 +132,14 @@ const DailyStreakScreen = () => {
           return;
         }
 
-        setClaimedDays([...claimedDays, currentDay]);
+        // Update state and persist to local storage
+        const newClaimedDays = [...claimedDays, currentDay];
+        const newCurrentDay = currentDay + 1;
+        setClaimedDays(newClaimedDays);
+        setCurrentDay(newCurrentDay);
+        localStorage.setItem("claimedDays", JSON.stringify(newClaimedDays));
+        localStorage.setItem("currentDay", newCurrentDay);
+
         setProfile((prev) => ({
           ...prev,
           total_coins: streakData.total_coins || prev.total_coins,
@@ -112,11 +147,10 @@ const DailyStreakScreen = () => {
             ...prev.streak,
             current_streak: streakData.current_streak,
             longest_streak: streakData.longest_streak,
-            claimed_days: [...(prev.streak.claimed_days || []), currentDay],
+            claimed_days: newClaimedDays,
           },
         }));
         setLocalTotalCoins(streakData.total_coins || profile.total_coins);
-        setCurrentDay((prevDay) => prevDay + 1);
       } catch (err) {
         console.error("Error claiming reward:", err);
         setShowOverlay(true);
@@ -124,6 +158,7 @@ const DailyStreakScreen = () => {
     }
   };
 
+  // Close the ineligibility overlay
   const handleCloseOverlay = () => setShowOverlay(false);
 
   const profileInfo = profile ? `Current Coins: ${localTotalCoins.toLocaleString()}` : "Loading profile...";
@@ -161,10 +196,11 @@ const DailyStreakScreen = () => {
             />
           ))}
         </div>
+        <p className="rewards-note">Come back tomorrow to pick up your next reward</p>
       </div>
 
       {/* CTA button */}
-      <div className="cta-container2">
+      <div className="cta-container">
         <CTAButton
           isActive={!claimedDays.includes(currentDay)}
           text={claimedDays.includes(currentDay) ? "Come Back Tomorrow" : "Claim Reward"}

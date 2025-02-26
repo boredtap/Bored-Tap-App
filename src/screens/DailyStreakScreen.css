@@ -50,7 +50,7 @@
 
 /* Daily rewards section */
 .daily-rewards {
-  margin: 0 20px 60px; /* Space for CTA */
+  margin: 0 20px 60px;
   flex: 1;
 }
 
@@ -64,7 +64,7 @@
 .rewards-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(70px, 1fr));
-  gap: 10px; /* Equal horizontal and vertical gap */
+  gap: 10px;
   justify-items: center;
   margin: 0 auto;
   max-width: 400px;
@@ -78,7 +78,7 @@
   padding: 10px;
   border-radius: 4px;
   text-align: center;
-  width: 80px; /* Increased from 70px */
+  width: 80px;
   height: 100px;
   box-sizing: border-box;
   background-color: #414141;
@@ -118,22 +118,40 @@
 }
 
 /* CTA container */
-.cta-container2 {
+.cta-container {
+  position: fixed;
+  bottom: 80px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: center;
+  z-index: 10;
+}
+
+.cta-button {
   width: 100%;
-    max-width: 100%; /* Prevent overflow */
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center; /* Centralized text */
-    padding: 12px;
-    background-color: #fff;
-    color: #000;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+  max-width: 360px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.cta-button.active {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.cta-button.inactive {
+  background-color: #414141;
+  color: #aaa;
+  cursor: not-allowed;
 }
 
 /* Overlay for ineligibility */
@@ -284,7 +302,7 @@
   }
 
   .reward-frame {
-    width: 70px; /* Adjusted for mobile */
+    width: 70px;
     height: 90px;
     padding: 8px;
   }
@@ -345,7 +363,7 @@
   }
 
   .reward-frame {
-    width: 90px; /* Increased from 80px for desktop */
+    width: 90px;
     height: 110px;
   }
 
