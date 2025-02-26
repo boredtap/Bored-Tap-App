@@ -330,12 +330,16 @@
   }
 
   .invite-cta-button {
-    padding: 10px;
-    font-size: 14px;
+    width: 100%;
+    padding: 12px;
+    background-color: #fff;
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
     font-weight: 500;
-    margin-bottom: 10px;
-    width: 75%;
-
+    cursor: pointer;
+    transition: background-color 0.3s ease;
   }
 
   .overlay-title {
@@ -387,7 +391,15 @@
   }
 
   .invite-cta-button {
-    padding: 6px 12px; /* Match reward-cta */
-    max-width: 300px; /* Optional: cap width on large screens */
+    width: 100%;
+    padding: 12px;
+    background-color: #fff;
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
   }
 }
