@@ -45,6 +45,14 @@
   margin-bottom: 20px;
 }
 
+/* GIF animation below description */
+.wallet-gif {
+  width: 120px; /* "Little big" size */
+  height: 120px;
+  margin: 0 auto 24px;
+  display: block;
+}
+
 /* Wallet data card (pre-connection) */
 .wallet-data-card,
 .wallet-connected-card {
@@ -159,6 +167,12 @@
     font-size: 14px;
   }
 
+  .wallet-gif {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 20px;
+  }
+
   .wallet-data-card,
   .wallet-connected-card {
     padding: 12px;
@@ -211,5 +225,10 @@
   .wallet-frame {
     width: 90px;
     height: 90px;
+  }
+
+  .wallet-gif {
+    width: 150px;
+    height: 150px;
   }
 }

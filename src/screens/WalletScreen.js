@@ -40,12 +40,17 @@ const WalletScreen = () => {
           {!isConnected ? (
             <>
               {/* Pre-connection state */}
-              <h2 className="wallet-title">Connect Your Wallet</h2>
+              <h2 className="wallet-title">Wallet</h2>
               <p className="wallet-description">
                 Open wallet in Telegram or select your wallet to connect
               </p>
+              <img
+                src={`${process.env.PUBLIC_URL}/wallet.gif`} // Replace with your GIF file
+                alt="Wallet Animation"
+                className="wallet-gif"
+              />
 
-              {/* Telegram wallet link card */}
+              Telegram wallet link card
               <div className="wallet-data-card">
                 <img
                   src={`${process.env.PUBLIC_URL}/wallet.png`}
