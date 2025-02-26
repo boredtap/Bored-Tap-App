@@ -37,17 +37,6 @@
   color: #c2bfbf;
 }
 
-/* Profile info display */
-.profile-info-display {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.profile-info-display p {
-  font-size: 16px;
-  color: #fff;
-}
-
 /* Daily rewards section */
 .daily-rewards {
   margin: 0 20px 60px;
@@ -285,10 +274,6 @@
   }
 
   .streak-subtitle {
-    font-size: 14px;
-  }
-
-  .profile-info-display p {
     font-size: 14px;
   }
 

@@ -31,30 +31,25 @@ const RewardFrame = ({ day, reward, isActive, isClaimed, onClick }) => {
 
 /**
  * DailyStreakScreen component for managing and displaying the daily streak feature.
- * Persists streak state across navigation and syncs with backend data.
+ * Persists streak state across navigation, syncs with backend, and manages reward claiming.
  */
 const DailyStreakScreen = () => {
-  // State for tracking the current active day, initialized from localStorage
   const [currentDay, setCurrentDay] = useState(() => {
     return parseInt(localStorage.getItem("currentDay")) || 1;
   });
-  // State for tracking claimed days, initialized from localStorage
   const [claimedDays, setClaimedDays] = useState(() => {
     return JSON.parse(localStorage.getItem("claimedDays")) || [];
   });
-  // State for user profile data
   const [profile, setProfile] = useState(null);
-  // State for local coin count
-  const [localTotalCoins, setLocalTotalCoins] = useState(0);
-  // State for showing ineligibility overlay
   const [showOverlay, setShowOverlay] = useState(false);
-  // State for countdown time (mocked for now)
   const [countdownTime, setCountdownTime] = useState("12:59 PM");
+  // State to show the "Come back tomorrow" message only after claiming
+  const [showClaimMessage, setShowClaimMessage] = useState(false);
 
   // Fetch user profile on mount and sync with local storage
   useEffect(() => {
     /**
-     * Fetches user profile data from the backend to initialize streak and coin information.
+     * Fetches user profile data from the backend to initialize streak information.
      * Syncs with local storage to maintain state across navigation, prioritizing local state post-claim.
      */
     const fetchProfile = async () => {
@@ -72,9 +67,7 @@ const DailyStreakScreen = () => {
         if (!response.ok) throw new Error("Failed to fetch profile");
         const data = await response.json();
         setProfile(data);
-        setLocalTotalCoins(data.total_coins);
 
-        // Sync local state with backend only if local data is outdated
         const storedClaimedDays = JSON.parse(localStorage.getItem("claimedDays")) || [];
         const backendClaimedDays = data.streak.claimed_days || [];
         const backendLastClaimedDay = Math.max(...backendClaimedDays, 0);
@@ -127,7 +120,7 @@ const DailyStreakScreen = () => {
         const streakData = await response.json();
 
         if (streakData.message === "Streak not updated") {
-          setCountdownTime(streakData.Countdown || "12:59 PM"); // Mocked for now
+          setCountdownTime(streakData.Countdown || "12:59 PM");
           setShowOverlay(true);
           return;
         }
@@ -150,7 +143,8 @@ const DailyStreakScreen = () => {
             claimed_days: newClaimedDays,
           },
         }));
-        setLocalTotalCoins(streakData.total_coins || profile.total_coins);
+        // Show claim message after successful claim
+        setShowClaimMessage(true);
       } catch (err) {
         console.error("Error claiming reward:", err);
         setShowOverlay(true);
@@ -160,8 +154,6 @@ const DailyStreakScreen = () => {
 
   // Close the ineligibility overlay
   const handleCloseOverlay = () => setShowOverlay(false);
-
-  const profileInfo = profile ? `Current Coins: ${localTotalCoins.toLocaleString()}` : "Loading profile...";
 
   return (
     <div className="daily-streak-screen">
@@ -174,11 +166,6 @@ const DailyStreakScreen = () => {
         />
         <p className="streak-title">Streak Calendar</p>
         <p className="streak-subtitle">Claim your daily bonuses!</p>
-      </div>
-
-      {/* Profile info display */}
-      <div className="profile-info-display">
-        <p>{profileInfo}</p>
       </div>
 
       {/* Daily rewards section */}
@@ -196,7 +183,9 @@ const DailyStreakScreen = () => {
             />
           ))}
         </div>
-        <p className="rewards-note">Come back tomorrow to pick up your next reward</p>
+        {showClaimMessage && (
+          <p className="rewards-note">Come back tomorrow to pick up your next reward</p>
+        )}
       </div>
 
       {/* CTA button */}
