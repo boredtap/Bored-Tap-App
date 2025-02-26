@@ -1,109 +1,215 @@
+/* General screen styling for the wallet screen */
 .wallet-screen {
   background-color: #000;
   color: #fff;
   min-height: 100vh;
-  padding: 80px 16px;
-  padding-top: 0px;
+  padding: 16px;
   font-family: "Roboto", sans-serif;
   position: relative;
   display: flex;
   flex-direction: column;
   width: 100%;
+  box-sizing: border-box;
 }
-  
-  .wallet-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 0px;
+
+/* Main content area with centered alignment */
+.wallet-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+}
+
+/* Top section containing wallet icon and content */
+.wallet-top-section {
+  margin-top: 20px;
+  margin-bottom: 24px;
+}
+
+.wallet-icon-large {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+}
+
+.wallet-title {
+  font-size: 24px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.wallet-description {
+  font-size: 16px;
+  color: #888;
+  margin-bottom: 20px;
+}
+
+/* Wallet data card (pre-connection) */
+.wallet-data-card,
+.wallet-connected-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 400px;
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.data-card-icon,
+.connected-card-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.data-card-text,
+.connected-card-text {
+  font-size: 16px;
+  color: #000;
+  flex-grow: 1;
+  text-align: center;
+  margin: 0 10px;
+  word-break: break-word;
+}
+
+/* Wallet selection frames (pre-connection) */
+.wallet-selection {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.wallet-frame {
+  background-color: #414141;
+  border-radius: 8px;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.wallet-frame:hover {
+  background-color: #555;
+}
+
+.wallet-frame-icon {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 8px;
+}
+
+.wallet-frame-text {
+  margin: 0;
+}
+
+/* Disconnect button (post-connection) */
+.disconnect-button {
+  background-color: #fff;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  padding: 12px;
+  cursor: pointer;
+  width: 100%;
+  max-width: 400px;
+  transition: background-color 0.3s ease;
+}
+
+.disconnect-button:hover {
+  background-color: #e6e6e6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .wallet-screen {
+    padding: 12px;
   }
-  
+
+  .wallet-top-section {
+    margin-top: 15px;
+    margin-bottom: 20px;
+  }
+
   .wallet-icon-large {
-    width: 80px;
-    height: 80px;
-    margin-bottom: 24px;
-    margin: 0 auto;
+    width: 60px;
+    height: 60px;
+    margin-bottom: 20px;
   }
-  
+
   .wallet-title {
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 8px;
+    font-size: 20px;
   }
-  
+
   .wallet-description {
-    font-size: 16px;
-    color: #888;
-    margin-bottom: 20px;
-  }
-  
-  .wallet-data-card,
-  .wallet-connected-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    background-color: white;
-    border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-  
-  .data-card-icon,
-  .connected-card-icon {
-    width: 30px;
-    height: 30px;
-  }
-  
-  .data-card-text,
-  .connected-card-text {
-    font-size: 16px;
-    color: black;
-    flex-grow: 1;
-    text-align: center;
-  }
-  
-  .wallet-selection {
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-  
-  .wallet-frame {
-    background-color: #414141;
-    border-radius: 8px;
-    width: 80px;
-    height: 80px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: white;
     font-size: 14px;
   }
-  
-  .wallet-frame-icon {
-    width: 40px;
-    height: 40px;
-    margin-bottom: 8px;
-  }
-  
-  .disconnect-button {
-    background-color: white;
-    color: black;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
+
+  .wallet-data-card,
+  .wallet-connected-card {
     padding: 12px;
-    cursor: pointer;
-    width: 90%;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
-  
-  .disconnect-button:hover {
-    background-color: #e6e6e6;
+
+  .data-card-icon,
+  .connected-card-icon {
+    width: 24px;
+    height: 24px;
   }
-  
+
+  .data-card-text,
+  .connected-card-text {
+    font-size: 14px;
+  }
+
+  .wallet-frame {
+    width: 70px;
+    height: 70px;
+    font-size: 12px;
+  }
+
+  .wallet-frame-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .disconnect-button {
+    padding: 10px;
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 768px) {
+  .wallet-screen {
+    padding: 24px;
+  }
+
+  .wallet-data-card,
+  .wallet-connected-card,
+  .disconnect-button {
+    max-width: 500px;
+  }
+
+  .wallet-selection {
+    gap: 15px;
+    max-width: 500px;
+  }
+
+  .wallet-frame {
+    width: 90px;
+    height: 90px;
+  }
+}

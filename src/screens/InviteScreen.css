@@ -152,20 +152,19 @@
 .cta-container {
   position: fixed;
   bottom: 80px;
-  left: 16px; /* Adjusted for padding */
-  right: 16px; /* Adjusted for padding */
+  width: calc(100% - 32px); /* Account for 16px padding on each side */
   display: flex;
   justify-content: center;
   z-index: 10;
 }
 
 .invite-cta-button {
-  width: 75%;
-  max-width: 360px;
+  width: 100%;
+  max-width: 100%; /* Prevent overflow */
   height: 50px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: center; /* Centralized text */
   padding: 12px;
   background-color: #fff;
   color: #000;
@@ -331,6 +330,11 @@
 
   .invite-cta-button {
     width: 100%;
+    max-width: 100%; /* Prevent overflow */
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Centralized text */
     padding: 12px;
     background-color: #fff;
     color: #000;
@@ -392,6 +396,11 @@
 
   .invite-cta-button {
     width: 100%;
+    max-width: 100%; /* Prevent overflow */
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Centralized text */
     padding: 12px;
     background-color: #fff;
     color: #000;
