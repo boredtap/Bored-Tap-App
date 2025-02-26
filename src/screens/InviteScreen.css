@@ -76,7 +76,7 @@
 /* Friends section */
 .your-friends-section {
   margin-top: 30px;
-  flex: 1; /* Allow it to grow */
+  flex: 1;
 }
 
 .friends-title {
@@ -152,28 +152,29 @@
 .cta-container {
   position: fixed;
   bottom: 80px;
-  width: calc(100% - 32px); /* Account for 16px padding on each side */
+  left: 16px;
+  right: 16px;
   display: flex;
   justify-content: center;
   z-index: 10;
 }
 
 .invite-cta-button {
-  width: 100%;
-  max-width: 100%; /* Prevent overflow */
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center; /* Centralized text */
-  padding: 12px;
   background-color: #fff;
   color: #000;
   border: none;
   border-radius: 8px;
-  font-size: 16px;
-  font-weight: 500;
+  padding: 6px 12px;
+  font-weight: bold;
   cursor: pointer;
+  text-align: center;
   transition: background-color 0.3s ease;
+  width: 100%;
+  max-width: 100%;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .invite-cta-button:hover {
@@ -288,6 +289,43 @@
   background-color: #e6e6e6;
 }
 
+/* Copy confirmation popup */
+.copy-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #1d1d1d; /* Same as overlay */
+  color: #fff;
+  padding: 6px 12px; /* Reduced padding for 32px height */
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1002;
+  font-size: 14px;
+  max-height: 32px; /* Max height constraint */
+  animation: fadeInOut 2s ease-in-out;
+}
+
+.copy-popup-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.copy-popup-text {
+  font-weight: 500;
+  color: #fff;
+}
+
+/* Fade in and out animation for popup */
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 /* Responsive adjustments */
 @media (max-width: 600px) {
   .invite-screen {
@@ -306,13 +344,10 @@
 
   .invite-title {
     font-size: 20px;
-    font-weight: 800;
-    margin-bottom: 10px;
   }
 
   .invite-subtitle {
-    font-size: 12px;
-    margin-bottom: 10px;
+    font-size: 14px;
   }
 
   .invite-link-card {
@@ -329,21 +364,7 @@
   }
 
   .invite-cta-button {
-    width: 100%;
-    max-width: 100%; /* Prevent overflow */
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center; /* Centralized text */
-    padding: 12px;
-    background-color: #fff;
-    color: #000;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+    padding: 6px 12px;
   }
 
   .overlay-title {
@@ -362,6 +383,16 @@
   .overlay-cta-button {
     padding: 10px;
     font-size: 14px;
+  }
+
+  .copy-popup {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .copy-popup-icon {
+    width: 14px;
+    height: 14px;
   }
 }
 
@@ -392,23 +423,5 @@
   .overlay-cta-button {
     width: auto;
     min-width: 120px;
-  }
-
-  .invite-cta-button {
-    width: 100%;
-    max-width: 100%; /* Prevent overflow */
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center; /* Centralized text */
-    padding: 12px;
-    background-color: #fff;
-    color: #000;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
   }
 }

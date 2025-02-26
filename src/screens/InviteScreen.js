@@ -3,13 +3,14 @@ import Navigation from "../components/Navigation";
 import "./InviteScreen.css";
 
 /**
- * InviteScreen component for inviting friends via Telegram and displaying invited friends list.
+ * InviteScreen component for inviting friends and displaying invited friends list.
  * Fetches user profile and QR code, provides an invite link, and integrates sharing options.
  */
 const InviteScreen = () => {
   const [isOverlayVisible, setOverlayVisible] = useState(false);
   const [invites, setInvites] = useState([]);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [showCopyPopup, setShowCopyPopup] = useState(false);
 
   useEffect(() => {
     const fetchUserProfileAndQR = async () => {
@@ -48,7 +49,6 @@ const InviteScreen = () => {
         console.error("Error fetching user profile or QR code:", err);
       }
     };
-
     fetchUserProfileAndQR();
   }, []);
 
@@ -57,7 +57,8 @@ const InviteScreen = () => {
 
   const handleCopy = () => {
     navigator.clipboard.writeText(inviteLink);
-    alert("Invite link copied to clipboard!");
+    setShowCopyPopup(true);
+    setTimeout(() => setShowCopyPopup(false), 2000);
   };
 
   const handleTelegramShare = () => {
@@ -78,7 +79,6 @@ const InviteScreen = () => {
 
   return (
     <div className="invite-screen">
-      {/* Header with invite icon and text */}
       <div className="invite-header">
         <img
           src={`${process.env.PUBLIC_URL}/invite.png`}
@@ -89,7 +89,6 @@ const InviteScreen = () => {
         <p className="invite-subtitle">You and your friend will receive BT Coins</p>
       </div>
 
-      {/* Invite link card */}
       <div className="invite-link-card">
         <div className="invite-link-details">
           <p className="invite-link-title">My Invite Link:</p>
@@ -100,7 +99,6 @@ const InviteScreen = () => {
         </button>
       </div>
 
-      {/* List of invited friends */}
       <div className="your-friends-section">
         <p className="friends-title">Your Friends ({invites.length})</p>
         {invites.length === 0 ? (
@@ -134,14 +132,12 @@ const InviteScreen = () => {
         )}
       </div>
 
-      {/* Floating CTA button */}
       <div className="cta-container">
         <button className="invite-cta-button" onClick={toggleOverlay}>
           Invite a Friend
         </button>
       </div>
 
-      {/* Overlay for sharing options */}
       {isOverlayVisible && (
         <div className="overlay-container">
           <div className={`invite-overlay ${isOverlayVisible ? "slide-in" : "slide-out"}`}>
@@ -175,6 +171,17 @@ const InviteScreen = () => {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {showCopyPopup && (
+        <div className="copy-popup">
+          <img
+            src={`${process.env.PUBLIC_URL}/tick-icon.png`}
+            alt="Tick Icon"
+            className="copy-popup-icon"
+          />
+          <span className="copy-popup-text">Invite link is copied</span>
         </div>
       )}
 
