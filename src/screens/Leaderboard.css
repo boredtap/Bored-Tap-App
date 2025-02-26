@@ -12,12 +12,18 @@
   box-sizing: border-box;
 }
 
+/* Leaderboard body containing the main content */
+.leaderboard-body {
+  flex: 1;
+  margin-bottom: 100px; /* Space for floating card */
+}
+
 /* Header section with centered icon */
 .leaderboard-header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .leaderboard-icon {
@@ -25,12 +31,11 @@
   height: 64px;
 }
 
-/* Pagination tabs with proper spacing and responsiveness */
+/* Pagination tabs with even spacing and responsiveness */
 .pagination {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-evenly;
   margin-bottom: 20px;
-  padding: 0 10px;
   flex-wrap: wrap; /* Allow wrapping on small screens */
   gap: 15px; /* Add spacing between tabs */
 }
@@ -40,10 +45,10 @@
   cursor: pointer;
   color: #fff;
   position: relative;
-  padding: 5px 10px; /* Add padding for better click area */
+  padding: 5px 10px; /* Ensure clickable area */
   text-align: center;
-  flex: 1; /* Equal width distribution */
-  min-width: 70px; /* Minimum width for readability */
+  flex: 1;
+  min-width: 80px; /* Minimum width for readability */
 }
 
 .pagination-tab.active::after {
@@ -52,7 +57,7 @@
   width: 100%;
   height: 2px;
   background-color: #fff;
-  bottom: -4px;
+  bottom: 0;
   left: 0;
 }
 
@@ -60,9 +65,10 @@
 .leaderboard-cards {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 24px;
 }
 
+/* Individual leaderboard card */
 .leaderboard-card {
   display: flex;
   justify-content: space-between;
@@ -134,7 +140,7 @@
   font-size: 16px;
 }
 
-/* Floating card for current user */
+/* Floating card for current user's rank */
 .floating-card {
   position: fixed;
   bottom: 80px;
@@ -152,20 +158,38 @@
   box-sizing: border-box;
 }
 
-/* Text color overrides */
 .black-text {
   color: #000 !important;
 }
 
-/* Responsive adjustments */
-@media (max-width: 480px) {
+/* Responsive design adjustments */
+@media (max-width: 600px) {
+  .leaderboard-screen {
+    padding: 12px;
+  }
+
+  .leaderboard-header {
+    margin-bottom: 20px;
+  }
+
+  .leaderboard-icon {
+    width: 48px;
+    height: 48px;
+  }
+
   .pagination-tab {
-    font-size: 14px; /* Smaller font on mobile */
-    min-width: 60px;
+    font-size: 14px;
+    min-width: 70px;
+    padding: 4px 8px;
   }
 
   .leaderboard-card {
-    padding: 12px; /* Reduce padding on small screens */
+    padding: 12px;
+  }
+
+  .leaderboard-logo {
+    width: 36px;
+    height: 36px;
   }
 
   .floating-card {

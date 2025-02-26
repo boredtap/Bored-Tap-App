@@ -3,22 +3,22 @@ import Navigation from "../components/Navigation";
 import "./Leaderboard.css";
 
 /**
- * Leaderboard component displaying user rankings across different time periods.
- * Fetches data for Daily, Weekly, Monthly, and All Time leaderboards, and shows the current user's position.
+ * Leaderboard component displaying user rankings across different time periods (Daily, Weekly, Monthly, All Time).
+ * Fetches leaderboard data and the current user's position, with tabbed navigation and a floating card for the user's rank.
  */
 const Leaderboard = () => {
-  // State for active tab (Daily, Weekly, Monthly, All Time)
+  // State for managing the active leaderboard period (e.g., Daily, Weekly)
   const [activeTab, setActiveTab] = useState("Daily");
-  // State for leaderboard data, structured as { period: [entries] }
+  // State for storing leaderboard data, organized by period
   const [leaderboardData, setLeaderboardData] = useState({});
-  // State for current user's profile data
+  // State for the current user's profile and rank
   const [currentUser, setCurrentUser] = useState(null);
 
-  // Effect to fetch leaderboard data and user profile on mount
+  // Fetch leaderboard data and user profile when the component mounts
   useEffect(() => {
     /**
-     * Fetches leaderboard data for all periods and the current user's profile.
-     * Updates state with fetched data or logs errors if fetch fails.
+     * Asynchronously fetches leaderboard data for all periods and the current user's profile.
+     * Updates state with fetched data or logs errors if requests fail.
      */
     const fetchLeaderboardData = async () => {
       const token = localStorage.getItem("accessToken");
@@ -28,7 +28,7 @@ const Leaderboard = () => {
       }
 
       try {
-        // Define periods to fetch
+        // Define periods for leaderboard data
         const periods = ["Daily", "Weekly", "Monthly", "All Time"];
         const fetchedData = {};
 
@@ -86,17 +86,17 @@ const Leaderboard = () => {
     fetchLeaderboardData();
   }, []);
 
-  // Handler to switch between leaderboard tabs
+  // Handle tab switching for different leaderboard periods
   const handleTabClick = (tab) => {
     setActiveTab(tab);
   };
 
-  // Get current leaderboard data based on active tab
+  // Get the current leaderboard data based on the selected tab
   const currentLeaderboard = leaderboardData[activeTab] || [];
 
   return (
     <div className="leaderboard-screen">
-      {/* Header with leaderboard icon */}
+      {/* Header section with leaderboard icon */}
       <div className="leaderboard-header">
         <img
           src={`${process.env.PUBLIC_URL}/leaderboard12-icon.png`}
@@ -105,7 +105,7 @@ const Leaderboard = () => {
         />
       </div>
 
-      {/* Pagination tabs for switching periods */}
+      {/* Pagination tabs for switching between periods */}
       <div className="pagination">
         {Object.keys(leaderboardData).map((tab) => (
           <span
@@ -118,58 +118,60 @@ const Leaderboard = () => {
         ))}
       </div>
 
-      {/* Leaderboard entries */}
-      {currentLeaderboard.length === 0 ? (
-        <p className="no-leaderboard">No leaderboard entries available yet.</p>
-      ) : (
-        <div className="leaderboard-cards">
-          {currentLeaderboard.map((entry, index) => (
-            <div
-              className={`leaderboard-card ${index > 2 ? "transparent-card" : ""}`}
-              key={entry.telegram_user_id || index}
-            >
-              <div className="leaderboard-left">
-                <img
-                  src={entry.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`}
-                  alt={`${entry.username}'s Profile`}
-                  className="leaderboard-logo round-frame"
-                />
-                <div className="leaderboard-info">
-                  <p className="leaderboard-title">
-                    {entry.username} <span className="level">.Lvl {entry.level || 1}</span>
-                  </p>
-                  <p className="leaderboard-value">{entry.coins_earned || 0} BT Coin</p>
+      {/* Leaderboard entries or loading/error message */}
+      <div className="leaderboard-body">
+        {currentLeaderboard.length === 0 ? (
+          <p className="no-leaderboard">No leaderboard entries available yet.</p>
+        ) : (
+          <div className="leaderboard-cards">
+            {currentLeaderboard.map((entry, index) => (
+              <div
+                className={`leaderboard-card ${index > 2 ? "transparent-card" : ""}`}
+                key={entry.telegram_user_id || index}
+              >
+                <div className="leaderboard-left">
+                  <img
+                    src={entry.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`}
+                    alt={`${entry.username}'s Profile`}
+                    className="leaderboard-logo round-frame"
+                  />
+                  <div className="leaderboard-info">
+                    <p className="leaderboard-title">
+                      {entry.username} <span className="level">.Lvl {entry.level || 1}</span>
+                    </p>
+                    <p className="leaderboard-value">{entry.coins_earned || 0} BT Coin</p>
+                  </div>
+                </div>
+                <div className="leaderboard-right">
+                  {index === 0 ? (
+                    <img
+                      src={`${process.env.PUBLIC_URL}/first-icon.png`}
+                      alt="1st Place"
+                      className="leaderboard-right-icon"
+                    />
+                  ) : index === 1 ? (
+                    <img
+                      src={`${process.env.PUBLIC_URL}/second-icon.png`}
+                      alt="2nd Place"
+                      className="leaderboard-right-icon"
+                    />
+                  ) : index === 2 ? (
+                    <img
+                      src={`${process.env.PUBLIC_URL}/third-icon.png`}
+                      alt="3rd Place"
+                      className="leaderboard-right-icon"
+                    />
+                  ) : (
+                    <span className="position-number">#{index + 1}</span>
+                  )}
                 </div>
               </div>
-              <div className="leaderboard-right">
-                {index === 0 ? (
-                  <img
-                    src={`${process.env.PUBLIC_URL}/first-icon.png`}
-                    alt="1st Place"
-                    className="leaderboard-right-icon"
-                  />
-                ) : index === 1 ? (
-                  <img
-                    src={`${process.env.PUBLIC_URL}/second-icon.png`}
-                    alt="2nd Place"
-                    className="leaderboard-right-icon"
-                  />
-                ) : index === 2 ? (
-                  <img
-                    src={`${process.env.PUBLIC_URL}/third-icon.png`}
-                    alt="3rd Place"
-                    className="leaderboard-right-icon"
-                  />
-                ) : (
-                  <span className="position-number">#{index + 1}</span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
 
-      {/* Floating card for current user */}
+      {/* Floating card for current user's rank */}
       {currentUser && (
         <div className="floating-card">
           <div className="leaderboard-left">
