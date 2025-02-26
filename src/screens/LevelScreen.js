@@ -104,7 +104,6 @@ const LevelScreen = () => {
             className="level-data-card"
             style={{
               backgroundColor: item.cardNumber > currentLevel ? "transparent" : "#414141",
-              border: item.cardNumber > currentLevel ? "0px solid #fff" : "none",
             }}
           >
             <div className="level-data-left">

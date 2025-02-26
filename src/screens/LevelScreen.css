@@ -10,6 +10,8 @@
   flex-direction: column;
   width: 100%;
   box-sizing: border-box;
+  margin-top: 20px;
+  margin-bottom: 16px;
 }
 
 /* Level header with centered icon and text */
@@ -22,8 +24,8 @@
 }
 
 .level-icon {
-  width: 119px;
-  height: 95px;
+  width: 80px;
+  height: 63px;
 }
 
 .level-text {
@@ -40,7 +42,7 @@
   align-items: center;
   margin-bottom: 8px;
   font-size: 12px;
-  width: 100%;
+  width: calc(100% - 32px); /* Match screen padding */
   max-width: 400px;
   margin: 0 auto 8px;
 }
@@ -68,7 +70,7 @@
 .loading-bar {
   background-color: #414141;
   height: 10px;
-  width: 100%;
+  width: calc(100% - 32px); /* Match screen padding */
   max-width: 400px;
   border-radius: 5px;
   margin: 0 auto 20px;
@@ -84,11 +86,11 @@
 .level-data-cards {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 24px; /* Increased to 24px like RewardScreen */
   overflow-y: auto;
   max-height: calc(100vh - 200px); /* Adjusted for header and navigation */
-  padding-bottom: 20px;
-  margin: 0 20px;
+  width: calc(100% - 32px); /* Full width minus padding */
+  margin: 0 auto;
 }
 
 .level-data-card {
@@ -97,6 +99,8 @@
   align-items: center;
   padding: 16px;
   border-radius: 8px;
+  width: 100%; /* Full width of container */
+  box-sizing: border-box;
 }
 
 .level-data-left {
@@ -172,8 +176,12 @@
     height: 14px;
   }
 
+  .loading-bar {
+    max-width: 300px;
+  }
+
   .level-data-cards {
-    margin: 0 15px;
+    gap: 20px; /* Slightly reduced for mobile */
   }
 
   .level-data-card {
@@ -210,6 +218,5 @@
 
   .level-data-cards {
     max-width: 500px;
-    margin: 0 auto;
   }
 }
