@@ -161,11 +161,10 @@ const DailyStreakScreen = () => {
             />
           ))}
         </div>
-        <p className="rewards-note">Come back tomorrow to pick up your next reward</p>
       </div>
 
       {/* CTA button */}
-      <div className="cta-container">
+      <div className="cta-container2">
         <CTAButton
           isActive={!claimedDays.includes(currentDay)}
           text={claimedDays.includes(currentDay) ? "Come Back Tomorrow" : "Claim Reward"}
