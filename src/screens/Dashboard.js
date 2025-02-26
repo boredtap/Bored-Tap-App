@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./Dashboard.css";
 
 /**
  * Dashboard component displaying the main UI with tapping interaction and navigation links.
- * Reacts to daily booster states from BoostScreen via localStorage and events.
+ * Reacts to daily booster states from BoostScreen and resets data on account deletion.
  */
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -18,22 +18,40 @@ const Dashboard = () => {
   const profile = { level: 1, level_name: "Beginner" };
   const currentStreak = 0;
 
+  // Initial state constants
+  const INITIAL_ELECTRIC_BOOST = 1000;
+  const INITIAL_DAILY_BOOSTERS = useMemo(
+    () => ({
+      tapperBoost: { usesLeft: 3, isActive: false, endTime: null },
+      fullEnergy: { usesLeft: 3, isActive: false },
+    }),
+    [] // Empty dependency array ensures it’s created once
+  );
+
   // State for game mechanics
   const [totalTaps, setTotalTaps] = useState(0);
   const [tapEffects, setTapEffects] = useState([]);
-  const [electricBoost, setElectricBoost] = useState(1000);
-  const [maxElectricBoost] = useState(1000); // Static for now
-  const [tapValue] = useState(1); // Static for now
+  const [electricBoost, setElectricBoost] = useState(INITIAL_ELECTRIC_BOOST);
+  const [maxElectricBoost] = useState(INITIAL_ELECTRIC_BOOST);
+  const [tapValue] = useState(1);
   const [dailyBoosters, setDailyBoosters] = useState(() => {
     const saved = localStorage.getItem("dailyBoosters");
-    return saved
-      ? JSON.parse(saved)
-      : {
-          tapperBoost: { usesLeft: 3, isActive: false, endTime: null },
-          fullEnergy: { usesLeft: 3, isActive: false },
-        };
+    return saved ? JSON.parse(saved) : INITIAL_DAILY_BOOSTERS;
   });
   const [isTapping, setIsTapping] = useState(false);
+  const [tapAnimation, setTapAnimation] = useState(false);
+
+  // Reset data on account deletion (simulated by token absence)
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      setTotalTaps(0);
+      setElectricBoost(INITIAL_ELECTRIC_BOOST);
+      setDailyBoosters(INITIAL_DAILY_BOOSTERS);
+      localStorage.setItem("dailyBoosters", JSON.stringify(INITIAL_DAILY_BOOSTERS));
+      navigate("/splash");
+    }
+  }, [navigate, INITIAL_DAILY_BOOSTERS]);
 
   // Sync with localStorage and listen for Full Energy event
   useEffect(() => {
@@ -49,7 +67,6 @@ const Dashboard = () => {
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener("fullEnergyClaimed", handleFullEnergyClaimed);
 
-    // Initial sync
     handleStorageChange();
 
     return () => {
@@ -59,7 +76,7 @@ const Dashboard = () => {
   }, [maxElectricBoost]);
 
   /**
-   * Handles tap events, increments total taps, reduces electric boost, and shows tap effects.
+   * Handles tap events, increments total taps, reduces electric boost, and shows tap effects with slight animation.
    * @param {Object} event - The tap or click event object.
    */
   const handleTap = (event) => {
@@ -82,8 +99,10 @@ const Dashboard = () => {
     const newTapEffect = { id: Date.now(), x: tapX, y: tapY, count: tapIncrease };
     setTapEffects((prevEffects) => [...prevEffects, newTapEffect]);
 
+    setTapAnimation(true);
     setTimeout(() => {
       setTapEffects((prev) => prev.filter((e) => e.id !== newTapEffect.id));
+      setTapAnimation(false);
     }, 1000);
   };
 
@@ -148,7 +167,7 @@ const Dashboard = () => {
           <span>{totalTaps.toLocaleString()}</span>
         </div>
         <div
-          className="big-tap-icon"
+          className={`big-tap-icon ${tapAnimation ? "tap-animation" : ""}`}
           onTouchStart={handleTap}
           onTouchEnd={handleTapEnd}
           onMouseDown={handleTap}

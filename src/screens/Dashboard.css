@@ -166,7 +166,17 @@
   height: 500px;
   margin: 0 auto;
   display: block;
-  transition: transform 0.2s ease-in-out;
+}
+
+.big-tap-icon.tap-animation img {
+  animation: slight-bounce 0.2s ease-in-out; /* Very slight animation */
+}
+
+/* Slight Bounce Animation */
+@keyframes slight-bounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); } /* 2% increase, very subtle */
+  100% { transform: scale(1); }
 }
 
 /* Electric Boost Section */
@@ -191,11 +201,6 @@
   object-fit: contain;
 }
 
-.boost-btn-container {
-  display: flex;
-  gap: 8px;
-}
-
 .boost-btn {
   display: flex;
   align-items: center;
@@ -204,26 +209,20 @@
   color: white;
   border: none;
   border-radius: 4px;
-  padding: 8px 12px;
-  font-size: 14px;
+  padding: 12px 16px; /* Increased padding for larger size */
+  font-size: 18px; /* Larger font size */
   cursor: pointer;
-  gap: 5px;
+  gap: 8px;
   transition: background-color 0.3s ease;
 }
 
-.boost-btn:disabled {
-  background-color: #555;
-  color: #aaa;
-  cursor: not-allowed;
-}
-
-.boost-btn:hover:not(:disabled) {
+.boost-btn:hover {
   background-color: #555;
 }
 
 .boost-icon {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
 }
 
@@ -280,12 +279,12 @@
   }
 
   .boost-btn {
-    font-size: 12px;
-    padding: 6px 10px;
+    padding: 10px 14px; /* Slightly smaller but still larger than original */
+    font-size: 16px;
   }
 
   .boost-icon {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
   }
 }
