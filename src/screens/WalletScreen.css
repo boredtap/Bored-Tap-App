@@ -51,6 +51,7 @@
   height: 300px;
   margin: 0 auto 24px;
   display: block;
+  margin-top: 16px;
 }
 
 /* Wallet data card (pre-connection) */
@@ -168,8 +169,8 @@
   }
 
   .wallet-gif {
-    width: 200px;
-    height: 200px;
+    width: 250px;
+    height: 250px;
     margin-bottom: 20px;
   }
 
@@ -228,7 +229,7 @@
   }
 
   .wallet-gif {
-    width: 150px;
-    height: 150px;
+    width: 200px;
+    height: 200px;
   }
 }
