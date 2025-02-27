@@ -913,9 +913,9 @@ const Dashboard = () => {
   // Handle Tapper Boost activation
   useEffect(() => {
     const handleTapperBoostActivated = () => {
-      setTapMultiplier(2); // Double tap value for 20 seconds
+      setTapMultiplier((prev) => prev * 2); // Multiply current tap value by 2
       setTimeout(() => {
-        setTapMultiplier(1); // Reset after 20 seconds
+        setTapMultiplier((prev) => prev / 2); // Reset after 20 seconds by dividing back
       }, 20000);
     };
 
@@ -928,6 +928,7 @@ const Dashboard = () => {
     const handleFullEnergyClaimed = () => {
       setElectricBoost(maxElectricBoost); // Instantly set to max
       localStorage.setItem("electricBoost", maxElectricBoost);
+      // No reset to initial state—tapping resumes from full
     };
 
     window.addEventListener("fullEnergyClaimed", handleFullEnergyClaimed);
@@ -953,8 +954,8 @@ const Dashboard = () => {
     lastTapTime.current = Date.now();
     localStorage.setItem("lastTapTime", lastTapTime.current);
 
-    // Increment total taps with multiplier (base tap value = 1, doubled or quadrupled by boost)
-    const tapValue = tapMultiplier; // Tap value reflects multiplier (1, 2, or 4 with future upgrades)
+    // Increment total taps with multiplier
+    const tapValue = tapMultiplier; // Base value (1) multiplied by booster (e.g., 2 or 4)
     setTotalTaps((prev) => prev + tapValue);
     tapCountSinceLastUpdate.current += tapValue;
 
