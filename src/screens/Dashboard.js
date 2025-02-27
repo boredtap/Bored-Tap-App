@@ -414,12 +414,13 @@ const Dashboard = () => {
 
   // State for total taps and tap effects
   const [totalTaps, setTotalTaps] = useState(0);
-  const [tapEffects, setTapEffects] = useState([]); // Multiple tap effects allowed
+  const [tapEffects, setTapEffects] = useState([]);
 
   // Refs for tap and recharge management
   const tapCountSinceLastUpdate = useRef(0);
-  const lastTapTime = useRef(Date.now()); // Track time of last tap
-  const rechargeInterval = useRef(null); // Store recharge interval ID
+  const lastTapTime = useRef(Date.now());
+  const lastElectricBoost = useRef(1000); // Track boost across page navigation
+  const lastUpdateTime = useRef(Date.now()); // Track last recharge update time
 
   // Initialize Telegram WebApp data on component mount
   useEffect(() => {
@@ -463,9 +464,11 @@ const Dashboard = () => {
         setProfile(data);
         setTotalTaps(data.total_coins || 0);
         setCurrentStreak(data.streak?.current_streak || 0);
+        setElectricBoost(data.electric_boost || 1000); // Assume backend provides this, else default
+        lastElectricBoost.current = data.electric_boost || 1000;
       } catch (err) {
         console.error("Error fetching profile:", err);
-        navigate("/splash"); // Redirect on failure
+        navigate("/splash");
       }
     };
     fetchProfile();
@@ -490,14 +493,12 @@ const Dashboard = () => {
       );
       if (response.ok) {
         const data = await response.json();
-        if (data["current coins"] >= 0) {
-          setTotalTaps(data["current coins"]);
-          setProfile((prev) => ({
-            ...prev,
-            level: data["current level"] || prev.level,
-          }));
-          tapCountSinceLastUpdate.current = 0;
-        }
+        setTotalTaps((prev) => prev - tapsToSync + (data["current coins"] || prev)); // Ensure local sync
+        setProfile((prev) => ({
+          ...prev,
+          level: data["current level"] || prev.level,
+        }));
+        tapCountSinceLastUpdate.current = 0;
       } else {
         console.error("Failed to sync coins:", await response.text());
       }
@@ -508,54 +509,52 @@ const Dashboard = () => {
 
   // Set up backend sync interval and cleanup
   useEffect(() => {
-    const interval = setInterval(updateBackend, 2000); // Sync every 2 seconds
+    const interval = setInterval(updateBackend, 2000);
     return () => {
       clearInterval(interval);
       updateBackend(); // Sync remaining taps on unmount
     };
   }, [updateBackend]);
 
-  // Handle electric boost recharge
+  // Handle electric boost recharge across page navigation
   useEffect(() => {
-    const checkRecharge = () => {
+    const updateRecharge = () => {
       const now = Date.now();
       const timeSinceLastTap = now - lastTapTime.current;
+      const timeSinceLastUpdate = now - lastUpdateTime.current;
 
-      // Start recharging if 3 seconds have passed since the last tap
-      if (timeSinceLastTap >= 3000 && electricBoost < maxElectricBoost) {
-        if (!rechargeInterval.current) {
-          rechargeInterval.current = setInterval(() => {
-            setElectricBoost((prev) => {
-              const newBoost = Math.min(prev + 1, maxElectricBoost);
-              if (newBoost === maxElectricBoost) {
-                clearInterval(rechargeInterval.current);
-                rechargeInterval.current = null;
-              }
-              return newBoost;
-            });
-          }, 3000); // Recharge 1 point every 3 seconds (3000ms / 1000 = 3s per count)
+      if (timeSinceLastTap >= 3000 && lastElectricBoost.current < maxElectricBoost) {
+        const rechargeRate = 3000; // 3 seconds per point
+        const pointsToAdd = Math.floor(timeSinceLastUpdate / rechargeRate);
+        if (pointsToAdd > 0) {
+          setElectricBoost((prev) =>
+            Math.min(prev + pointsToAdd, maxElectricBoost)
+          );
+          lastElectricBoost.current = Math.min(
+            lastElectricBoost.current + pointsToAdd,
+            maxElectricBoost
+          );
+          lastUpdateTime.current = now;
         }
       }
     };
 
-    const interval = setInterval(checkRecharge, 1000); // Check every second
-    return () => {
-      clearInterval(interval);
-      if (rechargeInterval.current) {
-        clearInterval(rechargeInterval.current);
-        rechargeInterval.current = null;
-      }
-    };
-  }, [electricBoost, maxElectricBoost]);
+    // Initial update on mount
+    updateRecharge();
+
+    // Check every second
+    const interval = setInterval(updateRecharge, 1000);
+    return () => clearInterval(interval);
+  }, [maxElectricBoost]);
 
   /**
    * Handles tap events on the big tap icon, increments total taps, and shows a +1 effect per tap.
    * @param {Object} event - The tap or click event object.
    */
   const handleTap = (event) => {
-    event.preventDefault(); // Prevent default behavior
+    event.preventDefault();
 
-    if (electricBoost <= 0) return; // Prevent taps if no boost remains
+    if (electricBoost <= 0) return;
 
     // Update last tap time for recharge logic
     lastTapTime.current = Date.now();
@@ -565,14 +564,18 @@ const Dashboard = () => {
     tapCountSinceLastUpdate.current += 1;
 
     // Decrease electric boost
-    setElectricBoost((prev) => Math.max(prev - 1, 0));
+    setElectricBoost((prev) => {
+      const newBoost = Math.max(prev - 1, 0);
+      lastElectricBoost.current = newBoost;
+      return newBoost;
+    });
 
     // Get tap coordinates relative to the tap icon
     const tapIcon = event.currentTarget.getBoundingClientRect();
     const tapX = (event.touches ? event.touches[0].clientX : event.clientX) - tapIcon.left;
     const tapY = (event.touches ? event.touches[0].clientY : event.clientY) - tapIcon.top;
 
-    // Add a new tap effect without replacing existing ones
+    // Add a new tap effect
     const newTapEffect = { id: Date.now(), x: tapX, y: tapY };
     setTapEffects((prev) => [...prev, newTapEffect]);
 
@@ -637,7 +640,6 @@ const Dashboard = () => {
           onMouseDown={handleTap}
         >
           <img className="tap-logo-big" src={`${process.env.PUBLIC_URL}/logo.png`} alt="Big Tap Icon" />
-          {/* Tap Effects */}
           {tapEffects.map((effect) => (
             <div
               key={effect.id}
