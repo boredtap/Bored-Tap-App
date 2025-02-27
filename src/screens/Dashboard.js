@@ -753,6 +753,12 @@ const Dashboard = () => {
     setTapMultiplier(1);
     setElectricBoost(maxElectricBoost);
     localStorage.setItem("electricBoost", maxElectricBoost);
+    setTotalTaps(0); // Reset total taps to 0
+    setProfile({ level: 1, level_name: "Beginner" }); // Reset profile to default
+    setCurrentStreak(0); // Reset streak
+    tapCountSinceLastUpdate.current = 0; // Reset unsynced taps
+    localStorage.removeItem("lastTapTime"); // Clear last tap time to restart recharge logic
+    lastTapTime.current = Date.now();
   };
 
   // Initialize Telegram WebApp data on component mount and reset boosters if user changes
@@ -770,7 +776,7 @@ const Dashboard = () => {
             const storedUserId = localStorage.getItem("telegram_user_id");
             if (storedUserId !== user.id.toString()) {
               localStorage.setItem("telegram_user_id", user.id);
-              resetBoosters(); // Reset boosters if user ID changes
+              resetBoosters(); // Reset all logic if user ID changes
             }
           }
         }
@@ -928,7 +934,6 @@ const Dashboard = () => {
     const handleFullEnergyClaimed = () => {
       setElectricBoost(maxElectricBoost); // Instantly set to max
       localStorage.setItem("electricBoost", maxElectricBoost);
-      // No reset to initial state—tapping resumes from full
     };
 
     window.addEventListener("fullEnergyClaimed", handleFullEnergyClaimed);
