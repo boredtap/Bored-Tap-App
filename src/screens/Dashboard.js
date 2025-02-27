@@ -385,14 +385,14 @@
 
 // export default Dashboard;
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./Dashboard.css";
 
 /**
  * Dashboard component displaying the main UI with tapping interaction and navigation links.
- * Syncs with Telegram WebApp for user data and backend for profile, streak, and coin updates.
+ * Syncs with Telegram WebApp for user data and backend for profile and coin updates.
  */
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -415,10 +415,7 @@ const Dashboard = () => {
   // State for total taps and tap effects
   const [totalTaps, setTotalTaps] = useState(0);
   const [tapEffects, setTapEffects] = useState([]);
-
-  // Refs for tap and recharge management
-  const tapCountSinceLastUpdate = useRef(0);
-  const lastTapTime = useRef(Date.now());
+  const [pendingTaps, setPendingTaps] = useState(0); // Track taps not yet synced
 
   // Initialize Telegram WebApp data on component mount
   useEffect(() => {
@@ -462,7 +459,7 @@ const Dashboard = () => {
         setProfile(data);
         setTotalTaps(data.total_coins || 0);
         setCurrentStreak(data.streak?.current_streak || 0);
-        setElectricBoost(data.electric_boost || 1000); // Assume backend provides, else default
+        setElectricBoost(parseInt(localStorage.getItem("electricBoost")) || 1000);
       } catch (err) {
         console.error("Error fetching profile:", err);
         navigate("/splash");
@@ -471,15 +468,14 @@ const Dashboard = () => {
     fetchProfile();
   }, [navigate]);
 
-  // Sync tap count with backend every 2 seconds or on unmount
+  // Sync tap count with backend every 2 seconds
   const updateBackend = useCallback(async () => {
-    if (tapCountSinceLastUpdate.current === 0) return;
+    if (pendingTaps === 0) return;
 
-    const tapsToSync = tapCountSinceLastUpdate.current;
     try {
       const token = localStorage.getItem("accessToken");
       const response = await fetch(
-        `https://bt-coins.onrender.com/update-coins?coins=${tapsToSync}`,
+        `https://bt-coins.onrender.com/update-coins?coins=${pendingTaps}`,
         {
           method: "POST",
           headers: {
@@ -491,18 +487,14 @@ const Dashboard = () => {
       if (response.ok) {
         const data = await response.json();
         setTotalTaps(data["current coins"] || totalTaps); // Trust backend total
-        setProfile((prev) => ({
-          ...prev,
-          level: data["current level"] || prev.level,
-        }));
-        tapCountSinceLastUpdate.current = 0;
+        setPendingTaps(0); // Reset after sync
       } else {
         console.error("Failed to sync coins:", await response.text());
       }
     } catch (err) {
       console.error("Error syncing with backend:", err);
     }
-  }, [totalTaps]);
+  }, [pendingTaps, totalTaps]);
 
   // Set up backend sync interval and cleanup
   useEffect(() => {
@@ -513,23 +505,26 @@ const Dashboard = () => {
     };
   }, [updateBackend]);
 
-  // Handle electric boost recharge
+  // Handle electric boost recharge with persistence via localStorage
   useEffect(() => {
-    const updateRecharge = () => {
+    const recharge = () => {
       const now = Date.now();
-      const timeSinceLastTap = now - lastTapTime.current;
+      const lastTap = parseInt(localStorage.getItem("lastTapTime")) || now;
+      const timeSinceLastTap = now - lastTap;
 
-      if (timeSinceLastTap >= 3000 && electricBoost < maxElectricBoost) {
-        const rechargeRate = 3000; // 3 seconds per point
-        const pointsToAdd = Math.floor(timeSinceLastTap / rechargeRate);
-        setElectricBoost((prev) => Math.min(prev + pointsToAdd, maxElectricBoost));
+      if (timeSinceLastTap >= 3000) {
+        const currentBoost = parseInt(localStorage.getItem("electricBoost")) || 1000;
+        const pointsToAdd = Math.floor(timeSinceLastTap / 3000); // 3 seconds per point
+        const newBoost = Math.min(currentBoost + pointsToAdd, maxElectricBoost);
+        setElectricBoost(newBoost);
+        localStorage.setItem("electricBoost", newBoost);
       }
     };
 
-    // Check every second
-    const interval = setInterval(updateRecharge, 1000);
+    recharge(); // Initial check on mount
+    const interval = setInterval(recharge, 1000); // Check every second
     return () => clearInterval(interval);
-  }, [electricBoost, maxElectricBoost]);
+  }, [maxElectricBoost]);
 
   /**
    * Handles tap events on the big tap icon, increments total taps, and shows a +1 effect per tap.
@@ -540,15 +535,20 @@ const Dashboard = () => {
 
     if (electricBoost <= 0) return;
 
-    // Update last tap time for recharge logic
-    lastTapTime.current = Date.now();
+    // Update last tap time
+    const now = Date.now();
+    localStorage.setItem("lastTapTime", now);
 
-    // Increment total taps and track for backend sync
+    // Increment total taps and pending taps
     setTotalTaps((prev) => prev + 1);
-    tapCountSinceLastUpdate.current += 1;
+    setPendingTaps((prev) => prev + 1);
 
     // Decrease electric boost
-    setElectricBoost((prev) => Math.max(prev - 1, 0));
+    setElectricBoost((prev) => {
+      const newBoost = Math.max(prev - 1, 0);
+      localStorage.setItem("electricBoost", newBoost);
+      return newBoost;
+    });
 
     // Get tap coordinates relative to the tap icon
     const tapIcon = event.currentTarget.getBoundingClientRect();
