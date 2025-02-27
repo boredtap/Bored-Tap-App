@@ -385,46 +385,152 @@
 
 // export default Dashboard;
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./Dashboard.css";
 
 /**
  * Dashboard component displaying the main UI with tapping interaction and navigation links.
- * Handles tap events to increment total taps and show a single +1 effect at the touch point.
+ * Syncs with Telegram WebApp for user data and backend for profile, streak, and coin updates.
  */
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  // Static mock data for UI display
-  const telegramData = {
+  // State for Telegram user data
+  const [telegramData, setTelegramData] = useState({
+    telegram_user_id: "",
     username: "User",
     image_url: `${process.env.PUBLIC_URL}/profile-picture.png`,
-  };
-  const profile = { level: 1, level_name: "Beginner" };
-  const currentStreak = 0;
-  const electricBoost = 1000;
-  const maxElectricBoost = 1000;
+  });
+
+  // State for user profile data
+  const [profile, setProfile] = useState({ level: 1, level_name: "Beginner" });
+
+  // State for streak and boost data
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [electricBoost, setElectricBoost] = useState(1000);
+  const [maxElectricBoost] = useState(1000);
 
   // State for total taps and tap effects
   const [totalTaps, setTotalTaps] = useState(0);
   const [tapEffects, setTapEffects] = useState([]);
-  const [isTapping, setIsTapping] = useState(false); // To prevent multiple taps
+  const [isTapping, setIsTapping] = useState(false); // Prevents multiple taps during processing
+
+  // Ref to track taps since last backend update
+  const tapCountSinceLastUpdate = useRef(0);
+
+  // Initialize Telegram WebApp data on component mount
+  useEffect(() => {
+    const initTelegram = async () => {
+      try {
+        if (window.Telegram?.WebApp) {
+          const user = window.Telegram.WebApp.initDataUnsafe.user;
+          if (user) {
+            setTelegramData({
+              telegram_user_id: user.id,
+              username: user.username || `User${user.id}`,
+              image_url: user.photo_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Error syncing Telegram data:", err);
+      }
+    };
+    initTelegram();
+  }, []);
+
+  // Fetch user profile from backend on component mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        navigate("/splash");
+        return;
+      }
+      try {
+        const response = await fetch("https://bt-coins.onrender.com/user/profile", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (!response.ok) throw new Error("Failed to fetch profile");
+        const data = await response.json();
+        setProfile(data);
+        setTotalTaps(data.total_coins || 0);
+        setCurrentStreak(data.streak?.current_streak || 0);
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+        navigate("/splash"); // Redirect on failure
+      }
+    };
+    fetchProfile();
+  }, [navigate]);
+
+  // Sync tap count with backend periodically or on unmount
+  const updateBackend = useCallback(async () => {
+    if (tapCountSinceLastUpdate.current === 0) return;
+
+    const tapsToSync = tapCountSinceLastUpdate.current;
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch(
+        `https://bt-coins.onrender.com/update-coins?coins=${tapsToSync}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data["current coins"] >= 0) {
+          setTotalTaps(data["current coins"]);
+          setProfile((prev) => ({
+            ...prev,
+            level: data["current level"] || prev.level,
+          }));
+          tapCountSinceLastUpdate.current = 0;
+        }
+      } else {
+        console.error("Failed to sync coins:", await response.text());
+      }
+    } catch (err) {
+      console.error("Error syncing with backend:", err);
+    }
+  }, []);
+
+  // Sync taps with backend every 5 seconds or on component unmount
+  useEffect(() => {
+    const interval = setInterval(updateBackend, 5000); // Sync every 5 seconds
+    return () => {
+      clearInterval(interval);
+      updateBackend(); // Sync remaining taps on unmount
+    };
+  }, [updateBackend]);
 
   /**
-   * Handles tap events on the big tap icon, incrementing total taps and showing a single +1 effect.
+   * Handles tap events on the big tap icon, increments total taps, and shows a single +1 effect.
    * @param {Object} event - The tap or click event object.
    */
   const handleTap = (event) => {
     event.preventDefault(); // Prevent default behavior
 
-    if (isTapping) return; // Prevent multiple taps during processing
+    if (isTapping || electricBoost <= 0) return; // Prevent taps if already processing or no boost
 
     setIsTapping(true);
 
-    // Increment total taps by 1
+    // Increment total taps and track for backend sync
     setTotalTaps((prev) => prev + 1);
+    tapCountSinceLastUpdate.current += 1;
+
+    // Decrease electric boost
+    setElectricBoost((prev) => Math.max(prev - 1, 0));
 
     // Get tap coordinates relative to the tap icon
     const tapIcon = event.currentTarget.getBoundingClientRect();
@@ -450,7 +556,9 @@ const Dashboard = () => {
           <img src={telegramData.image_url} alt="Profile" className="profile1-picture" />
           <div className="profile1-info">
             <span className="profile1-username">{telegramData.username}</span>
-            <span className="profile1-level">Lv. {profile.level}. {profile.level_name}</span>
+            <span className="profile1-level">
+              Lv. {profile.level}. {profile.level_name}
+            </span>
           </div>
         </div>
         <div className="streak-section" onClick={() => navigate("/daily-streak-screen")}>
