@@ -419,8 +419,6 @@ const Dashboard = () => {
   // Refs for tap and recharge management
   const tapCountSinceLastUpdate = useRef(0);
   const lastTapTime = useRef(Date.now());
-  const lastElectricBoost = useRef(1000); // Track boost across page navigation
-  const lastUpdateTime = useRef(Date.now()); // Track last recharge update time
 
   // Initialize Telegram WebApp data on component mount
   useEffect(() => {
@@ -464,8 +462,7 @@ const Dashboard = () => {
         setProfile(data);
         setTotalTaps(data.total_coins || 0);
         setCurrentStreak(data.streak?.current_streak || 0);
-        setElectricBoost(data.electric_boost || 1000); // Assume backend provides this, else default
-        lastElectricBoost.current = data.electric_boost || 1000;
+        setElectricBoost(data.electric_boost || 1000); // Assume backend provides, else default
       } catch (err) {
         console.error("Error fetching profile:", err);
         navigate("/splash");
@@ -493,7 +490,7 @@ const Dashboard = () => {
       );
       if (response.ok) {
         const data = await response.json();
-        setTotalTaps((prev) => prev - tapsToSync + (data["current coins"] || prev)); // Ensure local sync
+        setTotalTaps(data["current coins"] || totalTaps); // Trust backend total
         setProfile((prev) => ({
           ...prev,
           level: data["current level"] || prev.level,
@@ -505,7 +502,7 @@ const Dashboard = () => {
     } catch (err) {
       console.error("Error syncing with backend:", err);
     }
-  }, []);
+  }, [totalTaps]);
 
   // Set up backend sync interval and cleanup
   useEffect(() => {
@@ -516,36 +513,23 @@ const Dashboard = () => {
     };
   }, [updateBackend]);
 
-  // Handle electric boost recharge across page navigation
+  // Handle electric boost recharge
   useEffect(() => {
     const updateRecharge = () => {
       const now = Date.now();
       const timeSinceLastTap = now - lastTapTime.current;
-      const timeSinceLastUpdate = now - lastUpdateTime.current;
 
-      if (timeSinceLastTap >= 3000 && lastElectricBoost.current < maxElectricBoost) {
+      if (timeSinceLastTap >= 3000 && electricBoost < maxElectricBoost) {
         const rechargeRate = 3000; // 3 seconds per point
-        const pointsToAdd = Math.floor(timeSinceLastUpdate / rechargeRate);
-        if (pointsToAdd > 0) {
-          setElectricBoost((prev) =>
-            Math.min(prev + pointsToAdd, maxElectricBoost)
-          );
-          lastElectricBoost.current = Math.min(
-            lastElectricBoost.current + pointsToAdd,
-            maxElectricBoost
-          );
-          lastUpdateTime.current = now;
-        }
+        const pointsToAdd = Math.floor(timeSinceLastTap / rechargeRate);
+        setElectricBoost((prev) => Math.min(prev + pointsToAdd, maxElectricBoost));
       }
     };
-
-    // Initial update on mount
-    updateRecharge();
 
     // Check every second
     const interval = setInterval(updateRecharge, 1000);
     return () => clearInterval(interval);
-  }, [maxElectricBoost]);
+  }, [electricBoost, maxElectricBoost]);
 
   /**
    * Handles tap events on the big tap icon, increments total taps, and shows a +1 effect per tap.
@@ -564,11 +548,7 @@ const Dashboard = () => {
     tapCountSinceLastUpdate.current += 1;
 
     // Decrease electric boost
-    setElectricBoost((prev) => {
-      const newBoost = Math.max(prev - 1, 0);
-      lastElectricBoost.current = newBoost;
-      return newBoost;
-    });
+    setElectricBoost((prev) => Math.max(prev - 1, 0));
 
     // Get tap coordinates relative to the tap icon
     const tapIcon = event.currentTarget.getBoundingClientRect();
