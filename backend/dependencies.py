@@ -1,5 +1,6 @@
+from pydantic import BaseModel
 from database_connection import fs
-from datetime import date
+from datetime import date, datetime
 from io import BytesIO
 from bson import ObjectId
 from fastapi.responses import StreamingResponse
@@ -203,3 +204,20 @@ def get_image(image_id: str):
     image_buffer = BytesIO(image.read())
     image_buffer.seek(0)
     return StreamingResponse(image_buffer, media_type="image/jpeg")
+
+
+# Function to convert datetime objects in a dictionary or list to ISO format strings
+def convert_datetime_to_iso(obj):
+    """Recursively converts datetime objects in a dictionary or list to ISO format strings."""
+    if isinstance(obj, dict):
+        new_obj = {}
+        for key, value in obj.items():
+            new_obj[key] = convert_datetime_to_iso(value)
+        return new_obj
+    elif isinstance(obj, list):
+        return [convert_datetime_to_iso(item) for item in obj]
+    elif isinstance(obj, datetime):
+        return obj.isoformat()  # Convert datetime to ISO format string
+    elif isinstance(obj, BaseModel):
+        return convert_datetime_to_iso(obj.model_dump())
+    return obj
