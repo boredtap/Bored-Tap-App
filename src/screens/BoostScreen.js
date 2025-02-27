@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import Navigation from "../components/Navigation";
 import "./BoostScreen.css";
 
-const BOOST_DURATION = 20000; // 20 seconds for Tapper Boost only
+const BOOST_DURATION = 20000; // 20 seconds for Tapper Boost
 const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
 
 const BoostScreen = () => {
@@ -18,11 +18,41 @@ const BoostScreen = () => {
       ? JSON.parse(savedBoosters)
       : {
           tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
-          fullEnergy: { usesLeft: 3, isActive: false, resetTime: null }, // No endTime
+          fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
         };
   });
 
   const handleOverlayClose = () => setActiveOverlay(null);
+
+  // Reset logic when Telegram user ID changes
+  useEffect(() => {
+    const initTelegram = async () => {
+      try {
+        if (window.Telegram?.WebApp) {
+          const user = window.Telegram.WebApp.initDataUnsafe.user;
+          if (user) {
+            const storedUserId = localStorage.getItem("telegram_user_id");
+            if (storedUserId !== user.id.toString()) {
+              localStorage.setItem("telegram_user_id", user.id);
+              // Reset daily boosters
+              const resetDailyState = {
+                tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
+                fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
+              };
+              setDailyBoosters(resetDailyState);
+              localStorage.setItem("dailyBoosters", JSON.stringify(resetDailyState));
+              // Reset extra boosters
+              setBoostersData({ dailyBoosters: [], extraBoosters: [] });
+              localStorage.removeItem("extraBoosters");
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error syncing Telegram data:", err);
+      }
+    };
+    initTelegram();
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
@@ -61,7 +91,7 @@ const BoostScreen = () => {
         icon: `${process.env.PUBLIC_URL}/extra-booster-icon.png`,
         imageId: booster.image_id,
         rawLevel: booster.level,
-        effect: booster.effect,
+        effect: booster.effect, // e.g., "boost", "multiplier", "recharge", "auto-tap"
       }));
 
       setBoostersData({ extraBoosters: mappedExtraBoosters });
@@ -86,7 +116,28 @@ const BoostScreen = () => {
       });
       if (!response.ok) throw new Error("Upgrade failed");
       await fetchProfileAndBoosters();
-      window.dispatchEvent(new Event("boosterUpgraded"));
+
+      // Find the upgraded booster and dispatch appropriate event
+      const booster = boostersData.extraBoosters.find((b) => b.id === boosterId);
+      if (booster) {
+        const newLevel = booster.rawLevel === "-" ? 1 : booster.rawLevel + 1;
+        switch (booster.effect) {
+          case "boost":
+            window.dispatchEvent(new CustomEvent("boostUpgraded", { detail: { level: newLevel } }));
+            break;
+          case "multiplier":
+            window.dispatchEvent(new CustomEvent("multiplierUpgraded", { detail: { level: newLevel } }));
+            break;
+          case "recharge":
+            window.dispatchEvent(new CustomEvent("rechargeSpeedUpgraded", { detail: { level: newLevel } }));
+            break;
+          case "auto-tap":
+            window.dispatchEvent(new CustomEvent("autoTapActivated", { detail: { level: newLevel } }));
+            break;
+          default:
+            window.dispatchEvent(new Event("boosterUpgraded"));
+        }
+      }
       handleOverlayClose();
     } catch (err) {
       setError(err.message);
@@ -329,111 +380,3 @@ const BoostScreen = () => {
 };
 
 export default BoostScreen;
-
-
-// import React from "react";
-// import Navigation from "../components/Navigation";
-// import "./BoostScreen.css";
-
-// /**
-//  * BoostScreen component displaying the boost UI with navigation links.
-//  * No game mechanics or state management, just static layout and links.
-//  */
-// const BoostScreen = () => {
-//   // Mock static data for UI display
-//   const totalTaps = 0;
-//   const dailyBoosters = [
-//     {
-//       type: "tapperBoost",
-//       title: "Tapper Boost",
-//       icon: `${process.env.PUBLIC_URL}/tapperboost.png`,
-//       timer: "3/3 uses left",
-//     },
-//     {
-//       type: "fullEnergy",
-//       title: "Full Energy",
-//       icon: `${process.env.PUBLIC_URL}/electric-icon.png`,
-//       timer: "3/3 uses left",
-//     },
-//   ];
-//   const extraBoosters = [
-//     {
-//       id: "boost1",
-//       title: "Boost",
-//       value: "1000",
-//       level: "Not Owned",
-//       icon: `${process.env.PUBLIC_URL}/extra-booster-icon.png`,
-//       actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
-//     },
-//     {
-//       id: "boost2",
-//       title: "Multiplier",
-//       value: "5000",
-//       level: "Level 1",
-//       icon: `${process.env.PUBLIC_URL}/extra-booster-icon.png`,
-//       actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
-//     },
-//   ];
-
-//   return (
-//     <div className="boost-screen">
-//       <div className="boost-body">
-//         {/* Total Taps Section */}
-//         <div className="total-taps-section">
-//           <p>Your Total Taps:</p>
-//           <div className="taps-display">
-//             <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Taps Icon" className="taps-icon" />
-//             <span className="total-taps-value">{totalTaps.toLocaleString()}</span>
-//           </div>
-//           <p className="bt-boost-info">How BT-boosters work?</p>
-//         </div>
-
-//         {/* Daily Boosters Section */}
-//         <div className="daily-boosters-section">
-//           <p className="daily-boosters-title">Your Daily Boosters:</p>
-//           <div className="daily-boosters-container">
-//             {dailyBoosters.map((booster) => (
-//               <div className="booster-frame" key={booster.type}>
-//                 <img src={booster.icon} alt={booster.title} className="booster-icon" />
-//                 <div className="booster-info">
-//                   <p className="booster-title">{booster.title}</p>
-//                   <p className="booster-value">{booster.timer}</p>
-//                 </div>
-//               </div>
-//             ))}
-//           </div>
-//         </div>
-
-//         {/* Extra Boosters Section */}
-//         <div className="extra-boosters-section">
-//           <p className="extra-boosters-title">Extra Boosters:</p>
-//           <div className="extra-boosters-container">
-//             {extraBoosters.map((booster) => (
-//               <div className="extra-booster-card" key={booster.id}>
-//                 <div className="booster-left">
-//                   <img src={booster.icon} alt={booster.title} className="booster-icon" />
-//                   <div className="booster-info">
-//                     <p className="booster-title">{booster.title}</p>
-//                     <div className="booster-meta">
-//                       <img
-//                         src={`${process.env.PUBLIC_URL}/logo.png`}
-//                         alt="Coin Icon"
-//                         className="small-icon"
-//                       />
-//                       <span>{booster.value}</span>
-//                     </div>
-//                   </div>
-//                 </div>
-//                 <img src={booster.actionIcon} alt="Action Icon" className="action-icon" />
-//               </div>
-//             ))}
-//           </div>
-//         </div>
-//       </div>
-
-//       <Navigation />
-//     </div>
-//   );
-// };
-
-// export default BoostScreen;
