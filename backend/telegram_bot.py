@@ -63,8 +63,8 @@ def start_command(message: Message):
     # get user datails
     try:
         user_id = str(message.from_user.id)
-        # referral_code = message.text.split(" ")[1]
-        referral_code = "1234521345"
+        referral_code = message.text.split(" ")[1]
+        # referral_code = "1234521345"
         username = message.from_user.username
         first_name = message.from_user.first_name
         last_name = message.from_user.last_name
