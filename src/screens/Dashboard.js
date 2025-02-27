@@ -463,6 +463,9 @@ const Dashboard = () => {
         setProfile(data);
         setTotalTaps(data.total_coins || 0);
         setCurrentStreak(data.streak?.current_streak || 0);
+        // Load electric boost from localStorage instead of resetting to 1000
+        const savedBoost = localStorage.getItem("electricBoost");
+        setElectricBoost(savedBoost !== null ? parseInt(savedBoost, 10) : 1000);
       } catch (err) {
         console.error("Error fetching profile:", err);
         navigate("/splash"); // Redirect on failure
@@ -491,6 +494,7 @@ const Dashboard = () => {
       if (response.ok) {
         const data = await response.json();
         if (data["current coins"] >= 0) {
+          // Update totalTaps only with backend value, no local subtraction
           setTotalTaps(data["current coins"]);
           setProfile((prev) => ({
             ...prev,
@@ -515,29 +519,28 @@ const Dashboard = () => {
     };
   }, [updateBackend]);
 
-  // Handle electric boost recharge
+  // Handle electric boost recharge with persistence
   useEffect(() => {
     const checkRecharge = () => {
       const now = Date.now();
-      const timeSinceLastTap = now - lastTapTime.current;
+      const savedLastTapTime = parseInt(localStorage.getItem("lastTapTime")) || lastTapTime.current;
+      const timeSinceLastTap = now - savedLastTapTime;
 
       // Start recharging if 3 seconds have passed since the last tap
-      if (timeSinceLastTap >= 3000 && electricBoost < maxElectricBoost) {
-        if (!rechargeInterval.current) {
-          rechargeInterval.current = setInterval(() => {
-            setElectricBoost((prev) => {
-              const newBoost = Math.min(prev + 1, maxElectricBoost);
-              if (newBoost === maxElectricBoost) {
-                clearInterval(rechargeInterval.current);
-                rechargeInterval.current = null;
-              }
-              return newBoost;
-            });
-          }, 3000); // Recharge 1 point every 3 seconds (3000ms / 1000 = 3s per count)
+      if (timeSinceLastTap >= 3000) {
+        const currentBoost = parseInt(localStorage.getItem("electricBoost")) || electricBoost;
+        const pointsToAdd = Math.floor(timeSinceLastTap / 3000); // 3 seconds per point
+        const newBoost = Math.min(currentBoost + pointsToAdd, maxElectricBoost);
+        setElectricBoost(newBoost);
+        localStorage.setItem("electricBoost", newBoost);
+        if (newBoost === maxElectricBoost && rechargeInterval.current) {
+          clearInterval(rechargeInterval.current);
+          rechargeInterval.current = null;
         }
       }
     };
 
+    checkRecharge(); // Initial check on mount
     const interval = setInterval(checkRecharge, 1000); // Check every second
     return () => {
       clearInterval(interval);
@@ -559,13 +562,18 @@ const Dashboard = () => {
 
     // Update last tap time for recharge logic
     lastTapTime.current = Date.now();
+    localStorage.setItem("lastTapTime", lastTapTime.current);
 
     // Increment total taps and track for backend sync
     setTotalTaps((prev) => prev + 1);
     tapCountSinceLastUpdate.current += 1;
 
     // Decrease electric boost
-    setElectricBoost((prev) => Math.max(prev - 1, 0));
+    setElectricBoost((prev) => {
+      const newBoost = Math.max(prev - 1, 0);
+      localStorage.setItem("electricBoost", newBoost);
+      return newBoost;
+    });
 
     // Get tap coordinates relative to the tap icon
     const tapIcon = event.currentTarget.getBoundingClientRect();
