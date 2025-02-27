@@ -779,7 +779,7 @@ const Dashboard = () => {
       }
     };
     initTelegram();
-  }, []); // No dependencies since resetBoosters is now defined above
+  }, []); // No dependencies since resetBoosters is defined above
 
   // Fetch user profile from backend on component mount
   useEffect(() => {
@@ -926,7 +926,7 @@ const Dashboard = () => {
   // Handle Full Energy claim
   useEffect(() => {
     const handleFullEnergyClaimed = () => {
-      setElectricBoost(maxElectricBoost);
+      setElectricBoost(maxElectricBoost); // Instantly set to max
       localStorage.setItem("electricBoost", maxElectricBoost);
     };
 
@@ -953,12 +953,12 @@ const Dashboard = () => {
     lastTapTime.current = Date.now();
     localStorage.setItem("lastTapTime", lastTapTime.current);
 
-    // Increment total taps with multiplier
-    const tapValue = 1 * tapMultiplier; // Base value multiplied by booster
+    // Increment total taps with multiplier (base tap value = 1, doubled or quadrupled by boost)
+    const tapValue = tapMultiplier; // Tap value reflects multiplier (1, 2, or 4 with future upgrades)
     setTotalTaps((prev) => prev + tapValue);
     tapCountSinceLastUpdate.current += tapValue;
 
-    // Decrease electric boost by 1 only
+    // Decrease electric boost by 1 only, regardless of tap value
     setElectricBoost((prev) => {
       const newBoost = Math.max(prev - 1, 0);
       localStorage.setItem("electricBoost", newBoost);
@@ -970,7 +970,7 @@ const Dashboard = () => {
     const tapX = (event.touches ? event.touches[0].clientX : event.clientX) - tapIcon.left;
     const tapY = (event.touches ? event.touches[0].clientY : event.clientY) - tapIcon.top;
 
-    // Add a new tap effect without replacing existing ones
+    // Add a new tap effect without replacing existing ones, showing the boosted value
     const newTapEffect = { id: Date.now(), x: tapX, y: tapY };
     setTapEffects((prev) => [...prev, newTapEffect]);
 
