@@ -748,57 +748,35 @@ const Dashboard = () => {
   const rechargeInterval = useRef(null); // Store recharge interval ID
   const autoTapInterval = useRef(null); // Store auto-tap interval ID
 
-  // Define resetBoosters before it's used
+  // Define resetBoosters to wipe all local data
   const resetBoosters = () => {
     const resetState = {
       tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
       fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
     };
-    localStorage.setItem("dailyBoosters", JSON.stringify(resetState));
+    localStorage.clear(); // Wipe all localStorage keys
+    localStorage.setItem("dailyBoosters", JSON.stringify(resetState)); // Reinitialize only dailyBoosters
     setBaseTapMultiplier(1);
     setTapMultiplier(1);
     setMaxElectricBoost(1000);
     setElectricBoost(1000);
-    localStorage.setItem("electricBoost", "1000");
     setRechargeTime(RECHARGE_TIMES[0]);
     setTotalTaps(0);
     setProfile({ level: 1, level_name: "Beginner" });
     setCurrentStreak(0);
     tapCountSinceLastUpdate.current = 0;
-    localStorage.removeItem("lastTapTime");
     lastTapTime.current = Date.now();
     setAutoTapActive(false);
     if (autoTapInterval.current) clearInterval(autoTapInterval.current);
     autoTapInterval.current = null;
+    setTelegramData({
+      telegram_user_id: "",
+      username: "User",
+      image_url: `${process.env.PUBLIC_URL}/profile-picture.png`,
+    });
   };
 
-  // Initialize Telegram WebApp data on component mount and reset boosters if user changes
-  useEffect(() => {
-    const initTelegram = async () => {
-      try {
-        if (window.Telegram?.WebApp) {
-          const user = window.Telegram.WebApp.initDataUnsafe.user;
-          if (user) {
-            setTelegramData({
-              telegram_user_id: user.id,
-              username: user.username || `User${user.id}`,
-              image_url: user.photo_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
-            });
-            const storedUserId = localStorage.getItem("telegram_user_id");
-            if (storedUserId !== user.id.toString()) {
-              localStorage.setItem("telegram_user_id", user.id);
-              resetBoosters(); // Reset all logic if user ID changes
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Error syncing Telegram data:", err);
-      }
-    };
-    initTelegram();
-  }, []);
-
-  // Fetch user profile from backend on component mount
+  // Fetch user profile from backend on component mount and reset if account deleted
   useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem("accessToken");
@@ -816,33 +794,39 @@ const Dashboard = () => {
         });
         if (!response.ok) throw new Error("Failed to fetch profile");
         const data = await response.json();
-        setProfile(data);
-        setTotalTaps(data.total_coins || 0);
-        setCurrentStreak(data.streak?.current_streak || 0);
 
-        // Load electric boost and last tap time from localStorage
-        const savedBoost = localStorage.getItem("electricBoost");
-        const savedTapTime = localStorage.getItem("lastTapTime");
-        const initialBoost = savedBoost !== null ? parseInt(savedBoost, 10) : maxElectricBoost;
-        lastTapTime.current = savedTapTime !== null ? parseInt(savedTapTime, 10) : Date.now();
-
-        // Calculate initial recharge or auto-tap gains based on time elapsed
-        const now = Date.now();
-        const timeSinceLastTap = now - lastTapTime.current;
-        if (timeSinceLastTap >= rechargeTime) {
-          const pointsToAdd = Math.floor(timeSinceLastTap / rechargeTime);
-          const newBoost = Math.min(initialBoost + pointsToAdd, maxElectricBoost);
-          setElectricBoost(newBoost);
-          localStorage.setItem("electricBoost", newBoost.toString());
+        // Detect account deletion by checking reset stats
+        if (data.total_coins === 0 && data.level === 1) {
+          resetBoosters(); // Full reset if account is deleted
         } else {
-          setElectricBoost(initialBoost);
-        }
+          setProfile(data);
+          setTotalTaps(data.total_coins || 0);
+          setCurrentStreak(data.streak?.current_streak || 0);
 
-        // Apply offline auto-tap gains if active
-        if (autoTapActive && timeSinceLastTap > 1000) {
-          const autoTaps = Math.floor(timeSinceLastTap / 1000) * baseTapMultiplier;
-          setTotalTaps((prev) => prev + autoTaps);
-          tapCountSinceLastUpdate.current += autoTaps;
+          // Load electric boost and last tap time from localStorage
+          const savedBoost = localStorage.getItem("electricBoost");
+          const savedTapTime = localStorage.getItem("lastTapTime");
+          const initialBoost = savedBoost !== null ? parseInt(savedBoost, 10) : maxElectricBoost;
+          lastTapTime.current = savedTapTime !== null ? parseInt(savedTapTime, 10) : Date.now();
+
+          // Calculate initial recharge or auto-tap gains based on time elapsed
+          const now = Date.now();
+          const timeSinceLastTap = now - lastTapTime.current;
+          if (timeSinceLastTap >= rechargeTime) {
+            const pointsToAdd = Math.floor(timeSinceLastTap / rechargeTime);
+            const newBoost = Math.min(initialBoost + pointsToAdd, maxElectricBoost);
+            setElectricBoost(newBoost);
+            localStorage.setItem("electricBoost", newBoost.toString());
+          } else {
+            setElectricBoost(initialBoost);
+          }
+
+          // Apply offline auto-tap gains if active
+          if (autoTapActive && timeSinceLastTap > 1000) {
+            const autoTaps = Math.floor(timeSinceLastTap / 1000) * baseTapMultiplier;
+            setTotalTaps((prev) => prev + autoTaps);
+            tapCountSinceLastUpdate.current += autoTaps;
+          }
         }
       } catch (err) {
         console.error("Error fetching profile:", err);
@@ -850,6 +834,18 @@ const Dashboard = () => {
       }
     };
     fetchProfile();
+
+    // Set Telegram data without reset trigger here
+    if (window.Telegram?.WebApp) {
+      const user = window.Telegram.WebApp.initDataUnsafe.user;
+      if (user) {
+        setTelegramData({
+          telegram_user_id: user.id,
+          username: user.username || `User${user.id}`,
+          image_url: user.photo_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
+        });
+      }
+    }
   }, [navigate, maxElectricBoost, rechargeTime, autoTapActive, baseTapMultiplier]);
 
   // Sync tap count with backend every 2 seconds or on unmount

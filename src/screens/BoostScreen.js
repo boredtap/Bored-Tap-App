@@ -24,35 +24,21 @@ const BoostScreen = () => {
 
   const handleOverlayClose = () => setActiveOverlay(null);
 
-  // Reset logic when Telegram user ID changes
-  useEffect(() => {
-    const initTelegram = async () => {
-      try {
-        if (window.Telegram?.WebApp) {
-          const user = window.Telegram.WebApp.initDataUnsafe.user;
-          if (user) {
-            const storedUserId = localStorage.getItem("telegram_user_id");
-            if (storedUserId !== user.id.toString()) {
-              localStorage.setItem("telegram_user_id", user.id);
-              // Reset daily boosters
-              const resetDailyState = {
-                tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
-                fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
-              };
-              setDailyBoosters(resetDailyState);
-              localStorage.setItem("dailyBoosters", JSON.stringify(resetDailyState));
-              // Reset extra boosters
-              setBoostersData({ dailyBoosters: [], extraBoosters: [] });
-              localStorage.removeItem("extraBoosters");
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Error syncing Telegram data:", err);
-      }
+  // Reset all local storage and state when account is deleted
+  const resetAllLocalData = () => {
+    const resetDailyState = {
+      tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
+      fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
     };
-    initTelegram();
-  }, []);
+    setDailyBoosters(resetDailyState);
+    localStorage.setItem("dailyBoosters", JSON.stringify(resetDailyState));
+    setBoostersData({ dailyBoosters: [], extraBoosters: [] });
+    setTotalTaps(0);
+    localStorage.removeItem("extraBoosters");
+    localStorage.removeItem("electricBoost");
+    localStorage.removeItem("lastTapTime");
+    localStorage.removeItem("telegram_user_id"); // Clear ID to force full reset on next login
+  };
 
   useEffect(() => {
     localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
@@ -70,7 +56,13 @@ const BoostScreen = () => {
       });
       if (!profileResponse.ok) throw new Error("Profile fetch failed");
       const profileData = await profileResponse.json();
-      setTotalTaps(profileData.total_coins || 0);
+
+      // Detect account deletion by checking if stats are reset to initial state
+      if (profileData.total_coins === 0 && profileData.level === 1) {
+        resetAllLocalData(); // Wipe all local storage and reset state
+      } else {
+        setTotalTaps(profileData.total_coins || 0);
+      }
 
       const extraBoostersResponse = await fetch("https://bt-coins.onrender.com/user/boost/extra_boosters", {
         method: "GET",
