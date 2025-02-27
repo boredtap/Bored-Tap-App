@@ -743,33 +743,43 @@ const Dashboard = () => {
   const lastTapTime = useRef(Date.now()); // Track time of last tap
   const rechargeInterval = useRef(null); // Store recharge interval ID
 
+  // Define resetBoosters before it's used
+  const resetBoosters = () => {
+    const resetState = {
+      tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
+      fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
+    };
+    localStorage.setItem("dailyBoosters", JSON.stringify(resetState));
+    setTapMultiplier(1);
+    setElectricBoost(maxElectricBoost);
+    localStorage.setItem("electricBoost", maxElectricBoost);
+  };
+
   // Initialize Telegram WebApp data on component mount and reset boosters if user changes
-  // Update the useEffect hook
-useEffect(() => {
-  const initTelegram = async () => {
-    try {
-      if (window.Telegram?.WebApp) {
-        const user = window.Telegram.WebApp.initDataUnsafe.user;
-        if (user) {
-          setTelegramData({
-            telegram_user_id: user.id,
-            username: user.username || `User${user.id}`,
-            image_url: user.photo_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
-          });
-          const storedUserId = localStorage.getItem("telegram_user_id");
-          if (storedUserId !== user.id.toString()) {
-            localStorage.setItem("telegram_user_id", user.id);
-            resetBoosters(); // Reset boosters if user ID changes
+  useEffect(() => {
+    const initTelegram = async () => {
+      try {
+        if (window.Telegram?.WebApp) {
+          const user = window.Telegram.WebApp.initDataUnsafe.user;
+          if (user) {
+            setTelegramData({
+              telegram_user_id: user.id,
+              username: user.username || `User${user.id}`,
+              image_url: user.photo_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
+            });
+            const storedUserId = localStorage.getItem("telegram_user_id");
+            if (storedUserId !== user.id.toString()) {
+              localStorage.setItem("telegram_user_id", user.id);
+              resetBoosters(); // Reset boosters if user ID changes
+            }
           }
         }
+      } catch (err) {
+        console.error("Error syncing Telegram data:", err);
       }
-    } catch (err) {
-      console.error("Error syncing Telegram data:", err);
-    }
-  };
-  initTelegram();
-// eslint-disable-next-line no-use-before-define
-}, [resetBoosters]); // Include resetBoosters in the dependency array
+    };
+    initTelegram();
+  }, []); // No dependencies since resetBoosters is now defined above
 
   // Fetch user profile from backend on component mount
   useEffect(() => {
@@ -923,19 +933,6 @@ useEffect(() => {
     window.addEventListener("fullEnergyClaimed", handleFullEnergyClaimed);
     return () => window.removeEventListener("fullEnergyClaimed", handleFullEnergyClaimed);
   }, [maxElectricBoost]);
-
-  // Define resetBoosters with useCallback
-const resetBoosters = useCallback(() => {
-  const resetState = {
-    tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
-    fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
-  };
-  localStorage.setItem("dailyBoosters", JSON.stringify(resetState));
-  setTapMultiplier(1);
-  setElectricBoost(maxElectricBoost);
-  localStorage.setItem("electricBoost", maxElectricBoost);
-}, [maxElectricBoost, setTapMultiplier, setElectricBoost]); // Dependencies of resetBoosters
-
 
   /**
    * Handles tap events on the big tap icon, increments total taps with multiplier, and shows a tap effect.
