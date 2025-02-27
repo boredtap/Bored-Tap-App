@@ -1,283 +1,315 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./Dashboard.css";
 
-/**
- * Dashboard component displaying the main UI with tapping interaction, daily booster effects,
- * and extra booster mechanics synced with the backend.
- */
+// Configurable constants
+const BASE_MAX_ELECTRIC_BOOST = 1000;
+const RECHARGE_TIMES = {
+  0: 3000,
+  1: 2500,
+  2: 2000,
+  3: 1500,
+  4: 1000,
+  5: 500,
+};
+const AUTOBOT_TAP_INTERVAL = 1000; // 1 tap per second
+
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  // Constants for game mechanics
-  const INITIAL_ELECTRIC_BOOST = 1000;
-  const BASE_MAX_ELECTRIC_BOOST = 1000;
-  // eslint-disable-next-line no-unused-vars
-  const BOOST_DURATION = 20000; // 20 seconds in milliseconds, used in BoostScreen.js
-  // eslint-disable-next-line no-unused-vars
-  const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds, used in BoostScreen.js
-  const RECHARGE_TIMES = useMemo(() => [3000, 2500, 2000, 1500, 1000], []); // Recharge speeds by level (ms), memoized
-  const AUTOBOT_TAP_INTERVAL = 1000; // 1 second in milliseconds
-
-  // Static mock data for UI display (partially replaced by backend), memoized for stability
-  const telegramDataFallback = useMemo(
-    () => ({
-      username: "User",
-      image_url: `${process.env.PUBLIC_URL}/profile-picture.png`,
-    }),
-    []
-  );
-  const profileFallback = useMemo(() => ({ level: 1, level_name: "Beginner" }), []);
-  const currentStreak = 0;
-
-  // Initial daily boosters state
-  const INITIAL_DAILY_BOOSTERS = useMemo(
-    () => ({
-      tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
-      fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
-    }),
-    []
-  );
-
-  // State for game mechanics
-  const [totalTaps, setTotalTaps] = useState(0);
-  const [tapEffects, setTapEffects] = useState([]);
-  const [electricBoost, setElectricBoost] = useState(INITIAL_ELECTRIC_BOOST);
-  const [maxElectricBoost, setMaxElectricBoost] = useState(BASE_MAX_ELECTRIC_BOOST);
-  const [tapValue] = useState(1);
-  const [dailyBoosters, setDailyBoosters] = useState(() => {
-    const saved = localStorage.getItem("dailyBoosters");
-    return saved ? JSON.parse(saved) : INITIAL_DAILY_BOOSTERS;
+  // States
+  const [telegramData, setTelegramData] = useState({
+    telegram_user_id: "",
+    username: "User",
+    image_url: "",
   });
-  const [isTapping, setIsTapping] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [error, setError] = useState(null);
+  const [totalTaps, setTotalTaps] = useState(0);
+  const [electricBoost, setElectricBoost] = useState(BASE_MAX_ELECTRIC_BOOST);
   const [tapAnimation, setTapAnimation] = useState(false);
+  const [boostAnimation, setBoostAnimation] = useState(false);
+  const [tapEffects, setTapEffects] = useState([]);
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [dailyBoosters, setDailyBoosters] = useState(() => {
+    const savedBoosters = localStorage.getItem("dailyBoosters");
+    return savedBoosters
+      ? JSON.parse(savedBoosters)
+      : {
+          tapperBoost: { usesLeft: 3, timers: [], isActive: false },
+          fullEnergy: { usesLeft: 3, timers: [], isActive: false },
+        };
+  });
+  const [maxElectricBoost, setMaxElectricBoost] = useState(BASE_MAX_ELECTRIC_BOOST);
+  const [rechargeIntervalMs, setRechargeIntervalMs] = useState(
+    (RECHARGE_TIMES[0] / BASE_MAX_ELECTRIC_BOOST) * 1000
+  );
   const [tapBoostLevel, setTapBoostLevel] = useState(0);
-  const [rechargingSpeedLevel, setRechargingSpeedLevel] = useState(0);
   const [hasAutobot, setHasAutobot] = useState(false);
-  const [telegramData, setTelegramData] = useState(telegramDataFallback);
-  const [profile, setProfile] = useState(profileFallback);
 
-  /**
-   * Resets all states to initial values on token absence or error.
-   */
-  const resetToInitialState = useCallback(() => {
-    setTotalTaps(0);
-    setElectricBoost(INITIAL_ELECTRIC_BOOST);
-    setDailyBoosters(INITIAL_DAILY_BOOSTERS);
-    setMaxElectricBoost(BASE_MAX_ELECTRIC_BOOST);
-    setTapBoostLevel(0);
-    setRechargingSpeedLevel(0);
-    setHasAutobot(false);
-    setTelegramData(telegramDataFallback);
-    setProfile(profileFallback);
-    localStorage.setItem("dailyBoosters", JSON.stringify(INITIAL_DAILY_BOOSTERS));
-  }, [INITIAL_DAILY_BOOSTERS, profileFallback, telegramDataFallback]);
+  // Refs
+  const tapCountSinceLastUpdate = useRef(0);
+  const updateBackendTimeout = useRef(null);
+  const isTapping = useRef(false);
+  const autobotInterval = useRef(null);
+  const rechargeInterval = useRef(null);
 
-  // Fetch initial user data and extra boosters from backend
+  // Fetch Telegram data
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      resetToInitialState();
-      navigate("/splash");
-      return;
-    }
+    const initializeDashboard = async () => {
+      try {
+        if (window.Telegram?.WebApp) {
+          const user = window.Telegram.WebApp.initDataUnsafe.user;
+          if (user) {
+            setTelegramData({
+              telegram_user_id: user.id,
+              username: user.username || `User${user.id}`,
+              image_url: user.photo_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Error syncing Telegram data:", err);
+      }
+    };
+    initializeDashboard();
+  }, []);
 
-    // Fetch user profile
-    fetch("https://bt-coins.onrender.com/user/profile", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
+  // Fetch profile data and initialize
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        navigate("/splash");
+        return;
+      }
+
+      try {
+        const response = await fetch("https://bt-coins.onrender.com/user/profile", {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) throw new Error("Unauthorized. Please log in again.");
+          throw new Error("Failed to fetch profile data.");
+        }
+
+        const data = await response.json();
+        setProfile(data);
         setTotalTaps(data.total_coins);
-        setTelegramData({
-          username: data.username,
-          image_url: data.image_url,
-        });
-        setProfile({
-          level: data.level,
-          level_name: data.level_name,
-        });
-      })
-      .catch(() => resetToInitialState());
+        setCurrentStreak(data.streak?.current_streak || 0);
 
-    // Fetch extra boosters
-    fetch("https://bt-coins.onrender.com/user/boost/extra_boosters", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((boosters) => {
-        applyExtraBoosterEffects(boosters);
-      })
-      .catch((err) => console.error("Failed to fetch extra boosters:", err));
-  }, [navigate, resetToInitialState]);
+        const savedBoost = localStorage.getItem("electricBoost");
+        if (savedBoost) {
+          setElectricBoost(parseInt(savedBoost));
+        } else {
+          localStorage.setItem("electricBoost", BASE_MAX_ELECTRIC_BOOST);
+          localStorage.setItem("lastBoostUpdateTime", Date.now());
+        }
 
-  /**
-   * Syncs total taps with backend periodically.
-   */
-  const syncTapsWithBackend = useCallback(async () => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) return;
+        const savedDailyBoosters = localStorage.getItem("dailyBoosters");
+        if (savedDailyBoosters) {
+          setDailyBoosters(JSON.parse(savedDailyBoosters));
+        }
 
-    try {
-      const response = await fetch(`https://bt-coins.onrender.com/update-coins?coins=${totalTaps}`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error("Failed to sync taps");
-    } catch (err) {
-      console.error("Sync error:", err);
+        const savedExtraBoosters = localStorage.getItem("extraBoosters");
+        if (savedExtraBoosters) {
+          const boosters = JSON.parse(savedExtraBoosters);
+          applyExtraBoosterEffects(boosters);
+        }
+      } catch (err) {
+        setError(err.message);
+        console.error("Error fetching profile:", err);
+      }
+    };
+
+    fetchProfile();
+
+    // Start autobot if owned
+    if (hasAutobot && !autobotInterval.current) {
+      autobotInterval.current = setInterval(() => {
+        const tapperBoostActive = dailyBoosters.tapperBoost.isActive;
+        const multiplier = (tapperBoostActive ? 2 : 1) + tapBoostLevel;
+        tapCountSinceLastUpdate.current += multiplier;
+        setTotalTaps((prev) => prev + multiplier);
+      }, AUTOBOT_TAP_INTERVAL);
     }
-  }, [totalTaps]);
 
-  // Sync taps every 30 seconds
-  useEffect(() => {
-    const syncInterval = setInterval(syncTapsWithBackend, 30000);
-    return () => clearInterval(syncInterval);
-  }, [syncTapsWithBackend]);
+    // Start energy recharge
+    rechargeInterval.current = setInterval(() => {
+      const isFullEnergyActive = dailyBoosters.fullEnergy.isActive;
+      if (electricBoost < maxElectricBoost && !isFullEnergyActive) {
+        setElectricBoost((prev) => Math.min(prev + 1, maxElectricBoost));
+        localStorage.setItem("electricBoost", electricBoost + 1);
+      }
+    }, rechargeIntervalMs);
 
-  // Apply extra booster effects based on backend data
+    // Periodic backend sync
+    const syncInterval = setInterval(() => {
+      if (tapCountSinceLastUpdate.current > 0) updateBackend();
+    }, 2000);
+
+    return () => {
+      clearInterval(autobotInterval.current);
+      clearInterval(rechargeInterval.current);
+      clearInterval(syncInterval);
+      if (updateBackendTimeout.current) clearTimeout(updateBackendTimeout.current);
+    };
+  }, [navigate, dailyBoosters, hasAutobot, tapBoostLevel, maxElectricBoost, rechargeIntervalMs, electricBoost]);
+
+  // Apply Extra Booster effects
   const applyExtraBoosterEffects = (boosters) => {
+    let newMaxElectricBoost = BASE_MAX_ELECTRIC_BOOST;
+    let newRechargeTime = RECHARGE_TIMES[0];
+    let newTapBoostLevel = 0;
+    let autobotOwned = false;
+
     boosters.forEach((booster) => {
-      switch (booster.name) {
-        case "multiplier":
-          setMaxElectricBoost(BASE_MAX_ELECTRIC_BOOST + booster.level * 500);
-          break;
+      switch (booster.title.toLowerCase()) {
         case "boost":
-          setTapBoostLevel(booster.level);
+          newTapBoostLevel = parseInt(booster.rawLevel) || 0;
+          break;
+        case "multiplier":
+          newMaxElectricBoost += 500 * (parseInt(booster.rawLevel) || 0);
           break;
         case "recharging speed":
-          setRechargingSpeedLevel(booster.level);
+          newRechargeTime = RECHARGE_TIMES[parseInt(booster.rawLevel)] || RECHARGE_TIMES[0];
           break;
-        case "Auto-bot Tapping":
-          setHasAutobot(true);
+        case "auto-bot tapping":
+          autobotOwned = booster.rawLevel !== "-";
           break;
         default:
           break;
       }
     });
+
+    setMaxElectricBoost(newMaxElectricBoost);
+    setRechargeIntervalMs((newRechargeTime / newMaxElectricBoost) * 1000);
+    setTapBoostLevel(newTapBoostLevel);
+    setHasAutobot(autobotOwned);
+    setElectricBoost((prev) => Math.min(prev, newMaxElectricBoost));
   };
 
-  // Sync daily boosters with localStorage and handle timers
+  // Save daily boosters to localStorage
   useEffect(() => {
-    const handleStorageChange = () => {
-      const saved = localStorage.getItem("dailyBoosters");
-      if (saved) setDailyBoosters(JSON.parse(saved));
-    };
+    localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
+  }, [dailyBoosters]);
 
-    const handleFullEnergyClaimed = () => {
-      setElectricBoost(maxElectricBoost);
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    window.addEventListener("fullEnergyClaimed", handleFullEnergyClaimed);
-
-    // Timer for Tapper Boost duration and daily reset
-    const interval = setInterval(() => {
+  // Real-time daily booster timer updates
+  useEffect(() => {
+    const intervalId = setInterval(() => {
       setDailyBoosters((prev) => {
         const updated = { ...prev };
-        const now = Date.now();
-
-        // Reset Tapper Boost after BOOST_DURATION
-        if (updated.tapperBoost.isActive && now >= updated.tapperBoost.endTime) {
-          updated.tapperBoost.isActive = false;
-        }
-
-        // Reset uses after DAILY_RESET_INTERVAL when depleted
-        if (updated.tapperBoost.usesLeft === 0 && updated.tapperBoost.resetTime && now >= updated.tapperBoost.resetTime) {
-          updated.tapperBoost.usesLeft = 3;
-          updated.tapperBoost.resetTime = null;
-        }
-        if (updated.fullEnergy.usesLeft === 0 && updated.fullEnergy.resetTime && now >= updated.fullEnergy.resetTime) {
-          updated.fullEnergy.usesLeft = 3;
-          updated.fullEnergy.resetTime = null;
-        }
-
-        localStorage.setItem("dailyBoosters", JSON.stringify(updated));
+        ["tapperBoost", "fullEnergy"].forEach((type) => {
+          const booster = updated[type];
+          if (booster.timers.length > 0) {
+            const nextTimer = booster.timers[0];
+            if (Date.now() >= nextTimer.endTime) {
+              if (booster.isActive) {
+                booster.isActive = false;
+                booster.timers.shift();
+              } else if (booster.usesLeft === 0) {
+                booster.usesLeft = 3;
+                booster.timers = [];
+              }
+            }
+          }
+        });
         return updated;
       });
     }, 1000);
+    return () => clearInterval(intervalId);
+  }, []);
 
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("fullEnergyClaimed", handleFullEnergyClaimed);
-      clearInterval(interval);
-    };
-  }, [maxElectricBoost]);
-
-  // Autobot effect: Auto-taps every second when enabled
-  useEffect(() => {
-    if (!hasAutobot) return;
-
-    const autobotInterval = setInterval(() => {
-      const multiplier = dailyBoosters.tapperBoost.isActive ? 2 : 1;
-      const tapIncrease = tapValue * (1 + tapBoostLevel) * multiplier;
-      setTotalTaps((prev) => prev + tapIncrease);
-    }, AUTOBOT_TAP_INTERVAL);
-
-    return () => clearInterval(autobotInterval);
-  }, [hasAutobot, tapBoostLevel, dailyBoosters.tapperBoost.isActive, tapValue]);
-
-  // Electric boost recharge based on recharge speed level
-  useEffect(() => {
-    if (isTapping || electricBoost >= maxElectricBoost) return;
-
-    const rechargeRate = RECHARGE_TIMES[rechargingSpeedLevel] || RECHARGE_TIMES[0];
-    const rechargeInterval = setInterval(() => {
-      setElectricBoost((prev) => Math.min(prev + 1, maxElectricBoost));
-    }, rechargeRate);
-
-    return () => clearInterval(rechargeInterval);
-  }, [isTapping, electricBoost, maxElectricBoost, rechargingSpeedLevel, RECHARGE_TIMES]);
-
-  /**
-   * Handles tap events, applies Tapper Boost and extra Boost multipliers, and shows tap effects.
-   * @param {Object} event - The tap or click event object.
-   */
+  // Handle tap events with booster logic
   const handleTap = (event) => {
-    event.preventDefault();
+    if (electricBoost === 0) return;
 
-    if (electricBoost <= 0) return;
+    const fingersCount = event.touches?.length || 1;
+    const tapperBoostActive = dailyBoosters.tapperBoost.isActive;
+    const fullEnergyActive = dailyBoosters.fullEnergy.isActive;
+    const multiplier = (tapperBoostActive ? 2 : 1) + tapBoostLevel;
+    const coinsAdded = fingersCount * multiplier;
 
-    setIsTapping(true);
-
-    const tapperMultiplier = dailyBoosters.tapperBoost.isActive ? 2 : 1;
-    const extraMultiplier = 1 + tapBoostLevel;
-    const tapIncrease = tapValue * tapperMultiplier * extraMultiplier;
-
-    setTotalTaps((prev) => prev + tapIncrease);
-    setElectricBoost((prev) => Math.max(prev - 1, 0));
-
-    const tapIcon = event.currentTarget.getBoundingClientRect();
-    const tapX = (event.touches ? event.touches[0].clientX : event.clientX) - tapIcon.left;
-    const tapY = (event.touches ? event.touches[0].clientY : event.clientY) - tapIcon.top;
-
-    const newTapEffect = { id: Date.now(), x: tapX, y: tapY, count: tapIncrease };
-    setTapEffects((prevEffects) => [...prevEffects, newTapEffect]);
+    setTotalTaps((prev) => prev + coinsAdded);
+    setElectricBoost((prev) => (fullEnergyActive ? maxElectricBoost : Math.max(prev - fingersCount, 0)));
+    localStorage.setItem("electricBoost", fullEnergyActive ? maxElectricBoost : Math.max(electricBoost - fingersCount, 0));
+    tapCountSinceLastUpdate.current += coinsAdded;
 
     setTapAnimation(true);
+    setBoostAnimation(true);
     setTimeout(() => {
-      setTapEffects((prev) => prev.filter((e) => e.id !== newTapEffect.id));
       setTapAnimation(false);
-    }, 1000);
+      setBoostAnimation(false);
+    }, 500);
+
+    const tapX = event.touches?.[0]?.clientX || event.clientX;
+    const tapY = event.touches?.[0]?.clientY || event.clientY;
+    const newTapEffect = { id: Date.now(), x: tapX, y: tapY, count: coinsAdded };
+    setTapEffects((prevEffects) => [...prevEffects, newTapEffect]);
+    setTimeout(() => setTapEffects((prev) => prev.filter((e) => e.id !== newTapEffect.id)), 1000);
+
+    if (updateBackendTimeout.current) clearTimeout(updateBackendTimeout.current);
+    updateBackendTimeout.current = setTimeout(() => {
+      updateBackend();
+    }, 2000);
+
+    isTapping.current = true;
+    playTapSound();
   };
 
-  /**
-   * Handles tap end to stop tapping state for recharge.
-   */
-  const handleTapEnd = () => {
-    setIsTapping(false);
+  const playTapSound = () => {
+    const audio = new Audio(`${process.env.PUBLIC_URL}/tap.mp3`);
+    audio.volume = 0.3;
+    audio.play().catch((err) => console.error("Audio playback error:", err));
   };
+
+  const updateBackend = async () => {
+    if (tapCountSinceLastUpdate.current > 0) {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const response = await fetch(
+          `https://bt-coins.onrender.com/update-coins?coins=${tapCountSinceLastUpdate.current}`,
+          {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          }
+        );
+
+        const data = await response.json();
+        if (response.ok) {
+          console.log("Backend updated successfully:", data);
+          if (data.total_coins !== undefined) {
+            setTotalTaps(data.total_coins);
+          }
+        } else {
+          console.error("Failed to update backend:", data.detail);
+        }
+      } catch (err) {
+        console.error("Error updating backend:", err);
+      } finally {
+        tapCountSinceLastUpdate.current = 0;
+        isTapping.current = false;
+      }
+    }
+  };
+
+  if (error) {
+    return <div className="error">{error}</div>;
+  }
+
+  const { level = 1, level_name = "Beginner" } = profile || {};
 
   return (
     <div className="dashboard-container">
-      {/* Profile and Streak Section */}
       <div className="profile1-streak-section">
         <div className="profile1-section" onClick={() => navigate("/profile-screen")}>
           <img src={telegramData.image_url} alt="Profile" className="profile1-picture" />
           <div className="profile1-info">
             <span className="profile1-username">{telegramData.username}</span>
-            <span className="profile1-level">Lv. {profile.level}. {profile.level_name}</span>
+            <span className="profile1-level">Lv. {level}. {level_name}</span>
           </div>
         </div>
         <div className="streak-section" onClick={() => navigate("/daily-streak-screen")}>
@@ -289,7 +321,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Navigation Frames */}
       <div className="frames-section">
         {[
           { name: "Rewards", icon: "reward.png", path: "/reward-screen" },
@@ -304,7 +335,6 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Total Taps Section */}
       <div className="total-taps-section">
         <p className="total-taps-text">Your Total Taps:</p>
         <div className="total-taps-count">
@@ -314,28 +344,21 @@ const Dashboard = () => {
         <div
           className={`big-tap-icon ${tapAnimation ? "tap-animation" : ""}`}
           onTouchStart={handleTap}
-          onTouchEnd={handleTapEnd}
-          onMouseDown={handleTap}
-          onMouseUp={handleTapEnd}
+          onClick={handleTap}
         >
           <img className="tap-logo-big" src={`${process.env.PUBLIC_URL}/logo.png`} alt="Big Tap Icon" />
-          {tapEffects.map((effect) => (
-            <div
-              key={effect.id}
-              className="tap-effect"
-              style={{ top: `${effect.y}px`, left: `${effect.x}px` }}
-            >
-              +{effect.count}
-            </div>
-          ))}
         </div>
+        {tapEffects.map((effect) => (
+          <div key={effect.id} className="tap-effect" style={{ top: effect.y, left: effect.x }}>
+            +{effect.count}
+          </div>
+        ))}
       </div>
 
-      {/* Electric Boost Section */}
       <div className="electric-boost-section">
-        <div className="electric-value">
+        <div className={`electric-value ${boostAnimation ? "boost-animation" : ""}`}>
           <img src={`${process.env.PUBLIC_URL}/electric-icon.png`} alt="Electric Icon" className="electric-icon" />
-          <span>{Math.floor(electricBoost)}/{maxElectricBoost}</span>
+          <span>{electricBoost}/{maxElectricBoost}</span>
         </div>
         <button className="boost-btn" onClick={() => navigate("/boost-screen")}>
           <img src={`${process.env.PUBLIC_URL}/boostx2.png`} alt="Boost Icon" className="boost-icon" />
