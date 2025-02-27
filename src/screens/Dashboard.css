@@ -249,6 +249,18 @@
   }
 }
 
+/* Tap Animation for Big Tap Icon */
+.big-tap-icon.tap-animation img {
+  animation: slight-bounce 0.2s ease-in-out; /* Very slight animation */
+}
+
+/* Slight Bounce Animation */
+@keyframes slight-bounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); } /* 2% increase, very subtle */
+  100% { transform: scale(1); }
+}
+
 /* Media Queries for Responsiveness */
 @media (max-width: 600px) {
   .profile1-username {
