@@ -13,8 +13,10 @@ const Dashboard = () => {
   // Constants for game mechanics
   const INITIAL_ELECTRIC_BOOST = 1000;
   const BASE_MAX_ELECTRIC_BOOST = 1000;
-  const BOOST_DURATION = 20000; // 20 seconds in milliseconds
-  const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+  // eslint-disable-next-line no-unused-vars
+  const BOOST_DURATION = 20000; // 20 seconds in milliseconds, used in BoostScreen.js
+  // eslint-disable-next-line no-unused-vars
+  const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds, used in BoostScreen.js
   const RECHARGE_TIMES = useMemo(() => [3000, 2500, 2000, 1500, 1000], []); // Recharge speeds by level (ms), memoized
   const AUTOBOT_TAP_INTERVAL = 1000; // 1 second in milliseconds
 
@@ -201,7 +203,7 @@ const Dashboard = () => {
       window.removeEventListener("fullEnergyClaimed", handleFullEnergyClaimed);
       clearInterval(interval);
     };
-  }, [maxElectricBoost, BOOST_DURATION, DAILY_RESET_INTERVAL]);
+  }, [maxElectricBoost]);
 
   // Autobot effect: Auto-taps every second when enabled
   useEffect(() => {
