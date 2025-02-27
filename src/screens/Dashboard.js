@@ -414,12 +414,27 @@ const Dashboard = () => {
 
   // State for total taps and tap effects
   const [totalTaps, setTotalTaps] = useState(0);
-  const [tapEffects, setTapEffects] = useState([]); // Multiple tap effects allowed
+  const [tapEffects, setTapEffects] = useState([]);
+  const [isTapping, setIsTapping] = useState(false); // Prevents multiple taps during processing
+
+  // State for booster effects
+  const [tapMultiplier, setTapMultiplier] = useState(1); // Default tap value multiplier
 
   // Refs for tap and recharge management
   const tapCountSinceLastUpdate = useRef(0);
   const lastTapTime = useRef(Date.now()); // Track time of last tap
-  const rechargeInterval = useRef(null); // Store recharge interval ID
+
+ // Reset boosters on account change
+const resetBoosters = useCallback(() => {
+  const resetState = {
+    tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
+    fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
+  };
+  localStorage.setItem("dailyBoosters", JSON.stringify(resetState));
+  setTapMultiplier(1);
+  setElectricBoost(maxElectricBoost);
+  localStorage.setItem("electricBoost", maxElectricBoost);
+}, [maxElectricBoost]); // Dependency array includes maxElectricBoost
 
   // Initialize Telegram WebApp data on component mount
   useEffect(() => {
@@ -433,6 +448,11 @@ const Dashboard = () => {
               username: user.username || `User${user.id}`,
               image_url: user.photo_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
             });
+            const storedUserId = localStorage.getItem("telegram_user_id");
+            if (storedUserId !== user.id.toString()) {
+              localStorage.setItem("telegram_user_id", user.id);
+              resetBoosters(); // Reset boosters if user ID changes
+            }
           }
         }
       } catch (err) {
@@ -440,7 +460,7 @@ const Dashboard = () => {
       }
     };
     initTelegram();
-  }, []);
+  }, [resetBoosters]); // Dependency on resetBoosters
 
   // Fetch user profile from backend on component mount
   useEffect(() => {
@@ -464,32 +484,20 @@ const Dashboard = () => {
         setTotalTaps(data.total_coins || 0);
         setCurrentStreak(data.streak?.current_streak || 0);
 
-        // Load electric boost and last tap time from localStorage
+        // Load electric boost from localStorage
         const savedBoost = localStorage.getItem("electricBoost");
+        setElectricBoost(savedBoost !== null ? parseInt(savedBoost, 10) : 1000);
         const savedTapTime = localStorage.getItem("lastTapTime");
-        const initialBoost = savedBoost !== null ? parseInt(savedBoost, 10) : 1000;
         lastTapTime.current = savedTapTime !== null ? parseInt(savedTapTime, 10) : Date.now();
-
-        // Calculate initial recharge based on time elapsed
-        const now = Date.now();
-        const timeSinceLastTap = now - lastTapTime.current;
-        if (timeSinceLastTap >= 3000) {
-          const pointsToAdd = Math.floor((timeSinceLastTap - 3000) / 3000); // Points after 3s pause
-          const newBoost = Math.min(initialBoost + pointsToAdd, maxElectricBoost);
-          setElectricBoost(newBoost);
-          localStorage.setItem("electricBoost", newBoost);
-        } else {
-          setElectricBoost(initialBoost);
-        }
       } catch (err) {
         console.error("Error fetching profile:", err);
         navigate("/splash"); // Redirect on failure
       }
     };
     fetchProfile();
-  }, [navigate, maxElectricBoost]); // Added maxElectricBoost to satisfy ESLint
+  }, [navigate]);
 
-  // Sync tap count with backend every 2 seconds or on unmount
+  // Sync tap count with backend periodically or on unmount
   const updateBackend = useCallback(async () => {
     if (tapCountSinceLastUpdate.current === 0) return;
 
@@ -509,7 +517,7 @@ const Dashboard = () => {
       if (response.ok) {
         const data = await response.json();
         if (data["current coins"] >= 0) {
-          setTotalTaps(data["current coins"]); // Trust backend total
+          setTotalTaps(data["current coins"]);
           setProfile((prev) => ({
             ...prev,
             level: data["current level"] || prev.level,
@@ -524,7 +532,7 @@ const Dashboard = () => {
     }
   }, []);
 
-  // Set up backend sync interval and cleanup
+  // Sync taps with backend every 2 seconds or on component unmount
   useEffect(() => {
     const interval = setInterval(updateBackend, 2000); // Sync every 2 seconds
     return () => {
@@ -538,86 +546,95 @@ const Dashboard = () => {
     const checkRecharge = () => {
       const now = Date.now();
       const timeSinceLastTap = now - lastTapTime.current;
-
-      // Start recharging only after 3 seconds have passed since last tap
       if (timeSinceLastTap >= 3000 && electricBoost < maxElectricBoost) {
-        if (!rechargeInterval.current) {
-          rechargeInterval.current = setInterval(() => {
-            setElectricBoost((prev) => {
-              const newBoost = Math.min(prev + 1, maxElectricBoost);
-              localStorage.setItem("electricBoost", newBoost);
-              if (newBoost === maxElectricBoost) {
-                clearInterval(rechargeInterval.current);
-                rechargeInterval.current = null;
-              }
-              return newBoost;
-            });
-          }, 3000); // Recharge 1 point every 3 seconds
-        }
-      } else if (rechargeInterval.current) {
-        // Stop recharge if tapping resumes within 3 seconds
-        clearInterval(rechargeInterval.current);
-        rechargeInterval.current = null;
+        const pointsToAdd = Math.floor((timeSinceLastTap - 3000) / 3000) + 1;
+        const newBoost = Math.min(electricBoost + pointsToAdd, maxElectricBoost);
+        setElectricBoost(newBoost);
+        localStorage.setItem("electricBoost", newBoost);
       }
     };
 
+    checkRecharge(); // Initial check on mount
     const interval = setInterval(checkRecharge, 1000); // Check every second
-    return () => {
-      clearInterval(interval);
-      if (rechargeInterval.current) {
-        clearInterval(rechargeInterval.current);
-        rechargeInterval.current = null;
+    return () => clearInterval(interval);
+  }, [electricBoost, maxElectricBoost]);
+
+  // Handle Tapper Boost activation from BoostScreen
+  useEffect(() => {
+    const handleTapperBoostActivated = () => {
+      setTapMultiplier(2); // Double tap value
+      const boosters = JSON.parse(localStorage.getItem("dailyBoosters") || "{}");
+      const endTime = boosters.tapperBoost.endTime;
+      const remainingTime = endTime - Date.now();
+      if (remainingTime > 0) {
+        setTimeout(() => {
+          setTapMultiplier(1); // Reset after 20 seconds
+        }, remainingTime);
       }
     };
-  }, [electricBoost, maxElectricBoost]); // Added maxElectricBoost to dependency array
+
+    const handleTapperBoostDeactivated = () => {
+      setTapMultiplier(1); // Reset multiplier when deactivated
+    };
+
+    window.addEventListener("tapperBoostActivated", handleTapperBoostActivated);
+    window.addEventListener("tapperBoostDeactivated", handleTapperBoostDeactivated);
+    return () => {
+      window.removeEventListener("tapperBoostActivated", handleTapperBoostActivated);
+      window.removeEventListener("tapperBoostDeactivated", handleTapperBoostDeactivated);
+    };
+  }, []);
+
+  // Handle Full Energy claim from BoostScreen
+  useEffect(() => {
+    const handleFullEnergyClaimed = () => {
+      setElectricBoost(maxElectricBoost);
+      localStorage.setItem("electricBoost", maxElectricBoost);
+    };
+    window.addEventListener("fullEnergyClaimed", handleFullEnergyClaimed);
+    return () => window.removeEventListener("fullEnergyClaimed", handleFullEnergyClaimed);
+  }, [maxElectricBoost]);
 
   /**
-   * Handles tap events on the big tap icon, increments total taps, and shows a +1 effect per tap.
+   * Handles tap events on the big tap icon, increments total taps with boost multiplier, and shows a single +1 effect.
    * @param {Object} event - The tap or click event object.
    */
   const handleTap = (event) => {
     event.preventDefault(); // Prevent default behavior
 
-    if (electricBoost <= 0) return; // Prevent taps if no boost remains
+    if (isTapping || electricBoost <= 0) return; // Prevent taps if already processing or no boost
 
-    // Clear any existing recharge interval when tapping
-    if (rechargeInterval.current) {
-      clearInterval(rechargeInterval.current);
-      rechargeInterval.current = null;
-    }
+    setIsTapping(true);
 
-    // Update last tap time for recharge logic
-    lastTapTime.current = Date.now();
-    localStorage.setItem("lastTapTime", lastTapTime.current);
+    // Increment total taps with tap multiplier (affected by Tapper Boost)
+    const tapValue = 1 * tapMultiplier; // Base value of 1, doubled when Tapper Boost is active
+    setTotalTaps((prev) => prev + tapValue);
+    tapCountSinceLastUpdate.current += tapValue;
 
-    // Increment total taps and track for backend sync
-    setTotalTaps((prev) => prev + 1);
-    tapCountSinceLastUpdate.current += 1;
-
-    // Decrease electric boost and save to localStorage
+    // Decrease electric boost by 1 (unaffected by multiplier)
     setElectricBoost((prev) => {
       const newBoost = Math.max(prev - 1, 0);
       localStorage.setItem("electricBoost", newBoost);
       return newBoost;
     });
 
+    // Update last tap time for recharge logic
+    lastTapTime.current = Date.now();
+    localStorage.setItem("lastTapTime", lastTapTime.current);
+
     // Get tap coordinates relative to the tap icon
     const tapIcon = event.currentTarget.getBoundingClientRect();
     const tapX = (event.touches ? event.touches[0].clientX : event.clientX) - tapIcon.left;
     const tapY = (event.touches ? event.touches[0].clientY : event.clientY) - tapIcon.top;
 
-    // Add a new tap effect without replacing existing ones
+    // Add a single tap effect at the touch point with boosted value
     const newTapEffect = { id: Date.now(), x: tapX, y: tapY };
-    setTapEffects((prev) => [...prev, newTapEffect]);
+    setTapEffects([newTapEffect]);
 
-    // Trigger slight bounce animation
-    const tapElement = event.currentTarget;
-    tapElement.classList.add("tap-animation");
-    setTimeout(() => tapElement.classList.remove("tap-animation"), 200);
-
-    // Remove the tap effect after 1 second
+    // Remove the tap effect after 1 second and reset tapping state
     setTimeout(() => {
-      setTapEffects((prev) => prev.filter((effect) => effect.id !== newTapEffect.id));
+      setTapEffects([]);
+      setIsTapping(false);
     }, 1000);
   };
 
@@ -678,7 +695,7 @@ const Dashboard = () => {
               className="tap-effect"
               style={{ top: `${effect.y}px`, left: `${effect.x}px` }}
             >
-              +1
+              +{tapMultiplier} {/* Display the actual tap value */}
             </div>
           ))}
         </div>

@@ -104,15 +104,19 @@ const BoostScreen = () => {
             usesLeft: booster.usesLeft - 1,
             isActive: true,
             endTime: now + BOOST_DURATION,
-            resetTime: booster.usesLeft === 1 ? now + DAILY_RESET_INTERVAL : booster.resetTime,
+            resetTime: booster.usesLeft === 3 ? null : prev.tapperBoost.resetTime || now + DAILY_RESET_INTERVAL,
           };
+          window.dispatchEvent(new Event("tapperBoostActivated"));
         } else if (boosterType === "fullEnergy") {
           updated.fullEnergy = {
             usesLeft: booster.usesLeft - 1,
-            isActive: true, // Instant effect, no countdown
-            resetTime: booster.usesLeft === 1 ? now + DAILY_RESET_INTERVAL : booster.resetTime,
+            isActive: false, // Instant effect, no duration
+            resetTime: booster.usesLeft === 3 ? null : prev.fullEnergy.resetTime || now + DAILY_RESET_INTERVAL,
           };
-          window.dispatchEvent(new Event("fullEnergyClaimed")); // Trigger immediate refill
+          window.dispatchEvent(new Event("fullEnergyClaimed"));
+        }
+        if (updated[boosterType].usesLeft === 0 && !updated[boosterType].resetTime) {
+          updated[boosterType].resetTime = now + DAILY_RESET_INTERVAL;
         }
         return updated;
       });
@@ -124,12 +128,18 @@ const BoostScreen = () => {
     const intervalId = setInterval(() => {
       setDailyBoosters((prev) => {
         const updated = { ...prev };
-        if (updated.tapperBoost.isActive && Date.now() >= updated.tapperBoost.endTime) {
+        const now = Date.now();
+
+        // Deactivate Tapper Boost after duration
+        if (updated.tapperBoost.isActive && now >= updated.tapperBoost.endTime) {
           updated.tapperBoost.isActive = false;
+          window.dispatchEvent(new Event("tapperBoostDeactivated"));
         }
+
+        // Reset boosters when resetTime is reached
         ["tapperBoost", "fullEnergy"].forEach((type) => {
           const booster = updated[type];
-          if (booster.usesLeft === 0 && booster.resetTime && Date.now() >= booster.resetTime) {
+          if (booster.usesLeft === 0 && booster.resetTime && now >= booster.resetTime) {
             booster.usesLeft = 3;
             booster.resetTime = null;
             booster.isActive = false;
@@ -146,14 +156,18 @@ const BoostScreen = () => {
     if (boosterType === "tapperBoost" && booster.isActive) {
       const remaining = Math.max(0, (booster.endTime - Date.now()) / 1000);
       return `Active: ${Math.floor(remaining)}s`;
-    } else if (booster.usesLeft === 0 && booster.resetTime) {
+    } else if (booster.usesLeft > 0) {
+      return `${booster.usesLeft}/3 uses left`;
+    } else if (booster.resetTime) {
       const resetIn = Math.max(0, (booster.resetTime - Date.now()) / 1000);
       const hours = Math.floor(resetIn / 3600);
       const minutes = Math.floor((resetIn % 3600) / 60);
       const seconds = Math.floor(resetIn % 60);
-      return `Resets in ${hours}h ${minutes}m ${seconds}s`;
+      return `0/3 ${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds
+        .toString()
+        .padStart(2, "0")}`;
     }
-    return `${booster.usesLeft}/3 uses left`;
+    return "0/3";
   };
 
   const renderOverlay = () => {
