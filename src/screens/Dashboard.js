@@ -463,13 +463,31 @@ const Dashboard = () => {
         setProfile(data);
         setTotalTaps(data.total_coins || 0);
         setCurrentStreak(data.streak?.current_streak || 0);
+
+        // Load electric boost and last tap time from localStorage
+        const savedBoost = localStorage.getItem("electricBoost");
+        const savedTapTime = localStorage.getItem("lastTapTime");
+        const initialBoost = savedBoost !== null ? parseInt(savedBoost, 10) : 1000;
+        lastTapTime.current = savedTapTime !== null ? parseInt(savedTapTime, 10) : Date.now();
+
+        // Calculate initial recharge based on time elapsed
+        const now = Date.now();
+        const timeSinceLastTap = now - lastTapTime.current;
+        if (timeSinceLastTap >= 3000) {
+          const pointsToAdd = Math.floor((timeSinceLastTap - 3000) / 3000); // Points after 3s pause
+          const newBoost = Math.min(initialBoost + pointsToAdd, maxElectricBoost);
+          setElectricBoost(newBoost);
+          localStorage.setItem("electricBoost", newBoost);
+        } else {
+          setElectricBoost(initialBoost);
+        }
       } catch (err) {
         console.error("Error fetching profile:", err);
         navigate("/splash"); // Redirect on failure
       }
     };
     fetchProfile();
-  }, [navigate]);
+  }, [navigate, maxElectricBoost]); // Added maxElectricBoost to satisfy ESLint
 
   // Sync tap count with backend every 2 seconds or on unmount
   const updateBackend = useCallback(async () => {
@@ -491,7 +509,7 @@ const Dashboard = () => {
       if (response.ok) {
         const data = await response.json();
         if (data["current coins"] >= 0) {
-          setTotalTaps(data["current coins"]);
+          setTotalTaps(data["current coins"]); // Trust backend total
           setProfile((prev) => ({
             ...prev,
             level: data["current level"] || prev.level,
@@ -521,20 +539,25 @@ const Dashboard = () => {
       const now = Date.now();
       const timeSinceLastTap = now - lastTapTime.current;
 
-      // Start recharging if 3 seconds have passed since the last tap
+      // Start recharging only after 3 seconds have passed since last tap
       if (timeSinceLastTap >= 3000 && electricBoost < maxElectricBoost) {
         if (!rechargeInterval.current) {
           rechargeInterval.current = setInterval(() => {
             setElectricBoost((prev) => {
               const newBoost = Math.min(prev + 1, maxElectricBoost);
+              localStorage.setItem("electricBoost", newBoost);
               if (newBoost === maxElectricBoost) {
                 clearInterval(rechargeInterval.current);
                 rechargeInterval.current = null;
               }
               return newBoost;
             });
-          }, 3000); // Recharge 1 point every 3 seconds (3000ms / 1000 = 3s per count)
+          }, 3000); // Recharge 1 point every 3 seconds
         }
+      } else if (rechargeInterval.current) {
+        // Stop recharge if tapping resumes within 3 seconds
+        clearInterval(rechargeInterval.current);
+        rechargeInterval.current = null;
       }
     };
 
@@ -546,7 +569,7 @@ const Dashboard = () => {
         rechargeInterval.current = null;
       }
     };
-  }, [electricBoost, maxElectricBoost]);
+  }, [electricBoost, maxElectricBoost]); // Added maxElectricBoost to dependency array
 
   /**
    * Handles tap events on the big tap icon, increments total taps, and shows a +1 effect per tap.
@@ -557,15 +580,26 @@ const Dashboard = () => {
 
     if (electricBoost <= 0) return; // Prevent taps if no boost remains
 
+    // Clear any existing recharge interval when tapping
+    if (rechargeInterval.current) {
+      clearInterval(rechargeInterval.current);
+      rechargeInterval.current = null;
+    }
+
     // Update last tap time for recharge logic
     lastTapTime.current = Date.now();
+    localStorage.setItem("lastTapTime", lastTapTime.current);
 
     // Increment total taps and track for backend sync
     setTotalTaps((prev) => prev + 1);
     tapCountSinceLastUpdate.current += 1;
 
-    // Decrease electric boost
-    setElectricBoost((prev) => Math.max(prev - 1, 0));
+    // Decrease electric boost and save to localStorage
+    setElectricBoost((prev) => {
+      const newBoost = Math.max(prev - 1, 0);
+      localStorage.setItem("electricBoost", newBoost);
+      return newBoost;
+    });
 
     // Get tap coordinates relative to the tap icon
     const tapIcon = event.currentTarget.getBoundingClientRect();
