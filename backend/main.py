@@ -125,7 +125,7 @@ async def update_coins(telegram_user_id: Annotated[str, Depends(get_current_user
 
 # get user data
 @app.get('/user/profile', tags=["Global Routes"], response_model=UserProfile)
-@redis_cache()
+# @redis_cache()
 async def get_user_data(telegram_user_id: Annotated[str, Depends(get_current_user)], request: Request) -> UserProfile:
     """Get full user profile information
 
