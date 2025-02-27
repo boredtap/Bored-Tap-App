@@ -748,7 +748,7 @@ const Dashboard = () => {
   const rechargeInterval = useRef(null); // Store recharge interval ID
   const autoTapInterval = useRef(null); // Store auto-tap interval ID
 
-  // Define resetBoosters to wipe all local data
+  // Define resetBoosters before it's used
   const resetBoosters = () => {
     const resetState = {
       tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
@@ -776,7 +776,7 @@ const Dashboard = () => {
     });
   };
 
-  // Fetch user profile from backend on component mount and reset if account deleted
+  // Fetch user profile from backend on component mount
   useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem("accessToken");
@@ -794,7 +794,6 @@ const Dashboard = () => {
         });
         if (!response.ok) throw new Error("Failed to fetch profile");
         const data = await response.json();
-
         // Detect account deletion by checking reset stats
         if (data.total_coins === 0 && data.level === 1) {
           resetBoosters(); // Full reset if account is deleted
@@ -969,6 +968,8 @@ const Dashboard = () => {
   }, [maxElectricBoost]);
 
   // Handle Extra Boosters
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  
   useEffect(() => {
     const handleBoostUpgraded = (event) => {
       const newLevel = event.detail.level;

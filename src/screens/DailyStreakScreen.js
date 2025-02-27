@@ -42,7 +42,7 @@ const DailyStreakScreen = () => {
   });
   const [profile, setProfile] = useState(null);
   const [showOverlay, setShowOverlay] = useState(false);
-  const [countdownTime, setCountdownTime] = useState("12:59 PM");
+  const [countdownTime, setCountdownTime] = useState("11:59 PM");
   // State to show the "Come back tomorrow" message only after claiming
   const [showClaimMessage, setShowClaimMessage] = useState(false);
 
