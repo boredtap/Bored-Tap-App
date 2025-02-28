@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./Dashboard.css";
 
-// Updated Recharge times per spec (in ms)
-const RECHARGE_TIMES = [3000, 2000, 1000, 500];
+// Updated Recharge times per spec (in ms) - now including all 5 levels
+const RECHARGE_TIMES = [3000, 2500, 2000, 1500, 1000, 500]; // Level 0 through 5
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -38,6 +38,14 @@ const Dashboard = () => {
   const rechargeInterval = useRef(null);
   const autoTapInterval = useRef(null);
   const boostMultiplierActive = useRef(false);
+  
+  // Load initial electric boost from localStorage
+  useEffect(() => {
+    const savedBoost = localStorage.getItem("electricBoost");
+    if (savedBoost !== null) {
+      setElectricBoost(parseInt(savedBoost, 10));
+    }
+  }, []);
 
   // Reset function
   const resetBoosters = () => {
@@ -45,12 +53,12 @@ const Dashboard = () => {
       tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
       fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
     };
-    localStorage.clear();
     localStorage.setItem("dailyBoosters", JSON.stringify(resetState));
     
     // Reset booster states in localStorage
     localStorage.setItem("baseTapMultiplier", "1");
     localStorage.setItem("maxElectricBoost", "1000");
+    localStorage.setItem("electricBoost", "1000");
     localStorage.setItem("rechargeTimeIndex", "0");
     localStorage.setItem("autoTapActive", "false");
     
@@ -77,37 +85,37 @@ const Dashboard = () => {
 
   // Load saved booster states
   const loadSavedBoosterStates = useCallback(() => {
+    console.log("Loading saved booster states");
+    
     // Load base tap multiplier
     const savedBaseMultiplier = localStorage.getItem("baseTapMultiplier");
     const baseMultiplier = savedBaseMultiplier ? parseInt(savedBaseMultiplier, 10) : 1;
+    console.log("Loaded base multiplier:", baseMultiplier);
     setBaseTapMultiplier(baseMultiplier);
-    setTapMultiplier(baseMultiplier); // Initialize tap multiplier with base value
     
     // Load max electric boost
     const savedMaxBoost = localStorage.getItem("maxElectricBoost");
     const maxBoost = savedMaxBoost ? parseInt(savedMaxBoost, 10) : 1000;
+    console.log("Loaded max boost:", maxBoost);
     setMaxElectricBoost(maxBoost);
     
     // Load recharge time
     const savedRechargeIndex = localStorage.getItem("rechargeTimeIndex");
     const rechargeIndex = savedRechargeIndex ? parseInt(savedRechargeIndex, 10) : 0;
-    setRechargeTime(RECHARGE_TIMES[Math.min(rechargeIndex, RECHARGE_TIMES.length - 1)]);
+    const newRechargeTime = RECHARGE_TIMES[Math.min(rechargeIndex, RECHARGE_TIMES.length - 1)];
+    console.log("Loaded recharge time:", newRechargeTime, "ms (index", rechargeIndex, ")");
+    setRechargeTime(newRechargeTime);
     
     // Load auto tap state
     const savedAutoTap = localStorage.getItem("autoTapActive");
     const isAutoTapActive = savedAutoTap === "true";
+    console.log("Loaded auto tap active:", isAutoTapActive);
     setAutoTapActive(isAutoTapActive);
     
-    // Load electric boost value
-    const savedBoost = localStorage.getItem("electricBoost");
-    // Only use saved boost if it exists, otherwise use max
-    if (savedBoost !== null) {
-      setElectricBoost(parseInt(savedBoost, 10));
-    } else {
-      setElectricBoost(maxBoost);
-      localStorage.setItem("electricBoost", maxBoost.toString());
-    }
+    // Load electric boost value - note: we don't set it here to avoid overriding
+    // preserved values, particularly after Full Energy booster use
     
+    // Return the loaded base multiplier for proper tap multiplier calculation
     return baseMultiplier;
   }, []);
 
@@ -137,7 +145,10 @@ const Dashboard = () => {
           setCurrentStreak(data.streak?.current_streak || 0);
           
           // Load all saved booster states
-          loadSavedBoosterStates();
+          const baseMultiplier = loadSavedBoosterStates();
+          
+          // Set initial tap multiplier based on base multiplier
+          setTapMultiplier(baseMultiplier);
           
           // Load last tap time
           const savedTapTime = localStorage.getItem("lastTapTime");
@@ -198,9 +209,11 @@ const Dashboard = () => {
       console.log("Starting auto tap interval");
       autoTapInterval.current = setInterval(() => {
         if (electricBoost > 0) {
-          // Use the baseTapMultiplier for auto-tapping (not affected by temporary boosts)
-          setTotalTaps((prev) => prev + tapMultiplier);
-          tapCountSinceLastUpdate.current += tapMultiplier;
+          // Use current correct base multiplier for auto-tapping
+          const currentBaseTap = parseInt(localStorage.getItem("baseTapMultiplier") || "1", 10);
+          
+          setTotalTaps((prev) => prev + currentBaseTap);
+          tapCountSinceLastUpdate.current += currentBaseTap;
           setElectricBoost((prev) => {
             const newBoost = Math.max(prev - 1, 0);
             localStorage.setItem("electricBoost", newBoost.toString());
@@ -208,7 +221,7 @@ const Dashboard = () => {
           });
           // Update last tap time to prevent immediate recharge during auto tapping
           lastTapTime.current = Date.now();
-          localStorage.setItem("lastTapTime", lastTapTime.current.toString());
+          localStorage.setItem("lastTapTime", lastTapTime.current);
         }
       }, 1000);
     } else if (!autoTapActive && autoTapInterval.current) {
@@ -222,7 +235,7 @@ const Dashboard = () => {
         autoTapInterval.current = null;
       }
     };
-  }, [autoTapActive, tapMultiplier, electricBoost]);
+  }, [autoTapActive, electricBoost]);
 
   // Backend sync every 2 seconds
   const updateBackend = useCallback(async () => {

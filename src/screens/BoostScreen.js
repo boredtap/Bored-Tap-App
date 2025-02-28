@@ -35,7 +35,12 @@ const BoostScreen = () => {
     setBoostersData({ dailyBoosters: [], extraBoosters: [] });
     setTotalTaps(0);
     localStorage.removeItem("extraBoosters");
-    localStorage.removeItem("electricBoost");
+    // Use consistent naming for localStorage keys
+    localStorage.setItem("electricBoost", "1000");
+    localStorage.setItem("baseTapMultiplier", "1");
+    localStorage.setItem("maxElectricBoost", "1000");
+    localStorage.setItem("rechargeTimeIndex", "0");
+    localStorage.setItem("autoTapActive", "false");
     localStorage.removeItem("lastTapTime");
     localStorage.removeItem("telegram_user_id"); // Clear ID to force full reset on next login
   };
@@ -82,7 +87,7 @@ const BoostScreen = () => {
         actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
         icon: `${process.env.PUBLIC_URL}/extra-booster-icon.png`,
         imageId: booster.image_id,
-        rawLevel: booster.level,
+        rawLevel: booster.level === "-" ? 0 : parseInt(booster.level, 10),
         effect: booster.effect, // e.g., "boost", "multiplier", "recharge", "auto-tap"
       }));
 
@@ -110,20 +115,30 @@ const BoostScreen = () => {
       await fetchProfileAndBoosters();
 
       // Find the upgraded booster and dispatch appropriate event
-      const booster = boostersData.extraBoosters.find((b) => b.id === boosterId);
+      const extraBoosters = JSON.parse(localStorage.getItem("extraBoosters") || "[]");
+      const booster = extraBoosters.find((b) => b.id === boosterId);
+      
       if (booster) {
-        const newLevel = booster.rawLevel === "-" ? 1 : booster.rawLevel + 1;
+        const newLevel = booster.rawLevel === "-" || booster.rawLevel === 0 ? 1 : parseInt(booster.rawLevel, 10) + 1;
+        
+        // Store upgrade values in localStorage
         switch (booster.effect) {
           case "boost":
-            window.dispatchEvent(new CustomEvent("boostUpgraded", { detail: { level: newLevel } }));
+            const newMultiplier = 1 + newLevel; // Level 1: 2, Level 2: 3, Level 3: 4, etc.
+            localStorage.setItem("baseTapMultiplier", newMultiplier.toString());
+            window.dispatchEvent(new CustomEvent("boostUpgraded", { detail: { level: newLevel, multiplier: newMultiplier } }));
             break;
           case "multiplier":
-            window.dispatchEvent(new CustomEvent("multiplierUpgraded", { detail: { level: newLevel } }));
+            const newMaxEnergy = 1000 + (newLevel * 500); // Level 1: 1500, Level 2: 2000, etc.
+            localStorage.setItem("maxElectricBoost", newMaxEnergy.toString());
+            window.dispatchEvent(new CustomEvent("multiplierUpgraded", { detail: { level: newLevel, maxEnergy: newMaxEnergy } }));
             break;
           case "recharge":
+            localStorage.setItem("rechargeTimeIndex", newLevel.toString());
             window.dispatchEvent(new CustomEvent("rechargeSpeedUpgraded", { detail: { level: newLevel } }));
             break;
           case "auto-tap":
+            localStorage.setItem("autoTapActive", "true");
             window.dispatchEvent(new CustomEvent("autoTapActivated", { detail: { level: newLevel } }));
             break;
           default:
@@ -156,7 +171,9 @@ const BoostScreen = () => {
             isActive: false, // Instant effect, no duration
             resetTime: booster.usesLeft === 3 ? null : prev.fullEnergy.resetTime || now + DAILY_RESET_INTERVAL,
           };
-          window.dispatchEvent(new Event("fullEnergyClaimed"));
+          const maxEnergy = parseInt(localStorage.getItem("maxElectricBoost") || "1000", 10);
+          localStorage.setItem("electricBoost", maxEnergy.toString());
+          window.dispatchEvent(new CustomEvent("fullEnergyClaimed", { detail: { maxEnergy } }));
         }
         if (updated[boosterType].usesLeft === 0 && !updated[boosterType].resetTime) {
           updated[boosterType].resetTime = now + DAILY_RESET_INTERVAL;
