@@ -9,7 +9,7 @@ const RECHARGE_TIMES = [3000, 2500, 2000, 1500, 1000, 500]; // Level 0 through 5
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  const [isUpdating, setIsUpdating] = useState(false) //State for when syncing tap
+  //const [isUpdating, setIsUpdating] = useState(false) //State for when syncing tap
 
   // State for Telegram user data
   const [telegramData, setTelegramData] = useState({
@@ -262,11 +262,6 @@ const Dashboard = () => {
 
   // Backend sync every 2 seconds
   const updateBackend = useCallback(async () => {
-    if (isUpdating) return
-    else {
-      setIsUpdating(true)
-    }
-
     if (tapCountSinceLastUpdate.current === 0) return;
     const tapsToSync = tapCountSinceLastUpdate.current;
     try {
@@ -296,8 +291,6 @@ const Dashboard = () => {
       }
     } catch (err) {
       console.error("Error syncing with backend:", err);
-    } finally {
-      setIsUpdating(false)
     }
   }, []);
 
