@@ -847,7 +847,7 @@ const Dashboard = () => {
     }
   }, [navigate, maxElectricBoost, rechargeTime, autoTapActive, baseTapMultiplier]);
 
-  // New useEffect: On mount, check localStorage for active daily booster (Tapper Boost) and update tapMultiplier accordingly.
+  // New useEffect: On mount, check localStorage for active Tapper Boost and update tapMultiplier accordingly.
   useEffect(() => {
     const dailyBoosters = JSON.parse(localStorage.getItem("dailyBoosters") || "{}");
     if (dailyBoosters.tapperBoost?.isActive) {
@@ -863,6 +863,16 @@ const Dashboard = () => {
       }
     }
   }, [baseTapMultiplier]);
+
+  // New useEffect: On mount, check localStorage for a claimed Full Energy booster and refill energy.
+  useEffect(() => {
+    const dailyBoosters = JSON.parse(localStorage.getItem("dailyBoosters") || "{}");
+    if (dailyBoosters.fullEnergy && dailyBoosters.fullEnergy.usesLeft < 3) {
+      console.log("Dashboard: Detected fullEnergy booster claim in localStorage; refilling energy");
+      setElectricBoost(maxElectricBoost);
+      localStorage.setItem("electricBoost", maxElectricBoost.toString());
+    }
+  }, [maxElectricBoost]);
 
   // Sync tap count with backend every 2 seconds or on unmount
   const updateBackend = useCallback(async () => {
@@ -1166,3 +1176,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
