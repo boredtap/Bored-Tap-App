@@ -710,7 +710,7 @@ import Navigation from "../components/Navigation";
 import "./Dashboard.css";
 
 // Updated Recharge times per spec (in ms)
-const RECHARGE_TIMES = [3000, 2500, 2000, 1500, 1000, 500];
+const RECHARGE_TIMES = [3000, 2000, 1000, 500];
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -744,7 +744,7 @@ const Dashboard = () => {
   const rechargeInterval = useRef(null);
   const autoTapInterval = useRef(null);
 
-  // Reset function (untouched)
+  // Reset function (unchanged)
   const resetBoosters = () => {
     const resetState = {
       tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
@@ -772,7 +772,7 @@ const Dashboard = () => {
     });
   };
 
-  // Fetch profile on mount – now simply load saved electricBoost (without recalculating offline gains)
+  // Fetch profile on mount – load saved electricBoost without recalculating offline gains.
   useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem("accessToken");
@@ -797,7 +797,6 @@ const Dashboard = () => {
           setTotalTaps(data.total_coins || 0);
           setCurrentStreak(data.streak?.current_streak || 0);
 
-          // Load the saved electric boost without recalculating offline gains
           const savedBoost = localStorage.getItem("electricBoost");
           const initialBoost = savedBoost !== null ? parseInt(savedBoost, 10) : maxElectricBoost;
           setElectricBoost(initialBoost);
@@ -825,7 +824,7 @@ const Dashboard = () => {
     }
   }, [navigate, maxElectricBoost, rechargeTime, autoTapActive, baseTapMultiplier]);
 
-  // On mount, check for active Tapper Boost from daily boosters
+  // On mount, check for active Tapper Boost from daily boosters.
   useEffect(() => {
     const dailyBoosters = JSON.parse(localStorage.getItem("dailyBoosters") || "{}");
     if (dailyBoosters.tapperBoost?.isActive) {
@@ -841,17 +840,11 @@ const Dashboard = () => {
     }
   }, [baseTapMultiplier]);
 
-  // On mount, check for a claimed Full Energy booster and refill energy
-  useEffect(() => {
-    const dailyBoosters = JSON.parse(localStorage.getItem("dailyBoosters") || "{}");
-    if (dailyBoosters.fullEnergy && dailyBoosters.fullEnergy.usesLeft < 3) {
-      console.log("Dashboard: Detected Full Energy booster claim; refilling energy");
-      setElectricBoost(maxElectricBoost);
-      localStorage.setItem("electricBoost", maxElectricBoost.toString());
-    }
-  }, [maxElectricBoost]);
+  // IMPORTANT: Removed the on-mount effect that auto-refilled Full Energy.
+  // Full Energy should only be refilled when the "fullEnergyClaimed" event fires.
+  // (This prevents the energy from auto-refilling to 1000/1000 on reentry.)
 
-  // Backend sync every 2 seconds
+  // Backend sync every 2 seconds.
   const updateBackend = useCallback(async () => {
     if (tapCountSinceLastUpdate.current === 0) return;
     const tapsToSync = tapCountSinceLastUpdate.current;
@@ -893,7 +886,7 @@ const Dashboard = () => {
     };
   }, [updateBackend]);
 
-  // Electric boost recharge logic
+  // Electric boost recharge logic.
   useEffect(() => {
     const checkRecharge = () => {
       const now = Date.now();
@@ -927,7 +920,7 @@ const Dashboard = () => {
     };
   }, [electricBoost, maxElectricBoost, rechargeTime]);
 
-  // Daily booster Tapper Boost event listeners
+  // Daily booster Tapper Boost event listeners.
   useEffect(() => {
     const handleTapperBoostActivated = () => {
       const boosters = JSON.parse(localStorage.getItem("dailyBoosters") || "{}");
@@ -952,7 +945,7 @@ const Dashboard = () => {
     };
   }, []);
 
-  // Full Energy claim event listener
+  // Full Energy claim event listener – refills energy when claimed.
   useEffect(() => {
     const handleFullEnergyClaimed = () => {
       setElectricBoost(maxElectricBoost);
@@ -962,7 +955,7 @@ const Dashboard = () => {
     return () => window.removeEventListener("fullEnergyClaimed", handleFullEnergyClaimed);
   }, [maxElectricBoost]);
 
-  // Extra boosters event listeners
+  // Extra boosters event listeners.
   useEffect(() => {
     // Extra Booster: Boost (permanent tap bonus)
     const handleBoostUpgraded = (event) => {
@@ -1024,7 +1017,7 @@ const Dashboard = () => {
     };
   }, [baseTapMultiplier, electricBoost]);
 
-  // Tap handling function
+  // Tap handling function.
   const handleTap = (event) => {
     event.preventDefault();
     if (electricBoost <= 0) return;
@@ -1119,4 +1112,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
