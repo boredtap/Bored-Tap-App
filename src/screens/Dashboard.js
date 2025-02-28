@@ -9,6 +9,8 @@ const RECHARGE_TIMES = [3000, 2500, 2000, 1500, 1000, 500]; // Level 0 through 5
 const Dashboard = () => {
   const navigate = useNavigate();
 
+  const [isUpdating, setIsUpdating] = useState(false) //State for when syncing tap
+
   // State for Telegram user data
   const [telegramData, setTelegramData] = useState({
     telegram_user_id: "",
@@ -38,7 +40,7 @@ const Dashboard = () => {
   const rechargeInterval = useRef(null);
   const autoTapInterval = useRef(null);
   const boostMultiplierActive = useRef(false);
-  
+
   // Load initial electric boost from localStorage
   useEffect(() => {
     const savedBoost = localStorage.getItem("electricBoost");
@@ -54,14 +56,14 @@ const Dashboard = () => {
       fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
     };
     localStorage.setItem("dailyBoosters", JSON.stringify(resetState));
-    
+
     // Reset booster states in localStorage
     localStorage.setItem("baseTapMultiplier", "1");
     localStorage.setItem("maxElectricBoost", "1000");
     localStorage.setItem("electricBoost", "1000");
     localStorage.setItem("rechargeTimeIndex", "0");
     localStorage.setItem("autoTapActive", "false");
-    
+
     setBaseTapMultiplier(1);
     setTapMultiplier(1);
     setMaxElectricBoost(1000);
@@ -86,35 +88,35 @@ const Dashboard = () => {
   // Load saved booster states
   const loadSavedBoosterStates = useCallback(() => {
     console.log("Loading saved booster states");
-    
+
     // Load base tap multiplier
     const savedBaseMultiplier = localStorage.getItem("baseTapMultiplier");
     const baseMultiplier = savedBaseMultiplier ? parseInt(savedBaseMultiplier, 10) : 1;
     console.log("Loaded base multiplier:", baseMultiplier);
     setBaseTapMultiplier(baseMultiplier);
-    
+
     // Load max electric boost
     const savedMaxBoost = localStorage.getItem("maxElectricBoost");
     const maxBoost = savedMaxBoost ? parseInt(savedMaxBoost, 10) : 1000;
     console.log("Loaded max boost:", maxBoost);
     setMaxElectricBoost(maxBoost);
-    
+
     // Load recharge time
     const savedRechargeIndex = localStorage.getItem("rechargeTimeIndex");
     const rechargeIndex = savedRechargeIndex ? parseInt(savedRechargeIndex, 10) : 0;
     const newRechargeTime = RECHARGE_TIMES[Math.min(rechargeIndex, RECHARGE_TIMES.length - 1)];
     console.log("Loaded recharge time:", newRechargeTime, "ms (index", rechargeIndex, ")");
     setRechargeTime(newRechargeTime);
-    
+
     // Load auto tap state
     const savedAutoTap = localStorage.getItem("autoTapActive");
     const isAutoTapActive = savedAutoTap === "true";
     console.log("Loaded auto tap active:", isAutoTapActive);
     setAutoTapActive(isAutoTapActive);
-    
+
     // Load electric boost value - note: we don't set it here to avoid overriding
     // preserved values, particularly after Full Energy booster use
-    
+
     // Return the loaded base multiplier for proper tap multiplier calculation
     return baseMultiplier;
   }, []);
@@ -143,13 +145,13 @@ const Dashboard = () => {
           setProfile(data);
           setTotalTaps(data.total_coins || 0);
           setCurrentStreak(data.streak?.current_streak || 0);
-          
+
           // Load all saved booster states
           const baseMultiplier = loadSavedBoosterStates();
-          
+
           // Set initial tap multiplier based on base multiplier
           setTapMultiplier(baseMultiplier);
-          
+
           // Load last tap time
           const savedTapTime = localStorage.getItem("lastTapTime");
           if (savedTapTime) {
@@ -177,51 +179,51 @@ const Dashboard = () => {
 
   // --- Tapper Boost Integration ---
 
-// On mount: Check if a daily tapper boost is active in localStorage
-useEffect(() => {
-  const storedBoosters = JSON.parse(localStorage.getItem("dailyBoosters") || "{}");
-  if (storedBoosters.tapperBoost && storedBoosters.tapperBoost.isActive) {
-    console.log("Dashboard: Tapper Boost active on mount");
-    // Apply a 2× multiplier over the baseTapMultiplier
-    setTapMultiplier(baseTapMultiplier * 2);
-    const remaining = storedBoosters.tapperBoost.endTime - Date.now();
-    if (remaining > 0) {
-      setTimeout(() => {
-        console.log("Dashboard: Tapper Boost expired on mount check");
+  // On mount: Check if a daily tapper boost is active in localStorage
+  useEffect(() => {
+    const storedBoosters = JSON.parse(localStorage.getItem("dailyBoosters") || "{}");
+    if (storedBoosters.tapperBoost && storedBoosters.tapperBoost.isActive) {
+      console.log("Dashboard: Tapper Boost active on mount");
+      // Apply a 2× multiplier over the baseTapMultiplier
+      setTapMultiplier(baseTapMultiplier * 2);
+      const remaining = storedBoosters.tapperBoost.endTime - Date.now();
+      if (remaining > 0) {
+        setTimeout(() => {
+          console.log("Dashboard: Tapper Boost expired on mount check");
+          setTapMultiplier(baseTapMultiplier);
+        }, remaining);
+      } else {
+        // In case the boost has already expired
         setTapMultiplier(baseTapMultiplier);
-      }, remaining);
+      }
     } else {
-      // In case the boost has already expired
+      // No active boost – ensure multiplier equals base
       setTapMultiplier(baseTapMultiplier);
     }
-  } else {
-    // No active boost – ensure multiplier equals base
-    setTapMultiplier(baseTapMultiplier);
-  }
-}, [baseTapMultiplier]);
+  }, [baseTapMultiplier]);
 
-// Listen for tapper boost events dispatched from BoostScreen
-useEffect(() => {
-  const handleTapperBoostActivated = () => {
-    console.log("Dashboard: tapperBoostActivated event received");
-    // Double the tap multiplier
-    setTapMultiplier(baseTapMultiplier * 2);
-  };
+  // Listen for tapper boost events dispatched from BoostScreen
+  useEffect(() => {
+    const handleTapperBoostActivated = () => {
+      console.log("Dashboard: tapperBoostActivated event received");
+      // Double the tap multiplier
+      setTapMultiplier(baseTapMultiplier * 2);
+    };
 
-  const handleTapperBoostDeactivated = () => {
-    console.log("Dashboard: tapperBoostDeactivated event received");
-    // Revert to the base multiplier
-    setTapMultiplier(baseTapMultiplier);
-  };
+    const handleTapperBoostDeactivated = () => {
+      console.log("Dashboard: tapperBoostDeactivated event received");
+      // Revert to the base multiplier
+      setTapMultiplier(baseTapMultiplier);
+    };
 
-  window.addEventListener("tapperBoostActivated", handleTapperBoostActivated);
-  window.addEventListener("tapperBoostDeactivated", handleTapperBoostDeactivated);
+    window.addEventListener("tapperBoostActivated", handleTapperBoostActivated);
+    window.addEventListener("tapperBoostDeactivated", handleTapperBoostDeactivated);
 
-  return () => {
-    window.removeEventListener("tapperBoostActivated", handleTapperBoostActivated);
-    window.removeEventListener("tapperBoostDeactivated", handleTapperBoostDeactivated);
-  };
-}, [baseTapMultiplier]);
+    return () => {
+      window.removeEventListener("tapperBoostActivated", handleTapperBoostActivated);
+      window.removeEventListener("tapperBoostDeactivated", handleTapperBoostDeactivated);
+    };
+  }, [baseTapMultiplier]);
 
 
   // Setup auto tap if active
@@ -232,7 +234,7 @@ useEffect(() => {
         if (electricBoost > 0) {
           // Use current correct base multiplier for auto-tapping
           const currentBaseTap = parseInt(localStorage.getItem("baseTapMultiplier") || "1", 10);
-          
+
           setTotalTaps((prev) => prev + currentBaseTap);
           tapCountSinceLastUpdate.current += currentBaseTap;
           setElectricBoost((prev) => {
@@ -249,7 +251,7 @@ useEffect(() => {
       clearInterval(autoTapInterval.current);
       autoTapInterval.current = null;
     }
-    
+
     return () => {
       if (autoTapInterval.current) {
         clearInterval(autoTapInterval.current);
@@ -260,6 +262,11 @@ useEffect(() => {
 
   // Backend sync every 2 seconds
   const updateBackend = useCallback(async () => {
+    if (isUpdating) return
+    else {
+      setIsUpdating(true)
+    }
+
     if (tapCountSinceLastUpdate.current === 0) return;
     const tapsToSync = tapCountSinceLastUpdate.current;
     try {
@@ -289,6 +296,8 @@ useEffect(() => {
       }
     } catch (err) {
       console.error("Error syncing with backend:", err);
+    } finally {
+      setIsUpdating(false)
     }
   }, []);
 
@@ -305,7 +314,7 @@ useEffect(() => {
     const checkRecharge = () => {
       const now = Date.now();
       const timeSinceLastTap = now - lastTapTime.current;
-      
+
       if (timeSinceLastTap >= rechargeTime && electricBoost < maxElectricBoost) {
         if (!rechargeInterval.current) {
           rechargeInterval.current = setInterval(() => {
@@ -325,7 +334,7 @@ useEffect(() => {
         rechargeInterval.current = null;
       }
     };
-    
+
     const interval = setInterval(checkRecharge, 1000);
     return () => {
       clearInterval(interval);
@@ -344,7 +353,7 @@ useEffect(() => {
       if (boosters.tapperBoost?.isActive) {
         boostMultiplierActive.current = true;
         setTapMultiplier(baseTapMultiplier * 2);
-        
+
         const remainingTime = boosters.tapperBoost.endTime - Date.now();
         if (remainingTime > 0) {
           setTimeout(() => {
@@ -354,16 +363,16 @@ useEffect(() => {
         }
       }
     };
-    
+
     const handleTapperBoostDeactivated = () => {
       console.log("Tapper Boost Deactivated Event");
       boostMultiplierActive.current = false;
       setTapMultiplier(baseTapMultiplier);
     };
-    
+
     window.addEventListener("tapperBoostActivated", handleTapperBoostActivated);
     window.addEventListener("tapperBoostDeactivated", handleTapperBoostDeactivated);
-    
+
     return () => {
       window.removeEventListener("tapperBoostActivated", handleTapperBoostActivated);
       window.removeEventListener("tapperBoostDeactivated", handleTapperBoostDeactivated);
@@ -377,7 +386,7 @@ useEffect(() => {
       setElectricBoost(maxElectricBoost);
       localStorage.setItem("electricBoost", maxElectricBoost.toString());
     };
-    
+
     window.addEventListener("fullEnergyClaimed", handleFullEnergyClaimed);
     return () => window.removeEventListener("fullEnergyClaimed", handleFullEnergyClaimed);
   }, [maxElectricBoost]);
@@ -390,17 +399,17 @@ useEffect(() => {
       const newLevel = event.detail?.level || 1;
       // Level 1: 2, Level 2: 3, etc. (level + 1)
       const newPermanent = newLevel + 1;
-      
+
       console.log("Setting new base multiplier:", newPermanent);
       setBaseTapMultiplier(newPermanent);
-      
+
       // Only update tap multiplier if no temporary boost is active
       if (!boostMultiplierActive.current) {
         setTapMultiplier(newPermanent);
       } else {
         setTapMultiplier(newPermanent * 2); // Keep the x2 boost if active
       }
-      
+
       // Save to localStorage
       localStorage.setItem("baseTapMultiplier", newPermanent.toString());
     };
@@ -411,10 +420,10 @@ useEffect(() => {
       const newLevel = event.detail?.level || 1;
       // Level 1: 1500, Level 2: 2000, Level 3: 2500, etc.
       const newMax = 1000 + newLevel * 500;
-      
+
       console.log("Setting new max electric boost:", newMax);
       setMaxElectricBoost(newMax);
-      
+
       // Save to localStorage
       localStorage.setItem("maxElectricBoost", newMax.toString());
     };
@@ -425,13 +434,13 @@ useEffect(() => {
       const newLevel = event.detail?.level || 1;
       const rechargeIndex = Math.min(newLevel, RECHARGE_TIMES.length - 1);
       const newRechargeTime = RECHARGE_TIMES[rechargeIndex];
-      
+
       console.log("Setting new recharge time:", newRechargeTime);
       setRechargeTime(newRechargeTime);
-      
+
       // Save to localStorage
       localStorage.setItem("rechargeTimeIndex", rechargeIndex.toString());
-      
+
       // Reset recharge interval with new timing
       if (rechargeInterval.current) {
         clearInterval(rechargeInterval.current);
@@ -443,7 +452,7 @@ useEffect(() => {
     const handleAutoTapActivated = (event) => {
       console.log("Auto Tap Activated Event:", event.detail);
       setAutoTapActive(true);
-      
+
       // Save to localStorage
       localStorage.setItem("autoTapActive", "true");
     };
@@ -458,7 +467,7 @@ useEffect(() => {
     window.addEventListener("rechargeSpeedUpgraded", handleRechargeSpeedUpgraded);
     window.addEventListener("autoTapActivated", handleAutoTapActivated);
     window.addEventListener("boosterUpgraded", handleBoosterUpgraded);
-    
+
     return () => {
       window.removeEventListener("boostUpgraded", handleBoostUpgraded);
       window.removeEventListener("multiplierUpgraded", handleMultiplierUpgraded);
@@ -472,35 +481,35 @@ useEffect(() => {
   const handleTap = (event) => {
     event.preventDefault();
     if (electricBoost <= 0) return;
-    
+
     if (rechargeInterval.current) {
       clearInterval(rechargeInterval.current);
       rechargeInterval.current = null;
     }
-    
+
     lastTapTime.current = Date.now();
     localStorage.setItem("lastTapTime", lastTapTime.current.toString());
-    
+
     setTotalTaps((prev) => prev + tapMultiplier);
     tapCountSinceLastUpdate.current += tapMultiplier;
-    
+
     setElectricBoost((prev) => {
       const newBoost = Math.max(prev - 1, 0);
       localStorage.setItem("electricBoost", newBoost.toString());
       return newBoost;
     });
-    
+
     const tapIcon = event.currentTarget.getBoundingClientRect();
     const tapX = (event.touches ? event.touches[0].clientX : event.clientX) - tapIcon.left;
     const tapY = (event.touches ? event.touches[0].clientY : event.clientY) - tapIcon.top;
     const newTapEffect = { id: Date.now(), x: tapX, y: tapY };
-    
+
     setTapEffects((prev) => [...prev, newTapEffect]);
-    
+
     const tapElement = event.currentTarget;
     tapElement.classList.add("tap-animation");
     setTimeout(() => tapElement.classList.remove("tap-animation"), 200);
-    
+
     setTimeout(() => {
       setTapEffects((prev) => prev.filter((effect) => effect.id !== newTapEffect.id));
     }, 1000);
