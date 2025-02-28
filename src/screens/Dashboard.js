@@ -264,6 +264,7 @@ const Dashboard = () => {
   const updateBackend = useCallback(async () => {
     if (tapCountSinceLastUpdate.current === 0) return;
     const tapsToSync = tapCountSinceLastUpdate.current;
+    tapCountSinceLastUpdate.current = 0;
     try {
       const token = localStorage.getItem("accessToken");
       const response = await fetch(
@@ -284,7 +285,6 @@ const Dashboard = () => {
             ...prev,
             level: data["current level"] || prev.level,
           }));
-          tapCountSinceLastUpdate.current = 0;
         }
       } else {
         console.error("Failed to sync coins:", await response.text());
