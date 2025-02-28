@@ -710,7 +710,8 @@ import Navigation from "../components/Navigation";
 import "./Dashboard.css";
 
 // Recharge times mapped to "Recharging Speed" levels (ms per point)
-const RECHARGE_TIMES = [3000, 2000, 1000, 500];
+// Updated to match product manager's spec: Level 0:3000, 1:2500, 2:2000, 3:1500, 4:1000, 5:500
+const RECHARGE_TIMES = [3000, 2500, 2000, 1500, 1000, 500];
 
 /**
  * Dashboard component displaying the main UI with tapping interaction and navigation links.
@@ -733,10 +734,14 @@ const Dashboard = () => {
   const [currentStreak, setCurrentStreak] = useState(0);
   const [electricBoost, setElectricBoost] = useState(1000);
   const [maxElectricBoost, setMaxElectricBoost] = useState(1000); // Dynamic for Multiplier
-  const [baseTapMultiplier, setBaseTapMultiplier] = useState(1); // Base for Boost
+  const [baseTapMultiplier, setBaseTapMultiplier] = useState(1); // Base for Boost extra
   const [tapMultiplier, setTapMultiplier] = useState(1); // Combined multiplier
   const [rechargeTime, setRechargeTime] = useState(RECHARGE_TIMES[0]); // Dynamic recharge
   const [autoTapActive, setAutoTapActive] = useState(false); // Auto-bot state
+
+  // New state for Auto Bot Tapping overlay (for offline gains)
+  const [autoTapOverlayVisible, setAutoTapOverlayVisible] = useState(false);
+  const [offlineAutoTaps, setOfflineAutoTaps] = useState(0);
 
   // State for total taps and tap effects
   const [totalTaps, setTotalTaps] = useState(0);
@@ -874,10 +879,36 @@ const Dashboard = () => {
     }
   }, [maxElectricBoost]);
 
+  // New useEffect: On mount, check for offline auto-tapping (Extra Booster Auto Bot)
+  useEffect(() => {
+    if (autoTapActive) {
+      // Retrieve the last auto-tap active time from localStorage (set when autoTap was activated)
+      const savedAutoTapTime = localStorage.getItem("lastActiveTimeForAutoTap");
+      if (savedAutoTapTime) {
+        const timeOffline = Date.now() - parseInt(savedAutoTapTime, 10);
+        const calculatedTaps = Math.floor(timeOffline / 1000) * baseTapMultiplier;
+        if (calculatedTaps > 0) {
+          console.log("Dashboard: Offline auto taps detected:", calculatedTaps);
+          setOfflineAutoTaps(calculatedTaps);
+          setAutoTapOverlayVisible(true);
+        }
+      }
+    }
+  }, [autoTapActive, baseTapMultiplier]);
+
+  // Function to handle confirmation of offline auto taps via overlay
+  const handleAutoTapConfirm = () => {
+    setTotalTaps((prev) => prev + offlineAutoTaps);
+    tapCountSinceLastUpdate.current += offlineAutoTaps;
+    // Optionally, trigger a backend sync immediately here.
+    setAutoTapOverlayVisible(false);
+    localStorage.removeItem("lastActiveTimeForAutoTap");
+    setOfflineAutoTaps(0);
+  };
+
   // Sync tap count with backend every 2 seconds or on unmount
   const updateBackend = useCallback(async () => {
     if (tapCountSinceLastUpdate.current === 0) return;
-
     const tapsToSync = tapCountSinceLastUpdate.current;
     try {
       const token = localStorage.getItem("accessToken");
@@ -923,7 +954,6 @@ const Dashboard = () => {
     const checkRecharge = () => {
       const now = Date.now();
       const timeSinceLastTap = now - lastTapTime.current;
-
       // Start recharging only after rechargeTime has passed since last tap
       if (timeSinceLastTap >= rechargeTime && electricBoost < maxElectricBoost) {
         if (!rechargeInterval.current) {
@@ -945,7 +975,6 @@ const Dashboard = () => {
         rechargeInterval.current = null;
       }
     };
-
     const interval = setInterval(checkRecharge, 1000); // Check every second
     return () => {
       clearInterval(interval);
@@ -970,11 +999,9 @@ const Dashboard = () => {
         }
       }
     };
-
     const handleTapperBoostDeactivated = () => {
       setTapMultiplier((prev) => prev / 2); // Revert multiplier
     };
-
     window.addEventListener("tapperBoostActivated", handleTapperBoostActivated);
     window.addEventListener("tapperBoostDeactivated", handleTapperBoostDeactivated);
     return () => {
@@ -989,20 +1016,17 @@ const Dashboard = () => {
       setElectricBoost(maxElectricBoost); // Instantly set to current max
       localStorage.setItem("electricBoost", maxElectricBoost.toString());
     };
-
     window.addEventListener("fullEnergyClaimed", handleFullEnergyClaimed);
     return () => window.removeEventListener("fullEnergyClaimed", handleFullEnergyClaimed);
   }, [maxElectricBoost]);
 
-  // Handle Extra Boosters
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Handle Extra Boosters events (Boost, Multiplier, Recharge Speed, and Auto Bot Tapping)
   useEffect(() => {
     const handleBoostUpgraded = (event) => {
       const newLevel = event.detail.level;
       setBaseTapMultiplier(1 + newLevel); // Permanent increase by +1 per level
       setTapMultiplier((prev) => (prev > baseTapMultiplier ? prev : 1 + newLevel)); // Update if not boosted
     };
-
     const handleMultiplierUpgraded = (event) => {
       const newLevel = event.detail.level;
       const newMax = 1000 + newLevel * 500; // Increase by 500 per level
@@ -1010,7 +1034,6 @@ const Dashboard = () => {
       setElectricBoost((prev) => Math.min(prev, newMax)); // Adjust current boost if needed
       localStorage.setItem("electricBoost", Math.min(electricBoost, newMax).toString());
     };
-
     const handleRechargeSpeedUpgraded = (event) => {
       const newLevel = event.detail.level;
       const newRechargeTime = RECHARGE_TIMES[Math.min(newLevel, RECHARGE_TIMES.length - 1)];
@@ -1020,9 +1043,10 @@ const Dashboard = () => {
         rechargeInterval.current = null; // Restart with new interval on next check
       }
     };
-
     const handleAutoTapActivated = (event) => {
       setAutoTapActive(true);
+      // When auto tap is activated, store the current time for offline calculations
+      localStorage.setItem("lastActiveTimeForAutoTap", Date.now().toString());
       if (!autoTapInterval.current) {
         autoTapInterval.current = setInterval(() => {
           setTotalTaps((prev) => prev + baseTapMultiplier); // Auto-tap with base multiplier
@@ -1035,7 +1059,6 @@ const Dashboard = () => {
         }, 1000); // 1 tap per second
       }
     };
-
     window.addEventListener("boostUpgraded", handleBoostUpgraded);
     window.addEventListener("multiplierUpgraded", handleMultiplierUpgraded);
     window.addEventListener("rechargeSpeedUpgraded", handleRechargeSpeedUpgraded);
@@ -1058,45 +1081,36 @@ const Dashboard = () => {
    */
   const handleTap = (event) => {
     event.preventDefault(); // Prevent default behavior
-
     if (electricBoost <= 0) return; // Prevent taps if no boost remains
-
     // Clear any existing recharge interval when tapping
     if (rechargeInterval.current) {
       clearInterval(rechargeInterval.current);
       rechargeInterval.current = null;
     }
-
     // Update last tap time for recharge logic
     lastTapTime.current = Date.now();
     localStorage.setItem("lastTapTime", lastTapTime.current);
-
     // Increment total taps with multiplier
     const tapValue = tapMultiplier; // Combined multiplier (base + temp boosts)
     setTotalTaps((prev) => prev + tapValue);
     tapCountSinceLastUpdate.current += tapValue;
-
     // Decrease electric boost by 1 only, regardless of tap value
     setElectricBoost((prev) => {
       const newBoost = Math.max(prev - 1, 0);
       localStorage.setItem("electricBoost", newBoost.toString());
       return newBoost;
     });
-
     // Get tap coordinates relative to the tap icon
     const tapIcon = event.currentTarget.getBoundingClientRect();
     const tapX = (event.touches ? event.touches[0].clientX : event.clientX) - tapIcon.left;
     const tapY = (event.touches ? event.touches[0].clientY : event.clientY) - tapIcon.top;
-
     // Add a new tap effect without replacing existing ones, showing the boosted value
     const newTapEffect = { id: Date.now(), x: tapX, y: tapY };
     setTapEffects((prev) => [...prev, newTapEffect]);
-
     // Trigger slight bounce animation
     const tapElement = event.currentTarget;
     tapElement.classList.add("tap-animation");
     setTimeout(() => tapElement.classList.remove("tap-animation"), 200);
-
     // Remove the tap effect after 1 second
     setTimeout(() => {
       setTapEffects((prev) => prev.filter((effect) => effect.id !== newTapEffect.id));
@@ -1105,6 +1119,17 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
+      {/* Overlay for Auto Bot Offline Taps */}
+      {autoTapOverlayVisible && (
+        <div className="overlay-container">
+          <div className="auto-tap-overlay">
+            <h2>Auto Bot Tapping</h2>
+            <p>{offlineAutoTaps} coins tapped by the auto bot while you were away.</p>
+            <button onClick={handleAutoTapConfirm}>OK</button>
+          </div>
+        </div>
+      )}
+
       {/* Profile and Streak Section */}
       <div className="profile1-streak-section">
         <div className="profile1-section" onClick={() => navigate("/profile-screen")}>
@@ -1176,3 +1201,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
