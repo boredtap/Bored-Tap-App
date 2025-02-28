@@ -847,6 +847,33 @@ const Dashboard = () => {
     }
   }, [navigate, maxElectricBoost, rechargeTime, autoTapActive, baseTapMultiplier]);
 
+  // New useEffect: On mount, check localStorage for active Tapper Boost and update tapMultiplier accordingly.
+  useEffect(() => {
+    const dailyBoosters = JSON.parse(localStorage.getItem("dailyBoosters") || "{}");
+    if (dailyBoosters.tapperBoost?.isActive) {
+      console.log("Dashboard: Detected active tapperBoost in localStorage");
+      // Double the multiplier if not already doubled
+      setTapMultiplier((prev) => (prev === baseTapMultiplier ? prev * 2 : prev));
+      const remainingTime = dailyBoosters.tapperBoost.endTime - Date.now();
+      if (remainingTime > 0) {
+        setTimeout(() => {
+          console.log("Dashboard: Reverting tapper boost multiplier after timeout");
+          setTapMultiplier((prev) => prev / 2);
+        }, remainingTime);
+      }
+    }
+  }, [baseTapMultiplier]);
+
+  // New useEffect: On mount, check localStorage for a claimed Full Energy booster and refill energy.
+  useEffect(() => {
+    const dailyBoosters = JSON.parse(localStorage.getItem("dailyBoosters") || "{}");
+    if (dailyBoosters.fullEnergy && dailyBoosters.fullEnergy.usesLeft < 3) {
+      console.log("Dashboard: Detected fullEnergy booster claim in localStorage; refilling energy");
+      setElectricBoost(maxElectricBoost);
+      localStorage.setItem("electricBoost", maxElectricBoost.toString());
+    }
+  }, [maxElectricBoost]);
+
   // Sync tap count with backend every 2 seconds or on unmount
   const updateBackend = useCallback(async () => {
     if (tapCountSinceLastUpdate.current === 0) return;
@@ -969,12 +996,11 @@ const Dashboard = () => {
 
   // Handle Extra Boosters
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  
   useEffect(() => {
     const handleBoostUpgraded = (event) => {
       const newLevel = event.detail.level;
       setBaseTapMultiplier(1 + newLevel); // Permanent increase by +1 per level
-      setTapMultiplier((prev) => prev > baseTapMultiplier ? prev : 1 + newLevel); // Update if not boosted
+      setTapMultiplier((prev) => (prev > baseTapMultiplier ? prev : 1 + newLevel)); // Update if not boosted
     };
 
     const handleMultiplierUpgraded = (event) => {
@@ -1121,19 +1147,11 @@ const Dashboard = () => {
           <img className="tap-logo-small" src={`${process.env.PUBLIC_URL}/logo.png`} alt="Small Icon" />
           <span>{totalTaps.toLocaleString()}</span>
         </div>
-        <div
-          className="big-tap-icon"
-          onTouchStart={handleTap}
-          onMouseDown={handleTap}
-        >
+        <div className="big-tap-icon" onTouchStart={handleTap} onMouseDown={handleTap}>
           <img className="tap-logo-big" src={`${process.env.PUBLIC_URL}/logo.png`} alt="Big Tap Icon" />
           {/* Tap Effects */}
           {tapEffects.map((effect) => (
-            <div
-              key={effect.id}
-              className="tap-effect"
-              style={{ top: `${effect.y}px`, left: `${effect.x}px` }}
-            >
+            <div key={effect.id} className="tap-effect" style={{ top: `${effect.y}px`, left: `${effect.x}px` }}>
               +{tapMultiplier} {/* Display the boosted value */}
             </div>
           ))}
