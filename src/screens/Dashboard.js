@@ -712,10 +712,6 @@ import "./Dashboard.css";
 // Updated Recharge times per spec (in ms)
 const RECHARGE_TIMES = [3000, 2500, 2000, 1500, 1000, 500];
 
-/**
- * Dashboard component displaying the main UI with tapping interaction and navigation links.
- * Syncs with Telegram WebApp for user data and backend for profile, streak, and coin updates.
- */
 const Dashboard = () => {
   const navigate = useNavigate();
 
@@ -732,7 +728,7 @@ const Dashboard = () => {
   // State for streak and boost data
   const [currentStreak, setCurrentStreak] = useState(0);
   const [electricBoost, setElectricBoost] = useState(1000);
-  const [maxElectricBoost, setMaxElectricBoost] = useState(1000); // Dynamic for Multiplier Booster
+  const [maxElectricBoost, setMaxElectricBoost] = useState(1000); // For Multiplier extra booster
   const [baseTapMultiplier, setBaseTapMultiplier] = useState(1); // Permanent bonus from Boost extra booster
   const [tapMultiplier, setTapMultiplier] = useState(1); // Combined multiplier (base + temporary boosts)
   const [rechargeTime, setRechargeTime] = useState(RECHARGE_TIMES[0]); // Dynamic recharge time
@@ -740,7 +736,7 @@ const Dashboard = () => {
 
   // State for total taps and tap effects
   const [totalTaps, setTotalTaps] = useState(0);
-  const [tapEffects, setTapEffects] = useState([]); // For tap animation effects
+  const [tapEffects, setTapEffects] = useState([]); // For tap animations
 
   // Refs for tap and recharge management
   const tapCountSinceLastUpdate = useRef(0);
@@ -776,7 +772,7 @@ const Dashboard = () => {
     });
   };
 
-  // Fetch profile on mount – now load saved electricBoost without recalculating offline gains
+  // Fetch profile on mount – now simply load saved electricBoost (without recalculating offline gains)
   useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem("accessToken");
@@ -801,6 +797,7 @@ const Dashboard = () => {
           setTotalTaps(data.total_coins || 0);
           setCurrentStreak(data.streak?.current_streak || 0);
 
+          // Load the saved electric boost without recalculating offline gains
           const savedBoost = localStorage.getItem("electricBoost");
           const initialBoost = savedBoost !== null ? parseInt(savedBoost, 10) : maxElectricBoost;
           setElectricBoost(initialBoost);
@@ -896,7 +893,7 @@ const Dashboard = () => {
     };
   }, [updateBackend]);
 
-  // Handle electric boost recharge logic
+  // Electric boost recharge logic
   useEffect(() => {
     const checkRecharge = () => {
       const now = Date.now();
@@ -930,7 +927,7 @@ const Dashboard = () => {
     };
   }, [electricBoost, maxElectricBoost, rechargeTime]);
 
-  // Handle Tapper Boost events (daily booster)
+  // Daily booster Tapper Boost event listeners
   useEffect(() => {
     const handleTapperBoostActivated = () => {
       const boosters = JSON.parse(localStorage.getItem("dailyBoosters") || "{}");
@@ -955,7 +952,7 @@ const Dashboard = () => {
     };
   }, []);
 
-  // Handle Full Energy claim event
+  // Full Energy claim event listener
   useEffect(() => {
     const handleFullEnergyClaimed = () => {
       setElectricBoost(maxElectricBoost);
@@ -965,12 +962,12 @@ const Dashboard = () => {
     return () => window.removeEventListener("fullEnergyClaimed", handleFullEnergyClaimed);
   }, [maxElectricBoost]);
 
-  // Handle Extra Boosters events
+  // Extra boosters event listeners
   useEffect(() => {
     // Extra Booster: Boost (permanent tap bonus)
     const handleBoostUpgraded = (event) => {
       const newLevel = event.detail.level;
-      const newPermanent = 1 + newLevel; // Level 1: 2, Level 2: 3, ... Level 5: 6
+      const newPermanent = 1 + newLevel; // Level 1: 2, Level 2: 3, …, Level 5: 6
       setBaseTapMultiplier(newPermanent);
       setTapMultiplier(newPermanent);
     };
@@ -1027,9 +1024,7 @@ const Dashboard = () => {
     };
   }, [baseTapMultiplier, electricBoost]);
 
-  /**
-   * Handles tap events on the big tap icon.
-   */
+  // Tap handling function
   const handleTap = (event) => {
     event.preventDefault();
     if (electricBoost <= 0) return;
@@ -1062,7 +1057,6 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      {/* Profile and Streak Section */}
       <div className="profile1-streak-section">
         <div className="profile1-section" onClick={() => navigate("/profile-screen")}>
           <img src={telegramData.image_url} alt="Profile" className="profile1-picture" />
@@ -1081,8 +1075,6 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-
-      {/* Navigation Frames */}
       <div className="frames-section">
         {[
           { name: "Rewards", icon: "reward.png", path: "/reward-screen" },
@@ -1096,8 +1088,6 @@ const Dashboard = () => {
           </div>
         ))}
       </div>
-
-      {/* Total Taps Section */}
       <div className="total-taps-section">
         <p className="total-taps-text">Your Total Taps:</p>
         <div className="total-taps-count">
@@ -1113,8 +1103,6 @@ const Dashboard = () => {
           ))}
         </div>
       </div>
-
-      {/* Electric Boost Section */}
       <div className="electric-boost-section">
         <div className="electric-value">
           <img src={`${process.env.PUBLIC_URL}/electric-icon.png`} alt="Electric Icon" className="electric-icon" />
@@ -1125,10 +1113,10 @@ const Dashboard = () => {
           Boost
         </button>
       </div>
-
       <Navigation />
     </div>
   );
 };
 
 export default Dashboard;
+
