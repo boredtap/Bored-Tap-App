@@ -386,13 +386,13 @@
 // export default Dashboard;
 
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./Dashboard.css";
 
-// Updated Recharge times per spec (in ms)
-const RECHARGE_TIMES = [3000, 2500, 2000, 1500, 1000, 500];
+// Recharge times mapped to "Recharging Speed" levels (in ms)
+const RECHARGE_TIMES = [3000, 2000, 1000, 500];
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -407,10 +407,10 @@ const Dashboard = () => {
   // State for user profile data
   const [profile, setProfile] = useState({ level: 1, level_name: "Beginner" });
 
-  // State for streak and booster data
+  // State for streak and boost data
   const [currentStreak, setCurrentStreak] = useState(0);
   const [electricBoost, setElectricBoost] = useState(1000);
-  const [maxElectricBoost, setMaxElectricBoost] = useState(1000); // For multiplier extra booster
+  const [maxElectricBoost, setMaxElectricBoost] = useState(1000); // Dynamic for Multiplier Booster
   const [baseTapMultiplier, setBaseTapMultiplier] = useState(1); // Permanent bonus from Boost extra booster
   const [tapMultiplier, setTapMultiplier] = useState(1); // Combined multiplier (base + temporary boosts)
   const [rechargeTime, setRechargeTime] = useState(RECHARGE_TIMES[0]); // Dynamic recharge time
@@ -426,7 +426,7 @@ const Dashboard = () => {
   const rechargeInterval = useRef(null);
   const autoTapInterval = useRef(null);
 
-  // Reset function remains unchanged
+  // Reset function (unchanged)
   const resetBoosters = () => {
     const resetState = {
       tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
@@ -454,7 +454,7 @@ const Dashboard = () => {
     });
   };
 
-  // Fetch profile on mount – simply load saved electricBoost (no offline recalculation)
+  // Fetch profile on mount – original logic to load saved electricBoost and lastTapTime
   useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem("accessToken");
@@ -478,6 +478,7 @@ const Dashboard = () => {
           setProfile(data);
           setTotalTaps(data.total_coins || 0);
           setCurrentStreak(data.streak?.current_streak || 0);
+
           const savedBoost = localStorage.getItem("electricBoost");
           const initialBoost = savedBoost !== null ? parseInt(savedBoost, 10) : maxElectricBoost;
           setElectricBoost(initialBoost);
@@ -505,102 +506,7 @@ const Dashboard = () => {
     }
   }, [navigate, maxElectricBoost, rechargeTime, autoTapActive, baseTapMultiplier]);
 
-  // On mount, check for active Tapper Boost from daily boosters
-  useEffect(() => {
-    const dailyBoosters = JSON.parse(localStorage.getItem("dailyBoosters") || "{}");
-    if (dailyBoosters.tapperBoost?.isActive) {
-      console.log("Dashboard: Detected active tapperBoost");
-      setTapMultiplier((prev) => (prev === baseTapMultiplier ? prev * 2 : prev));
-      const remainingTime = dailyBoosters.tapperBoost.endTime - Date.now();
-      if (remainingTime > 0) {
-        setTimeout(() => {
-          console.log("Dashboard: Tapper Boost expired, reverting multiplier");
-          setTapMultiplier((prev) => prev / 2);
-        }, remainingTime);
-      }
-    }
-  }, [baseTapMultiplier]);
-
-  // NOTE: Removed the on-mount effect for Full Energy booster refill.
-  // Rely solely on the "fullEnergyClaimed" event to refill energy.
-
-  // Backend sync every 2 seconds
-  const updateBackend = useCallback(async () => {
-    if (tapCountSinceLastUpdate.current === 0) return;
-    const tapsToSync = tapCountSinceLastUpdate.current;
-    try {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch(
-        `https://bt-coins.onrender.com/update-coins?coins=${tapsToSync}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        if (data["current coins"] >= 0) {
-          setTotalTaps(data["current coins"]);
-          setProfile((prev) => ({
-            ...prev,
-            level: data["current level"] || prev.level,
-          }));
-          tapCountSinceLastUpdate.current = 0;
-        }
-      } else {
-        console.error("Failed to sync coins:", await response.text());
-      }
-    } catch (err) {
-      console.error("Error syncing with backend:", err);
-    }
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(updateBackend, 2000);
-    return () => {
-      clearInterval(interval);
-      updateBackend();
-    };
-  }, [updateBackend]);
-
-  // Electric boost recharge logic
-  useEffect(() => {
-    const checkRecharge = () => {
-      const now = Date.now();
-      const timeSinceLastTap = now - lastTapTime.current;
-      if (timeSinceLastTap >= rechargeTime && electricBoost < maxElectricBoost) {
-        if (!rechargeInterval.current) {
-          rechargeInterval.current = setInterval(() => {
-            setElectricBoost((prev) => {
-              const newBoost = Math.min(prev + 1, maxElectricBoost);
-              localStorage.setItem("electricBoost", newBoost.toString());
-              if (newBoost === maxElectricBoost) {
-                clearInterval(rechargeInterval.current);
-                rechargeInterval.current = null;
-              }
-              return newBoost;
-            });
-          }, rechargeTime);
-        }
-      } else if (rechargeInterval.current && timeSinceLastTap < rechargeTime) {
-        clearInterval(rechargeInterval.current);
-        rechargeInterval.current = null;
-      }
-    };
-    const interval = setInterval(checkRecharge, 1000);
-    return () => {
-      clearInterval(interval);
-      if (rechargeInterval.current) {
-        clearInterval(rechargeInterval.current);
-        rechargeInterval.current = null;
-      }
-    };
-  }, [electricBoost, maxElectricBoost, rechargeTime]);
-
-  // Daily booster Tapper Boost event listeners
+  // Daily booster Tapper Boost event listeners (unchanged)
   useEffect(() => {
     const handleTapperBoostActivated = () => {
       const boosters = JSON.parse(localStorage.getItem("dailyBoosters") || "{}");
@@ -625,7 +531,7 @@ const Dashboard = () => {
     };
   }, []);
 
-  // Full Energy claim event listener – fills energy to max and then stops the booster effect.
+  // Full Energy claim event listener (unchanged)
   useEffect(() => {
     const handleFullEnergyClaimed = () => {
       setElectricBoost(maxElectricBoost);
@@ -635,7 +541,7 @@ const Dashboard = () => {
     return () => window.removeEventListener("fullEnergyClaimed", handleFullEnergyClaimed);
   }, [maxElectricBoost]);
 
-  // Extra boosters event listeners
+  // Extra boosters event listeners (unchanged from your original integration)
   useEffect(() => {
     // Extra Booster: Boost (permanent tap bonus)
     const handleBoostUpgraded = (event) => {
@@ -697,7 +603,7 @@ const Dashboard = () => {
     };
   }, [baseTapMultiplier, electricBoost]);
 
-  // Tap handling function
+  // Tap handling function (unchanged)
   const handleTap = (event) => {
     event.preventDefault();
     if (electricBoost <= 0) return;
