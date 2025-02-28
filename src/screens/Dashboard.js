@@ -175,33 +175,54 @@ const Dashboard = () => {
     }
   }, [navigate, loadSavedBoosterStates]);
 
-  // Check for active Tapper Boost on mount
-  useEffect(() => {
-    const dailyBoosters = JSON.parse(localStorage.getItem("dailyBoosters") || "{}");
-    if (dailyBoosters.tapperBoost?.isActive) {
-      console.log("Dashboard: Detected active tapperBoost");
-      boostMultiplierActive.current = true;
-      setTapMultiplier(baseTapMultiplier * 2);
-      
-      const remainingTime = dailyBoosters.tapperBoost.endTime - Date.now();
-      if (remainingTime > 0) {
-        setTimeout(() => {
-          console.log("Dashboard: Tapper Boost expired, reverting multiplier");
-          boostMultiplierActive.current = false;
-          setTapMultiplier(baseTapMultiplier);
-        }, remainingTime);
-      } else {
-        // If boost has expired but state wasn't updated
-        boostMultiplierActive.current = false;
+  // --- Tapper Boost Integration ---
+
+// On mount: Check if a daily tapper boost is active in localStorage
+useEffect(() => {
+  const storedBoosters = JSON.parse(localStorage.getItem("dailyBoosters") || "{}");
+  if (storedBoosters.tapperBoost && storedBoosters.tapperBoost.isActive) {
+    console.log("Dashboard: Tapper Boost active on mount");
+    // Apply a 2× multiplier over the baseTapMultiplier
+    setTapMultiplier(baseTapMultiplier * 2);
+    const remaining = storedBoosters.tapperBoost.endTime - Date.now();
+    if (remaining > 0) {
+      setTimeout(() => {
+        console.log("Dashboard: Tapper Boost expired on mount check");
         setTapMultiplier(baseTapMultiplier);
-        
-        // Update localStorage to reflect that the boost is no longer active
-        const updatedBoosters = { ...dailyBoosters };
-        updatedBoosters.tapperBoost.isActive = false;
-        localStorage.setItem("dailyBoosters", JSON.stringify(updatedBoosters));
-      }
+      }, remaining);
+    } else {
+      // In case the boost has already expired
+      setTapMultiplier(baseTapMultiplier);
     }
-  }, [baseTapMultiplier]);
+  } else {
+    // No active boost – ensure multiplier equals base
+    setTapMultiplier(baseTapMultiplier);
+  }
+}, [baseTapMultiplier]);
+
+// Listen for tapper boost events dispatched from BoostScreen
+useEffect(() => {
+  const handleTapperBoostActivated = () => {
+    console.log("Dashboard: tapperBoostActivated event received");
+    // Double the tap multiplier
+    setTapMultiplier(baseTapMultiplier * 2);
+  };
+
+  const handleTapperBoostDeactivated = () => {
+    console.log("Dashboard: tapperBoostDeactivated event received");
+    // Revert to the base multiplier
+    setTapMultiplier(baseTapMultiplier);
+  };
+
+  window.addEventListener("tapperBoostActivated", handleTapperBoostActivated);
+  window.addEventListener("tapperBoostDeactivated", handleTapperBoostDeactivated);
+
+  return () => {
+    window.removeEventListener("tapperBoostActivated", handleTapperBoostActivated);
+    window.removeEventListener("tapperBoostDeactivated", handleTapperBoostDeactivated);
+  };
+}, [baseTapMultiplier]);
+
 
   // Setup auto tap if active
   useEffect(() => {
