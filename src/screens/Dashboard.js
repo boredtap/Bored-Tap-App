@@ -284,7 +284,7 @@ const Dashboard = () => {
       if (response.ok) {
         const data = await response.json();
         if (data["current coins"] >= 0) {
-          setTotalTaps(data["current coins"]);
+          //setTotalTaps(data["current coins"]);
           setProfile((prev) => ({
             ...prev,
             level: data["current level"] || prev.level,
