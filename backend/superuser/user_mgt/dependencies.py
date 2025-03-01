@@ -1,5 +1,4 @@
 from database_connection import user_collection, task_collection, coin_stats, invites_ref
-from superuser.user_mgt.router import delete_user
 from superuser.user_mgt.schemas import OverallAchievement, TodayAchievement, UserMgtDashboard, UserProfile
 from superuser.leaderboard.dependencies import all_time_achievement, daily_achievement
 
