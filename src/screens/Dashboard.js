@@ -226,6 +226,10 @@ const Dashboard = () => {
     };
   }, []);
 
+  useEffect(() => {
+    console.log('Base Multipliter', baseTapMultiplier)
+  }, [baseTapMultiplier])
+
 
 
   // Setup auto tap if active
