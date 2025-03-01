@@ -12,10 +12,17 @@ const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
 const BoostersContext = ({ children }) => {
     // Retrieve boosters from localStorage and handle potential errors
     let initialBoosters;
+    let initialTapMultiplier = 1;
 
     try {
         const savedBoosters = localStorage.getItem("dailyBoosters");
         initialBoosters = savedBoosters ? JSON.parse(savedBoosters) : null;
+
+        const savedMultiplier = localStorage.getItem("tapMultiplier");
+        if (savedMultiplier) {
+            initialTapMultiplier = parseInt(savedMultiplier, 10);
+        }
+
     } catch (error) {
         console.error("Error parsing dailyBoosters from localStorage:", error);
         initialBoosters = null; // Handle corrupted data
@@ -29,16 +36,21 @@ const BoostersContext = ({ children }) => {
         };
     }
 
-    // State for daily boosters
+    // State for boosters
     const [boosters, setBoosters] = useState({
-        tapMultiplier: initialBoosters.tapperBoost.isActive ? 2 : 1,
-        dailyBoosters: initialBoosters,
+        tapMultiplier: initialTapMultiplier,
+        dailyBoosters: initialBoosters
     });
 
     // Sync `dailyBoosters` to localStorage whenever it changes
     useEffect(() => {
         localStorage.setItem("dailyBoosters", JSON.stringify(boosters.dailyBoosters));
     }, [boosters.dailyBoosters]);
+
+    // Sync `tapMultiplier` to localStorage whenever it changes
+    useEffect(() => {
+        localStorage.setItem("tapMultiplier", boosters.tapMultiplier.toString());
+    }, [boosters.tapMultiplier]);
 
     const setDailyBoosters = (newBoosters) => {
         setBoosters(prev => ({
@@ -169,6 +181,7 @@ const BoostersContext = ({ children }) => {
         }
     }, []); // Runs only on mount
 
+    //  Booster issue: I think it is fetching from localstorage immediately i open dashbboard or something. Either way it is set, but seems when i get into dashboard it is changed back to 1.
 
     return (
         <BoostContext.Provider value={{
