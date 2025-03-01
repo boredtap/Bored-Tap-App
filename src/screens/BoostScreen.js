@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useContext } from "react";
 import Navigation from "../components/Navigation";
 import "./BoostScreen.css";
+import { DailyBoostersContext } from "../context/BoosterContext";
 
 const BOOST_DURATION = 20000; // 20 seconds for Tapper Boost
 const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
@@ -11,16 +12,17 @@ const BoostScreen = () => {
   const [boostersData, setBoostersData] = useState({ dailyBoosters: [], extraBoosters: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { setDailyBoosters, dailyBoosters } = useContext(DailyBoostersContext)
 
-  const [dailyBoosters, setDailyBoosters] = useState(() => {
-    const savedBoosters = localStorage.getItem("dailyBoosters");
-    return savedBoosters
-      ? JSON.parse(savedBoosters)
-      : {
-          tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
-          fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
-        };
-  });
+  // const [dailyBoosters, setDailyBoosters] = useState(() => {
+  //   const savedBoosters = localStorage.getItem("dailyBoosters");
+  //   return savedBoosters
+  //     ? JSON.parse(savedBoosters)
+  //     : {
+  //         tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
+  //         fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
+  //       };
+  // });
 
   const handleOverlayClose = () => setActiveOverlay(null);
 
@@ -31,7 +33,6 @@ const BoostScreen = () => {
       fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
     };
     setDailyBoosters(resetDailyState);
-    localStorage.setItem("dailyBoosters", JSON.stringify(resetDailyState));
     setBoostersData({ dailyBoosters: [], extraBoosters: [] });
     setTotalTaps(0);
     localStorage.removeItem("extraBoosters");
@@ -45,9 +46,9 @@ const BoostScreen = () => {
     localStorage.removeItem("telegram_user_id"); // Clear ID to force full reset on next login
   };
 
-  useEffect(() => {
-    localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
-  }, [dailyBoosters]);
+  // useEffect(() => {
+  //   localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
+  // }, [dailyBoosters]);
 
   const fetchProfileAndBoosters = useCallback(async () => {
     setLoading(true);
@@ -157,7 +158,6 @@ const BoostScreen = () => {
 
         const now = Date.now();
         const updated = { ...prev };
-
         const booster = updated[boosterType];
 
         if (booster.usesLeft > 0 && !booster.isActive) {
@@ -167,15 +167,16 @@ const BoostScreen = () => {
                     usesLeft: booster.usesLeft - 1,
                     isActive: true,
                     endTime: now + BOOST_DURATION,
-                    resetTime: booster.usesLeft === 3 ? null : booster.resetTime || now + DAILY_RESET_INTERVAL,
+                    resetTime: booster.usesLeft === 1 ? now + DAILY_RESET_INTERVAL : booster.resetTime || null,
                 };
                 window.dispatchEvent(new Event("tapperBoostActivated"));
-            } else if (boosterType === "fullEnergy") {
+            } 
+            else if (boosterType === "fullEnergy") {
                 updated.fullEnergy = {
                     ...booster,
                     usesLeft: booster.usesLeft - 1,
                     isActive: false, // Instant effect
-                    resetTime: booster.usesLeft === 3 ? null : booster.resetTime || now + DAILY_RESET_INTERVAL,
+                    resetTime: booster.usesLeft === 1 ? now + DAILY_RESET_INTERVAL : booster.resetTime || null,
                 };
 
                 const maxEnergy = parseInt(localStorage.getItem("maxElectricBoost") || "1000", 10);
@@ -188,9 +189,6 @@ const BoostScreen = () => {
                 updated[boosterType].resetTime = now + DAILY_RESET_INTERVAL;
             }
 
-            // Save updated boosters to localStorage for persistence
-            localStorage.setItem("dailyBoosters", JSON.stringify(updated));
-
             return updated;
         }
 
@@ -199,7 +197,6 @@ const BoostScreen = () => {
 
     handleOverlayClose();
 };
-
 
   useEffect(() => {
     const intervalId = setInterval(() => {

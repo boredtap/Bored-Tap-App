@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./Dashboard.css";
+import { DailyBoostersContext } from "../context/BoosterContext";
 
 // Updated Recharge times per spec (in ms) - now including all 5 levels
 const RECHARGE_TIMES = [3000, 2500, 2000, 1500, 1000, 500]; // Level 0 through 5
@@ -9,7 +10,7 @@ const RECHARGE_TIMES = [3000, 2500, 2000, 1500, 1000, 500]; // Level 0 through 5
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  //const [isUpdating, setIsUpdating] = useState(false) //State for when syncing tap
+  const { setDailyBoosters, dailyBoosters } = useContext(DailyBoostersContext)
 
   // State for Telegram user data
   const [telegramData, setTelegramData] = useState({
@@ -55,7 +56,7 @@ const Dashboard = () => {
       tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
       fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
     };
-    localStorage.setItem("dailyBoosters", JSON.stringify(resetState));
+    setDailyBoosters(resetState);
 
     // Reset booster states in localStorage
     localStorage.setItem("baseTapMultiplier", "1");
@@ -181,7 +182,7 @@ const Dashboard = () => {
 
   // On mount: Check if a daily tapper boost is active in localStorage
   useEffect(() => {
-    const storedBoosters = JSON.parse(localStorage.getItem("dailyBoosters") || "{}");
+    const storedBoosters = dailyBoosters
     console.log('Stored Boosters', storedBoosters)
     if (storedBoosters.tapperBoost && storedBoosters.tapperBoost.isActive) {
       console.log("Dashboard: Tapper Boost active on mount");
@@ -201,7 +202,7 @@ const Dashboard = () => {
       // No active boost – ensure multiplier equals base
       setTapMultiplier(baseTapMultiplier);
     }
-  }, [baseTapMultiplier]);
+  }, []);
 
   // Listen for tapper boost events dispatched from BoostScreen
   useEffect(() => {
@@ -224,11 +225,11 @@ const Dashboard = () => {
       window.removeEventListener("tapperBoostActivated", handleTapperBoostActivated);
       window.removeEventListener("tapperBoostDeactivated", handleTapperBoostDeactivated);
     };
-  }, [baseTapMultiplier]);
+  }, [dailyBoosters.tapperBoost]);
 
   useEffect(() => {
-    console.log('Base Multipliter', baseTapMultiplier)
-  }, [baseTapMultiplier])
+    console.log('Tap Multipliter', tapMultiplier)
+  }, [tapMultiplier])
 
 
 
