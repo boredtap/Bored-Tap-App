@@ -52,12 +52,19 @@ const BoostersContext = ({ children }) => {
         }));
     };
 
+    const setTapMultiplier = () => {
+        setBoosters(prev => ({
+            ...prev, tapMultiplier: prev.dailyBoosters.tapperBoost.isActive ? 2 : 1,
+        }))
+    }
+
     return (
         <BoostContext.Provider value={{
             tapMultiplier: boosters.tapMultiplier,
             dailyBoosters: boosters.dailyBoosters,
             setBoosters,
-            setDailyBoosters
+            setDailyBoosters,
+            setTapMultiplier
         }}>
             {children}
         </BoostContext.Provider>

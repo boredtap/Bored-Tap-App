@@ -10,7 +10,7 @@ const RECHARGE_TIMES = [3000, 2500, 2000, 1500, 1000, 500]; // Level 0 through 5
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  const { setDailyBoosters, dailyBoosters, tapMultiplier } = useContext(DailyBoostersContext)
+  const { setDailyBoosters, dailyBoosters, tapMultiplier, setTapMultiplier } = useContext(DailyBoostersContext)
 
   // State for Telegram user data
   const [telegramData, setTelegramData] = useState({
@@ -190,15 +190,15 @@ const Dashboard = () => {
       if (remaining > 0) {
         setTimeout(() => {
           console.log("Dashboard: Tapper Boost expired on mount check");
-          // setTapMultiplier(baseTapMultiplier);
+          setTapMultiplier();
         }, remaining);
       } else {
         // In case the boost has already expired
-        setTapMultiplier(baseTapMultiplier);
+        setTapMultiplier();
       }
     } else {
       // No active boost – ensure multiplier equals base
-      setTapMultiplier(baseTapMultiplier);
+      setTapMultiplier();
     }
   }, []);
 
@@ -206,12 +206,12 @@ const Dashboard = () => {
   useEffect(() => {
     const handleTapperBoostActivated = () => {
       console.log("Dashboard: tapperBoostActivated event received");
-      //setTapMultiplier(baseTapMultiplier * 2);
+      setTapMultiplier();
     };
 
     const handleTapperBoostDeactivated = () => {
       console.log("Dashboard: tapperBoostDeactivated event received");
-      //setTapMultiplier(baseTapMultiplier); // Ensure it resets correctly
+      setTapMultiplier();
     };
 
     // Attach event listeners
