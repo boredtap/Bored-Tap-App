@@ -20,77 +20,21 @@ REDIS_PASSWORD = get_settings().redis_password
 REDIS_EXPIRE = timedelta(minutes=5)  # Cache expiration time
 
 # Initialize Redis client
-try:
-    redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True, username="default", password=REDIS_PASSWORD)
-    redis_client.ping()  # Check connection
-    print("Connected to Redis")
-except redis.exceptions.ConnectionError as e:
-    print(f"Error connecting to Redis: {e}")
-    redis_client = None  # Disable caching if Redis is not available
+def get_redis_client():
+    try:
+        # production cache
+        redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True, username="default", password=REDIS_PASSWORD)
 
+        # local cache
+        # redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
 
-def redis_cache(expire: timedelta = REDIS_EXPIRE):
-    def decorator(func):
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            print("redis cache")
-            if redis_client is None:
-                return await func(*args, **kwargs)  # Bypass cache if Redis is unavailable
-
-            request: Request = kwargs.get("request")  # Assuming 'request' is a parameter
-            if request is None:
-                raise ValueError("Request object is missing")
-
-            cache_key = f"{request.url.path}:{request.query_params}" # Generate a unique cache key
-            cached_response = redis_client.get(cache_key)
-
-            if cached_response:
-                print("Cache hit")
-                response = Response(content=cached_response, media_type="application/json")
-                return response
-
-            # Cache miss
-            print("Cache miss")
-            response = await func(*args, **kwargs)
-
-            if response:
-                try:
-                    # serialize to json before caching
-                    redis_client.set(cache_key, json.dumps(response.model_dump()), ex=expire)
-                except Exception as e:
-                    print(f"Error setting cache: {e}")
-
-            return response
-
-        return wrapper
-
-    return decorator
-
-
-
-
-# # Example usage:
-# @app.get("/items/{item_id}")
-# @redis_cache() # Use the default expiration or @redis_cache(expire=timedelta(minutes=10))
-# async def read_item(item_id: int, request: Request): # Request is now a parameter
-#     # Simulate some work (e.g., database query)
-#     import time
-#     time.sleep(2)  # Simulate a 2-second delay
-
-#     data = {"item_id": item_id, "value": "some_data"}
-#     return data
-
-
-# @app.get("/no_cache")
-# async def no_cache():
-#     # Simulate some work (e.g., database query)
-#     import time
-#     time.sleep(2)  # Simulate a 2-second delay
-
-#     data = {"message": "This endpoint is not cached"}
-#     return data
-
-
+        redis_client.ping()  # Check connection
+        print("Connected to Redis")
+    except redis.exceptions.ConnectionError as e:
+        print(f"Error connecting to Redis: {e}")
+        redis_client = None  # Disable caching if Redis is not available
+    
+    yield redis_client
 
 
 
