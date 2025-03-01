@@ -1,4 +1,5 @@
-from database_connection import user_collection, task_collection
+from database_connection import user_collection, task_collection, coin_stats, invites_ref
+from superuser.user_mgt.router import delete_user
 from superuser.user_mgt.schemas import OverallAchievement, TodayAchievement, UserMgtDashboard, UserProfile
 from superuser.leaderboard.dependencies import all_time_achievement, daily_achievement
 
@@ -95,3 +96,27 @@ def get_user_profile(telegram_user_id: str):
         )
     
         return profile
+
+
+# --------------------------- DELETE ONE USER ------------------------------- #
+def delete_one_user(telegram_user_id: str):
+    delete_coin_stats = coin_stats.delete_many({"telegram_user_id": telegram_user_id})
+    # delete_user_invites = invites_ref.delete_many({"telegram_user_id": telegram_user_id})
+    deleted_user = user_collection.delete_one({"telegram_user_id": telegram_user_id})
+
+    if deleted_user.deleted_count > 0 and delete_coin_stats.deleted_count > 0:
+        return {"message": "User deleted successfully."}
+    else:
+        return {"message": "User not found."}
+
+
+# --------------------------- DELETE MANY USERS ------------------------------- #
+def delete_many_users(telegram_user_ids: list[str]):
+    delete_coin_stats = coin_stats.delete_many({"telegram_user_id": {"$in": telegram_user_ids}})
+    # delete_user_invites = invites_ref.delete_many({"telegram_user_id": {"$in": telegram_user_ids}})
+    deleted_users = user_collection.delete_many({"telegram_user_id": {"$in": telegram_user_ids}})
+
+    if deleted_users.deleted_count > 0 and delete_coin_stats.deleted_count > 0:
+        return {"message": "Users deleted successfully."}
+    else:
+        return {"message": "Users not found."}
