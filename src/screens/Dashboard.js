@@ -207,24 +207,25 @@ const Dashboard = () => {
   useEffect(() => {
     const handleTapperBoostActivated = () => {
       console.log("Dashboard: tapperBoostActivated event received");
-      // Double the tap multiplier
-      setTapMultiplier(baseTapMultiplier * 2);
+      setTapMultiplier((prevMultiplier) => prevMultiplier * 2);
     };
 
     const handleTapperBoostDeactivated = () => {
       console.log("Dashboard: tapperBoostDeactivated event received");
-      // Revert to the base multiplier
-      setTapMultiplier(baseTapMultiplier);
+      setTapMultiplier(baseTapMultiplier); // Ensure it resets correctly
     };
 
+    // Attach event listeners
     window.addEventListener("tapperBoostActivated", handleTapperBoostActivated);
     window.addEventListener("tapperBoostDeactivated", handleTapperBoostDeactivated);
 
+    // Cleanup event listeners on unmount
     return () => {
       window.removeEventListener("tapperBoostActivated", handleTapperBoostActivated);
       window.removeEventListener("tapperBoostDeactivated", handleTapperBoostDeactivated);
     };
-  }, [baseTapMultiplier]);
+  }, []);
+
 
 
   // Setup auto tap if active

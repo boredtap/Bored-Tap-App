@@ -152,37 +152,54 @@ const BoostScreen = () => {
   };
 
   const handleClaimDailyBooster = (boosterType) => {
-    const booster = dailyBoosters[boosterType];
-    if (booster.usesLeft > 0 && !booster.isActive) {
-      const now = Date.now();
-      setDailyBoosters((prev) => {
+    setDailyBoosters((prev) => {
+        if (!prev || !prev[boosterType]) return prev; // Ensure booster exists
+
+        const now = Date.now();
         const updated = { ...prev };
-        if (boosterType === "tapperBoost") {
-          updated.tapperBoost = {
-            usesLeft: booster.usesLeft - 1,
-            isActive: true,
-            endTime: now + BOOST_DURATION,
-            resetTime: booster.usesLeft === 3 ? null : prev.tapperBoost.resetTime || now + DAILY_RESET_INTERVAL,
-          };
-          window.dispatchEvent(new Event("tapperBoostActivated"));
-        } else if (boosterType === "fullEnergy") {
-          updated.fullEnergy = {
-            usesLeft: booster.usesLeft - 1,
-            isActive: false, // Instant effect, no duration
-            resetTime: booster.usesLeft === 3 ? null : prev.fullEnergy.resetTime || now + DAILY_RESET_INTERVAL,
-          };
-          const maxEnergy = parseInt(localStorage.getItem("maxElectricBoost") || "1000", 10);
-          localStorage.setItem("electricBoost", maxEnergy.toString());
-          window.dispatchEvent(new CustomEvent("fullEnergyClaimed", { detail: { maxEnergy } }));
+
+        const booster = updated[boosterType];
+
+        if (booster.usesLeft > 0 && !booster.isActive) {
+            if (boosterType === "tapperBoost") {
+                updated.tapperBoost = {
+                    ...booster, // Keep existing properties
+                    usesLeft: booster.usesLeft - 1,
+                    isActive: true,
+                    endTime: now + BOOST_DURATION,
+                    resetTime: booster.usesLeft === 3 ? null : booster.resetTime || now + DAILY_RESET_INTERVAL,
+                };
+                window.dispatchEvent(new Event("tapperBoostActivated"));
+            } else if (boosterType === "fullEnergy") {
+                updated.fullEnergy = {
+                    ...booster,
+                    usesLeft: booster.usesLeft - 1,
+                    isActive: false, // Instant effect
+                    resetTime: booster.usesLeft === 3 ? null : booster.resetTime || now + DAILY_RESET_INTERVAL,
+                };
+
+                const maxEnergy = parseInt(localStorage.getItem("maxElectricBoost") || "1000", 10);
+                localStorage.setItem("electricBoost", maxEnergy.toString());
+                window.dispatchEvent(new CustomEvent("fullEnergyClaimed", { detail: { maxEnergy } }));
+            }
+
+            // If no uses left, ensure resetTime is set
+            if (updated[boosterType].usesLeft === 0 && !updated[boosterType].resetTime) {
+                updated[boosterType].resetTime = now + DAILY_RESET_INTERVAL;
+            }
+
+            // Save updated boosters to localStorage for persistence
+            localStorage.setItem("dailyBoosters", JSON.stringify(updated));
+
+            return updated;
         }
-        if (updated[boosterType].usesLeft === 0 && !updated[boosterType].resetTime) {
-          updated[boosterType].resetTime = now + DAILY_RESET_INTERVAL;
-        }
-        return updated;
-      });
-    }
+
+        return prev;
+    });
+
     handleOverlayClose();
-  };
+};
+
 
   useEffect(() => {
     const intervalId = setInterval(() => {
