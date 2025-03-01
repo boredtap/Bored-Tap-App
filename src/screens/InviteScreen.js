@@ -2,10 +2,15 @@ import React, { useState, useEffect } from "react";
 import Navigation from "../components/Navigation";
 import "./InviteScreen.css";
 
+/**
+ * InviteScreen component for inviting friends and displaying invited friends list.
+ * Fetches user profile and QR code, provides an invite link, and integrates sharing options.
+ */
 const InviteScreen = () => {
   const [isOverlayVisible, setOverlayVisible] = useState(false);
   const [invites, setInvites] = useState([]);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [showCopyPopup, setShowCopyPopup] = useState(false);
 
   useEffect(() => {
     const fetchUserProfileAndQR = async () => {
@@ -16,7 +21,6 @@ const InviteScreen = () => {
       }
 
       try {
-        // Fetch user profile which includes invited friends
         const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
           method: "GET",
           headers: {
@@ -26,9 +30,8 @@ const InviteScreen = () => {
         });
         if (!profileResponse.ok) throw new Error("Failed to fetch profile");
         const profileData = await profileResponse.json();
-        setInvites(profileData.invite || []); // Assuming 'invite' is the field in the profile for friends
+        setInvites(profileData.invite || []);
 
-        // Fetch QR code
         const qrResponse = await fetch("https://bt-coins.onrender.com/invite-qr-code", {
           method: "GET",
           headers: {
@@ -46,22 +49,36 @@ const InviteScreen = () => {
         console.error("Error fetching user profile or QR code:", err);
       }
     };
-
     fetchUserProfileAndQR();
   }, []);
 
-  const user = JSON.parse(localStorage.getItem("telegramUser"));
-  const inviteLink = `http://t.me/Bored_Tap_Bot?start=${user.telegramUserId}`;
+  const user = JSON.parse(localStorage.getItem("telegramUser")) || { telegramUserId: "" };
+  const inviteLink = `https://t.me/Bored_Tap_Bot?start=${user.telegramUserId}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(inviteLink);
-    alert("Invite link copied to clipboard!");
+    setShowCopyPopup(true);
+    setTimeout(() => setShowCopyPopup(false), 2000);
   };
+
+  const handleTelegramShare = () => {
+    const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent(
+      "Join me on Bored Tap and earn BT Coins!"
+    )}`;
+    window.open(telegramUrl, "_blank");
+  };
+
+  const handleWhatsAppShare = () => {
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(
+      "Join me on Bored Tap! " + inviteLink
+    )}`;
+    window.open(whatsappUrl, "_blank");
+  };
+
+  const toggleOverlay = () => setOverlayVisible((prev) => !prev);
 
   return (
     <div className="invite-screen">
-
-      {/* Centralized Top Section */}
       <div className="invite-header">
         <img
           src={`${process.env.PUBLIC_URL}/invite.png`}
@@ -72,7 +89,6 @@ const InviteScreen = () => {
         <p className="invite-subtitle">You and your friend will receive BT Coins</p>
       </div>
 
-      {/* Invite Link Section */}
       <div className="invite-link-card">
         <div className="invite-link-details">
           <p className="invite-link-title">My Invite Link:</p>
@@ -83,69 +99,92 @@ const InviteScreen = () => {
         </button>
       </div>
 
-      {/* Your Friends Section */}
       <div className="your-friends-section">
         <p className="friends-title">Your Friends ({invites.length})</p>
-        {invites.map((invite) => (
-          <div className="friend-card" key={invite.id}>
-            <img
-              src={`${process.env.PUBLIC_URL}/profile-picture.png`}
-              alt="Profile"
-              className="friend-profile-img"
-            />
-            <div className="friend-details">
-              <p className="friend-name">
-                {invite.username || invite.name} <span className="friend-level">.Lvl {invite.level || "?"}</span>
-              </p>
-              {/* Assuming backend provides similar fields for each invite */}
-              <div className="friend-icon-value">
+        {invites.length === 0 ? (
+          <p className="no-friends">No friends invited yet.</p>
+        ) : (
+          <div className="friends-list">
+            {invites.map((invite) => (
+              <div className="friend-card" key={invite.id || invite.telegram_user_id}>
                 <img
-                  src={`${process.env.PUBLIC_URL}/friends.png`}
-                  alt="Icon"
-                  className="icon-img"
+                  src={invite.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`}
+                  alt={`${invite.username || "Friend"}'s Profile`}
+                  className="friend-profile-img round-frame"
                 />
-                <span className="icon-value">+{invite.iconValue || 0}</span>
+                <div className="friend-details">
+                  <p className="friend-name">
+                    {invite.username || "Unknown"} <span className="friend-level">.Lvl {invite.level || "?"}</span>
+                  </p>
+                  <div className="friend-icon-value">
+                    <img
+                      src={`${process.env.PUBLIC_URL}/friends.png`}
+                      alt="Friends Icon"
+                      className="icon-img"
+                    />
+                    <span className="icon-value">+{invite.iconValue || 0}</span>
+                  </div>
+                </div>
+                <p className="friend-bt-value">{invite.total_coins ? `${invite.total_coins} BT` : "0 BT"}</p>
               </div>
-            </div>
-            <p className="friend-bt-value">{invite.total_coins ? `${invite.total_coins} BT` : "0 BT"}</p>
+            ))}
           </div>
-        ))}
+        )}
       </div>
 
-      {/* Full-screen Invite CTA */}
       <div className="cta-container">
-        <button
-          className="cta-button"
-          style={{ backgroundColor: 'white', color: 'black' }}
-          onClick={() => setOverlayVisible(true)}
-        >
+        <button className="invite-cta-button" onClick={toggleOverlay}>
           Invite a Friend
         </button>
       </div>
 
-      {/* Overlay */}
       {isOverlayVisible && (
-        <div className="overlay">
-          <div className="overlay-card">
+        <div className="overlay-container">
+          <div className={`invite-overlay ${isOverlayVisible ? "slide-in" : "slide-out"}`}>
             <div className="overlay-header">
-              <p className="overlay-title">Invite a Friend</p>
-              <button className="close-button" onClick={() => setOverlayVisible(false)}>
-                ×
-              </button>
+              <h2 className="overlay-title">Invite a Friend</h2>
+              <img
+                src={`${process.env.PUBLIC_URL}/cancel.png`}
+                alt="Close"
+                className="overlay-cancel"
+                onClick={toggleOverlay}
+              />
             </div>
-            <div className="division-line"></div>
-            <img
-              src={qrCodeUrl || `${process.env.PUBLIC_URL}/qr-code.png`}
-              alt="QR Code"
-              className="qr-code"
-            />
-            <button className="overlay-cta-button">Share</button>
-            <button className="overlay-cta-button" onClick={handleCopy}>Copy</button>
+            <div className="overlay-divider"></div>
+            <div className="overlay-content">
+              <img
+                src={qrCodeUrl || `${process.env.PUBLIC_URL}/qr-code.png`}
+                alt="Invite QR Code"
+                className="qr-code"
+              />
+              <p className="overlay-text">Share via:</p>
+              <div className="share-options">
+                <button className="overlay-cta-button" onClick={handleTelegramShare}>
+                  Telegram
+                </button>
+                <button className="overlay-cta-button" onClick={handleWhatsAppShare}>
+                  WhatsApp
+                </button>
+                <button className="overlay-cta-button" onClick={handleCopy}>
+                  Copy Link
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Navigation */}
+      {showCopyPopup && (
+        <div className="copy-popup">
+          <img
+            src={`${process.env.PUBLIC_URL}/tick-icon.png`}
+            alt="Tick Icon"
+            className="copy-popup-icon"
+          />
+          <span className="copy-popup-text">Invite link is copied</span>
+        </div>
+      )}
+
       <Navigation />
     </div>
   );

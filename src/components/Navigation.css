@@ -9,11 +9,11 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  
   border-top: 1px solid #414141;
   z-index: 1000; /* Keeps navigation above other content */
 }
 
+/* Individual navigation items */
 .navigation-item {
   display: flex;
   flex-direction: column;
@@ -26,11 +26,29 @@
   transition: color 0.3s ease-in-out;
 }
 
+/* Hover effect for navigation items */
 .navigation-item:hover {
   color: #c7913d; /* Highlight on hover */
 }
 
+/* Highlight styling for the active navigation item */
+.navigation-item.active {
+  color: #F9B54C; /* Orange color for the active item */
+}
+
+/* Navigation icons */
 .navigation-icon {
   width: 24px;
   height: 24px;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 600px) {
+  .navigation-item {
+    font-size: 14px; /* Reduce font size for smaller screens */
+  }
+  .navigation-icon {
+    width: 20px; /* Reduce icon size for smaller screens */
+    height: 20px;
+  }
 }

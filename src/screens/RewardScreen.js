@@ -3,11 +3,13 @@ import Navigation from "../components/Navigation";
 import "./RewardScreen.css";
 
 const RewardScreen = () => {
-  const [activeTab, setActiveTab] = useState("on_going"); // Matches backend response
+  const [activeTab, setActiveTab] = useState("on_going");
   const [totalTaps, setTotalTaps] = useState(0);
   const [rewardsData, setRewardsData] = useState({ on_going: [], claimed: [] });
   const [rewardImages, setRewardImages] = useState({});
   const [loading, setLoading] = useState(true);
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [selectedReward, setSelectedReward] = useState(null);
 
   useEffect(() => {
     const fetchUserProfileAndRewards = async () => {
@@ -18,7 +20,6 @@ const RewardScreen = () => {
           return;
         }
 
-        // Fetch user profile
         const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
           method: "GET",
           headers: {
@@ -34,7 +35,6 @@ const RewardScreen = () => {
         const profileData = await profileResponse.json();
         setTotalTaps(profileData.total_coins);
 
-        // Fetch rewards (both ongoing and claimed)
         const rewardTypes = ["on_going", "claimed"];
         const fetchedRewards = {};
 
@@ -64,20 +64,17 @@ const RewardScreen = () => {
     fetchUserProfileAndRewards();
   }, []);
 
-  // Fetch images for rewards (Optimized to prevent infinite loops)
   useEffect(() => {
     const fetchRewardImages = async () => {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
 
       const allRewards = [...rewardsData.on_going, ...rewardsData.claimed];
-
-      // Find rewards that don't have images already loaded
       const missingImages = allRewards.filter(
         (reward) => reward.reward_image_id && !rewardImages[reward.reward_image_id]
       );
 
-      if (missingImages.length === 0) return; // Prevent unnecessary API calls
+      if (missingImages.length === 0) return;
 
       const newImages = {};
       for (const reward of missingImages) {
@@ -96,15 +93,13 @@ const RewardScreen = () => {
         }
       }
 
-      // Use functional update to prevent unnecessary re-renders
       setRewardImages((prevImages) => ({ ...prevImages, ...newImages }));
     };
 
     if (rewardsData.on_going.length > 0 || rewardsData.claimed.length > 0) {
       fetchRewardImages();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rewardsData]); // ✅ Removed `rewardImages` to prevent infinite loop
+  }, [rewardsData, rewardImages]);
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
@@ -123,7 +118,10 @@ const RewardScreen = () => {
 
       const result = await response.json();
       if (response.ok) {
-        alert("Reward claimed successfully!");
+        const claimedReward = rewardsData.on_going.find((r) => r.reward_id === rewardId);
+        setSelectedReward(claimedReward);
+        setShowOverlay(true);
+
         setRewardsData((prevData) => ({
           ...prevData,
           on_going: prevData.on_going.filter((reward) => reward.reward_id !== rewardId),
@@ -137,7 +135,13 @@ const RewardScreen = () => {
     }
   };
 
+  const handleCloseOverlay = () => {
+    setShowOverlay(false);
+    setSelectedReward(null);
+  };
+
   const rewards = rewardsData[activeTab] || [];
+  const tabLabels = { on_going: "On-going Reward", claimed: "Claimed Reward" };
 
   return (
     <div className="reward-screen">
@@ -148,10 +152,8 @@ const RewardScreen = () => {
             <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Logo" className="taps-logo" />
             <span className="taps-number">{totalTaps.toLocaleString()}</span>
           </div>
-          <p className="task-link">How BT-boosters work?</p>
         </div>
 
-        {/* Pagination Tabs */}
         <div className="pagination">
           {Object.keys(rewardsData).map((tab) => (
             <span
@@ -159,59 +161,94 @@ const RewardScreen = () => {
               className={`pagination-tab ${activeTab === tab ? "active" : ""}`}
               onClick={() => handleTabClick(tab)}
             >
-              {tab.replace("_", " ").toUpperCase()}
+              {tabLabels[tab]}
             </span>
           ))}
         </div>
 
-        {/* Reward Cards */}
-        <div className="reward-cards">
-        {loading ? <p className="loading-message">Fetching Rewards...</p>
-         : rewards.length > 0 ? (
-            rewards.map((reward) => (
-              <div className="reward-card" key={reward.reward_id}>
-                <div className="reward-left">
-                  <img
-                    src={rewardImages[reward.reward_image_id] || `${process.env.PUBLIC_URL}/default-reward-icon.png`}
-                    alt={reward.reward_title}
-                    className="reward-icon"
-                  />
-                  <div className="reward-info">
-                    <p className="reward-title">{reward.reward_title}</p>
-                    <div className="reward-meta">
-                      <img
-                        src={`${process.env.PUBLIC_URL}/logo.png`}
-                        alt="Coin Icon"
-                        className="small-icon"
-                      />
-                      <span>Reward: {reward.reward}</span>
+        <div className="reward-cards-container">
+          <div className="reward-cards">
+            {loading ? (
+              <p className="loading-message">Fetching Rewards...</p>
+            ) : rewards.length > 0 ? (
+              rewards.map((reward) => (
+                <div className="reward-card" key={reward.reward_id}>
+                  <div className="reward-left">
+                    <img
+                      src={rewardImages[reward.reward_image_id] || `${process.env.PUBLIC_URL}/default-reward-icon.png`}
+                      alt={reward.reward_title}
+                      className="reward-icon"
+                    />
+                    <div className="reward-info">
+                      <p className="reward-title">{reward.reward_title}</p>
+                      <div className="reward-meta">
+                        <img
+                          src={`${process.env.PUBLIC_URL}/logo.png`}
+                          alt="Coin Icon"
+                          className="small-icon"
+                        />
+                        <span>Reward: {reward.reward}</span>
+                      </div>
                     </div>
                   </div>
+                  {activeTab === "on_going" ? (
+                    <button
+                      className="reward-cta"
+                      style={{ backgroundColor: "#f9b54c", color: "black" }}
+                      onClick={() => handleClaimReward(reward.reward_id)}
+                    >
+                      Claim
+                    </button>
+                  ) : (
+                    <div className="reward-share-icon" style={{ backgroundColor: "#000" }}>
+                      <img
+                        src={`${process.env.PUBLIC_URL}/share-icon.png`}
+                        alt="Share Icon"
+                        className="share-icon"
+                      />
+                    </div>
+                  )}
                 </div>
-                {activeTab === "on_going" ? (
-                  <button
-                    className="reward-cta"
-                    style={{ backgroundColor: "orange", color: "white" }}
-                    onClick={() => handleClaimReward(reward.reward_id)}
-                  >
-                    Claim
-                  </button>
-                ) : (
-                  <div className="reward-share-icon" style={{ backgroundColor: "white" }}>
-                    <img
-                      src={`${process.env.PUBLIC_URL}/share-icon.png`}
-                      alt="Share Icon"
-                      className="share-icon"
-                    />
-                  </div>
-                )}
-              </div>
-            ))
-          ) : (
-            <p>No rewards available for this category.</p>
-          )}
+              ))
+            ) : (
+              <p>No rewards available for this category.</p>
+            )}
+          </div>
         </div>
       </div>
+
+      {showOverlay && selectedReward && (
+        <div className="overlay-container">
+          <div className={`reward-overlay ${showOverlay ? "slide-in" : "slide-out"}`}>
+            <div className="overlay-header">
+              <h2 className="overlay-title">Claim Reward</h2>
+              <img
+                src={`${process.env.PUBLIC_URL}/cancel.png`}
+                alt="Cancel"
+                className="overlay-cancel"
+                onClick={handleCloseOverlay}
+              />
+            </div>
+            <div className="overlay-divider"></div>
+            <div className="overlay-content">
+              <img
+                src={rewardImages[selectedReward.reward_image_id] || `${process.env.PUBLIC_URL}/default_reward.png`}
+                alt="Reward Icon"
+                className="overlay-reward-icon"
+              />
+              <p className="overlay-text">Your reward of</p>
+              <div className="overlay-reward-value">
+                <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Coin Icon" className="overlay-coin-icon" />
+                <span>{selectedReward.reward}</span>
+              </div>
+              <p className="overlay-message">has been added to your coin balance</p>
+              <button className="overlay-cta" onClick={handleCloseOverlay}>
+                Ok
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Navigation />
     </div>

@@ -1,4 +1,4 @@
-/* Reward Screen Styling */
+/* Reward Screen Container */
 .reward-screen {
   background-color: #000;
   color: #fff;
@@ -10,6 +10,12 @@
   display: flex;
   flex-direction: column;
   width: 100%;
+  box-sizing: border-box;
+}
+
+/* Reward Body */
+.reward-body {
+  flex: 1;
 }
 
 /* Total Taps Section */
@@ -36,14 +42,7 @@
   font-weight: bold;
 }
 
-.task-link {
-  font-size: 14px;
-  color: #00bfff;
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-/* Pagination */
+/* Pagination Tabs */
 .pagination {
   display: flex;
   justify-content: space-evenly;
@@ -54,6 +53,8 @@
   font-size: 16px;
   cursor: pointer;
   color: #fff;
+  position: relative;
+  padding-bottom: 4px;
 }
 
 .pagination-tab.active::after {
@@ -62,17 +63,24 @@
   width: 100%;
   height: 2px;
   background-color: #fff;
-  bottom: -4px;
+  bottom: 0;
   left: 0;
 }
 
-/* Reward Cards */
+/* Reward Cards Container */
+.reward-cards-container {
+  max-height: 80vh;
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+
 .reward-cards {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 24px;
 }
 
+/* Individual Reward Card */
 .reward-card {
   display: flex;
   justify-content: space-between;
@@ -82,18 +90,22 @@
   background-color: #414141;
 }
 
+/* Left Side of Reward Card */
 .reward-left {
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  flex: 1;
 }
 
+/* Reward Icon */
 .reward-icon {
   width: 32px;
   height: 32px;
-  border-radius: 100%;
+  border-radius: 50%;
 }
 
+/* Reward Information */
 .reward-info {
   display: flex;
   flex-direction: column;
@@ -116,43 +128,250 @@
   height: 16px;
 }
 
+/* Call-to-Action Button (Claim) */
 .reward-cta {
   padding: 8px 16px;
   border-radius: 25px;
   border: none;
   font-size: 14px;
   cursor: pointer;
+  font-weight: 500;
 }
 
+/* Share Icon for Claimed Rewards */
 .reward-share-icon {
-  padding: 8px 16px;
+  padding: 8px;
   border-radius: 25px;
-  border: none;
-  font-size: 14px;
-  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .share-icon {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
 }
 
-/* Loading Rewards */
-.loading-message {
-  text-align: center;
-  font-size: 18px;
-  font-weight: bold;
-  color: orange;
-  margin-top: 20px;
-  animation: fadeInOut 1.5s infinite alternate;
+/* Overlay Container */
+.overlay-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1001;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
 }
 
-/* Smooth fade-in and fade-out effect */
-@keyframes fadeInOut {
-  0% {
-    opacity: 0.4;
+/* Overlay for Claim Confirmation */
+.reward-overlay {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 60%;
+  background-color: #1d1d1d;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  box-sizing: border-box;
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out forwards;
+  border-top-left-radius: 25px;
+  border-top-right-radius: 25px;
+}
+
+.reward-overlay.slide-out {
+  animation: slideOut 0.3s ease-out forwards;
+}
+
+/* Slide-in Animation */
+@keyframes slideIn {
+  from {
+    transform: translateY(100%);
   }
-  100% {
-    opacity: 1;
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Slide-out Animation */
+@keyframes slideOut {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+/* Overlay Header */
+.overlay-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.overlay-title {
+  font-size: 18px;
+  /* font-weight: bold; */
+}
+
+.overlay-cancel {
+  position: absolute;
+  right: 0;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+/* Overlay Divider */
+.overlay-divider {
+  width: 100%;
+  height: 1px;
+  background-color: #777777;
+  margin: 20px 0;
+}
+
+/* Overlay Content */
+.overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  justify-content: center;
+}
+
+.overlay-reward-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+}
+
+.overlay-text {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.overlay-reward-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.overlay-coin-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.overlay-message {
+  font-size: 14px;
+  font-weight: 400;
+  text-align: center;
+  color: #BBBBBB;
+}
+
+.overlay-cta {
+  width: 100%;
+  padding: 12px;
+  background-color: #fff;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .reward-screen {
+    padding: 60px 12px;
+    padding-top: 0px;
+  }
+
+  .taps-number {
+    font-size: 28px;
+  }
+
+  .taps-logo {
+    width: 24px;
+    height: 24px;
+  }
+
+  .pagination-tab {
+    font-size: 14px;
+  }
+
+  .reward-card {
+    padding: 12px;
+  }
+
+  .reward-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .reward-title {
+    font-size: 13px;
+  }
+
+  .reward-meta {
+    font-size: 11px;
+  }
+
+  .small-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .reward-cta,
+  .reward-share-icon {
+    padding: 6px 12px;
+  }
+
+  .overlay-title {
+    font-size: 16px;
+  }
+
+  .overlay-cancel {
+    width: 20px;
+    height: 20px;
+  }
+
+  .overlay-reward-icon {
+    width: 50px;
+    height: 50px;
+  }
+
+  .overlay-text {
+    font-size: 14px;
+  }
+
+  .overlay-reward-value {
+    font-size: 18px;
+  }
+
+  .overlay-coin-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .overlay-message {
+    font-size: 12px;
+  }
+
+  .overlay-cta {
+    padding: 10px;
+    font-size: 14px;
   }
 }

@@ -1,98 +1,196 @@
-/* Profile Screen Styling */
+/* Profile Screen Container */
 .profile-screen {
-    background-color: #000;
-    color: #fff;
-    min-height: 100vh;
-    padding: 80px 16px;
+  background-color: #000;
+  color: #fff;
+  min-height: 100vh;
+  padding: 80px 16px;
+  padding-top: 8px;
+  font-family: "Roboto", sans-serif;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* Profile Body */
+.profile-body {
+  flex: 1; /* Ensures body takes available space, pushing navigation down */
+}
+
+/* Profile Picture */
+.profile-picture {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.profile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Username Styling */
+.profile-username {
+  margin-top: 16px;
+  margin-bottom: 24px; /* Space before cards */
+  font-size: 18px;
+  font-weight: 700; /* Bold */
+}
+
+/* Profile Data Cards Container */
+.profile-data-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Matches LevelScreen's 8px gap */
+  width: 100%;
+  max-width: 360px; /* Consistent with previous design */
+  margin: 0 auto; /* Center cards */
+}
+
+/* Individual Data Card */
+.profile-data-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #414141;
+  padding: 16px; /* Matches LevelScreen's 16px padding */
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 60px; /* Increased height for breathing room, inspired by LevelScreen */
+}
+
+/* Left Side of Card (Icon and Label) */
+.profile-data-left {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* Matches LevelScreen's gap */
+  flex: 1; /* Equal space with right side */
+  overflow: hidden;
+}
+
+/* Profile Icon */
+.profile-icon img {
+  width: 40px; /* Increased to match LevelScreen's 40px */
+  height: 40px;
+  object-fit: contain;
+}
+
+/* Card Label */
+.profile-label {
+  font-size: 14px; /* Reduced from 16px, still readable */
+  font-weight: 400; /* Normal weight */
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Right Side of Card (Value) */
+.profile-data-right {
+  font-size: 14px; /* Matches label size, reduced from 16px */
+  font-weight: 400; /* Normal weight */
+  color: orange;
+  text-align: right;
+  direction: rtl; /* Right-to-left for better fit */
+  flex: 1; /* Equal space with left side */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Wallet Icon in Connect Wallet Card */
+.wallet-icon {
+  width: 24px; /* Increased for visibility */
+  height: 24px;
+}
+
+/* Footer Links */
+.profile-links {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-links a {
+  color: #b2b2b2;
+  text-decoration: underline;
+  font-size: 12px;
+}
+
+.profile-links a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .profile-screen {
+    padding: 60px 12px; /* Adjusted for smaller screens */
     padding-top: 8px;
-    font-family: "Roboto", sans-serif;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    text-align: center;
   }
-  
-  /* Profile Picture */
+
   .profile-picture {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    margin: 0 auto;
-    overflow: hidden; /* Ensures image fits within the circle */
+    width: 60px;
+    height: 60px;
   }
-  
-  .profile-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* Ensures the image scales appropriately */
-  }
-  
-  /* Username and Level */
+
   .profile-username {
-    margin-top: 16px;
-    font-size: 18px;
-    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 20px;
   }
-  
-  .profile-level {
-    font-size: 14px;
-    color: #f9b54c; /* Level color */
-    margin-bottom: 24px;
+
+  .profile-data-cards {
+    max-width: 100%; /* Full width on small screens */
+    padding: 0 8px;
   }
-  
-  /* Data Cards */
-  .profile-data-cards { 
-    display: flex;
-    flex-direction: column;
-    gap: 8px; /* Spacing between cards */
-  }
-  
+
   .profile-data-card {
-    display: flex;
-    justify-content: space-evenly;
-    align-items: center;
-    background-color: #414141; /* Card background */
     padding: 12px; /* Slightly reduced padding */
-    border-radius: 8px;
-    cursor: pointer; /* Indicate clickable cards */
+    min-height: 50px; /* Adjusted height for mobile */
   }
-  
-  .profile-data-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  
+
   .profile-icon img {
-    width: 24px; /* Icon size */
-    height: 24px;
+    width: 32px; /* Slightly smaller icons */
+    height: 32px;
   }
-  
-  .profile-label {
-    font-size: 14px;
-  }
-  
+
+  .profile-label,
   .profile-data-right {
-    font-size: 12px; /* Reduced font size */
-    color: orange;
-    text-align: left;
+    font-size: 12px; /* Smaller text for mobile */
   }
-  
-  /* Links */
-  .profile-links {
-    margin-top: 32px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+
+  .wallet-icon {
+    width: 20px;
+    height: 20px;
   }
-  
-  .profile-links a {
-    color: #b2b2b2; /* Clickable link color */
-    text-decoration: underline; /* Underline for indication */
+}
+
+/* Extra Small Screens (e.g., < 400px) */
+@media (max-width: 400px) {
+  .profile-data-card {
+    padding: 10px;
+    min-height: 45px; /* Further reduced height */
   }
-  
-  .profile-links a:hover {
-    text-decoration: underline;
+
+  .profile-label,
+  .profile-data-right {
+    font-size: 11px;
   }
-  
+
+  .profile-icon img {
+    width: 28px;
+    height: 28px;
+  }
+
+  .wallet-icon {
+    width: 18px;
+    height: 18px;
+  }
+}

@@ -1,32 +1,34 @@
+/* General screen styling for the daily streak screen */
 .daily-streak-screen {
   background-color: #000;
   color: #fff;
   min-height: 100vh;
-  padding: 80px 16px;
-  padding-top: 0px;
+  padding: 16px;
   font-family: "Roboto", sans-serif;
   position: relative;
   display: flex;
   flex-direction: column;
   width: 100%;
+  box-sizing: border-box;
 }
 
-/* Top Section */
+/* Header with centered streak content */
 .streak-header {
   text-align: center;
-  margin: 20px 0;
+  margin-top: 20px;
+  margin-bottom: 24px;
 }
 
 .streak-icon-big {
-  width: 80px;  /* Increased size */
-  height: 80px; /* Increased size */
+  width: 80px;
+  height: 80px;
   margin: 0 auto;
   display: block;
 }
 
 .streak-title {
   font-size: 24px;
-  font-weight: bold;
+  font-weight: 500;
   margin: 10px 0;
 }
 
@@ -35,23 +37,26 @@
   color: #c2bfbf;
 }
 
-/* Rewards Section */
+/* Daily rewards section */
 .daily-rewards {
-  margin: 20px;
+  margin: 0 20px 60px;
+  flex: 1;
 }
 
 .daily-rewards-title {
   font-size: 16px;
   font-weight: bold;
   margin-bottom: 15px;
+  text-align: center;
 }
 
 .rewards-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(60px, 1fr)); /* 4 cards in a row */
-  gap: 8px; /* Reduced spacing */
+  grid-template-columns: repeat(4, minmax(70px, 1fr));
+  gap: 10px;
   justify-items: center;
-  margin: 0 -5px; /* Responsive margin */
+  margin: 0 auto;
+  max-width: 400px;
 }
 
 .reward-frame {
@@ -62,25 +67,21 @@
   padding: 10px;
   border-radius: 4px;
   text-align: center;
-  width: 70px;
+  width: 80px;
   height: 100px;
   box-sizing: border-box;
-  cursor: pointer;
-  gap: 8px;
-
-  /* Default inactive styles */
   background-color: #414141;
   color: #ffffff;
 }
 
 .reward-frame.active {
-  background-color: #ffffff;
-  color: #000000;
+  background-color: #fff;
+  color: #000;
 }
 
 .reward-frame.claimed {
-  background-color: #838181; /* Keep inactive look after claiming */
-  color: #ffffff;
+  background-color: #838181;
+  color: #fff;
 }
 
 .reward-frame .frame-icon {
@@ -91,7 +92,6 @@
 
 .frame-day {
   font-weight: bold;
-  margin-bottom: 5px;
   font-size: 12px;
 }
 
@@ -99,7 +99,6 @@
   font-size: 12px;
 }
 
-/* Rewards Note */
 .rewards-note {
   margin-top: 15px;
   font-size: 14px;
@@ -107,26 +106,30 @@
   color: #aaa;
 }
 
-/* CTA Button */
-.cta-container2 {
+/* CTA container */
+.cta-container {
+  position: fixed;
+  bottom: 80px;
+  left: 16px;
+  right: 16px;
   display: flex;
   justify-content: center;
-  align-items: center;
-  text-align: center;
-  bottom: 60px;
-  width: 100%;
+  z-index: 10;
 }
 
 .cta-button {
   width: 100%;
   max-width: 360px;
   height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   border-radius: 8px;
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 500;
   cursor: pointer;
-  text-align: center;
+  transition: background-color 0.3s ease;
 }
 
 .cta-button.active {
@@ -138,4 +141,218 @@
   background-color: #414141;
   color: #aaa;
   cursor: not-allowed;
+}
+
+/* Overlay for ineligibility */
+.overlay-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 1001;
+}
+
+.streak-overlay {
+  background-color: #1d1d1d;
+  color: #fff;
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+  border-top-left-radius: 25px;
+  border-top-right-radius: 25px;
+  box-sizing: border-box;
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+.streak-overlay.slide-out {
+  animation: slideOut 0.3s ease-out forwards;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes slideOut {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+.overlay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.overlay-title {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.overlay-cancel {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.overlay-divider {
+  width: 100%;
+  height: 1px;
+  background-color: #777777;
+  margin: 20px 0;
+}
+
+.overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.overlay-streak-icon {
+  width: 60px;
+  height: 60px;
+}
+
+.overlay-text {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.overlay-subtext {
+  font-size: 14px;
+  color: #c2bfbf;
+}
+
+.overlay-time {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.overlay-cta-button {
+  width: 100%;
+  max-width: 400px;
+  padding: 12px;
+  background-color: #fff;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.overlay-cta-button:hover {
+  background-color: #e6e6e6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .daily-streak-screen {
+    padding: 12px;
+  }
+
+  .streak-header {
+    margin-top: 15px;
+    margin-bottom: 20px;
+  }
+
+  .streak-icon-big {
+    width: 60px;
+    height: 60px;
+  }
+
+  .streak-title {
+    font-size: 20px;
+  }
+
+  .streak-subtitle {
+    font-size: 14px;
+  }
+
+  .daily-rewards {
+    margin: 0 15px 60px;
+  }
+
+  .rewards-grid {
+    grid-template-columns: repeat(4, minmax(60px, 1fr));
+    gap: 8px;
+  }
+
+  .reward-frame {
+    width: 70px;
+    height: 90px;
+    padding: 8px;
+  }
+
+  .frame-day,
+  .frame-reward {
+    font-size: 11px;
+  }
+
+  .reward-frame .frame-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .rewards-note {
+    font-size: 12px;
+  }
+
+  .overlay-title {
+    font-size: 16px;
+  }
+
+  .overlay-cancel {
+    width: 20px;
+    height: 20px;
+  }
+
+  .overlay-streak-icon {
+    width: 50px;
+    height: 50px;
+  }
+
+  .overlay-text {
+    font-size: 14px;
+  }
+
+  .overlay-subtext {
+    font-size: 12px;
+  }
+
+  .overlay-time {
+    font-size: 18px;
+  }
+
+  .overlay-cta-button {
+    padding: 10px;
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 768px) {
+  .daily-streak-screen {
+    padding: 24px;
+  }
+
+  .rewards-grid {
+    max-width: 500px;
+  }
+
+  .reward-frame {
+    width: 90px;
+    height: 110px;
+  }
+
+  .overlay-cta-button {
+    max-width: 500px;
+  }
 }

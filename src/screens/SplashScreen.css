@@ -1,78 +1,83 @@
 .splash-container {
-    background-color: #000;
-    display: flex;
-    flex-direction: column; 
-    justify-content: center;
-    padding-top: 0px; 
-    align-items: center;
-    height:100vh; 
-  }
-  
-  .splash-content {
-    display: flex;
-    flex-direction: row; 
-    align-items: center;
-    gap: 10px; 
-  }
-  
-  .splash-logo {
-    width: 80px; 
-    height: 80px;
-    object-fit: contain; 
-  }
-  
-  .splash-text {
-    color: white;
-    font-size: 24px;
-    font-weight: bold;
-  }
-  
-
- /* src/screens/SplashScreen.css
-.splash-container {
+  background-color: #000;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  background-color: #000;
+  height: 100vh;
 }
 
 .splash-content {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
 }
 
 .splash-logo {
-  width: 150px;
-  height: 150px;
+  width: 50%;
+  max-width: 200px;
+  height: auto;
+  object-fit: contain;
 }
 
-.splash-logo.animated {
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-.splash-message {
-  margin-top: 2rem;
-  font-size: 1.2rem;
-  color: #333;
-}
-
-.loading-text {
-  color: #666;
-}
-
-.welcome-text {
-  color: #007bff;
+.splash-title {
+  color: white;
+  font-size: 24px;
   font-weight: bold;
-}*/
+  margin: 0;
+}
+
+.loader-bar {
+  width: 100%;
+  height: 8px;
+  background: #ccc;
+  position: relative;
+  overflow: hidden;
+  border-radius: 25px;
+}
+
+.loader-bar::after {
+  content: '';
+  position: absolute;
+  width: 50%;
+  height: 100%;
+  background: #F9B54C;
+  animation: loading 2s infinite ease-in-out;
+}
+@keyframes loading {
+  0% { left: -50%; }
+  50% { left: 100%; }
+  100% { left: -50%; }
+}
+
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.error-message {
+  color: red;
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.retry-button {
+  padding: 10px 20px;
+  background-color: #F9B54C;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .splash-logo {
+    width: 70%;
+    max-width: 150px;
+  }
+  .splash-title {
+    font-size: 20px;
+  }
+}

@@ -1,158 +1,220 @@
-/* General Screen Styling */
+/* General screen styling for the leaderboard */
 .leaderboard-screen {
   background-color: #000;
   color: #fff;
   min-height: 100vh;
-  padding: 80px 16px;
-  padding-top: 0px;
+  padding: 16px;
   font-family: "Roboto", sans-serif;
   position: relative;
   display: flex;
   flex-direction: column;
   width: 100%;
+  box-sizing: border-box;
 }
-  
-  /* Header Section */
-  .leaderboard-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-  
-  .leaderboard-icon {
-    width: 100px;
-    height: 100px;
-  }
-  
-  /* Pagination */
-  .pagination {
-    display: flex;
-    justify-content: space-around;
-    margin-bottom: 20px;
-  }
-  
-  .pagination-tab {
-    font-size: 16px;
-    cursor: pointer;
-    color: #fff;
-    position: relative;
-  }
-  
-  .pagination-tab.active::after {
-    content: "";
-    position: absolute;
-    width: 100%;
-    height: 2px;
-    background-color: #fff;
-    bottom: -4px;
-    left: 0;
-  }
-  
-  /* Leaderboard Cards */
-  .leaderboard-cards {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .leaderboard-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px;
-    border-radius: 8px;
-    background-color: #414141;
-  }
-  
-  .transparent-card {
-    background-color: transparent;
-  }
-  
-  .leaderboard-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  
-  .leaderboard-logo {
-    width: 40px;
-    height: 40px;
-  }
-  
-  .leaderboard-info {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .leaderboard-title {
-    font-size: 14px;
-    font-weight: bold;
-    color: #fff;
-  }
-  
-  .leaderboard-title .level {
-    color: orange;
-  }
-  
-  .leaderboard-value {
-    font-size: 12px;
-    color: #d9d9d9;
-  }
-  
-  .leaderboard-right {
-    display: flex;
-    align-items: center;
-  }
-  
-  .leaderboard-right-icon {
-    width: 20px;
-    height: 20px;
-  }
 
-  /* Make profile frames round */
-.leaderboard-logo.round-frame {
+/* Leaderboard body containing the main content */
+.leaderboard-body {
+  flex: 1;
+  margin-bottom: 100px; /* Space for floating card */
+}
+
+/* Header section with centered icon */
+.leaderboard-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.leaderboard-icon {
+  width: 64px;
+  height: 64px;
+}
+
+/* Pagination tabs with even spacing and responsiveness */
+.pagination {
+  display: flex;
+  justify-content: space-evenly;
+  margin-bottom: 20px;
+  flex-wrap: wrap; /* Allow wrapping on small screens */
+  gap: 15px; /* Add spacing between tabs */
+}
+
+.pagination-tab {
+  font-size: 16px;
+  cursor: pointer;
+  color: #fff;
+  position: relative;
+  padding: 5px 10px; /* Ensure clickable area */
+  text-align: center;
+  flex: 1;
+  min-width: 80px; /* Minimum width for readability */
+}
+
+.pagination-tab.active::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background-color: #fff;
+  bottom: 0;
+  left: 0;
+}
+
+/* Leaderboard cards container */
+.leaderboard-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Individual leaderboard card */
+.leaderboard-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #414141;
+}
+
+.transparent-card {
+  background-color: transparent;
+}
+
+.leaderboard-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.leaderboard-logo {
   width: 40px;
   height: 40px;
-  border-radius: 50%; /* Makes images round */
+}
+
+.leaderboard-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.leaderboard-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.leaderboard-title .level {
+  color: orange;
+}
+
+.leaderboard-value {
+  font-size: 12px;
+  color: #d9d9d9;
+}
+
+.leaderboard-right {
+  display: flex;
+  align-items: center;
+}
+
+.leaderboard-right-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.round-frame {
+  border-radius: 50%;
   object-fit: cover;
 }
 
-  
-  .position-number {
-    font-size: 14px;
-    color: #fff;
+.position-number {
+  font-size: 14px;
+  color: #fff;
+}
+
+.no-leaderboard {
+  text-align: center;
+  color: #c2bfbf;
+  margin-top: 20px;
+  font-size: 16px;
+}
+
+/* Floating card for current user's rank */
+.floating-card {
+  position: fixed;
+  bottom: 80px;
+  left: 16px;
+  right: 16px;
+  background-color: #ffffff;
+  color: #000;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+  font-family: "Roboto", sans-serif;
+  box-sizing: border-box;
+}
+
+.black-text {
+  color: #000 !important;
+}
+
+/* Responsive design adjustments */
+@media (max-width: 600px) {
+  .leaderboard-screen {
+    padding: 12px;
   }
 
-  .no-leaderboard {
-    text-align: center;
-    color: #c2bfbf; /* or any color you prefer */
-    margin-top: 20px;
-    font-size: 16px;
-    /* Add more styling as needed */
+  .leaderboard-header {
+    margin-bottom: 20px;
   }
-  
-  /* Floating Card */
+
+  .leaderboard-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .pagination-tab {
+    font-size: 14px;
+    min-width: 70px;
+    padding: 4px 8px;
+  }
+
+  .leaderboard-card {
+    padding: 12px;
+  }
+
+  .leaderboard-logo {
+    width: 36px;
+    height: 36px;
+  }
+
   .floating-card {
-    position: fixed;
-    bottom: 80px;
-    width: calc(100% - 32px);
-    background-color: #ffffff;
-    color: #000;
-    border-radius: 8px;
-    padding: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    z-index: 10;
-    font-family: "Roboto", sans-serif;
+    padding: 12px;
+    bottom: 70px; /* Adjust for smaller screens */
   }
-  
-  .black-text {
-    color: #000 !important;
+}
+
+@media (min-width: 768px) {
+  .leaderboard-screen {
+    padding: 24px;
   }
-  
-  .gray-text {
-    color: #d9d9d9 !important;
+
+  .pagination {
+    gap: 20px; /* More spacing on larger screens */
   }
-  
+
+  .leaderboard-card {
+    padding: 20px;
+  }
+
+  .floating-card {
+    max-width: 500px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 20px;
+  }
+}
