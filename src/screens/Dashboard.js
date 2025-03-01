@@ -437,14 +437,14 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      <div className="w-screen h-screen bg-black text-white z-100 fixed top-0 bottom-0">
-        <p>{tapMultiplier}</p>
-        <button onClick={testClick}>
-          Change
-        </button>
-      </div>
       <div className="profile1-streak-section">
         <div className="profile1-section" onClick={() => navigate("/profile-screen")}>
+          <div className="w-[20vw] h-[20vh] bg-black text-white z-100">
+            <p>{tapMultiplier}</p>
+            <button onClick={testClick}>
+              Change
+            </button>
+          </div>
           <img src={telegramData.image_url} alt="Profile" className="profile1-picture" />
           <div className="profile1-info">
             <span className="profile1-username">{telegramData.username}</span>
