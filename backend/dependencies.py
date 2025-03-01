@@ -1,3 +1,5 @@
+import json
+from typing import Any, Generator
 from pydantic import BaseModel
 from database_connection import fs
 from datetime import date, datetime
@@ -6,6 +8,7 @@ from bson import ObjectId
 from fastapi.responses import StreamingResponse
 from models import CoinStats
 from database_connection import user_collection, invites_ref, coin_stats
+from superuser.level.models import LevelModelResponse
 from user_reg_and_prof_mngmnt.schemas import InviteeData, Update, UserProfile
 
 
@@ -203,21 +206,14 @@ def get_image(image_id: str):
     image = fs.get(ObjectId(image_id))
     image_buffer = BytesIO(image.read())
     image_buffer.seek(0)
+
     return StreamingResponse(image_buffer, media_type="image/jpeg")
 
 
 # Function to convert datetime objects in a dictionary or list to ISO format strings
-def convert_datetime_to_iso(obj):
-    """Recursively converts datetime objects in a dictionary or list to ISO format strings."""
-    if isinstance(obj, dict):
-        new_obj = {}
-        for key, value in obj.items():
-            new_obj[key] = convert_datetime_to_iso(value)
-        return new_obj
-    elif isinstance(obj, list):
-        return [convert_datetime_to_iso(item) for item in obj]
-    elif isinstance(obj, datetime):
-        return obj.isoformat()  # Convert datetime to ISO format string
-    elif isinstance(obj, BaseModel):
-        return convert_datetime_to_iso(obj.model_dump())
-    return obj
+def datetime_to_iso_str(obj):
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    raise TypeError(f"Type {type(obj)} is not JSON serializable")
+
+

@@ -1,13 +1,18 @@
+from datetime import timedelta
+import json
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from database_connection import redis_cache
+from redis import Redis
+from database_connection import get_redis_client
 from dependencies import (
+    datetime_to_iso_str,
     get_user_profile,
     update_coins_in_db,
     get_user_by_id,
     get_image as get_image_func
 )
 from superuser.level.dependencies import get_levels as get_levels_func
+from superuser.level.models import LevelModelResponse
 from user_reg_and_prof_mngmnt.router import userApp
 from earn.router import earnApp
 from boosts.router import userExtraBoostApp
@@ -84,6 +89,7 @@ for router_app in all_routers:
 
 
 
+
 @app.get('/', tags=["Global Routes"])
 async def home():
     return {"message": "Welcome to BoredTap Coin :)"}
@@ -122,43 +128,93 @@ async def update_coins(telegram_user_id: Annotated[str, Depends(get_current_user
     return {"message": "Coins not updated"}
 
 
-
 # get user data
 @app.get('/user/profile', tags=["Global Routes"], response_model=UserProfile)
 # @redis_cache()
-async def get_user_data(telegram_user_id: Annotated[str, Depends(get_current_user)], request: Request) -> UserProfile:
-    """Get full user profile information
+async def get_user_data(
+    telegram_user_id: Annotated[str, Depends(get_current_user)], request: Request,
+    redis_client: Annotated[Redis, Depends(get_redis_client)]
+) -> UserProfile:
+    """
+    Retrieve the profile of a user by their telegram user ID.
 
     Args:
-        telegram_user_id (Annotated[str, Depends): _description_
+        telegram_user_id (Annotated[str, Depends]): gets the telegram id of signed-in users
+        request (Request): the incoming request object
 
     Returns:
-        UserProfile: user profile information
+        UserProfile: the user data if found, otherwise None
+
+    Caches the user profile in Redis for 1 minute.
     """
-    user = get_user_profile(telegram_user_id)
+    if redis_client:
+        cache_key = f"{request.url.path}:{telegram_user_id}"
+        cached_response = redis_client.get(cache_key) if redis_client else None
+
+        if cached_response:
+            print("Cache hit: user profile")
+            deserialized_user = json.loads(cached_response)
+            cached_user_profile = UserProfile(**deserialized_user)
+
+            return cached_user_profile
+        
+        print("Cache miss: user profile")
+        user = get_user_profile(telegram_user_id)
+
+        try:
+            redis_client.set(cache_key, json.dumps(user.model_dump(), default=datetime_to_iso_str), ex=timedelta(minutes=1))
+        except Exception as e:
+            print(f"Error caching user profile: {e}")
+
     return user
 
 
 # get levels
 @app.get("/bored-tap/levels", tags=["Global Routes"])
-async def get_levels():
+async def get_levels(request: Request, redis_client: Annotated[Redis, Depends(get_redis_client)]) -> list[LevelModelResponse]:    
+    """
+    Retrieve and return all levels available in the system.
 
-    return get_levels_func()
+    This endpoint fetches levels from the database and caches the result in Redis
+    for subsequent requests to improve performance. If the levels are already cached,
+    it returns the cached data. Otherwise, it fetches the levels from the database,
+    caches them, and then returns the data.
+
+    Args:
+        request (Request): The FastAPI request object containing details of the HTTP request.
+
+    Returns:
+        list[LevelModelResponse]: A list of LevelModelResponse instances representing
+        the levels retrieved from the database or cache.
+    """
+
+    if redis_client:
+        cache_key = f"{request.url.path}"
+        cached_response = redis_client.get(cache_key) if redis_client else None
+
+        if cached_response:
+            print("Cache hit: levels")
+            deserialized_levels = json.loads(cached_response)
+            model_instances = [LevelModelResponse(**level) for level in deserialized_levels]
+
+            return model_instances
+
+        print("Cache miss: levels")
+        level_generator = get_levels_func()
+        serialized_levels = [level.model_dump() for level in level_generator]
+
+        try:
+            redis_client.set(cache_key, json.dumps(serialized_levels), ex=timedelta(minutes=5))
+        except Exception as e:
+            print(f"Error caching levels: {e}")
+
+    return [LevelModelResponse(**level) for level in serialized_levels]
 
 
 # get user image
 @app.get("/bored-tap/user_app/image", tags=["Global Routes"])
 async def get_image(
     image_id: str, request: Request, user: Annotated[str, Depends(get_current_user)]):
-    # user_agent = request.headers.get("User-Agent")
-    # referer = request.headers.get("Referer")
-    # origin = request.headers.get("Origin")
-
-    # if origin not in origins:
-    #     raise HTTPException(
-    #         status_code=403,
-    #         detail="Access denied, not enough permissions"
-    #     )
 
     if user:
         return get_image_func(image_id)
