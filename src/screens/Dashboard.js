@@ -182,6 +182,7 @@ const Dashboard = () => {
   // On mount: Check if a daily tapper boost is active in localStorage
   useEffect(() => {
     const storedBoosters = JSON.parse(localStorage.getItem("dailyBoosters") || "{}");
+    console.log('Stored Boosters', storedBoosters)
     if (storedBoosters.tapperBoost && storedBoosters.tapperBoost.isActive) {
       console.log("Dashboard: Tapper Boost active on mount");
       // Apply a 2× multiplier over the baseTapMultiplier
