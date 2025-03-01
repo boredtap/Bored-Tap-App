@@ -118,9 +118,9 @@ const BoostersContext = ({ children }) => {
         window.dispatchEvent(new CustomEvent("fullEnergyClaimed", { detail: { maxEnergy } }));
     }
 
-    const setTapMultiplier = () => {
+    const setTapMultiplier = (val) => {
         setBoosters(prev => ({
-            ...prev, tapMultiplier: prev.dailyBoosters.tapperBoost.isActive ? 2 : 1,
+            ...prev, tapMultiplier: val,
         }))
     }
 

@@ -430,8 +430,19 @@ const Dashboard = () => {
     }, 1000);
   };
 
+  const testClick = () => {
+    setTapMultiplier(2)
+    setTimeout(() => { }, 3000)
+  }
+
   return (
     <div className="dashboard-container">
+      <div className="w-screen h-screen bg-black text-white absolute top-0">
+        <p>{tapMultiplier}</p>
+        <button onClick={testClick}>
+          Change
+        </button>
+      </div>
       <div className="profile1-streak-section">
         <div className="profile1-section" onClick={() => navigate("/profile-screen")}>
           <img src={telegramData.image_url} alt="Profile" className="profile1-picture" />
