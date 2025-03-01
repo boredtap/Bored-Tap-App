@@ -437,7 +437,7 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      <div className="w-screen h-screen bg-black text-white absolute top-0">
+      <div className="w-screen h-screen bg-black text-white z-100 fixed top-0 bottom-0">
         <p>{tapMultiplier}</p>
         <button onClick={testClick}>
           Change
