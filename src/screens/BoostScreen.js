@@ -12,7 +12,7 @@ const BoostScreen = () => {
   const [boostersData, setBoostersData] = useState({ dailyBoosters: [], extraBoosters: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { setDailyBoosters, dailyBoosters, tapMultiplier } = useContext(DailyBoostersContext)
+  const { setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy } = useContext(DailyBoostersContext)
 
   // const [dailyBoosters, setDailyBoosters] = useState(() => {
   //   const savedBoosters = localStorage.getItem("dailyBoosters");
@@ -118,10 +118,10 @@ const BoostScreen = () => {
       // Find the upgraded booster and dispatch appropriate event
       const extraBoosters = JSON.parse(localStorage.getItem("extraBoosters") || "[]");
       const booster = extraBoosters.find((b) => b.id === boosterId);
-      
+
       if (booster) {
         const newLevel = booster.rawLevel === "-" || booster.rawLevel === 0 ? 1 : parseInt(booster.rawLevel, 10) + 1;
-        
+
         // Store upgrade values in localStorage
         switch (booster.effect) {
           case "boost":
@@ -153,50 +153,14 @@ const BoostScreen = () => {
   };
 
   const handleClaimDailyBooster = (boosterType) => {
-    setDailyBoosters((prev) => {
-        if (!prev || !prev[boosterType]) return prev; // Ensure booster exists
-
-        const now = Date.now();
-        const updated = { ...prev };
-        const booster = updated[boosterType];
-
-        if (booster.usesLeft > 0 && !booster.isActive) {
-            if (boosterType === "tapperBoost") {
-                updated.tapperBoost = {
-                    ...booster, // Keep existing properties
-                    usesLeft: booster.usesLeft - 1,
-                    isActive: true,
-                    endTime: now + BOOST_DURATION,
-                    resetTime: booster.usesLeft === 1 ? now + DAILY_RESET_INTERVAL : booster.resetTime || null,
-                };
-                window.dispatchEvent(new Event("tapperBoostActivated"));
-            } 
-            else if (boosterType === "fullEnergy") {
-                updated.fullEnergy = {
-                    ...booster,
-                    usesLeft: booster.usesLeft - 1,
-                    isActive: false, // Instant effect
-                    resetTime: booster.usesLeft === 1 ? now + DAILY_RESET_INTERVAL : booster.resetTime || null,
-                };
-
-                const maxEnergy = parseInt(localStorage.getItem("maxElectricBoost") || "1000", 10);
-                localStorage.setItem("electricBoost", maxEnergy.toString());
-                window.dispatchEvent(new CustomEvent("fullEnergyClaimed", { detail: { maxEnergy } }));
-            }
-
-            // If no uses left, ensure resetTime is set
-            if (updated[boosterType].usesLeft === 0 && !updated[boosterType].resetTime) {
-                updated[boosterType].resetTime = now + DAILY_RESET_INTERVAL;
-            }
-
-            return updated;
-        }
-
-        return prev;
-    });
+    if (boosterType === "tapperBoost") {
+      activateTapperBoost()
+    } else if (boosterType === "fullEnergy") {
+      activateFullEnergy()
+    }
 
     handleOverlayClose();
-};
+  };
 
   useEffect(() => {
     const intervalId = setInterval(() => {

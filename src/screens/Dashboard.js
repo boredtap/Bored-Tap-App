@@ -10,7 +10,7 @@ const RECHARGE_TIMES = [3000, 2500, 2000, 1500, 1000, 500]; // Level 0 through 5
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  const { setDailyBoosters, dailyBoosters, tapMultiplier, setTapMultiplier } = useContext(DailyBoostersContext)
+  const { setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, setTapMultiplier } = useContext(DailyBoostersContext)
 
   // State for Telegram user data
   const [telegramData, setTelegramData] = useState({
@@ -178,58 +178,9 @@ const Dashboard = () => {
 
   // --- Tapper Boost Integration ---
 
-  // On mount: Check if a daily tapper boost is active in localStorage
-  useEffect(() => {
-    const storedBoosters = dailyBoosters
-    console.log('Stored Boosters', storedBoosters)
-    if (storedBoosters.tapperBoost && storedBoosters.tapperBoost.isActive) {
-      console.log("Dashboard: Tapper Boost active on mount");
-      // Apply a 2× multiplier over the baseTapMultiplier
-      //setTapMultiplier(baseTapMultiplier * 2);
-      const remaining = storedBoosters.tapperBoost.endTime - Date.now();
-      if (remaining > 0) {
-        setTimeout(() => {
-          console.log("Dashboard: Tapper Boost expired on mount check");
-          setTapMultiplier();
-        }, remaining);
-      } else {
-        // In case the boost has already expired
-        setTapMultiplier();
-      }
-    } else {
-      // No active boost – ensure multiplier equals base
-      setTapMultiplier();
-    }
-  }, []);
-
-  // Listen for tapper boost events dispatched from BoostScreen
-  useEffect(() => {
-    const handleTapperBoostActivated = () => {
-      console.log("Dashboard: tapperBoostActivated event received");
-      setTapMultiplier();
-    };
-
-    const handleTapperBoostDeactivated = () => {
-      console.log("Dashboard: tapperBoostDeactivated event received");
-      setTapMultiplier();
-    };
-
-    // Attach event listeners
-    window.addEventListener("tapperBoostActivated", handleTapperBoostActivated);
-    window.addEventListener("tapperBoostDeactivated", handleTapperBoostDeactivated);
-
-    // Cleanup event listeners on unmount
-    return () => {
-      window.removeEventListener("tapperBoostActivated", handleTapperBoostActivated);
-      window.removeEventListener("tapperBoostDeactivated", handleTapperBoostDeactivated);
-    };
-  }, [dailyBoosters.tapperBoost]);
-
   useEffect(() => {
     console.log('Tap Multipliter', tapMultiplier)
   }, [tapMultiplier])
-
-
 
   // Setup auto tap if active
   useEffect(() => {
@@ -342,40 +293,6 @@ const Dashboard = () => {
       }
     };
   }, [electricBoost, maxElectricBoost, rechargeTime]);
-
-  // Daily booster Tapper Boost event listeners
-  useEffect(() => {
-    const handleTapperBoostActivated = () => {
-      console.log("Tapper Boost Activated Event");
-      const boosters = JSON.parse(localStorage.getItem("dailyBoosters") || "{}");
-      if (boosters.tapperBoost?.isActive) {
-        boostMultiplierActive.current = true;
-        setTapMultiplier(baseTapMultiplier * 2);
-
-        const remainingTime = boosters.tapperBoost.endTime - Date.now();
-        if (remainingTime > 0) {
-          setTimeout(() => {
-            boostMultiplierActive.current = false;
-            setTapMultiplier(baseTapMultiplier);
-          }, remainingTime);
-        }
-      }
-    };
-
-    const handleTapperBoostDeactivated = () => {
-      console.log("Tapper Boost Deactivated Event");
-      boostMultiplierActive.current = false;
-      setTapMultiplier(baseTapMultiplier);
-    };
-
-    window.addEventListener("tapperBoostActivated", handleTapperBoostActivated);
-    window.addEventListener("tapperBoostDeactivated", handleTapperBoostDeactivated);
-
-    return () => {
-      window.removeEventListener("tapperBoostActivated", handleTapperBoostActivated);
-      window.removeEventListener("tapperBoostDeactivated", handleTapperBoostDeactivated);
-    };
-  }, [baseTapMultiplier]);
 
   // Full Energy claim event listener
   useEffect(() => {
