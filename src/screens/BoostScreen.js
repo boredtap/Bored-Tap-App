@@ -12,7 +12,7 @@ const BoostScreen = () => {
   const [boostersData, setBoostersData] = useState({ dailyBoosters: [], extraBoosters: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { setDailyBoosters, dailyBoosters } = useContext(DailyBoostersContext)
+  const { setDailyBoosters, dailyBoosters, tapMultiplier } = useContext(DailyBoostersContext)
 
   // const [dailyBoosters, setDailyBoosters] = useState(() => {
   //   const savedBoosters = localStorage.getItem("dailyBoosters");

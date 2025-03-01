@@ -10,7 +10,7 @@ const RECHARGE_TIMES = [3000, 2500, 2000, 1500, 1000, 500]; // Level 0 through 5
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  const { setDailyBoosters, dailyBoosters } = useContext(DailyBoostersContext)
+  const { setDailyBoosters, dailyBoosters, tapMultiplier } = useContext(DailyBoostersContext)
 
   // State for Telegram user data
   const [telegramData, setTelegramData] = useState({
@@ -27,7 +27,6 @@ const Dashboard = () => {
   const [electricBoost, setElectricBoost] = useState(1000);
   const [maxElectricBoost, setMaxElectricBoost] = useState(1000); // For Multiplier extra booster
   const [baseTapMultiplier, setBaseTapMultiplier] = useState(1); // Permanent bonus from Boost extra booster
-  const [tapMultiplier, setTapMultiplier] = useState(1); // Combined multiplier (base + temporary boosts)
   const [rechargeTime, setRechargeTime] = useState(RECHARGE_TIMES[0]); // Dynamic recharge time
   const [autoTapActive, setAutoTapActive] = useState(false); // Auto Bot state
 
@@ -66,7 +65,6 @@ const Dashboard = () => {
     localStorage.setItem("autoTapActive", "false");
 
     setBaseTapMultiplier(1);
-    setTapMultiplier(1);
     setMaxElectricBoost(1000);
     setElectricBoost(1000);
     setRechargeTime(RECHARGE_TIMES[0]);
@@ -150,8 +148,8 @@ const Dashboard = () => {
           // Load all saved booster states
           const baseMultiplier = loadSavedBoosterStates();
 
-          // Set initial tap multiplier based on base multiplier
-          setTapMultiplier(baseMultiplier);
+          // // Set initial tap multiplier based on base multiplier
+          // setTapMultiplier(baseMultiplier);
 
           // Load last tap time
           const savedTapTime = localStorage.getItem("lastTapTime");
@@ -187,12 +185,12 @@ const Dashboard = () => {
     if (storedBoosters.tapperBoost && storedBoosters.tapperBoost.isActive) {
       console.log("Dashboard: Tapper Boost active on mount");
       // Apply a 2× multiplier over the baseTapMultiplier
-      setTapMultiplier(baseTapMultiplier * 2);
+      //setTapMultiplier(baseTapMultiplier * 2);
       const remaining = storedBoosters.tapperBoost.endTime - Date.now();
       if (remaining > 0) {
         setTimeout(() => {
           console.log("Dashboard: Tapper Boost expired on mount check");
-          setTapMultiplier(baseTapMultiplier);
+          // setTapMultiplier(baseTapMultiplier);
         }, remaining);
       } else {
         // In case the boost has already expired
@@ -208,12 +206,12 @@ const Dashboard = () => {
   useEffect(() => {
     const handleTapperBoostActivated = () => {
       console.log("Dashboard: tapperBoostActivated event received");
-      setTapMultiplier(baseTapMultiplier * 2);
+      //setTapMultiplier(baseTapMultiplier * 2);
     };
 
     const handleTapperBoostDeactivated = () => {
       console.log("Dashboard: tapperBoostDeactivated event received");
-      setTapMultiplier(baseTapMultiplier); // Ensure it resets correctly
+      //setTapMultiplier(baseTapMultiplier); // Ensure it resets correctly
     };
 
     // Attach event listeners

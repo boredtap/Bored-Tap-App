@@ -1,7 +1,10 @@
 import { createContext, useState, useEffect } from "react";
 
 // Create context without a default value (avoids unnecessary object creation)
-export const DailyBoostersContext = createContext(null);
+export const BoostContext = createContext({
+    tapMultiplier: 1,
+    dailyBoosters: null,
+});
 
 const BoostersContext = ({ children }) => {
     // Retrieve boosters from localStorage and handle potential errors
@@ -24,17 +27,40 @@ const BoostersContext = ({ children }) => {
     }
 
     // State for daily boosters
-    const [dailyBoosters, setDailyBoosters] = useState(initialBoosters);
+    const [boosters, setBoosters] = useState({
+        tapMultiplier: initialBoosters.tapperBoost.isActive ? 2 : 1,
+        dailyBoosters: initialBoosters,
+    });
 
     // Sync `dailyBoosters` to localStorage whenever it changes
     useEffect(() => {
-        localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
-    }, [dailyBoosters]);
+        localStorage.setItem("dailyBoosters", JSON.stringify(boosters.dailyBoosters));
+    }, [boosters.dailyBoosters]);
+
+    // Effect to update tapMultiplier when `tapperBoost.isActive` changes
+    useEffect(() => {
+        setBoosters((prevBoosters) => ({
+            ...prevBoosters,
+            tapMultiplier: prevBoosters.dailyBoosters.tapperBoost.isActive ? 2 : 1,
+        }));
+    }, [boosters.dailyBoosters.tapperBoost.isActive]);
+
+    const setDailyBoosters = (newBoosters) => {
+        setBoosters(prev => ({
+            ...prev,
+            dailyBoosters: typeof newBoosters === "function" ? newBoosters(prev.dailyBoosters) : newBoosters
+        }));
+    };
 
     return (
-        <DailyBoostersContext.Provider value={{ dailyBoosters, setDailyBoosters }}>
+        <BoostContext.Provider value={{
+            tapMultiplier: boosters.tapMultiplier,
+            dailyBoosters: boosters.dailyBoosters,
+            setBoosters,
+            setDailyBoosters
+        }}>
             {children}
-        </DailyBoostersContext.Provider>
+        </BoostContext.Provider>
     );
 };
 
