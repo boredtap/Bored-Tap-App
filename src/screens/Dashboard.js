@@ -207,7 +207,7 @@ const Dashboard = () => {
   useEffect(() => {
     const handleTapperBoostActivated = () => {
       console.log("Dashboard: tapperBoostActivated event received");
-      setTapMultiplier((prevMultiplier) => prevMultiplier * 2);
+      setTapMultiplier(baseTapMultiplier * 2);
     };
 
     const handleTapperBoostDeactivated = () => {
@@ -224,7 +224,7 @@ const Dashboard = () => {
       window.removeEventListener("tapperBoostActivated", handleTapperBoostActivated);
       window.removeEventListener("tapperBoostDeactivated", handleTapperBoostDeactivated);
     };
-  }, []);
+  }, [baseTapMultiplier]);
 
   useEffect(() => {
     console.log('Base Multipliter', baseTapMultiplier)
