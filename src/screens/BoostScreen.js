@@ -38,7 +38,6 @@ const BoostScreen = () => {
     localStorage.removeItem("extraBoosters");
     // Use consistent naming for localStorage keys
     localStorage.setItem("electricBoost", "1000");
-    localStorage.setItem("baseTapMultiplier", "1");
     localStorage.setItem("maxElectricBoost", "1000");
     localStorage.setItem("rechargeTimeIndex", "0");
     localStorage.setItem("autoTapActive", "false");
@@ -126,7 +125,6 @@ const BoostScreen = () => {
         switch (booster.effect) {
           case "boost":
             const newMultiplier = 1 + newLevel; // Level 1: 2, Level 2: 3, Level 3: 4, etc.
-            localStorage.setItem("baseTapMultiplier", newMultiplier.toString());
             window.dispatchEvent(new CustomEvent("boostUpgraded", { detail: { level: newLevel, multiplier: newMultiplier } }));
             break;
           case "multiplier":

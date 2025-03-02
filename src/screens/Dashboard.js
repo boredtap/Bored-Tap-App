@@ -26,7 +26,6 @@ const Dashboard = () => {
   const [currentStreak, setCurrentStreak] = useState(0);
   const [electricBoost, setElectricBoost] = useState(1000);
   const [maxElectricBoost, setMaxElectricBoost] = useState(1000); // For Multiplier extra booster
-  const [baseTapMultiplier, setBaseTapMultiplier] = useState(1); // Permanent bonus from Boost extra booster
   const [rechargeTime, setRechargeTime] = useState(RECHARGE_TIMES[0]); // Dynamic recharge time
   const [autoTapActive, setAutoTapActive] = useState(false); // Auto Bot state
 
@@ -58,13 +57,11 @@ const Dashboard = () => {
     setDailyBoosters(resetState);
 
     // Reset booster states in localStorage
-    localStorage.setItem("baseTapMultiplier", "1");
     localStorage.setItem("maxElectricBoost", "1000");
     localStorage.setItem("electricBoost", "1000");
     localStorage.setItem("rechargeTimeIndex", "0");
     localStorage.setItem("autoTapActive", "false");
 
-    setBaseTapMultiplier(1);
     setMaxElectricBoost(1000);
     setElectricBoost(1000);
     setRechargeTime(RECHARGE_TIMES[0]);
@@ -87,12 +84,6 @@ const Dashboard = () => {
   // Load saved booster states
   const loadSavedBoosterStates = useCallback(() => {
     console.log("Loading saved booster states");
-
-    // Load base tap multiplier
-    const savedBaseMultiplier = localStorage.getItem("baseTapMultiplier");
-    const baseMultiplier = savedBaseMultiplier ? parseInt(savedBaseMultiplier, 10) : 1;
-    console.log("Loaded base multiplier:", baseMultiplier);
-    setBaseTapMultiplier(baseMultiplier);
 
     // Load max electric boost
     const savedMaxBoost = localStorage.getItem("maxElectricBoost");
@@ -189,9 +180,7 @@ const Dashboard = () => {
       autoTapInterval.current = setInterval(() => {
         if (electricBoost > 0) {
           // Use current correct base multiplier for auto-tapping
-          const currentBaseTap = parseInt(localStorage.getItem("baseTapMultiplier") || "1", 10);
-
-          setTotalTaps((prev) => prev + currentBaseTap);
+          setTotalTaps((prev) => prev + tapMultiplier);
           tapCountSinceLastUpdate.current += currentBaseTap;
           setElectricBoost((prev) => {
             const newBoost = Math.max(prev - 1, 0);
@@ -316,7 +305,6 @@ const Dashboard = () => {
       const newPermanent = newLevel + 1;
 
       console.log("Setting new base multiplier:", newPermanent);
-      setBaseTapMultiplier(newPermanent);
 
       // Only update tap multiplier if no temporary boost is active
       if (!boostMultiplierActive.current) {
@@ -324,9 +312,6 @@ const Dashboard = () => {
       } else {
         setTapMultiplier(newPermanent * 2); // Keep the x2 boost if active
       }
-
-      // Save to localStorage
-      localStorage.setItem("baseTapMultiplier", newPermanent.toString());
     };
 
     // Extra Booster: Multiplier (max energy increase)
@@ -430,11 +415,6 @@ const Dashboard = () => {
     }, 1000);
   };
 
-  const testClick = () => {
-    setTapMultiplier(2)
-    setTimeout(() => { }, 3000)
-  }
-
   return (
     <div className="dashboard-container">
       <div className="profile1-streak-section">
@@ -443,7 +423,7 @@ const Dashboard = () => {
           <div className="profile1-info">
             <span className="profile1-username">{telegramData.username}</span>
             <span className="profile1-level">
-              Lv. {profile.level}. {profile.level_name}
+              Lv. {tapMultiplier} {profile.level}. {profile.level_name}
             </span>
           </div>
         </div>
@@ -489,14 +469,6 @@ const Dashboard = () => {
           <span>{Math.floor(electricBoost)}/{maxElectricBoost}</span>
         </div>
 
-        <div>
-        <p>Test Section</p>
-        <p>{tapMultiplier}</p>
-        <button onClick={testClick}>
-          Change
-        </button>
-      </div>
-      
         <button className="boost-btn" onClick={() => navigate("/boost-screen")}>
           <img src={`${process.env.PUBLIC_URL}/boostx2.png`} alt="Boost Icon" className="boost-icon" />
           Boost
