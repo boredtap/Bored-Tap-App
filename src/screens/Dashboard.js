@@ -488,16 +488,18 @@ const Dashboard = () => {
           <img src={`${process.env.PUBLIC_URL}/electric-icon.png`} alt="Electric Icon" className="electric-icon" />
           <span>{Math.floor(electricBoost)}/{maxElectricBoost}</span>
         </div>
-        <button className="boost-btn" onClick={() => navigate("/boost-screen")}>
-          <img src={`${process.env.PUBLIC_URL}/boostx2.png`} alt="Boost Icon" className="boost-icon" />
-          Boost
-        </button>
-      </div>
-      <div className="test-section">
+
+        <div>
         <p>Test Section</p>
         <p>{tapMultiplier}</p>
         <button onClick={testClick}>
           Change
+        </button>
+      </div>
+      
+        <button className="boost-btn" onClick={() => navigate("/boost-screen")}>
+          <img src={`${process.env.PUBLIC_URL}/boostx2.png`} alt="Boost Icon" className="boost-icon" />
+          Boost
         </button>
       </div>
       <Navigation />
