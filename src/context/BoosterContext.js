@@ -268,7 +268,10 @@ const BoostersContext = ({ children }) => {
     };
 
     const resetAll = () => {
-        setDailyBoosters(null);
+        setDailyBoosters({
+            tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
+            fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
+        });
         setAutoTapActive(false)
         setExtraBoosters([])
         setTotalTaps(0);
