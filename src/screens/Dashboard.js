@@ -10,7 +10,7 @@ const RECHARGE_TIMES = [3000, 2500, 2000, 1500, 1000, 500]; // Level 0 through 5
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  const { setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, setTapMultiplier, electricBoost, setElectricBoost, setMaxElectricBoost, maxElectricBoost, setRechargeTime, rechargeTime } = useContext(BoostContext)
+  const { totalTaps, setTotalTaps, setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, setTapMultiplier, electricBoost, setElectricBoost, setMaxElectricBoost, maxElectricBoost, setRechargeTime, rechargeTime, autoTapActive, setAutoTapActive } = useContext(BoostContext)
 
   // State for Telegram user data
   const [telegramData, setTelegramData] = useState({
@@ -24,10 +24,8 @@ const Dashboard = () => {
 
   // State for streak and boost data
   const [currentStreak, setCurrentStreak] = useState(0);
-  const [autoTapActive, setAutoTapActive] = useState(false); // Auto Bot state
 
   // State for total taps and tap effects
-  const [totalTaps, setTotalTaps] = useState(0);
   const [tapEffects, setTapEffects] = useState([]); // For tap animations
 
   // Refs for tap and recharge management
@@ -48,7 +46,7 @@ const Dashboard = () => {
 
     // Reset booster states in localStorage
     localStorage.setItem("rechargeTimeIndex", "0");
-    localStorage.setItem("autoTapActive", "false");
+    setAutoTapActive(false)
     setMaxElectricBoost(1000);
     setElectricBoost(1000);
     setRechargeTime(RECHARGE_TIMES[0]);
@@ -67,23 +65,6 @@ const Dashboard = () => {
       image_url: `${process.env.PUBLIC_URL}/profile-picture.png`,
     });
   };
-
-  // Load saved booster states
-  const loadSavedBoosterStates = useCallback(() => {
-    console.log("Loading saved booster states");
-
-    // Load auto tap state
-    const savedAutoTap = localStorage.getItem("autoTapActive");
-    const isAutoTapActive = savedAutoTap === "true";
-    console.log("Loaded auto tap active:", isAutoTapActive);
-    setAutoTapActive(isAutoTapActive);
-
-    // Load electric boost value - note: we don't set it here to avoid overriding
-    // preserved values, particularly after Full Energy booster use
-
-    // Return the loaded base multiplier for proper tap multiplier calculation
-    //return baseMultiplier;
-  }, []);
 
   // Fetch profile on mount
   useEffect(() => {
@@ -107,6 +88,7 @@ const Dashboard = () => {
           resetBoosters();
         } else {
           setProfile(data);
+          console.log('here', data.total_coins)
           setTotalTaps(data.total_coins || 0);
           setCurrentStreak(data.streak?.current_streak || 0);
 
@@ -139,44 +121,13 @@ const Dashboard = () => {
         });
       }
     }
-  }, [navigate, loadSavedBoosterStates]);
+  }, [navigate]);
 
   // --- Tapper Boost Integration ---
 
   useEffect(() => {
     console.log('Tap Multipliter', tapMultiplier)
   }, [tapMultiplier])
-
-  // Setup auto tap if active
-  useEffect(() => {
-    if (autoTapActive && !autoTapInterval.current) {
-      console.log("Starting auto tap interval");
-      autoTapInterval.current = setInterval(() => {
-        if (electricBoost > 0) {
-          // Use current correct base multiplier for auto-tapping
-          setTotalTaps((prev) => prev + tapMultiplier);
-          tapCountSinceLastUpdate.current += tapMultiplier;
-          setElectricBoost((prev) => {
-            const newBoost = Math.max(prev - 1, 0);
-            return newBoost;
-          });
-          // Update last tap time to prevent immediate recharge during auto tapping
-          lastTapTime.current = Date.now();
-          localStorage.setItem("lastTapTime", lastTapTime.current);
-        }
-      }, 1000);
-    } else if (!autoTapActive && autoTapInterval.current) {
-      clearInterval(autoTapInterval.current);
-      autoTapInterval.current = null;
-    }
-
-    return () => {
-      if (autoTapInterval.current) {
-        clearInterval(autoTapInterval.current);
-        autoTapInterval.current = null;
-      }
-    };
-  }, [autoTapActive, electricBoost]);
 
   // Backend sync every 2 seconds
   const updateBackend = useCallback(async () => {
@@ -305,9 +256,6 @@ const Dashboard = () => {
     const handleAutoTapActivated = (event) => {
       console.log("Auto Tap Activated Event:", event.detail);
       setAutoTapActive(true);
-
-      // Save to localStorage
-      localStorage.setItem("autoTapActive", "true");
     };
 
     // Generic booster upgraded event
@@ -408,7 +356,7 @@ const Dashboard = () => {
         <p className="total-taps-text">Your Total Taps:</p>
         <div className="total-taps-count">
           <img className="tap-logo-small" src={`${process.env.PUBLIC_URL}/logo.png`} alt="Small Icon" />
-          <span>{totalTaps.toLocaleString()}</span>
+          {totalTaps && <span>{totalTaps.toLocaleString()}</span>}
         </div>
         <div className="big-tap-icon" onTouchStart={handleTap} onMouseDown={handleTap}>
           <img className="tap-logo-big" src={`${process.env.PUBLIC_URL}/logo.png`} alt="Big Tap Icon" />

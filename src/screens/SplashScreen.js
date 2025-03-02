@@ -7,7 +7,7 @@ const SplashScreen = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { resetAll } = useContext(BoostContext)
+  const { resetAll, applyAutoBotTaps } = useContext(BoostContext)
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -123,6 +123,14 @@ const SplashScreen = () => {
     setLoading(true);
     window.location.reload();
   };
+
+  window.addEventListener("beforeunload", () => {
+    localStorage.setItem("lastActiveTime", Date.now());
+  });
+
+  window.addEventListener("load", () => {
+    applyAutoBotTaps()
+  });
 
   return (
     <div className="splash-container">

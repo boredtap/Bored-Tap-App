@@ -8,10 +8,9 @@ const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
 
 const BoostScreen = () => {
   const [activeOverlay, setActiveOverlay] = useState(null);
-  const [totalTaps, setTotalTaps] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, activateOtherBoosters, setExtraBoosters, boostersData, setElectricBoost } = useContext(BoostContext)
+  const { totalTaps, setTotalTaps, setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, activateOtherBoosters, setExtraBoosters, boostersData, setElectricBoost, setAutoTapActive } = useContext(BoostContext)
 
   // const [dailyBoosters, setDailyBoosters] = useState(() => {
   //   const savedBoosters = localStorage.getItem("dailyBoosters");
@@ -38,7 +37,7 @@ const BoostScreen = () => {
     // Use consistent naming for localStorage keys
     setElectricBoost(1000)
     localStorage.setItem("rechargeTimeIndex", "0");
-    localStorage.setItem("autoTapActive", "false");
+    setAutoTapActive(false)
     localStorage.removeItem("lastTapTime");
     localStorage.removeItem("telegram_user_id"); // Clear ID to force full reset on next login
   };

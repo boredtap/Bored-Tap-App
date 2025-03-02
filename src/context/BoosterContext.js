@@ -12,7 +12,9 @@ export const BoostContext = createContext({
     extraBoosters: null,
     electricBoost: 1000,
     maxElectricBoost: 1000,
-    rechargeTime: RECHARGE_TIMES[0]
+    rechargeTime: RECHARGE_TIMES[0],
+    autoTapActive: false,
+    totalTaps: 0
 });
 
 const BoostersContext = ({ children }) => {
@@ -23,8 +25,13 @@ const BoostersContext = ({ children }) => {
     let initialElectricBoost = 1000
     let initialMaxElectricBoost = 1000
     let initialRechargeTime = RECHARGE_TIMES[0]
+    let initialAutoTapActive = false
+    let initialTotalTaps = 0
 
     try {
+        const savedTotalTaps = localStorage.getItem("totalTaps");
+        initialTotalTaps = savedTotalTaps ? JSON.parse(savedTotalTaps) : 0;
+
         const savedBoosters = localStorage.getItem("dailyBoosters");
         initialBoosters = savedBoosters ? JSON.parse(savedBoosters) : null;
 
@@ -39,6 +46,9 @@ const BoostersContext = ({ children }) => {
 
         const savedRechargeTime = localStorage.getItem("rechargeTime")
         initialRechargeTime = savedRechargeTime ? JSON.parse(savedRechargeTime) : RECHARGE_TIMES[0];
+
+        const savedAutoTapActive = localStorage.getItem("autoTapActive")
+        initialAutoTapActive = savedAutoTapActive ? JSON.parse(savedAutoTapActive) : false;
 
         const savedMultiplier = localStorage.getItem("tapMultiplier");
         if (savedMultiplier) {
@@ -69,8 +79,15 @@ const BoostersContext = ({ children }) => {
         extraBoosters: initialExtraBoosters,
         electricBoost: initialElectricBoost,
         maxElectricBoost: initialMaxElectricBoost,
-        rechargeTime: initialRechargeTime
+        rechargeTime: initialRechargeTime,
+        autoTapActive: initialAutoTapActive,
+        totalTaps: initialTotalTaps
     });
+
+    // Sync `TotalTaps` to localStorage whenever it changes
+    useEffect(() => {
+        localStorage.setItem("totalTaps", JSON.stringify(boosters.totalTaps));
+    }, [boosters.totalTaps]);
 
     // Sync `dailyBoosters` to localStorage whenever it changes
     useEffect(() => {
@@ -102,12 +119,23 @@ const BoostersContext = ({ children }) => {
         localStorage.setItem("rechargeTime", boosters.rechargeTime.toString());
     }, [boosters.rechargeTime]);
 
+    // Sync `AutoTapActive` to localStorage whenever it changes
+    useEffect(() => {
+        localStorage.setItem("autoTapActive", boosters.autoTapActive.toString());
+    }, [boosters.autoTapActive]);
+
     const setDailyBoosters = (newBoosters) => {
         setBoosters(prev => ({
             ...prev,
             dailyBoosters: typeof newBoosters === "function" ? newBoosters(prev.dailyBoosters) : newBoosters
         }));
     };
+
+    const setTotalTaps = (taps) => {
+        setBoosters(prev => ({
+            ...prev, totalTaps: typeof taps === 'function' ? taps(prev.totalTaps) : taps,
+        }))
+    }
 
     const activateTapperBoost = () => {
         if (boosters.dailyBoosters.tapperBoost.isActive) return
@@ -199,6 +227,12 @@ const BoostersContext = ({ children }) => {
         }))
     }
 
+    const setAutoTapActive = (activate) => {
+        setBoosters(prev => ({
+            ...prev, autoTapActive: activate
+        }))
+    }
+
     const activateOtherBoosters = (effect, newLevel) => {
         console.log(`Activating booster: ${effect}, Level: ${newLevel}`);
 
@@ -223,7 +257,7 @@ const BoostersContext = ({ children }) => {
                 break;
             }
             case "auto-tap": {
-                localStorage.setItem("autoTapActive", "true");
+                setAutoTapActive(true)
                 window.dispatchEvent(new CustomEvent("autoTapActivated", { detail: { level: newLevel } }));
                 break;
             }
@@ -234,14 +268,49 @@ const BoostersContext = ({ children }) => {
     };
 
     const resetAll = () => {
-        setBoosters({
-            tapMultiplier: 1,
-            dailyBoosters: null,
-            extraBoosters: null,
-            electricBoost: 1000,
-            maxElectricBoost: 1000,
-            rechargeTime: RECHARGE_TIMES[0]
-        })
+        setDailyBoosters(null);
+        setAutoTapActive(false)
+        setExtraBoosters([])
+        setTotalTaps(0);
+        setElectricBoost(1000)
+        setMaxElectricBoost(1000)
+        setTapMultiplier(1)
+        setRechargeTime(RECHARGE_TIMES[0])
+    }
+
+    const applyAutoBotTaps = () => {
+        const lastActiveTime = parseInt(localStorage.getItem("lastActiveTime") || Date.now(), 10);
+        const now = Date.now();
+        const timeAway = (now - lastActiveTime) / 1000; // Convert ms to seconds
+
+        // Get stored values
+        const tapsPerSecond = 5 * boosters.tapMultiplier; // Example: 5 taps per second
+        const electricBoost = parseInt(localStorage.getItem("electricBoost") || "100", 10); // Get current boost
+        const maxElectricBoost = parseInt(localStorage.getItem("maxElectricBoost") || "1000", 10);
+
+        // Calculate energy regeneration
+        const regenTimeMs = boosters.rechargeTime || RECHARGE_TIMES[0]; // 1 energy restored every 3000ms
+        const energyGained = Math.floor(timeAway * 1000 / regenTimeMs); // Convert sec → ms
+
+        // Update electric boost (min ensures it doesn't exceed max)
+        const maxPotentialElectricBoosts = electricBoost + energyGained
+
+        // Check if offlineTaps is not greater than maxPossibleTaps
+        const offlineTaps = Math.min(Math.floor(timeAway * tapsPerSecond), maxPotentialElectricBoosts);
+
+        // Deduct taps from ElectricBoost
+        const newElectricBoost = Math.max(maxPotentialElectricBoosts - offlineTaps, 0);
+
+        // Save updated values
+        localStorage.setItem("electricBoost", newElectricBoost.toString());
+        localStorage.setItem("tapCount", (parseInt(localStorage.getItem("tapCount") || "0", 10) + offlineTaps).toString());
+        localStorage.setItem("lastActiveTime", now.toString()); // Update last active time
+
+        console.log(`While you were away:
+        - ${offlineTaps} taps were simulated.
+        - Energy regenerated: +${energyGained}.
+        - New Electric Boost: ${newElectricBoost}/${maxElectricBoost}.
+        `);
     }
 
     useEffect(() => {
@@ -316,6 +385,8 @@ const BoostersContext = ({ children }) => {
             electricBoost: boosters.electricBoost,
             maxElectricBoost: boosters.maxElectricBoost,
             rechargeTime: boosters.rechargeTime,
+            autoTapActive: boosters.autoTapActive,
+            totalTaps: boosters.totalTaps,
             setBoosters,
             setDailyBoosters,
             setTapMultiplier,
@@ -326,7 +397,10 @@ const BoostersContext = ({ children }) => {
             setElectricBoost,
             setMaxElectricBoost,
             setRechargeTime,
-            resetAll
+            resetAll,
+            setAutoTapActive,
+            setTotalTaps,
+            applyAutoBotTaps
         }}>
             {children}
         </BoostContext.Provider>
