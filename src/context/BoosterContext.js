@@ -233,6 +233,17 @@ const BoostersContext = ({ children }) => {
         }
     };
 
+    const resetAll = () => {
+        setBoosters({
+            tapMultiplier: 1,
+            dailyBoosters: null,
+            extraBoosters: null,
+            electricBoost: 1000,
+            maxElectricBoost: 1000,
+            rechargeTime: RECHARGE_TIMES[0]
+        })
+    }
+
     useEffect(() => {
         boosters.extraBoosters.forEach(({ title, rawLevel }) => activateOtherBoosters(title, rawLevel))
     }, [boosters.extraBoosters])
@@ -314,7 +325,8 @@ const BoostersContext = ({ children }) => {
             setExtraBoosters,
             setElectricBoost,
             setMaxElectricBoost,
-            setRechargeTime
+            setRechargeTime,
+            resetAll
         }}>
             {children}
         </BoostContext.Provider>

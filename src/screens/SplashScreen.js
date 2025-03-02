@@ -100,6 +100,15 @@ const SplashScreen = () => {
     const handleSuccessfulAuth = (authData, userInfo) => {
       localStorage.setItem("accessToken", authData.access_token);
       localStorage.setItem("tokenType", authData.token_type);
+
+      // Check if new user and adjust localstorage data accordingly
+      const oldUser = localStorage.getItem("telegramUser");
+      if (oldUser) {
+        const { telegramUserId: oldUserId } = JSON.parse(oldUser)
+        if (oldUserId !== userInfo.telegramUserId) {
+          resetAll()
+        }
+      }
       localStorage.setItem("telegramUser", JSON.stringify(userInfo));
       navigate("/dashboard");
     };
