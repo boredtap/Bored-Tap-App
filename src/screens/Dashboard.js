@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./Dashboard.css";
 import { BoostContext } from "../context/BoosterContext";
+
 // Updated Recharge times per spec (in ms) - now including all 5 levels
 const RECHARGE_TIMES = [3000, 2500, 2000, 1500, 1000, 500]; // Level 0 through 5
 
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  const { setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, setTapMultiplier } = useContext(BoostContext)
+  const { setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, setTapMultiplier, electricBoost, setElectricBoost, setMaxElectricBoost, maxElectricBoost, setRechargeTime, rechargeTime } = useContext(BoostContext)
 
   // State for Telegram user data
   const [telegramData, setTelegramData] = useState({
@@ -23,9 +24,6 @@ const Dashboard = () => {
 
   // State for streak and boost data
   const [currentStreak, setCurrentStreak] = useState(0);
-  const [electricBoost, setElectricBoost] = useState(1000);
-  const [maxElectricBoost, setMaxElectricBoost] = useState(1000); // For Multiplier extra booster
-  const [rechargeTime, setRechargeTime] = useState(RECHARGE_TIMES[0]); // Dynamic recharge time
   const [autoTapActive, setAutoTapActive] = useState(false); // Auto Bot state
 
   // State for total taps and tap effects
@@ -39,13 +37,6 @@ const Dashboard = () => {
   const autoTapInterval = useRef(null);
   const boostMultiplierActive = useRef(false);
 
-  // Load initial electric boost from localStorage
-  useEffect(() => {
-    const savedBoost = localStorage.getItem("electricBoost");
-    if (savedBoost !== null) {
-      setElectricBoost(parseInt(savedBoost, 10));
-    }
-  }, []);
 
   // Reset function
   const resetBoosters = () => {
@@ -56,11 +47,8 @@ const Dashboard = () => {
     setDailyBoosters(resetState);
 
     // Reset booster states in localStorage
-    localStorage.setItem("maxElectricBoost", "1000");
-    localStorage.setItem("electricBoost", "1000");
     localStorage.setItem("rechargeTimeIndex", "0");
     localStorage.setItem("autoTapActive", "false");
-
     setMaxElectricBoost(1000);
     setElectricBoost(1000);
     setRechargeTime(RECHARGE_TIMES[0]);
@@ -83,19 +71,6 @@ const Dashboard = () => {
   // Load saved booster states
   const loadSavedBoosterStates = useCallback(() => {
     console.log("Loading saved booster states");
-
-    // Load max electric boost
-    const savedMaxBoost = localStorage.getItem("maxElectricBoost");
-    const maxBoost = savedMaxBoost ? parseInt(savedMaxBoost, 10) : 1000;
-    console.log("Loaded max boost:", maxBoost);
-    setMaxElectricBoost(maxBoost);
-
-    // Load recharge time
-    const savedRechargeIndex = localStorage.getItem("rechargeTimeIndex");
-    const rechargeIndex = savedRechargeIndex ? parseInt(savedRechargeIndex, 10) : 0;
-    const newRechargeTime = RECHARGE_TIMES[Math.min(rechargeIndex, RECHARGE_TIMES.length - 1)];
-    console.log("Loaded recharge time:", newRechargeTime, "ms (index", rechargeIndex, ")");
-    setRechargeTime(newRechargeTime);
 
     // Load auto tap state
     const savedAutoTap = localStorage.getItem("autoTapActive");
@@ -183,7 +158,6 @@ const Dashboard = () => {
           tapCountSinceLastUpdate.current += tapMultiplier;
           setElectricBoost((prev) => {
             const newBoost = Math.max(prev - 1, 0);
-            localStorage.setItem("electricBoost", newBoost.toString());
             return newBoost;
           });
           // Update last tap time to prevent immediate recharge during auto tapping
@@ -257,7 +231,6 @@ const Dashboard = () => {
           rechargeInterval.current = setInterval(() => {
             setElectricBoost((prev) => {
               const newBoost = Math.min(prev + 1, maxElectricBoost);
-              localStorage.setItem("electricBoost", newBoost.toString());
               if (newBoost === maxElectricBoost) {
                 clearInterval(rechargeInterval.current);
                 rechargeInterval.current = null;
@@ -287,7 +260,6 @@ const Dashboard = () => {
     const handleFullEnergyClaimed = () => {
       console.log("Full Energy Claimed Event - Refilling to", maxElectricBoost);
       setElectricBoost(maxElectricBoost);
-      localStorage.setItem("electricBoost", maxElectricBoost.toString());
     };
 
     window.addEventListener("fullEnergyClaimed", handleFullEnergyClaimed);
@@ -316,29 +288,11 @@ const Dashboard = () => {
     // Extra Booster: Multiplier (max energy increase)
     const handleMultiplierUpgraded = (event) => {
       console.log("Multiplier Upgraded Event:", event.detail);
-      const newLevel = event.detail?.level || 1;
-      // Level 1: 1500, Level 2: 2000, Level 3: 2500, etc.
-      const newMax = 1000 + newLevel * 500;
-
-      console.log("Setting new max electric boost:", newMax);
-      setMaxElectricBoost(newMax);
-
-      // Save to localStorage
-      localStorage.setItem("maxElectricBoost", newMax.toString());
     };
 
     // Extra Booster: Recharge Speed
     const handleRechargeSpeedUpgraded = (event) => {
       console.log("Recharge Speed Upgraded Event:", event.detail);
-      const newLevel = event.detail?.level || 1;
-      const rechargeIndex = Math.min(newLevel, RECHARGE_TIMES.length - 1);
-      const newRechargeTime = RECHARGE_TIMES[rechargeIndex];
-
-      console.log("Setting new recharge time:", newRechargeTime);
-      setRechargeTime(newRechargeTime);
-
-      // Save to localStorage
-      localStorage.setItem("rechargeTimeIndex", rechargeIndex.toString());
 
       // Reset recharge interval with new timing
       if (rechargeInterval.current) {
@@ -394,7 +348,6 @@ const Dashboard = () => {
 
     setElectricBoost((prev) => {
       const newBoost = Math.max(prev - 1, 0);
-      localStorage.setItem("electricBoost", newBoost.toString());
       return newBoost;
     });
 
