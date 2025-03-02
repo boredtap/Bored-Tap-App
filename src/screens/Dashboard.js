@@ -437,12 +437,6 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      <div className="test-section">
-            <p>{tapMultiplier}</p>
-            <button onClick={testClick}>
-              Change
-            </button>
-          </div>
       <div className="profile1-streak-section">
         <div className="profile1-section" onClick={() => navigate("/profile-screen")}>
           <img src={telegramData.image_url} alt="Profile" className="profile1-picture" />
@@ -497,6 +491,13 @@ const Dashboard = () => {
         <button className="boost-btn" onClick={() => navigate("/boost-screen")}>
           <img src={`${process.env.PUBLIC_URL}/boostx2.png`} alt="Boost Icon" className="boost-icon" />
           Boost
+        </button>
+      </div>
+      <div className="test-section">
+        <p>Test Section</p>
+        <p>{tapMultiplier}</p>
+        <button onClick={testClick}>
+          Change
         </button>
       </div>
       <Navigation />
