@@ -173,14 +173,14 @@ const BoostersContext = ({ children }) => {
                 window.dispatchEvent(new CustomEvent("multiplierUpgraded", { detail: { level: newLevel, maxEnergy: newMaxEnergy } }));
                 break;
             }
-            case "recharge": {
+            case "recharging speed": {
                 const rechargeIndex = Math.min(newLevel, RECHARGE_TIMES.length - 1);
                 const newRechargeTime = RECHARGE_TIMES[rechargeIndex];
                 setRechargeTime(newRechargeTime)
                 window.dispatchEvent(new CustomEvent("rechargeSpeedUpgraded", { detail: { level: newLevel } }));
                 break;
             }
-            case "auto-tap": {
+            case "Auto-bot Tapping": {
                 setAutoTapActive(true)
                 window.dispatchEvent(new CustomEvent("autoTapActivated", { detail: { level: newLevel } }));
                 break;
@@ -205,13 +205,13 @@ const BoostersContext = ({ children }) => {
                 setMaxElectricBoost(newMaxEnergy);
                 break;
             }
-            case "recharge": {
+            case "recharging speed": {
                 const rechargeIndex = Math.min(newLevel, RECHARGE_TIMES.length - 1);
                 const newRechargeTime = RECHARGE_TIMES[rechargeIndex];
                 setRechargeTime(newRechargeTime)
                 break;
             }
-            case "auto-tap": {
+            case "Auto-bot Tapping": {
                 setAutoTapActive(true)
                 break;
             }

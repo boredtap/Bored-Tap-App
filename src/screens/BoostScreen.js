@@ -37,7 +37,6 @@ const BoostScreen = () => {
     localStorage.removeItem("extraBoosters");
     // Use consistent naming for localStorage keys
     setElectricBoost(1000)
-    localStorage.setItem("rechargeTimeIndex", "0");
     setAutoTapActive(false)
     localStorage.removeItem("lastTapTime");
     localStorage.removeItem("telegram_user_id"); // Clear ID to force full reset on next login

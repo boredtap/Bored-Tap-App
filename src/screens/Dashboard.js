@@ -45,7 +45,6 @@ const Dashboard = () => {
     setDailyBoosters(resetState);
 
     // Reset booster states in localStorage
-    localStorage.setItem("rechargeTimeIndex", "0");
     setAutoTapActive(false)
     setMaxElectricBoost(1000);
     setElectricBoost(1000);
@@ -89,7 +88,9 @@ const Dashboard = () => {
         } else {
           setProfile(data);
           console.log('here', data.total_coins)
-          //setTotalTaps(data.total_coins || 0);
+          if (data.total_coins){
+            setTotalTaps(data.total_coins)
+          }
           setCurrentStreak(data.streak?.current_streak || 0);
 
           // Load all saved booster states
