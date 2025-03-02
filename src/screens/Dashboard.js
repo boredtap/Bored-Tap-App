@@ -2,15 +2,14 @@ import React, { useState, useEffect, useCallback, useRef, useContext } from "rea
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./Dashboard.css";
-import { DailyBoostersContext } from "../context/BoosterContext";
-
+import { BoostContext } from "../context/BoosterContext";
 // Updated Recharge times per spec (in ms) - now including all 5 levels
 const RECHARGE_TIMES = [3000, 2500, 2000, 1500, 1000, 500]; // Level 0 through 5
 
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  const { setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, setTapMultiplier } = useContext(DailyBoostersContext)
+  const { setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, setTapMultiplier } = useContext(BoostContext)
 
   // State for Telegram user data
   const [telegramData, setTelegramData] = useState({
@@ -417,13 +416,20 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
+      <div className="test-section">
+        <p>Test Section</p>
+        <p>{tapMultiplier}</p>
+        <button onClick={testClick}>
+          Change
+        </button>
+      </div>
       <div className="profile1-streak-section">
         <div className="profile1-section" onClick={() => navigate("/profile-screen")}>
           <img src={telegramData.image_url} alt="Profile" className="profile1-picture" />
           <div className="profile1-info">
             <span className="profile1-username">{telegramData.username}</span>
             <span className="profile1-level">
-              Lv. {tapMultiplier} {profile.level}. {profile.level_name}
+              Lv. {profile.level}. {profile.level_name}
             </span>
           </div>
         </div>

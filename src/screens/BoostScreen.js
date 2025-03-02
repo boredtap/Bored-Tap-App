@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useContext } from "react";
 import Navigation from "../components/Navigation";
 import "./BoostScreen.css";
-import { DailyBoostersContext } from "../context/BoosterContext";
+import { BoostContext } from "../context/BoosterContext";
 
 const BOOST_DURATION = 20000; // 20 seconds for Tapper Boost
 const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
@@ -12,7 +12,7 @@ const BoostScreen = () => {
   const [boostersData, setBoostersData] = useState({ dailyBoosters: [], extraBoosters: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy } = useContext(DailyBoostersContext)
+  const { setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy } = useContext(BoostContext)
 
   // const [dailyBoosters, setDailyBoosters] = useState(() => {
   //   const savedBoosters = localStorage.getItem("dailyBoosters");
