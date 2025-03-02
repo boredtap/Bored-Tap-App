@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import "./SplashScreen.css";
+import { BoostContext } from "../context/BoosterContext";
 
 const SplashScreen = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { resetAll } = useContext(BoostContext)
 
   useEffect(() => {
     const initializeAuth = async () => {
