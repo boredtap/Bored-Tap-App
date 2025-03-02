@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Navigation from "../components/Navigation";
 import "./RewardScreen.css";
+import { BoostContext } from "../context/BoosterContext";
 
 const RewardScreen = () => {
   const [activeTab, setActiveTab] = useState("on_going");
-  const [totalTaps, setTotalTaps] = useState(0);
+  const { totalTaps } = useContext(BoostContext)
   const [rewardsData, setRewardsData] = useState({ on_going: [], claimed: [] });
   const [rewardImages, setRewardImages] = useState({});
   const [loading, setLoading] = useState(true);
@@ -33,7 +34,6 @@ const RewardScreen = () => {
         }
 
         const profileData = await profileResponse.json();
-        setTotalTaps(profileData.total_coins);
 
         const rewardTypes = ["on_going", "claimed"];
         const fetchedRewards = {};
@@ -150,7 +150,7 @@ const RewardScreen = () => {
           <p>Your Total Taps:</p>
           <div className="taps-display">
             <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Logo" className="taps-logo" />
-            <span className="taps-number">{totalTaps.toLocaleString()}</span>
+            <span className="taps-number">{totalTaps?.toLocaleString() ?? 0}</span>
           </div>
         </div>
 

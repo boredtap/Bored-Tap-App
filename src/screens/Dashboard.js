@@ -89,7 +89,7 @@ const Dashboard = () => {
         } else {
           setProfile(data);
           console.log('here', data.total_coins)
-          setTotalTaps(data.total_coins || 0);
+          //setTotalTaps(data.total_coins || 0);
           setCurrentStreak(data.streak?.current_streak || 0);
 
           // Load all saved booster states
@@ -315,9 +315,24 @@ const Dashboard = () => {
     }, 1000);
   };
 
-  const testClick = () => {
-    setTapMultiplier(tapMultiplier == 1 ? 2 : 1)
-  }
+  useEffect(() => {
+    const fetchData = async () => {
+      const token = localStorage.getItem("accessToken");
+      const extraBoostersResponse = await fetch("https://bt-coins.onrender.com/user/boost/extra_boosters", {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      });
+      if (!extraBoostersResponse.ok) throw new Error("Extra boosters fetch failed");
+      const extraBoostersData = await extraBoostersResponse.json();
+      console.log('Splash Screen', extraBoostersData)
+    }
+
+    fetchData()
+  }, [])
+
+  useEffect(() => {
+    console.log("hERE", electricBoost)
+  }, [electricBoost])
 
   return (
     <div className="dashboard-container">
@@ -356,7 +371,7 @@ const Dashboard = () => {
         <p className="total-taps-text">Your Total Taps:</p>
         <div className="total-taps-count">
           <img className="tap-logo-small" src={`${process.env.PUBLIC_URL}/logo.png`} alt="Small Icon" />
-          {totalTaps && <span>{totalTaps.toLocaleString()}</span>}
+          <span>{totalTaps?.toLocaleString() ?? 0}</span>
         </div>
         <div className="big-tap-icon" onTouchStart={handleTap} onMouseDown={handleTap}>
           <img className="tap-logo-big" src={`${process.env.PUBLIC_URL}/logo.png`} alt="Big Tap Icon" />

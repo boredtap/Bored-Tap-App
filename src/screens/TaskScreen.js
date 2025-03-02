@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Navigation from "../components/Navigation";
 import "./TaskScreen.css";
+import { BoostContext } from "../context/BoosterContext";
 
 // TaskScreen component displays user's tasks across categories with claim functionality
 const TaskScreen = () => {
+  const { totalTaps } = useContext(BoostContext)
   const [activeTab, setActiveTab] = useState("In-Game"); // Default active tab
   const [tasksData, setTasksData] = useState([]); // Holds tasks data for the active tab
-  const [totalTaps, setTotalTaps] = useState(0); // User's total taps from profile
+
   const [loading, setLoading] = useState(true); // Loading state for data fetching
   const [showOverlay, setShowOverlay] = useState(false); // Controls overlay visibility
   const [selectedTask, setSelectedTask] = useState(null); // Tracks the task being claimed
@@ -44,9 +46,8 @@ const TaskScreen = () => {
       });
 
       if (!profileResponse.ok) throw new Error(`Profile fetch failed: ${profileResponse.status}`);
-      
+
       const profileData = await profileResponse.json();
-      setTotalTaps(profileData.total_coins || 0);
 
       // Determine the URL based on active tab
       let url = `https://bt-coins.onrender.com/user/tasks/my_tasks?task_type=${taskType.toLowerCase()}`;
@@ -126,7 +127,7 @@ const TaskScreen = () => {
           <p>Your Total Taps:</p>
           <div className="taps-display">
             <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Logo" className="taps-logo" />
-            <span className="taps-number">{totalTaps.toLocaleString()}</span>
+            <span className="taps-number">{totalTaps?.toLocaleString() ?? 0}</span>
           </div>
           <p className="tap-info">Earn BT-coin rewards by completing simple tasks</p>
         </div>

@@ -194,7 +194,7 @@ const ChallengeScreen = () => {
               alt="Logo"
               className="taps-logo"
             />
-            <span className="taps-number">{totalTaps.toLocaleString()}</span>
+            <span className="taps-number">{totalTaps?.toLocaleString() ?? 0}</span>
           </div>
           <p className="tap-rewards">Earn BT-coin rewards by completing challenges.</p>
         </div>

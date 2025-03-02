@@ -5,124 +5,46 @@ const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
 // Updated Recharge times per spec (in ms) - now including all 5 levels
 const RECHARGE_TIMES = [3000, 2500, 2000, 1500, 1000, 500]; // Level 0 through 5
 
+
+const getFromStorage = (key, defaultValue) => {
+    try {
+        const saved = localStorage.getItem(key);
+        if (saved === null) return defaultValue;
+        return JSON.parse(saved);
+    } catch (error) {
+        console.error(`Error loading ${key} from localStorage`, error);
+        return defaultValue;
+    }
+};
+
+
 // Create context without a default value (avoids unnecessary object creation)
-export const BoostContext = createContext({
-    tapMultiplier: 1,
-    dailyBoosters: null,
-    extraBoosters: null,
-    electricBoost: 1000,
-    maxElectricBoost: 1000,
-    rechargeTime: RECHARGE_TIMES[0],
-    autoTapActive: false,
-    totalTaps: 0
-});
+export const BoostContext = createContext(null);
 
 const BoostersContext = ({ children }) => {
-    // Retrieve boosters from localStorage and handle potential errors
-    let initialBoosters;
-    let initialTapMultiplier = 1;
-    let initialExtraBoosters;
-    let initialElectricBoost = 1000
-    let initialMaxElectricBoost = 1000
-    let initialRechargeTime = RECHARGE_TIMES[0]
-    let initialAutoTapActive = false
-    let initialTotalTaps = 0
-
-    try {
-        const savedTotalTaps = localStorage.getItem("totalTaps");
-        initialTotalTaps = savedTotalTaps ? JSON.parse(savedTotalTaps) : 0;
-
-        const savedBoosters = localStorage.getItem("dailyBoosters");
-        initialBoosters = savedBoosters ? JSON.parse(savedBoosters) : null;
-
-        const savedExtraBoosters = localStorage.getItem("extraBoosters");
-        initialExtraBoosters = savedExtraBoosters ? JSON.parse(savedExtraBoosters) : null;
-
-        const savedElectricBoost = localStorage.getItem("electricBoost")
-        initialElectricBoost = savedElectricBoost ? JSON.parse(savedElectricBoost) : 1000;
-
-        const savedMaxElectricBoost = localStorage.getItem("maxElectricBoost")
-        initialMaxElectricBoost = savedMaxElectricBoost ? JSON.parse(savedMaxElectricBoost) : 1000;
-
-        const savedRechargeTime = localStorage.getItem("rechargeTime")
-        initialRechargeTime = savedRechargeTime ? JSON.parse(savedRechargeTime) : RECHARGE_TIMES[0];
-
-        const savedAutoTapActive = localStorage.getItem("autoTapActive")
-        initialAutoTapActive = savedAutoTapActive ? JSON.parse(savedAutoTapActive) : false;
-
-        const savedMultiplier = localStorage.getItem("tapMultiplier");
-        if (savedMultiplier) {
-            initialTapMultiplier = parseInt(savedMultiplier, 10);
-        }
-
-    } catch (error) {
-        console.error("Error parsing dailyBoosters from localStorage:", error);
-        initialBoosters = null; // Handle corrupted data
-    }
-
-    // Provide default boosters if no valid data is found
-    if (!initialBoosters) {
-        initialBoosters = {
-            tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
-            fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
-        };
-    }
-
-    if (!initialExtraBoosters) {
-        initialExtraBoosters = []
-    }
-
-    // State for boosters
-    const [boosters, setBoosters] = useState({
-        tapMultiplier: initialTapMultiplier,
-        dailyBoosters: initialBoosters,
-        extraBoosters: initialExtraBoosters,
-        electricBoost: initialElectricBoost,
-        maxElectricBoost: initialMaxElectricBoost,
-        rechargeTime: initialRechargeTime,
-        autoTapActive: initialAutoTapActive,
-        totalTaps: initialTotalTaps
+    const initialBoosters = getFromStorage("dailyBoosters", {
+        tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
+        fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
     });
 
-    // Sync `TotalTaps` to localStorage whenever it changes
-    useEffect(() => {
-        localStorage.setItem("totalTaps", JSON.stringify(boosters.totalTaps));
-    }, [boosters.totalTaps]);
+    const initialState = {
+        tapMultiplier: getFromStorage("tapMultiplier", 1),
+        dailyBoosters: initialBoosters,
+        extraBoosters: getFromStorage("extraBoosters", []),
+        electricBoost: getFromStorage("electricBoost", 1000),
+        maxElectricBoost: getFromStorage("maxElectricBoost", 1000),
+        rechargeTime: getFromStorage("rechargeTime", RECHARGE_TIMES[0]),
+        autoTapActive: getFromStorage("autoTapActive", false),
+        totalTaps: getFromStorage("totalTaps", 0),
+    };
 
-    // Sync `dailyBoosters` to localStorage whenever it changes
-    useEffect(() => {
-        localStorage.setItem("dailyBoosters", JSON.stringify(boosters.dailyBoosters));
-    }, [boosters.dailyBoosters]);
+    const [boosters, setBoosters] = useState(initialState);
 
-    // Sync `extraBoosters` to localStorage whenever it changes
     useEffect(() => {
-        localStorage.setItem("extraBoosters", JSON.stringify(boosters.extraBoosters));
-    }, [boosters.extraBoosters]);
-
-    // Sync `tapMultiplier` to localStorage whenever it changes
-    useEffect(() => {
-        localStorage.setItem("tapMultiplier", boosters.tapMultiplier.toString());
-    }, [boosters.tapMultiplier]);
-
-    // Sync `ElectricMultiplier` to localStorage whenever it changes
-    useEffect(() => {
-        localStorage.setItem("electricBoost", boosters.electricBoost.toString());
-    }, [boosters.electricBoost]);
-
-    // Sync `MaxElectricBoost` to localStorage whenever it changes
-    useEffect(() => {
-        localStorage.setItem("maxElectricBoost", boosters.maxElectricBoost.toString());
-    }, [boosters.maxElectricBoost]);
-
-    // Sync `RechargeTime` to localStorage whenever it changes
-    useEffect(() => {
-        localStorage.setItem("rechargeTime", boosters.rechargeTime.toString());
-    }, [boosters.rechargeTime]);
-
-    // Sync `AutoTapActive` to localStorage whenever it changes
-    useEffect(() => {
-        localStorage.setItem("autoTapActive", boosters.autoTapActive.toString());
-    }, [boosters.autoTapActive]);
+        Object.keys(boosters).forEach((key) => {
+            localStorage.setItem(key, JSON.stringify(boosters[key]));
+        });
+    }, [boosters]);
 
     const setDailyBoosters = (newBoosters) => {
         setBoosters(prev => ({
@@ -144,6 +66,7 @@ const BoostersContext = ({ children }) => {
             const now = Date.now();
 
             setBoosters(prev => ({
+                ...prev,
                 tapMultiplier: prev.tapMultiplier * 2,
                 dailyBoosters: {
                     ...prev.dailyBoosters,
@@ -158,6 +81,7 @@ const BoostersContext = ({ children }) => {
 
             setTimeout(() => {
                 setBoosters(prev => ({
+                    ...prev,
                     tapMultiplier: Math.round(prev.tapMultiplier / 2),
                     dailyBoosters: {
                         ...prev.dailyBoosters,
@@ -267,19 +191,54 @@ const BoostersContext = ({ children }) => {
         }
     };
 
+    const activateOtherBoostersOnLoad = (effect, newLevel) => {
+        console.log(`Activating booster (On Load): ${effect}, Level: ${newLevel}`);
+
+        switch (effect) {
+            case "boost": {
+                const newMultiplier = 1 + newLevel;
+                setTapMultiplier(newMultiplier);
+                break;
+            }
+            case "multiplier": {
+                const newMaxEnergy = 1000 + newLevel * 500;
+                setMaxElectricBoost(newMaxEnergy);
+                break;
+            }
+            case "recharge": {
+                const rechargeIndex = Math.min(newLevel, RECHARGE_TIMES.length - 1);
+                const newRechargeTime = RECHARGE_TIMES[rechargeIndex];
+                setRechargeTime(newRechargeTime)
+                break;
+            }
+            case "auto-tap": {
+                setAutoTapActive(true)
+                break;
+            }
+            default:
+                console.warn(`Unknown booster effect: ${effect}`);
+        }
+    };
+
+    const updateBoosters = (updates) => {
+        setBoosters((prev) => ({ ...prev, ...updates }));
+    };
+
     const resetAll = () => {
-        setDailyBoosters({
-            tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
-            fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
+        updateBoosters({
+            tapMultiplier: 1,
+            dailyBoosters: {
+                tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
+                fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
+            },
+            extraBoosters: [],
+            electricBoost: 1000,
+            maxElectricBoost: 1000,
+            rechargeTime: RECHARGE_TIMES[0],
+            autoTapActive: false,
+            totalTaps: 0,
         });
-        setAutoTapActive(false)
-        setExtraBoosters([])
-        setTotalTaps(0);
-        setElectricBoost(1000)
-        setMaxElectricBoost(1000)
-        setTapMultiplier(1)
-        setRechargeTime(RECHARGE_TIMES[0])
-    }
+    };
 
     const applyAutoBotTaps = () => {
         const lastActiveTime = parseInt(localStorage.getItem("lastActiveTime") || Date.now(), 10);
@@ -305,9 +264,9 @@ const BoostersContext = ({ children }) => {
         const newElectricBoost = Math.max(maxPotentialElectricBoosts - offlineTaps, 0);
 
         // Save updated values
-        localStorage.setItem("electricBoost", newElectricBoost.toString());
-        localStorage.setItem("tapCount", (parseInt(localStorage.getItem("tapCount") || "0", 10) + offlineTaps).toString());
-        localStorage.setItem("lastActiveTime", now.toString()); // Update last active time
+        localStorage.setItem("electricBoost", JSON.stringify(newElectricBoost));
+        localStorage.setItem("tapCount", JSON.stringify(parseInt(localStorage.getItem("tapCount") || "0", 10) + offlineTaps));
+        localStorage.setItem("lastActiveTime", JSON.stringify(now)); // Update last active time
 
         console.log(`While you were away:
         - ${offlineTaps} taps were simulated.
@@ -317,7 +276,9 @@ const BoostersContext = ({ children }) => {
     }
 
     useEffect(() => {
-        boosters.extraBoosters.forEach(({ title, rawLevel }) => activateOtherBoosters(title, rawLevel))
+        if (boosters.extraBoosters?.length) {
+            boosters.extraBoosters.forEach(({ title, rawLevel }) => activateOtherBoostersOnLoad(title, rawLevel))
+        }
     }, [boosters.extraBoosters])
 
 
@@ -377,8 +338,14 @@ const BoostersContext = ({ children }) => {
             }
         }
 
-        boosters.extraBoosters.forEach(({ title, rawLevel }) => activateOtherBoosters(title, rawLevel))
+        if (boosters.extraBoosters?.length) {
+            boosters.extraBoosters.forEach(({ title, rawLevel }) => activateOtherBoostersOnLoad(title, rawLevel))
+        }
     }, []); // Runs only on mount
+
+    useEffect(() => {
+        console.log(boosters)
+    }, [boosters])
 
     return (
         <BoostContext.Provider value={{

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useContext } from "react";
 import Navigation from "../components/Navigation";
 import "./BoostScreen.css";
 import { BoostContext } from "../context/BoosterContext";
+import BoosterTimer from "../components/BoosterTimer";
 
 const BOOST_DURATION = 20000; // 20 seconds for Tapper Boost
 const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
@@ -60,11 +61,11 @@ const BoostScreen = () => {
       const profileData = await profileResponse.json();
 
       // Detect account deletion by checking if stats are reset to initial state
-      if (profileData.total_coins === 0 && profileData.level === 1) {
-        resetAllLocalData(); // Wipe all local storage and reset state
-      } else {
-        setTotalTaps(profileData.total_coins || 0);
-      }
+      // if (profileData.total_coins === 0 && profileData.level === 1) {
+      //   resetAllLocalData(); // Wipe all local storage and reset state
+      // } else {
+      //   setTotalTaps(profileData.total_coins || 0);
+      // }
 
       const extraBoostersResponse = await fetch("https://bt-coins.onrender.com/user/boost/extra_boosters", {
         method: "GET",
@@ -84,7 +85,7 @@ const BoostScreen = () => {
         actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
         icon: `${process.env.PUBLIC_URL}/extra-booster-icon.png`,
         imageId: booster.image_id,
-        rawLevel: booster.level === "-" ? 0 : parseInt(booster.level, 10),
+        rawLevel: booster.level === "-" ? 0 : parseInt(booster.level, 10) - 1,
         effect: booster.effect, // e.g., "boost", "multiplier", "recharge", "auto-tap"
       }));
 
@@ -104,6 +105,7 @@ const BoostScreen = () => {
   const handleUpgradeBoost = async (boosterId) => {
     try {
       const token = localStorage.getItem("accessToken");
+      console.log("I got here, therefore i updated boosters")
       const response = await fetch(`https://bt-coins.onrender.com/user/boost/upgrade/${boosterId}`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -139,25 +141,6 @@ const BoostScreen = () => {
     }
 
     handleOverlayClose();
-  };
-
-  const renderTimer = (boosterType) => {
-    const booster = dailyBoosters[boosterType];
-    if (boosterType === "tapperBoost" && booster.isActive) {
-      const remaining = Math.max(0, (booster.endTime - Date.now()) / 1000);
-      return `Active: ${Math.floor(remaining)}s`;
-    } else if (booster.usesLeft > 0) {
-      return `${booster.usesLeft}/3 uses left`;
-    } else if (booster.resetTime) {
-      const resetIn = Math.max(0, (booster.resetTime - Date.now()) / 1000);
-      const hours = Math.floor(resetIn / 3600);
-      const minutes = Math.floor((resetIn % 3600) / 60);
-      const seconds = Math.floor(resetIn % 60);
-      return `0/3 ${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds
-        .toString()
-        .padStart(2, "0")}`;
-    }
-    return "0/3";
   };
 
   const renderOverlay = () => {
@@ -207,7 +190,7 @@ const BoostScreen = () => {
           <p>Your Total Taps:</p>
           <div className="taps-display">
             <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Taps Icon" className="taps-icon" />
-            <span className="total-taps-value">{totalTaps.toLocaleString()}</span>
+            <span className="total-taps-value">{totalTaps?.toLocaleString() ?? 0}</span>
           </div>
           <p className="bt-boost-info">How BT-boosters work?</p>
         </div>
@@ -227,7 +210,6 @@ const BoostScreen = () => {
                     title: "Tapper Boost",
                     icon: `${process.env.PUBLIC_URL}/tapperboost.png`,
                     usesLeft: dailyBoosters.tapperBoost.usesLeft,
-                    timer: renderTimer("tapperBoost"),
                     isActive: dailyBoosters.tapperBoost.isActive,
                   },
                   {
@@ -235,7 +217,6 @@ const BoostScreen = () => {
                     title: "Full Energy",
                     icon: `${process.env.PUBLIC_URL}/electric-icon.png`,
                     usesLeft: dailyBoosters.fullEnergy.usesLeft,
-                    timer: renderTimer("fullEnergy"),
                     isActive: dailyBoosters.fullEnergy.isActive,
                   },
                 ].map((booster) => (
@@ -261,7 +242,7 @@ const BoostScreen = () => {
                     <img src={booster.icon} alt={booster.title} className="booster-icon" />
                     <div className="booster-info">
                       <p className="booster-title">{booster.title}</p>
-                      <p className="booster-value">{booster.timer}</p>
+                      <BoosterTimer boosterType={booster.type} dailyBoosters={dailyBoosters} />
                     </div>
                   </div>
                 ))}
@@ -270,7 +251,7 @@ const BoostScreen = () => {
 
             <div className="extra-boosters-section">
               <p className="extra-boosters-title">Extra Boosters:</p>
-              <div className="extra-boosters-container">
+              {boostersData?.length && boostersData.length > 0 ? <div className="extra-boosters-container">
                 {boostersData.map((booster) => (
                   <div
                     className="extra-booster-card"
@@ -306,7 +287,7 @@ const BoostScreen = () => {
                     <img src={booster.actionIcon} alt="Action Icon" className="action-icon" />
                   </div>
                 ))}
-              </div>
+              </div> : <div className="extra-boosters-container"></div>}
             </div>
           </>
         )}
