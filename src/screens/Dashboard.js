@@ -107,7 +107,7 @@ const Dashboard = () => {
     // preserved values, particularly after Full Energy booster use
 
     // Return the loaded base multiplier for proper tap multiplier calculation
-    return baseMultiplier;
+    //return baseMultiplier;
   }, []);
 
   // Fetch profile on mount
@@ -136,7 +136,7 @@ const Dashboard = () => {
           setCurrentStreak(data.streak?.current_streak || 0);
 
           // Load all saved booster states
-          const baseMultiplier = loadSavedBoosterStates();
+          //const baseMultiplier = loadSavedBoosterStates();
 
           // // Set initial tap multiplier based on base multiplier
           // setTapMultiplier(baseMultiplier);
@@ -180,7 +180,7 @@ const Dashboard = () => {
         if (electricBoost > 0) {
           // Use current correct base multiplier for auto-tapping
           setTotalTaps((prev) => prev + tapMultiplier);
-          tapCountSinceLastUpdate.current += currentBaseTap;
+          tapCountSinceLastUpdate.current += tapMultiplier;
           setElectricBoost((prev) => {
             const newBoost = Math.max(prev - 1, 0);
             localStorage.setItem("electricBoost", newBoost.toString());
@@ -413,6 +413,10 @@ const Dashboard = () => {
       setTapEffects((prev) => prev.filter((effect) => effect.id !== newTapEffect.id));
     }, 1000);
   };
+
+  const testClick = () => {
+    setTapMultiplier(2)
+  }
 
   return (
     <div className="dashboard-container">
