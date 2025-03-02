@@ -1,13 +1,3 @@
-.test-section {
-  background: black;
-  color: white;
-  z-index: 100;
-  height: 50vh;
-  width: 50vw;
-  position: fixed;
-  top: 20;
-}
-
 /* Dashboard Container */
 .dashboard-container {
   background-color: #000;

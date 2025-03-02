@@ -378,7 +378,7 @@ const Dashboard = () => {
 
   // Tap handling function
   const handleTap = (event) => {
-    event.preventDefault();
+    //event.preventDefault();
     if (electricBoost <= 0) return;
 
     if (rechargeInterval.current) {
@@ -415,18 +415,11 @@ const Dashboard = () => {
   };
 
   const testClick = () => {
-    setTapMultiplier(2)
+    setTapMultiplier(tapMultiplier == 1 ? 2 : 1)
   }
 
   return (
     <div className="dashboard-container">
-      <div className="test-section">
-        <p>Test Section</p>
-        <p>{tapMultiplier}</p>
-        <button onClick={testClick}>
-          Change
-        </button>
-      </div>
       <div className="profile1-streak-section">
         <div className="profile1-section" onClick={() => navigate("/profile-screen")}>
           <img src={telegramData.image_url} alt="Profile" className="profile1-picture" />
