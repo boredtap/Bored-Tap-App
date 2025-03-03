@@ -137,7 +137,9 @@ def upgrade_extra_boost(extra_boost_id: str, telegram_user_id: str):
         }
         booster_name = booster_names[ebooster_name]
 
-
+        if user["extra_boost"][booster_name] == 5:
+            raise HTTPException(status_code=400, detail="You have reached the maximum level for this booster.")
+        
         update = user_collection.update_one(
             {"telegram_user_id": telegram_user_id},
             {
