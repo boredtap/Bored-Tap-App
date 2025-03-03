@@ -12,8 +12,8 @@ class CreateClan(BaseModel):
 class ClanResponse(BaseModel):
     id: str
     name: str
-    rank: int
-    total_coin: int
+    rank: str
+    total_coins: int
     image_id: str
 
 

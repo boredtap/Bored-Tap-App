@@ -120,7 +120,6 @@ def create_clan(creator: str, clan: CreateClan):
     }
 
 
-
 # ----------------------------------- JOIN CLAN ------------------------------------- #
 def join_clan(telegram_user_id: str, clan_id: str):
     clan = clans_collection.find_one({"_id": ObjectId(clan_id)})
@@ -141,6 +140,7 @@ def join_clan(telegram_user_id: str, clan_id: str):
     if clan["status"] == "active":
         clan_name = clan["name"]
 
+        # update user profile
         update_user = user_collection.update_one(
             {"telegram_user_id": telegram_user_id},
             {
@@ -153,10 +153,35 @@ def join_clan(telegram_user_id: str, clan_id: str):
             }
         )
 
-        if update_user.modified_count > 0:
+        # increment clan member count
+        update_clan_member_count = clans_collection.update_one(
+            {"_id": ObjectId(clan_id)},
+            {
+                "$inc": {
+                    "members": 1
+                }
+            }
+        )
+
+        if update_user.modified_count > 0 and update_clan_member_count.modified_count > 0:
             return {
                 "status": True, "message": "Joined clan successfully"
             }
+
+
+# --------------------------------- MY CLAN ---------------------------------- #
+def all_clans():
+    clans = clans_collection.find().sort("total_coins", -1)
+
+    for clan in clans:
+        if clan["status"] == "active":
+            yield ClanResponse(
+                id=str(clan["_id"]),
+                name=clan["name"],
+                rank=f"#{clan['rank']}",
+                image_id=clan["image_id"],
+                total_coins=clan["total_coins"]
+            )
 
 
 # --------------------------------- MY CLAN ---------------------------------- #
@@ -192,7 +217,7 @@ def top_clans():
             yield ClanResponse(
                     id=str(clan["_id"]),
                     name=clan["name"],
-                    rank=clan["rank"],
+                    rank=f"#{clan['rank']}",
                     total_coins=clan["total_coins"],
                     image_id=clan["image_id"]
                 )

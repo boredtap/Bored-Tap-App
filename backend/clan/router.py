@@ -1,3 +1,4 @@
+import re
 from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
@@ -5,8 +6,9 @@ from clan.schemas import CreateClan, ClanSearchResponse
 from user_reg_and_prof_mngmnt.user_authentication import get_current_user
 from clan.dependencies import (
     create_clan as create_clan_func,
-    top_clans as top_clans_func,
     join_clan as join_clan_func,
+    all_clans as all_clans_func,
+    top_clans as top_clans_func,
     my_clan as my_clan_func,
 )
 from database_connection import clans_collection, user_collection
@@ -30,6 +32,14 @@ async def create_clan(
     response = create_clan_func(telegram_user_id, clan)
 
     return response
+
+
+# ----------------------------- ALL CLANS ------------------------------ #
+@user_clan_router.get("/all_clans")
+async def all_clans():
+    all_active_clans = all_clans_func()
+
+    return all_active_clans
 
 
 # ----------------------------- TOP CLANS ------------------------------ #
@@ -72,8 +82,8 @@ async def search_clans(
                 ClanSearchResponse(
                     id=str(clan["_id"]),
                     name=clan["name"],
-                    rank=clan["rank"],
-                    total_coin=clan["total_coins"],
+                    rank=f"#{clan['rank']}",
+                    total_coins=clan["total_coins"],
                     image_id=clan["image_id"],
                     members=clan["members"]
                 ).model_dump_json(),
@@ -100,8 +110,20 @@ async def my_clan(telegram_user_id: Annotated[str, Depends(get_current_user)]):
     return clan
 
 
+# ----------------------------- INVITE MEMBERS TO CLAN ------------------------------ #
+@user_clan_router.post("/invite_members", deprecated=True)
+async def invite_members_to_clan(telegram_user_id: Annotated[str, Depends(get_current_user)]):
+    pass
+
+
+# ----------------------------- EXIT CLAN ------------------------------ #
+@user_clan_router.post("/exit_clan", deprecated=True)
+async def exit_clan(telegram_user_id: Annotated[str, Depends(get_current_user)]):
+    pass
+
+
 # ----------------------------- CLAN TOP EARNERS ------------------------------ #
-@user_clan_router.get("/clan/top_earners", deprecated=True)
+@user_clan_router.get("/clan/{clan_id}/top_earners", deprecated=True)
 async def clan_top_earners(clan_id: str, limit: Optional[int] = 10):
     pass
 
