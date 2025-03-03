@@ -256,7 +256,6 @@ const Dashboard = () => {
     // Extra Booster: Auto Bot Tapping (1 tap per second)
     const handleAutoTapActivated = (event) => {
       console.log("Auto Tap Activated Event:", event.detail);
-      setAutoTapActive(true);
     };
 
     // Generic booster upgraded event

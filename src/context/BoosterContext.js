@@ -212,7 +212,9 @@ const BoostersContext = ({ children }) => {
                 break;
             }
             case "Auto-bot Tapping": {
-                setAutoTapActive(true)
+                if (newLevel > 0) {
+                    setAutoTapActive(true)
+                }
                 break;
             }
             default:
@@ -246,7 +248,7 @@ const BoostersContext = ({ children }) => {
         const timeAway = (now - lastActiveTime) / 1000; // Convert ms to seconds
 
         // Get stored values
-        const tapsPerSecond = 5 * boosters.tapMultiplier; // Example: 5 taps per second
+        const tapsPerSecond = 1 * boosters.tapMultiplier; // Example: 5 taps per second
         const electricBoost = parseInt(localStorage.getItem("electricBoost") || "100", 10); // Get current boost
         const maxElectricBoost = parseInt(localStorage.getItem("maxElectricBoost") || "1000", 10);
 
