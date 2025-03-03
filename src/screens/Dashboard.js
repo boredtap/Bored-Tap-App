@@ -330,10 +330,6 @@ const Dashboard = () => {
     fetchData()
   }, [])
 
-  useEffect(() => {
-    console.log("hERE", electricBoost)
-  }, [electricBoost])
-
   return (
     <div className="dashboard-container">
       <div className="profile1-streak-section">

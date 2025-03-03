@@ -128,9 +128,22 @@ const SplashScreen = () => {
     localStorage.setItem("lastActiveTime", Date.now());
   });
 
-  window.addEventListener("load", () => {
-    applyAutoBotTaps()
-  });
+  useEffect(() => {
+    const handleLoad = () => {
+      applyAutoBotTaps();
+    };
+
+    // Check if the document is already loaded
+    if (document.readyState === "complete") {
+      handleLoad();
+    } else {
+      window.addEventListener("load", handleLoad);
+    }
+
+    return () => {
+      window.removeEventListener("load", handleLoad);
+    };
+  }, []);
 
   return (
     <div className="splash-container">

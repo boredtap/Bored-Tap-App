@@ -212,7 +212,7 @@ const BoostersContext = ({ children }) => {
                 break;
             }
             case "Auto-bot Tapping": {
-                if (newLevel > 0) {
+                if(newLevel) {
                     setAutoTapActive(true)
                 }
                 break;
@@ -248,7 +248,7 @@ const BoostersContext = ({ children }) => {
         const timeAway = (now - lastActiveTime) / 1000; // Convert ms to seconds
 
         // Get stored values
-        const tapsPerSecond = 1 * boosters.tapMultiplier; // Example: 5 taps per second
+        const tapsPerSecond = 1; // Example: 5 taps per second
         const electricBoost = parseInt(localStorage.getItem("electricBoost") || "100", 10); // Get current boost
         const maxElectricBoost = parseInt(localStorage.getItem("maxElectricBoost") || "1000", 10);
 
@@ -271,15 +271,31 @@ const BoostersContext = ({ children }) => {
         localStorage.setItem("lastActiveTime", JSON.stringify(now)); // Update last active time
 
         console.log(`While you were away:
-        - ${offlineTaps} taps were simulated.
+        - ${offlineTaps * boosters.tapMultiplier} taps were simulated.
         - Energy regenerated: +${energyGained}.
+        - Old Electric Boost: ${electricBoost}
         - New Electric Boost: ${newElectricBoost}/${maxElectricBoost}.
         `);
+
+        alert(`While you were away:
+            - ${offlineTaps * boosters.tapMultiplier} taps were simulated.
+            - Energy regenerated: +${energyGained}.
+            - Old Electric Boost: ${electricBoost}
+            - New Electric Boost: ${newElectricBoost}/${maxElectricBoost}.
+            `);
+            
     }
 
     useEffect(() => {
         if (boosters.extraBoosters?.length) {
-            boosters.extraBoosters.forEach(({ title, rawLevel }) => activateOtherBoostersOnLoad(title, rawLevel))
+            boosters.extraBoosters.forEach(({ title, rawLevel, status }) => {
+                if (title === "Auto-bot Tapping") {
+                    activateOtherBoostersOnLoad(title, status)
+                } else {
+                    console.log("Activating Autobot", title)
+                    activateOtherBoostersOnLoad(title, rawLevel)
+                }
+            })
         }
     }, [boosters.extraBoosters])
 
@@ -341,7 +357,13 @@ const BoostersContext = ({ children }) => {
         }
 
         if (boosters.extraBoosters?.length) {
-            boosters.extraBoosters.forEach(({ title, rawLevel }) => activateOtherBoostersOnLoad(title, rawLevel))
+            boosters.extraBoosters.forEach(({ title, rawLevel, status }) => {
+                if (boosters.name === 'Auto-bot Tapping') {
+                    activateOtherBoostersOnLoad(title, status)
+                } else {
+                    activateOtherBoostersOnLoad(title, rawLevel)
+                }
+            })
         }
     }, []); // Runs only on mount
 

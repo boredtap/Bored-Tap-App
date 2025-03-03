@@ -86,6 +86,7 @@ const BoostScreen = () => {
         imageId: booster.image_id,
         rawLevel: booster.level === "-" ? 0 : parseInt(booster.level, 10) - 1,
         effect: booster.effect, // e.g., "boost", "multiplier", "recharge", "auto-tap"
+        status: booster.status && booster.status === "owned" ? 1 : 0
       }));
 
       setExtraBoosters(mappedExtraBoosters)
@@ -121,8 +122,13 @@ const BoostScreen = () => {
       if (booster) {
         const previousLevel = Number(booster.rawLevel) || 0;
         const newLevel = previousLevel + 1;
+        const status = booster.status
 
-        activateOtherBoosters(booster.effect, newLevel)
+        if (booster.name === 'Auto-bot Tapping') {
+          activateOtherBoosters(booster.effect, status)
+        } else {
+          activateOtherBoosters(booster.effect, newLevel)
+        }
       }
 
       handleOverlayClose();
