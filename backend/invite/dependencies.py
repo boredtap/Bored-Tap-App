@@ -67,16 +67,12 @@ def get_user_invitees(telegram_user_id: str) -> list[Invitee] | list:
 
         for id in invitees_ref:
             invitee: dict = user_collection.find_one({"telegram_user_id": id})
-            invitee_data = Invitee(
-                username=invitee.get("username"),
-                level=invitee.get("level"),
-                image_url=invitee.get("image_url", None),
-                total_coins=invitee.get("total_coins")
-            )
-            invitees.append(invitee_data)
+            if invitee:
+                invitee_data = Invitee(
+                    username=invitee.get("username"),
+                    level=invitee.get("level"),
+                    image_url=invitee.get("image_url", None),
+                    total_coins=invitee.get("total_coins")
+                )
+                invitees.append(invitee_data)
     return invitees
-
-    """
-    level_name
-    
-    """

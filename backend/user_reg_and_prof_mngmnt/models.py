@@ -19,6 +19,10 @@ class ExtraBoost(BaseModel):
     recharging_speed: int = 0
     auto_bot_tap: bool = False
 
+class Clan(BaseModel):
+    id: str = None
+    name: str = None
+
 class UserProfile(BaseModel):
     telegram_user_id: str
     username: str | None = None
@@ -33,6 +37,6 @@ class UserProfile(BaseModel):
     is_admin: bool = False
     is_active: bool = True
     created_at: datetime = datetime.now()
-    clan: list[str] = []
+    clan: Clan = Field(default_factory=Clan)
     claimed_rewards: list[str] = []
     extra_boost: ExtraBoost = Field(default_factory=ExtraBoost)

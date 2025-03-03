@@ -177,12 +177,13 @@ def get_user_profile(telegram_user_id: str) -> UserProfile:
 
         for id in invitees_ref:
             invitee = user_collection.find_one({"telegram_user_id": id})
-            invitee_data = InviteeData(
-                username=invitee.get("username"),
-                level=invitee.get("level"),
-                total_coins=invitee.get("total_coins")
-            )
-            invitees.append(invitee_data)
+            if invitee:
+                invitee_data = InviteeData(
+                    username=invitee.get("username"),
+                    level=invitee.get("level"),
+                    total_coins=invitee.get("total_coins")
+                )
+                invitees.append(invitee_data)
 
     if user:
         user_data = UserProfile(
