@@ -22,7 +22,7 @@ user_clan_router = APIRouter(
 
 
 # ----------------------------- CREATE CLAN ------------------------------ #
-@user_clan_router.post("/create_clan", deprecated=True)
+@user_clan_router.post("/create_clan")
 async def create_clan(
     clan: Annotated[CreateClan, Depends(CreateClan)],
     telegram_user_id: Annotated[str, Depends(get_current_user)]
