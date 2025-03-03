@@ -5,7 +5,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from redis import Redis
 from database_connection import get_redis_client
 from dependencies import (
-    datetime_to_iso_str,
     get_user_profile,
     update_coins_in_db,
     get_user_by_id,
@@ -15,6 +14,7 @@ from superuser.level.dependencies import get_levels as get_levels_func
 from superuser.level.models import LevelModelResponse
 from user_reg_and_prof_mngmnt.router import userApp
 from earn.router import earnApp
+from clan.router import user_clan_router
 from boosts.router import userExtraBoostApp
 from tasks.router import taskApp
 from invite.router import inviteApp
@@ -78,9 +78,9 @@ app.add_middleware(
 )
 
 all_routers = [
-    userApp, earnApp, userExtraBoostApp, taskApp, inviteApp, bot_interactions, 
-    adminDashboard, task_router, rewardApp, challenge_router, adminLeaderboard,
-    boostApp, levelApp, userMgtApp, securityApp
+    userApp, earnApp, user_clan_router, userExtraBoostApp, taskApp, inviteApp, bot_interactions, 
+    adminDashboard, task_router, rewardApp, challenge_router,
+    adminLeaderboard, boostApp, levelApp, userMgtApp, securityApp
 ]
 
 # include all routers
@@ -88,6 +88,11 @@ for router_app in all_routers:
     app.include_router(router_app)
 
 
+
+# # health check
+# @app.get("/health", tags=["Global Routes"])
+# async def health_check():
+#     return {"status": "OK"}
 
 
 @app.get('/', tags=["Global Routes"])
@@ -114,7 +119,7 @@ async def update_coins(telegram_user_id: Annotated[str, Depends(get_current_user
     print("user agent: ", user_agent)
     print("referer: ", referer)
     print("origin: ", origin)
-    print("request headers: ", request.headers)
+    # print("request headers: ", request.headers)
 
     result = update_coins_in_db(telegram_user_id, coins)
     user = get_user_by_id(telegram_user_id)
@@ -130,41 +135,20 @@ async def update_coins(telegram_user_id: Annotated[str, Depends(get_current_user
 
 # get user data
 @app.get('/user/profile', tags=["Global Routes"], response_model=UserProfile)
-# @redis_cache()
 async def get_user_data(
-    telegram_user_id: Annotated[str, Depends(get_current_user)], request: Request,
-    redis_client: Annotated[Redis, Depends(get_redis_client)]
+    telegram_user_id: Annotated[str, Depends(get_current_user)],
+    # redis_client: Annotated[Redis, Depends(get_redis_client)]
 ) -> UserProfile:
     """
-    Retrieve the profile of a user by their telegram user ID.
+    Retrieve and return the profile of a signed-in user.
 
     Args:
-        telegram_user_id (Annotated[str, Depends]): gets the telegram id of signed-in users
-        request (Request): the incoming request object
+        telegram_user_id (Annotated[str, Depends(get_current_user)]): The Telegram user ID of the user to retrieve.
 
     Returns:
-        UserProfile: the user data if found, otherwise None
-
-    Caches the user profile in Redis for 1 minute.
+        UserProfile: The user profile if found, otherwise None.
     """
-    if redis_client:
-        cache_key = f"{request.url.path}:{telegram_user_id}"
-        cached_response = redis_client.get(cache_key) if redis_client else None
-
-        if cached_response:
-            print("Cache hit: user profile")
-            deserialized_user = json.loads(cached_response)
-            cached_user_profile = UserProfile(**deserialized_user)
-
-            return cached_user_profile
-        
-        print("Cache miss: user profile")
-        user = get_user_profile(telegram_user_id)
-
-        try:
-            redis_client.set(cache_key, json.dumps(user.model_dump(), default=datetime_to_iso_str), ex=timedelta(minutes=1))
-        except Exception as e:
-            print(f"Error caching user profile: {e}")
+    user = get_user_profile(telegram_user_id)
 
     return user
 

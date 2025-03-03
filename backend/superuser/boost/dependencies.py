@@ -92,7 +92,7 @@ def create_extra_boost(eboost: CreateExtraBoost):
     
     image = eboost.image.file.read()
     image_name = eboost.image.filename
-    image_format = image_name.split(".")[1]
+    image_format = image_name.split(".")[-1]
 
     verify_new_extra_boost(eboost)
 

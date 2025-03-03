@@ -19,3 +19,4 @@ class AutoBotTap(BaseModel):
     effect: str
     upgrade_cost: int
     image_id: str
+    status: str
