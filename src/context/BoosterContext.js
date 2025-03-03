@@ -243,6 +243,8 @@ const BoostersContext = ({ children }) => {
     };
 
     const applyAutoBotTaps = () => {
+        if (!boosters.autoTapActive) return
+        
         const lastActiveTime = parseInt(localStorage.getItem("lastActiveTime") || Date.now(), 10);
         const now = Date.now();
         const timeAway = (now - lastActiveTime) / 1000; // Convert ms to seconds
@@ -253,7 +255,7 @@ const BoostersContext = ({ children }) => {
         const maxElectricBoost = parseInt(localStorage.getItem("maxElectricBoost") || "1000", 10);
 
         // Calculate energy regeneration
-        const regenTimeMs = boosters.rechargeTime || RECHARGE_TIMES[0]; // 1 energy restored every 3000ms
+        const regenTimeMs = RECHARGE_TIMES[0]; // 1 energy restored every 3000ms
         const energyGained = Math.floor(timeAway * 1000 / regenTimeMs); // Convert sec → ms
 
         // Update electric boost (min ensures it doesn't exceed max)
@@ -278,7 +280,7 @@ const BoostersContext = ({ children }) => {
         `);
 
         alert(`While you were away:
-            - ${offlineTaps * boosters.tapMultiplier} taps were simulated.
+            - ${offlineTaps} taps were simulated.
             - Energy regenerated: +${energyGained}.
             - Old Electric Boost: ${electricBoost}
             - New Electric Boost: ${newElectricBoost}/${maxElectricBoost}.

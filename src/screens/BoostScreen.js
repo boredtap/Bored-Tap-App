@@ -79,8 +79,8 @@ const BoostScreen = () => {
         description: booster.description,
         value: booster.upgrade_cost.toString(),
         level: booster.level === "-" ? "Not Owned" : `Level ${booster.level}`,
-        ctaText: booster.level === "-" ? "Buy" : "Upgrade",
-        altCTA: (profileData.total_coins || 0) < booster.upgrade_cost ? "Insufficient Funds" : null,
+        ctaText: booster.level === "-" ? "Buy" : `Upgrade to Level ${booster.level + 1}`,
+        altCTA: (parseInt(booster.level, 10) === 5) || (booster.status === "owned") ? "Maximum Level Reached" : (profileData.total_coins || 0) < booster.upgrade_cost ? "Insufficient Funds" : null,
         actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
         icon: `${process.env.PUBLIC_URL}/extra-booster-icon.png`,
         imageId: booster.image_id,
@@ -103,6 +103,12 @@ const BoostScreen = () => {
   }, [fetchProfileAndBoosters]);
 
   const handleUpgradeBoost = async (boosterId) => {
+    let extraBoosters = JSON.parse(localStorage.getItem("extraBoosters") || "[]");
+    let booster = extraBoosters.find((b) => b.id === boosterId);
+
+    if (booster.rawLevel == 4) return
+    if (booster.name === 'Auto-bot Tapping' && booster.status === 1) return
+
     try {
       const token = localStorage.getItem("accessToken");
       console.log("I got here, therefore i updated boosters")
@@ -116,8 +122,8 @@ const BoostScreen = () => {
       await fetchProfileAndBoosters(); // Ensure boosters are updated before accessing localStorage
 
       // Retrieve updated boosters from localStorage
-      const extraBoosters = JSON.parse(localStorage.getItem("extraBoosters") || "[]");
-      const booster = extraBoosters.find((b) => b.id === boosterId);
+      extraBoosters = JSON.parse(localStorage.getItem("extraBoosters") || "[]");
+      booster = extraBoosters.find((b) => b.id === boosterId);
 
       if (booster) {
         const previousLevel = Number(booster.rawLevel) || 0;

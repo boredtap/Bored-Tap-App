@@ -10,7 +10,7 @@ const RECHARGE_TIMES = [3000, 2500, 2000, 1500, 1000, 500]; // Level 0 through 5
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  const { totalTaps, setTotalTaps, setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, setTapMultiplier, electricBoost, setElectricBoost, setMaxElectricBoost, maxElectricBoost, setRechargeTime, rechargeTime, autoTapActive, setAutoTapActive } = useContext(BoostContext)
+  const { totalTaps, setTotalTaps, setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, setTapMultiplier, electricBoost, setElectricBoost, setMaxElectricBoost, maxElectricBoost, setRechargeTime, rechargeTime, autoTapActive, setAutoTapActive, applyAutoBotTaps } = useContext(BoostContext)
 
   // State for Telegram user data
   const [telegramData, setTelegramData] = useState({
@@ -329,6 +329,29 @@ const Dashboard = () => {
 
     fetchData()
   }, [])
+
+  useEffect(() => {
+    const handleLoad = () => {
+      const oldUser = localStorage.getItem("telegramUser");
+      const isFirstVisit = !sessionStorage.getItem("hasVisited");
+  
+      if (oldUser && isFirstVisit) {
+        applyAutoBotTaps();
+        sessionStorage.setItem("hasVisited", "true"); // Mark as visited for this session
+      }
+    };
+  
+    if (document.readyState === "complete") {
+      handleLoad();
+    } else {
+      window.addEventListener("load", handleLoad);
+    }
+  
+    return () => {
+      window.removeEventListener("load", handleLoad);
+    };
+  }, []);
+  
 
   return (
     <div className="dashboard-container">
