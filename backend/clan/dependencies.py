@@ -171,7 +171,7 @@ def my_clan(telegram_user_id):
 
     return MyClan(
         name=clan["name"],
-        rank=f"#{clan["rank"]}",
+        rank=f"#{clan['rank']}",
         image_id=clan["image_id"],
         in_clan_rank=in_clan_rank,
         total_coins=clan["total_coins"],
