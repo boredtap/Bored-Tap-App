@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from superuser.dashboard.admin_auth import authenticate_admin
 from config import get_settings
+from database_connection import user_collection
 from user_reg_and_prof_mngmnt.dependencies import (
     get_user_by_id,
     insert_new_invite_ref,
@@ -43,7 +44,7 @@ async def sign_up(user: Signup, referral_code: str | None = None) -> BasicProfil
         HTTPException: If the telegram user ID already exists in the database with status code 400.
     """
     # check if telegram_user_id already exists in database
-    existing_user = get_user_by_id(user.telegram_user_id)
+    existing_user = user_collection.find_one({"telegram_user_id": user.telegram_user_id})
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
