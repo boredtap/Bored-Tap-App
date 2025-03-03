@@ -69,6 +69,7 @@ def get_user_invitees(telegram_user_id: str) -> list[Invitee] | list:
             invitee: dict = user_collection.find_one({"telegram_user_id": id})
             if invitee:
                 invitee_data = Invitee(
+                    telegram_user_id=id,
                     username=invitee.get("username"),
                     level=invitee.get("level"),
                     image_url=invitee.get("image_url", None),

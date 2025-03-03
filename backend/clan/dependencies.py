@@ -84,37 +84,36 @@ def create_clan(creator: str, clan: CreateClan):
     clan_id = str(created_clan.inserted_id)
 
     if clan_id:
-        print("Clan created")
-        try:
-            # update profile of added members including the creator
-            update_members_profile = user_collection.update_many(
-                {"telegrm_user_id": {"$in": members}},
-                {
-                    "$set": {
-                        "clan": UserProfileClan(
-                            id=clan_id,
-                            name=clan.name
-                        ).model_dump()
-                    }
+        clan_creation_status = "Clan created successfully"
+        # update profile of added members including the creator
+        update_members_profile = user_collection.update_many(
+            {"telegram_user_id": {"$in": members}},
+            {
+                "$set": {
+                    "clan": UserProfileClan(
+                        id=clan_id,
+                        name=clan.name
+                    ).model_dump()
                 }
-            )
-            print(f"{update_members_profile.modified_count} members added to clan")
+            }
+        )
 
-            # update clan member count
-            update_clan_member_count = clans_collection.update_one(
-                {"_id": ObjectId(clan_id)},
-                {
-                    "$inc": {
-                        "members": update_members_profile.modified_count 
-                }}
-            )
+        # update clan members count
+        update_clan_member_count = clans_collection.update_one(
+            {"_id": ObjectId(clan_id)},
+            {
+                "$inc": {
+                    "members": update_members_profile.modified_count 
+            }}
+        )
 
-            if update_clan_member_count.modified_count > 0:
-                return {
-                    "status": True, "message": "Clan created successfully, awaiting admin approval"
-                }
-        except Exception as e:
-            print(e)
+        if update_clan_member_count.modified_count > 0:
+            return {
+                "status": True,
+                "message": clan_creation_status,
+                "clan_id": clan_id,
+                "status": "awaiting verification"
+            }
 
     return {
         "status": False, "message": "Failed to create clan"
