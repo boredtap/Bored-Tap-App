@@ -118,13 +118,15 @@ const DailyStreakScreen = () => {
         });
         if (!response.ok) throw new Error("Failed to claim reward");
         const streakData = await response.json();
-
+  
         if (streakData.message === "Streak not updated") {
-          setCountdownTime(streakData.Countdown || "12:59 PM");
+          const timeMatch = streakData.Countdown.match(/(\d{2}:\d{2})/);
+          const time = timeMatch ? timeMatch[0] : "12:59 PM";
+          setCountdownTime(time);
           setShowOverlay(true);
           return;
         }
-
+  
         // Update state and persist to local storage
         const newClaimedDays = [...claimedDays, currentDay];
         const newCurrentDay = currentDay + 1;
@@ -132,7 +134,7 @@ const DailyStreakScreen = () => {
         setCurrentDay(newCurrentDay);
         localStorage.setItem("claimedDays", JSON.stringify(newClaimedDays));
         localStorage.setItem("currentDay", newCurrentDay);
-
+  
         setProfile((prev) => ({
           ...prev,
           total_coins: streakData.total_coins || prev.total_coins,

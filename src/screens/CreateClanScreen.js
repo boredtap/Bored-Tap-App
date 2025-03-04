@@ -59,18 +59,16 @@ const CreateClanScreen = () => {
   };
 
   const toggleFriendSelection = (friendId) => {
-    // Toggle individual friend selection
     setSelectedFriends((prev) => {
       if (prev.includes(friendId)) {
-        return prev.filter((id) => id !== friendId); // Deselect if already selected
+        return prev.filter((id) => id !== friendId);
       } else {
-        return [...prev, friendId]; // Select only this friend
+        return [...prev, friendId];
       }
     });
   };
 
   const selectAllFriends = () => {
-    // Toggle all friends selection
     setSelectedFriends((prev) =>
       prev.length === invites.length ? [] : invites.map((invite) => invite.telegram_user_id)
     );
@@ -82,11 +80,6 @@ const CreateClanScreen = () => {
     formData.append("name", clanName);
     formData.append("image", clanImage);
     selectedFriends.forEach((id) => formData.append("members", id));
-
-    // Debug FormData contents
-    for (let [key, value] of formData.entries()) {
-      console.log(`${key}:`, value);
-    }
 
     setLoading(true);
     try {
@@ -117,7 +110,6 @@ const CreateClanScreen = () => {
     navigate("/clan");
   };
 
-  // CTA active when name, image, and at least one friend are selected
   const isCtaActive = clanName && clanImage && selectedFriends.length > 0;
 
   return (
@@ -206,8 +198,7 @@ const CreateClanScreen = () => {
                       src={
                         selectedFriends.includes(invite.telegram_user_id)
                           ? `${process.env.PUBLIC_URL}/tick-icon.png`
-                          : `${process.env.PUBLIC_URL}/addd.png`
-                      }
+                          : `${process.env.PUBLIC_URL}/addd.png`}
                       alt={selectedFriends.includes(invite.telegram_user_id) ? "Selected" : "Add"}
                       className="friend-action-icon"
                       onClick={() => toggleFriendSelection(invite.telegram_user_id)}

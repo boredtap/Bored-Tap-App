@@ -79,7 +79,12 @@ const DetailedClanScreen = () => {
         },
       });
       if (!response.ok) throw new Error("Failed to join clan");
-      setIsMember(true);
+      const result = await response.json();
+      if (result.status) {
+        setIsMember(true);
+      } else {
+        setError(result.message);
+      }
     } catch (err) {
       setError(err.message);
       console.error("Error joining clan:", err);
