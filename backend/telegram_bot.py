@@ -105,6 +105,7 @@ def start_command(message: Message):
     # except user already exist
     except HTTPException as e:
         # send welcome message
+
         print(f"Error encountered: {e}")
         launch_btn = InlineKeyboardButton(
             text="Launch WebApp",
