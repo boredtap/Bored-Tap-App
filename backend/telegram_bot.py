@@ -61,6 +61,7 @@ def get_profile_url(user_id: int):
 @bot.message_handler(commands=['start'])
 def start_command(message: Message):
     # get user datails
+    print(f"message received: {message}")
     try:
         user_id = str(message.from_user.id)
         referral_code = message.text.split(" ")[1]
@@ -104,7 +105,8 @@ def start_command(message: Message):
     # except user already exist
     except HTTPException as e:
         # send welcome message
-        print(e)
+
+        print(f"Error encountered: {e}")
         launch_btn = InlineKeyboardButton(
             text="Launch WebApp",
             # callback_data="launch_webapp",
