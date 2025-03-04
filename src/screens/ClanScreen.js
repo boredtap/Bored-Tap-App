@@ -53,27 +53,25 @@ const ClanScreen = () => {
   }, []);
 
   const handleCreateClan = () => navigate("/create-clan");
-  const handleJoinClan = () => navigate("/join-clan");
+  const handleJoinClan = () => navigate("/join-clan-screen");
 
   return (
     <div className="clan-screen">
-      {/* Header Section */}
       <div className="clan-header">
-        <img src={`${process.env.PUBLIC_URL}/clan.png`} alt="Clan Icon" className="clan-icon" />
+        <img
+          src={`${process.env.PUBLIC_URL}/clan.png`}
+          alt="Clan Icon"
+          className="clan-image-icon"
+        />
         <p className="clan-title">Start your clan journey</p>
-        <p className="clan-subtitle">Create or join a clan to earn more BT Coins</p>
-      </div>
-
-      {/* CTA Section - Explicitly above Top Clans */}
-      <div className="cta-section">
-        <div className="cta-container">
+        <div className="clan-cta-buttons">
           {!clanPending && (
-            <button className="clan-cta-button" onClick={handleCreateClan}>
+            <button className="clan-cta active" onClick={handleCreateClan}>
               Create New
             </button>
           )}
           <button
-            className={`clan-cta-button ${clanPending ? "solo" : "secondary"}`}
+            className={`clan-cta ${clanPending ? "solo" : "inactive"}`}
             onClick={handleJoinClan}
           >
             Join Clan
@@ -82,10 +80,9 @@ const ClanScreen = () => {
         {clanPending && <p className="pending-message">Your Clan is Awaiting Verification</p>}
       </div>
 
-      {/* Top Clans Section */}
       <div className="top-clans-section">
         <p className="section-title">Top Clans</p>
-        <div className="see-all">
+        <div className="see-all" onClick={() => navigate("/join-clan-screen")}>
           <span>See all</span>
           <img
             src={`${process.env.PUBLIC_URL}/front-arrow.png`}
@@ -94,8 +91,6 @@ const ClanScreen = () => {
           />
         </div>
       </div>
-
-      {/* Clan Cards */}
       <div className="clan-cards">
         {loading ? (
           <p className="loading-message">Loading clans...</p>
@@ -104,8 +99,8 @@ const ClanScreen = () => {
         ) : topClans.length === 0 ? (
           <p className="no-clans">No top clans available yet.</p>
         ) : (
-          topClans.map((clan, index) => (
-            <div className="clan-card" key={clan.id || index}>
+          topClans.map((clan) => (
+            <div className="clan-card" key={clan.id}>
               <img
                 src={clan.image_url || `${process.env.PUBLIC_URL}/default-clan.png`}
                 alt={`${clan.name} Icon`}
@@ -123,14 +118,14 @@ const ClanScreen = () => {
                 </div>
               </div>
               <div className="clan-card-rank">
-                {index === 0 ? (
-                  <img src={`${process.env.PUBLIC_URL}/first-icon.png`} alt="1st" className="rank-icon" />
-                ) : index === 1 ? (
-                  <img src={`${process.env.PUBLIC_URL}/second-icon.png`} alt="2nd" className="rank-icon" />
-                ) : index === 2 ? (
-                  <img src={`${process.env.PUBLIC_URL}/third-icon.png`} alt="3rd" className="rank-icon" />
+                {clan.rankIcon ? (
+                  <img
+                    src={`${process.env.PUBLIC_URL}/${clan.rankIcon}`}
+                    alt="Rank Icon"
+                    className="rank-icon"
+                  />
                 ) : (
-                  <span className="position-number">#{index + 1}</span>
+                  <span className="position-number">#</span>
                 )}
               </div>
             </div>
