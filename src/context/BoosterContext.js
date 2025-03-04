@@ -243,45 +243,28 @@ const BoostersContext = ({ children }) => {
     };
 
     const applyAutoBotTaps = () => {
-        if (!boosters.autoTapActive) return
-
-        //localStorage.setItem("tapCount", JSON.stringify(0));
-
+        if (!boosters?.autoTapActive) return; // Ensure boosters exist before checking
+    
         const lastActiveTime = parseInt(localStorage.getItem("lastActiveTime") || Date.now(), 10);
         const now = Date.now();
         const timeAway = (now - lastActiveTime) / 1000; // Convert ms to seconds
-
-        // Get stored values
-        const tapsPerSecond = 1; // Example: 5 taps per second
-        // const electricBoost = parseInt(localStorage.getItem("electricBoost") || "100", 10); // Get current boost
-        // const maxElectricBoost = parseInt(localStorage.getItem("maxElectricBoost") || "1000", 10);
-
-        // Calculate energy regeneration
-        //const regenTimeMs = RECHARGE_TIMES[0]; // 1 energy restored every 3000ms
-        //const energyGained = Math.floor(timeAway * 1000); // Convert sec → ms
-
-        // Update electric boost (min ensures it doesn't exceed max)
-        //const maxPotentialElectricBoosts = electricBoost + energyGained
-
-        // Check if offlineTaps is not greater than maxPossibleTaps
+    
+        const tapsPerSecond = 1; // Example: Adjust based on game logic
+    
         const offlineTaps = Math.floor(timeAway * tapsPerSecond);
-
-        // Deduct taps from ElectricBoost
-        //const newElectricBoost = Math.max(maxPotentialElectricBoosts - offlineTaps, 0);
-
-        // Save updated values
-        //localStorage.setItem("electricBoost", JSON.stringify(newElectricBoost));
-        //localStorage.setItem("tapCount", JSON.stringify(parseInt(localStorage.getItem("tapCount") || "0", 10) + offlineTaps));
-        localStorage.setItem("lastActiveTime", JSON.stringify(Date.now())); // Update last active time
-
+    
+        // Update last active time with current timestamp
+        localStorage.setItem("lastActiveTime", JSON.stringify(now));
+    
         console.log(`While you were away:
         - ${offlineTaps} taps were simulated.
         `);
-
+    
         alert(`While you were away:
             - ${offlineTaps} taps were simulated.
-            `);
-    }
+        `);
+    };
+    
 
     useEffect(() => {
         if (boosters.extraBoosters?.length) {
