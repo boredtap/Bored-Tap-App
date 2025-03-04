@@ -1,27 +1,64 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./JoinClanScreen.css";
 
 const JoinClanScreen = () => {
   const [isSearchActive, setIsSearchActive] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [clans, setClans] = useState([]);
+  const [filteredClans, setFilteredClans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
-  const clans = [
-    { id: 1, name: "TON Station", members: "675,127,478,606", icon: "diamondbg.png", rankIcon: "front-arrow.png" },
-    { id: 2, name: "Crypto Warriors", members: "454,763,128,509", icon: "crypto-icon.png", rankIcon: "front-arrow.png" },
-    { id: 3, name: "Blockchain Knights", members: "234,561,786,204", icon: "knights-icon.png", rankIcon: "front-arrow.png" },
-    { id: 4, name: "DeFi Crusaders", members: "983,128,009,324", icon: "defi-icon.png", rankIcon: "front-arrow.png" },
-    { id: 5, name: "DAO Avengers", members: "763,028,561,123", icon: "dao-icon.png", rankIcon: "front-arrow.png" },
-    { id: 6, name: "Smart Chain Clan", members: "432,879,231,761", icon: "smartchain-icon.png", rankIcon: "front-arrow.png" },
-    { id: 7, name: "Ton Explorers", members: "567,091,234,786", icon: "explorers-icon.png", rankIcon: "front-arrow.png" },
-    { id: 8, name: "Validator League", members: "309,478,987,561", icon: "validator-icon.png", rankIcon: "front-arrow.png" },
-    { id: 9, name: "Node Builders", members: "123,456,789,101", icon: "node-icon.png", rankIcon: "front-arrow.png" },
-    { id: 10, name: "Mining Legends", members: "543,789,456,210", icon: "mining-icon.png", rankIcon: "front-arrow.png" },
-  ];
+  useEffect(() => {
+    const fetchClans = async () => {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        setError("No access token found");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch("https://bt-coins.onrender.com/user/clan/all_clans", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (!response.ok) throw new Error("Failed to fetch clans");
+        const data = await response.json();
+        setClans(Array.isArray(data) ? data : []);
+        setFilteredClans(Array.isArray(data) ? data : []);
+      } catch (err) {
+        setError(err.message);
+        console.error("Error fetching clans:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchClans();
+  }, []);
+
+  const handleSearchChange = (e) => {
+    const query = e.target.value.toLowerCase();
+    setSearchQuery(query);
+    const filtered = clans.filter((clan) =>
+      clan.name.toLowerCase().includes(query)
+    );
+    setFilteredClans(filtered);
+  };
+
+  const handleClanClick = (clanId) => {
+    navigate(`/clan/${clanId}`);
+  };
 
   return (
     <div className="join-clan-screen">
-
-      {/* Find a Clan Section */}
       <div className="find-clan-section">
         {!isSearchActive ? (
           <>
@@ -48,48 +85,61 @@ const JoinClanScreen = () => {
               type="text"
               placeholder="Search for a clan..."
               className="search-input"
+              value={searchQuery}
+              onChange={handleSearchChange}
               autoFocus
-              onBlur={() => setIsSearchActive(false)}
+              onBlur={() => {
+                if (!searchQuery) setIsSearchActive(false);
+              }}
             />
           </div>
         )}
       </div>
 
-      {/* Clan Cards */}
       <div className="clan-cards">
-        {clans.map((clan) => (
-          <div className="clan-card" key={clan.id}>
-            {/* Left Section */}
-            <div className="clan-card-left">
-              <img
-                src={`${process.env.PUBLIC_URL}/${clan.icon}`}
-                alt={`${clan.name} Icon`}
-                className="clan-card-icon"
-              />
-              <div className="clan-card-details">
-                <p className="clan-card-name">{clan.name}</p>
-                <div className="clan-card-stats">
-                  <img
-                    src={`${process.env.PUBLIC_URL}/logo.png`}
-                    alt="Members Icon"
-                    className="members-icon"
-                  />
-                  <span className="clan-card-members">{clan.members}</span>
+        {loading ? (
+          <p className="loading-message">Loading clans...</p>
+        ) : error ? (
+          <p className="error-message">{error}</p>
+        ) : filteredClans.length === 0 ? (
+          <p className="no-clans">No clans found.</p>
+        ) : (
+          filteredClans.map((clan) => (
+            <div
+              className="clan-card"
+              key={clan.id}
+              onClick={() => handleClanClick(clan.id)}
+            >
+              <div className="clan-card-left">
+                <img
+                  src={clan.image_url || `${process.env.PUBLIC_URL}/default-clan.png`}
+                  alt={`${clan.name} Icon`}
+                  className="clan-card-icon"
+                />
+                <div className="clan-card-details">
+                  <p className="clan-card-name">{clan.name}</p>
+                  <div className="clan-card-stats">
+                    <img
+                      src={`${process.env.PUBLIC_URL}/logo.png`}
+                      alt="Members Icon"
+                      className="members-icon"
+                    />
+                    <span className="clan-card-members">
+                      {clan.members?.toLocaleString() || "0"}
+                    </span>
+                  </div>
                 </div>
               </div>
+              <img
+                src={`${process.env.PUBLIC_URL}/front-arrow.png`}
+                alt="Join Icon"
+                className="join-icon"
+              />
             </div>
-
-            {/* Right Section */}
-            <img
-              src={`${process.env.PUBLIC_URL}/${clan.rankIcon}`}
-              alt="Join Icon"
-              className="join-icon"
-            />
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
-      {/* Navigation */}
       <Navigation />
     </div>
   );
