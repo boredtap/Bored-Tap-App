@@ -1,9 +1,10 @@
 from datetime import datetime
 from datetime import timezone
+from enum import member
 from bson import ObjectId
 from fastapi import HTTPException
 from database_connection import user_collection, fs, clans_collection
-from clan.schemas import CreateClan, ClanResponse, MyClan
+from clan.schemas import CreateClan, ClanResponse, ClanSearchResponse, MyClan
 from user_reg_and_prof_mngmnt.models import Clan as UserProfileClan
 from superuser.clan.models import Clan, ClanModelResponse
 
@@ -120,6 +121,44 @@ def create_clan(creator: str, clan: CreateClan):
     }
 
 
+# --------------------------------- ALL CLANS ---------------------------------- #
+def all_clans():
+    clans = clans_collection.find().sort("total_coins", -1)
+
+    for clan in clans:
+        if clan["status"] == "active":
+            yield ClanSearchResponse(
+                id=str(clan["_id"]),
+                name=clan["name"],
+                rank=f"#{clan['rank']}",
+                image_id=clan["image_id"],
+                total_coins=clan["total_coins"],
+                members=clan["members"]
+            )
+
+
+# --------------------------------- TOP CLAN ---------------------------------- #
+def top_clans():
+    """
+    Return the top 10 clans with the most coins.
+
+    Yields:
+        dict: A dictionary containing the details of each clan.
+    """
+    clans = clans_collection.find().sort("total_coins", -1).limit(10)
+
+    for clan in clans:
+        if clan["status"] == "active":
+            yield ClanSearchResponse(
+                    id=str(clan["_id"]),
+                    name=clan["name"],
+                    rank=f"#{clan['rank']}",
+                    total_coins=clan["total_coins"],
+                    image_id=clan["image_id"],
+                    members=clan["members"]
+                )
+
+
 # ----------------------------------- JOIN CLAN ------------------------------------- #
 def join_clan(telegram_user_id: str, clan_id: str):
     clan = clans_collection.find_one({"_id": ObjectId(clan_id)})
@@ -170,21 +209,6 @@ def join_clan(telegram_user_id: str, clan_id: str):
 
 
 # --------------------------------- MY CLAN ---------------------------------- #
-def all_clans():
-    clans = clans_collection.find().sort("total_coins", -1)
-
-    for clan in clans:
-        if clan["status"] == "active":
-            yield ClanResponse(
-                id=str(clan["_id"]),
-                name=clan["name"],
-                rank=f"#{clan['rank']}",
-                image_id=clan["image_id"],
-                total_coins=clan["total_coins"]
-            )
-
-
-# --------------------------------- MY CLAN ---------------------------------- #
 def my_clan(telegram_user_id):
     user_clan_id = user_collection.find_one({"telegram_user_id": telegram_user_id})["clan"]["id"]
     clan = clans_collection.find_one({"_id": ObjectId(user_clan_id)})
@@ -202,22 +226,84 @@ def my_clan(telegram_user_id):
         members=clan["members"]
     )
 
-# --------------------------------- TOP CLAN ---------------------------------- #
-def top_clans():
-    """
-    Return the top 10 clans with the most coins.
 
-    Yields:
-        dict: A dictionary containing the details of each clan.
-    """
-    clans = clans_collection.find().sort("total_coins", -1).limit(10)
+# --------------------------------- INVITE TO CLAN ---------------------------------- #
+def invite_to_clan(telegram_user_id: str, clan_id: str):
+    user = user_collection.find_one({"telegram_user_id": telegram_user_id})
+    clan = clans_collection.find_one({"_id": ObjectId(clan_id)})
 
-    for clan in clans:
-        if clan["status"] == "active":
-            yield ClanResponse(
-                    id=str(clan["_id"]),
-                    name=clan["name"],
-                    rank=f"#{clan['rank']}",
-                    total_coins=clan["total_coins"],
-                    image_id=clan["image_id"]
+    if user and clan:
+        if user["clan"]["id"] == None:
+            update_user = user_collection.update_one(
+                {"telegram_user_id": telegram_user_id},
+                {
+                    "$set": {
+                        "clan": {
+                            "name": clan["name"],
+                            "id": clan_id,
+                            "rank": "member",
+                            "in_clan_rank": "member"
+                        }
+                    }
+                }
+            )
+
+            if update_user.modified_count > 0:
+                # increment clan member count
+                update_clan_member_count = clans_collection.update_one(
+                    {"_id": ObjectId(clan_id)},
+                    {
+                        "$inc": {
+                            "members": 1
+                        }
+                    }
                 )
+
+                if update_clan_member_count.modified_count > 0:
+                    return {
+                        "status": True, "message": "Invited to clan successfully"
+                    }
+
+
+# --------------------------------- EXIT CLAN ---------------------------------- #
+def exit_clan(telegram_user_id: str, clan_id: str):
+    user = user_collection.find_one({"telegram_user_id": telegram_user_id})
+    clan = clans_collection.find_one({"_id": ObjectId(clan_id)})
+
+    # check if user is in clan
+    if user and user["clan"]["id"] == None:
+        raise HTTPException(status_code=404, detail="You need to be in a clan before you can exit")
+
+    # if user is not creator
+    if user and clan and clan["creator" != telegram_user_id]:
+        # set clan in user profile to none
+        update_user = user_collection.update_one(
+            {"telegram_user_id": telegram_user_id},
+            {
+                "$set": {
+                    "clan": {
+                        "id": None,
+                        "name": None,
+                    }
+                }
+            }
+        )
+
+        # decrement clan member count
+        update_clan_member_count = clans_collection.update_one(
+            {"_id": ObjectId(clan_id)},
+            {
+                "$inc": {
+                    "members": -1
+                }
+            }
+        )
+
+        if update_user.modified_count > 0 and update_clan_member_count.modified_count > 0:
+            return {
+                "status": True, "message": "Exited clan successfully"
+        }
+
+    # if user is creator
+    if user and clan and clan["creator"] == telegram_user_id:
+        pass
