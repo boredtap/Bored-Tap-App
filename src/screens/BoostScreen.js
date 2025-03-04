@@ -80,7 +80,7 @@ const BoostScreen = () => {
         value: booster.upgrade_cost.toString(),
         level: booster.level === "-" ? "Not Owned" : `Level ${booster.level - 1}`,
         ctaText: booster.level === "-" ? "Buy" : `Upgrade to Level ${booster.level}`,
-        altCTA: (parseInt(booster.level, 10) === 5) || (booster.status === "owned") ? "Maximum Level Reached" : (profileData.total_coins || 0) < booster.upgrade_cost ? "Insufficient Funds" : null,
+        altCTA: (parseInt(booster.level, 10) === 6) || (booster.status === "owned") ? "Maximum Level Reached" : (profileData.total_coins || 0) < booster.upgrade_cost ? "Insufficient Funds" : null,
         actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
         icon: `${process.env.PUBLIC_URL}/extra-booster-icon.png`,
         imageId: booster.image_id,
