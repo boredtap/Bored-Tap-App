@@ -272,7 +272,7 @@ const BoostersContext = ({ children }) => {
         // Save updated values
         //localStorage.setItem("electricBoost", JSON.stringify(newElectricBoost));
         //localStorage.setItem("tapCount", JSON.stringify(parseInt(localStorage.getItem("tapCount") || "0", 10) + offlineTaps));
-        localStorage.setItem("lastActiveTime", JSON.stringify(null)); // Update last active time
+        localStorage.setItem("lastActiveTime", JSON.stringify(Date.now())); // Update last active time
 
         console.log(`While you were away:
         - ${offlineTaps} taps were simulated.
