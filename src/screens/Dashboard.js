@@ -5,7 +5,7 @@ import "./Dashboard.css";
 import { BoostContext } from "../context/BoosterContext";
 
 // Updated Recharge times per spec (in ms) - now including all 5 levels
-const RECHARGE_TIMES = [3000, 2500, 2000, 1500, 1000, 500]; // Level 0 through 5
+const RECHARGE_TIMES = [5000, 4500, 3500, 2500, 1500, 500]; // Level 0 through 5
 
 const Dashboard = () => {
   const navigate = useNavigate();
