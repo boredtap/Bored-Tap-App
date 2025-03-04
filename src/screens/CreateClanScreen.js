@@ -125,7 +125,7 @@ const CreateClanScreen = () => {
       <div className="create-clan-header">
         <img src={`${process.env.PUBLIC_URL}/clan.png`} alt="Clan Icon" className="clan-icon" />
         <p className="create-clan-title">Create a Clan</p>
-        <p className="create-clan-subtitle">Invite friends to join your clan (1+ required for testing)</p>
+        <p className="create-clan-subtitle">Invite friends to join your clan (50+ required)</p>
       </div>
 
       {loading ? (
