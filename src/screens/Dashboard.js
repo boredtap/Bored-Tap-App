@@ -392,7 +392,7 @@ const Dashboard = () => {
           <img className="tap-logo-small" src={`${process.env.PUBLIC_URL}/logo.png`} alt="Small Icon" />
           <span>{totalTaps?.toLocaleString() ?? 0}</span>
         </div>
-        <div className="big-tap-icon" onTouchStart={handleTap} onMouseDown={handleTap}>
+        <div className="big-tap-icon" onTouchStart={handleTap}>
           <img className="tap-logo-big" src={`${process.env.PUBLIC_URL}/logo.png`} alt="Big Tap Icon" />
           {tapEffects.map((effect) => (
             <div key={effect.id} className="tap-effect" style={{ top: `${effect.y}px`, left: `${effect.x}px` }}>
