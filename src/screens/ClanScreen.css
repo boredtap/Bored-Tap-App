@@ -9,38 +9,83 @@
   flex-direction: column;
   width: 100%;
   box-sizing: border-box;
-}
-
-.clan-header {
+ }
+ 
+ .clan-header {
   text-align: center;
   margin-top: 20px;
   margin-bottom: 24px;
-}
-
-.clan-icon {
+ }
+ 
+ .clan-icon {
   width: 80px;
   height: 80px;
   margin: 0 auto;
-}
-
-.clan-title {
+ }
+ 
+ .clan-title {
   font-size: 24px;
   font-weight: 500;
   margin: 10px 0;
-}
-
-.clan-subtitle {
+ }
+ 
+ .clan-subtitle {
   font-size: 16px;
   color: #c2bfbf;
-  margin-bottom: 10px;
-}
-
-.top-clans-section {
+  margin-bottom: 15px; /* Adjusted for spacing before CTAs */
+ }
+ 
+ .cta-container {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 15px; /* Space between CTAs and Top Clans */
+ }
+ 
+ .clan-cta-button {
+  background-color: #fff;
+  color: #000;
+  border: none;
+  border-radius: 25px;
+  padding: 8px 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 40%;
+  font-size: 16px;
+ }
+ 
+ .clan-cta-button.secondary {
+  background-color: #414141;
+  color: #fff;
+ }
+ 
+ .clan-cta-button.solo {
+  width: 50%;
+  margin: 0 auto;
+ }
+ 
+ .clan-cta-button:hover {
+  background-color: #e6e6e6;
+ }
+ 
+ .clan-cta-button.secondary:hover {
+  background-color: #555;
+ }
+ 
+ .pending-message {
+  font-size: 14px;
+  color: #f9b54c;
+  margin-bottom: 15px; /* Adjusted for spacing */
+ }
+ 
+ .top-clans-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 10px;
-}
+ }
+ 
+ /* Rest of the CSS remains unchanged */
 
 .section-title {
   font-size: 16px;

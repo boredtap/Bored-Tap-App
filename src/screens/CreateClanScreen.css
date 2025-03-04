@@ -9,40 +9,40 @@
     flex-direction: column;
     width: 100%;
     box-sizing: border-box;
-  }
-  
-  .create-clan-header {
+   }
+   
+   .create-clan-header {
     text-align: center;
     margin-top: 20px;
     margin-bottom: 24px;
-  }
-  
-  .clan-icon {
+   }
+   
+   .clan-icon {
     width: 80px;
     height: 80px;
     margin: 0 auto;
-  }
-  
-  .create-clan-title {
+   }
+   
+   .create-clan-title {
     font-size: 24px;
     font-weight: 500;
     margin: 10px 0;
-  }
-  
-  .create-clan-subtitle {
+   }
+   
+   .create-clan-subtitle {
     font-size: 16px;
     color: #c2bfbf;
-  }
-  
-  .create-clan-form {
+   }
+   
+   .create-clan-form {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 16px;
-  }
-  
-  .clan-input,
-  .image-picker {
+   }
+   
+   .clan-input,
+   .image-picker {
     background-color: #414141;
     border: none;
     border-radius: 8px;
@@ -52,131 +52,133 @@
     width: 100%;
     box-sizing: border-box;
     height: 48px;
-  }
-  
-  .image-picker {
+   }
+   
+   .image-picker {
     position: relative;
     display: flex;
     align-items: center;
-  }
-  
-  .clan-image-input {
+   }
+   
+   .clan-image-input {
     display: none;
-  }
-  
-  .image-label {
+   }
+   
+   .image-label {
     flex: 1;
     display: flex;
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
     color: #c2bfbf;
-  }
-  
-  .picker-icon {
+   }
+   
+   .picker-icon {
     width: 20px;
     height: 20px;
     cursor: pointer;
-  }
-  
-  .friends-header {
+   }
+   
+   .friends-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-top: 20px;
-  }
-  
-  .friends-count {
+   }
+   
+   .friends-count {
     font-size: 16px;
     font-weight: bold;
-  }
-  
-  .select-all {
+   }
+   
+   .select-all {
     display: flex;
     align-items: center;
     cursor: pointer;
     font-size: 14px;
-  }
-  
-  .select-all-icon {
+   }
+   
+   .select-all-icon {
     width: 16px;
     height: 16px;
     margin-left: 8px;
-  }
-  
-  .friends-list {
+   }
+   
+   .friends-list {
     margin-top: 10px;
     display: flex;
     flex-direction: column;
     gap: 10px;
-  }
-  
-  .friend-card {
+   }
+   
+   .friend-card {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 12px;
-  }
-  
-  .friend-profile-img {
+   }
+   
+   .friend-profile-img {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-  }
-  
-  .friend-details {
+   }
+   
+   .friend-details {
     flex: 1;
     margin-left: 12px;
-  }
-  
-  .friend-name {
+   }
+   
+   .friend-name {
     font-size: 14px;
     font-weight: bold;
-  }
-  
-  .friend-level {
+   }
+   
+   .friend-level {
     font-size: 12px;
     color: orange;
-  }
-  
-  .friend-icon-value {
+   }
+   
+   .friend-icon-value {
     display: flex;
     align-items: center;
     margin-top: 4px;
-  }
-  
-  .icon-img {
+   }
+   
+   .icon-img {
     width: 16px;
     height: 16px;
     margin-right: 5px;
-  }
-  
-  .icon-value {
+   }
+   
+   .icon-value {
     font-size: 12px;
-  }
-  
-  .friend-action-icon {
+   }
+   
+   .friend-action-icon {
     width: 20px;
     height: 20px;
     cursor: pointer;
-  }
-  
-  .no-friends {
+   }
+   
+   .no-friends {
     text-align: center;
     color: #c2bfbf;
     font-size: 16px;
-  }
-  
-  .cta-container {
+   }
+   
+   .cta-container {
     position: fixed;
     bottom: 80px;
     left: 16px;
     right: 16px;
     display: flex;
     justify-content: center;
-  }
-  
-  .create-clan-cta {
+    width: calc(100% - 32px); /* 100% minus 16px padding on each side */
+    margin: 0 auto;
+   }
+   
+   .create-clan-cta {
     background-color: #fff;
     color: #000;
     border: none;
@@ -187,18 +189,18 @@
     transition: background-color 0.3s ease;
     width: 100%;
     font-size: 16px;
-  }
-  
-  .create-clan-cta.inactive {
+   }
+   
+   .create-clan-cta.inactive {
     background-color: #777;
     cursor: not-allowed;
-  }
-  
-  .create-clan-cta:not(.inactive):hover {
+   }
+   
+   .create-clan-cta:not(.inactive):hover {
     background-color: #e6e6e6;
-  }
-  
-  .overlay-container {
+   }
+   
+   .overlay-container {
     position: fixed;
     top: 0;
     left: 0;
@@ -209,9 +211,9 @@
     justify-content: center;
     align-items: flex-end;
     z-index: 1001;
-  }
-  
-  .clan-overlay {
+   }
+   
+   .clan-overlay {
     background-color: #1d1d1d;
     color: #fff;
     width: 100%;
@@ -221,65 +223,65 @@
     border-top-right-radius: 25px;
     box-sizing: border-box;
     animation: slideIn 0.3s ease-out forwards;
-  }
-  
-  .clan-overlay.slide-out {
+   }
+   
+   .clan-overlay.slide-out {
     animation: slideOut 0.3s ease-out forwards;
-  }
-  
-  @keyframes slideIn {
+   }
+   
+   @keyframes slideIn {
     from { transform: translateY(100%); }
     to { transform: translateY(0); }
-  }
-  
-  @keyframes slideOut {
+   }
+   
+   @keyframes slideOut {
     from { transform: translateY(0); }
     to { transform: translateY(100%); }
-  }
-  
-  .overlay-header {
+   }
+   
+   .overlay-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 10px;
-  }
-  
-  .overlay-title {
+   }
+   
+   .overlay-title {
     font-size: 18px;
     font-weight: 500;
-  }
-  
-  .overlay-cancel {
+   }
+   
+   .overlay-cancel {
     width: 24px;
     height: 24px;
     cursor: pointer;
-  }
-  
-  .overlay-divider {
+   }
+   
+   .overlay-divider {
     width: 100%;
     height: 1px;
     background-color: #777777;
     margin: 20px 0;
-  }
-  
-  .overlay-content {
+   }
+   
+   .overlay-content {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 15px;
-  }
-  
-  .overlay-icon {
+   }
+   
+   .overlay-icon {
     width: 60px;
     height: 60px;
-  }
-  
-  .overlay-text {
+   }
+   
+   .overlay-text {
     font-size: 16px;
     text-align: center;
-  }
-  
-  .overlay-cta {
+   }
+   
+   .overlay-cta {
     width: 100%;
     padding: 12px;
     background-color: #fff;
@@ -289,9 +291,10 @@
     font-size: 16px;
     font-weight: 500;
     cursor: pointer;
-  }
-  
-  @media (max-width: 600px) {
+   }
+   
+   /* Responsive Adjustments */
+   @media (max-width: 600px) {
     .create-clan-screen { padding: 12px; }
     .clan-icon { width: 60px; height: 60px; }
     .create-clan-title { font-size: 20px; }
@@ -303,10 +306,10 @@
     .overlay-title { font-size: 16px; }
     .overlay-cancel { width: 20px; height: 20px; }
     .overlay-icon { width: 50px; height: 50px; }
-  }
-  
-  @media (min-width: 768px) {
+   }
+   
+   @media (min-width: 768px) {
     .create-clan-screen { padding: 24px; }
     .create-clan-form { max-width: 500px; margin: 0 auto; }
     .create-clan-cta { max-width: none; }
-  }
+   }
