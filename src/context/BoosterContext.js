@@ -244,27 +244,28 @@ const BoostersContext = ({ children }) => {
 
     const applyAutoBotTaps = () => {
         if (!boosters?.autoTapActive) return; // Ensure boosters exist before checking
-    
+
         const lastActiveTime = parseInt(localStorage.getItem("lastActiveTime") || Date.now(), 10);
         const now = Date.now();
         const timeAway = (now - lastActiveTime) / 1000; // Convert ms to seconds
-    
+
         const tapsPerSecond = 1; // Example: Adjust based on game logic
-    
-        const offlineTaps = Math.floor(timeAway * tapsPerSecond);
-    
+
+        let offlineTaps = timeAway * tapsPerSecond;
+
         // Update last active time with current timestamp
         localStorage.setItem("lastActiveTime", JSON.stringify(now));
-    
+        offlineTaps = Math.floor(offlineTaps)
+
         console.log(`While you were away:
         - ${offlineTaps} taps were simulated.
         `);
-    
+
         alert(`While you were away:
             - ${offlineTaps} taps were simulated.
         `);
     };
-    
+
 
     useEffect(() => {
         if (boosters.extraBoosters?.length) {
