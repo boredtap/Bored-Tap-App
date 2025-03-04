@@ -88,7 +88,7 @@ const Dashboard = () => {
         } else {
           setProfile(data);
           console.log('here', data.total_coins)
-          if (data.total_coins){
+          if (data.total_coins) {
             setTotalTaps(data.total_coins)
           }
           setCurrentStreak(data.streak?.current_streak || 0);
@@ -117,8 +117,8 @@ const Dashboard = () => {
       if (user) {
         setTelegramData({
           telegram_user_id: user.id,
-          username: user.username || `User${user.id}`,
-          image_url: user.photo_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
+          username: user?.username ? user.username : `User${user.id}`,
+          image_url: user?.photo_url ? user.photo_url : `${process.env.PUBLIC_URL}/profile-picture.png`,
         });
       }
     }
@@ -334,24 +334,24 @@ const Dashboard = () => {
     const handleLoad = () => {
       const oldUser = localStorage.getItem("telegramUser");
       const isFirstVisit = !sessionStorage.getItem("hasVisited");
-  
+
       if (oldUser && isFirstVisit) {
         applyAutoBotTaps();
         sessionStorage.setItem("hasVisited", "true"); // Mark as visited for this session
       }
     };
-  
+
     if (document.readyState === "complete") {
       handleLoad();
     } else {
       window.addEventListener("load", handleLoad);
     }
-  
+
     return () => {
       window.removeEventListener("load", handleLoad);
     };
   }, []);
-  
+
 
   return (
     <div className="dashboard-container">

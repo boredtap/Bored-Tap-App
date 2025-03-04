@@ -78,8 +78,8 @@ const BoostScreen = () => {
         title: booster.name,
         description: booster.description,
         value: booster.upgrade_cost.toString(),
-        level: booster.level === "-" ? "Not Owned" : `Level ${booster.level}`,
-        ctaText: booster.level === "-" ? "Buy" : `Upgrade to Level ${booster.level + 1}`,
+        level: booster.level === "-" ? "Not Owned" : `Level ${booster.level - 1}`,
+        ctaText: booster.level === "-" ? "Buy" : `Upgrade to Level ${booster.level}`,
         altCTA: (parseInt(booster.level, 10) === 5) || (booster.status === "owned") ? "Maximum Level Reached" : (profileData.total_coins || 0) < booster.upgrade_cost ? "Insufficient Funds" : null,
         actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
         icon: `${process.env.PUBLIC_URL}/extra-booster-icon.png`,
@@ -106,12 +106,12 @@ const BoostScreen = () => {
     let extraBoosters = JSON.parse(localStorage.getItem("extraBoosters") || "[]");
     let booster = extraBoosters.find((b) => b.id === boosterId);
 
-    if (booster.rawLevel == 4) return
+    if (booster.rawLevel == 5) return
     if (booster.name === 'Auto-bot Tapping' && booster.status === 1) return
 
     try {
       const token = localStorage.getItem("accessToken");
-      console.log("I got here, therefore i updated boosters")
+      
       const response = await fetch(`https://bt-coins.onrender.com/user/boost/upgrade/${boosterId}`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
