@@ -257,13 +257,7 @@ const BoostersContext = ({ children }) => {
         localStorage.setItem("lastActiveTime", JSON.stringify(now));
         offlineTaps = Math.floor(offlineTaps)
 
-        console.log(`While you were away:
-        - ${offlineTaps} taps were simulated.
-        `);
-
-        alert(`While you were away:
-            - ${offlineTaps} taps were simulated.
-        `);
+        return offlineTaps
     };
 
 

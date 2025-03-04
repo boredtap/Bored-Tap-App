@@ -338,13 +338,16 @@ const Dashboard = () => {
     fetchData()
   }, [])
 
+  const [autoBotTaps, setAutoBotTaps] = useState(0)
+
   useEffect(() => {
     const handleLoad = () => {
       const oldUser = localStorage.getItem("telegramUser");
       const isFirstVisit = !sessionStorage.getItem("hasVisited");
 
       if (oldUser && isFirstVisit) {
-        applyAutoBotTaps();
+        const offlineTaps = applyAutoBotTaps();
+        setAutoBotTaps(offlineTaps)
         sessionStorage.setItem("hasVisited", "true"); // Mark as visited for this session
       }
     };
@@ -363,6 +366,18 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
+      {/* Temporary: Modal containing AutoBot information */}
+      {autoBotTaps ? (
+        <div className="autobot-result">
+          <span className="autobot-modal-bg"></span>
+          <span className="autobot-modal">
+            <h3>AutoBot Worked for you:</h3>
+            <p>{autoBotTaps} Taps</p>
+            <button onClick={() => setAutoBotTaps(0)}>Got It!</button>
+          </span>
+        </div>
+      ) : null}
+      {/* Temporary: Modal containing AutoBot information */}
       <div className="profile1-streak-section">
         <div className="profile1-section" onClick={() => navigate("/profile-screen")}>
           <img src={telegramData.image_url} alt="Profile" className="profile1-picture" />
