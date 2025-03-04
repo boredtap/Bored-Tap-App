@@ -99,10 +99,10 @@ const ClanScreen = () => {
         ) : topClans.length === 0 ? (
           <p className="no-clans">No top clans available yet.</p>
         ) : (
-          topClans.map((clan) => (
+          topClans.map((clan, index) => (
             <div className="clan-card" key={clan.id}>
               <img
-                src={clan.image_url || `${process.env.PUBLIC_URL}/default-clan.png`}
+                src={`https://bt-coins.onrender.com/bored-tap/user_app/image?image_id=${clan.image_id}`}
                 alt={`${clan.name} Icon`}
                 className="clan-card-icon"
               />
@@ -118,14 +118,26 @@ const ClanScreen = () => {
                 </div>
               </div>
               <div className="clan-card-rank">
-                {clan.rankIcon ? (
+                {index === 0 ? (
                   <img
-                    src={`${process.env.PUBLIC_URL}/${clan.rankIcon}`}
-                    alt="Rank Icon"
+                    src={`${process.env.PUBLIC_URL}/first-icon.png`}
+                    alt="1st Place"
+                    className="rank-icon"
+                  />
+                ) : index === 1 ? (
+                  <img
+                    src={`${process.env.PUBLIC_URL}/second-icon.png`}
+                    alt="2nd Place"
+                    className="rank-icon"
+                  />
+                ) : index === 2 ? (
+                  <img
+                    src={`${process.env.PUBLIC_URL}/third-icon.png`}
+                    alt="3rd Place"
                     className="rank-icon"
                   />
                 ) : (
-                  <span className="position-number">#</span>
+                  <span className="position-number">#{index + 1}</span>
                 )}
               </div>
             </div>
