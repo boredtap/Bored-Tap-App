@@ -124,8 +124,13 @@ const SplashScreen = () => {
     window.location.reload();
   };
 
-  window.addEventListener("beforeunload", () => {
+  const saveLastActiveTime = () => {
     localStorage.setItem("lastActiveTime", Date.now());
+  };
+
+  window.addEventListener("beforeunload", saveLastActiveTime);
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) saveLastActiveTime();
   });
 
   return (

@@ -278,9 +278,16 @@ const Dashboard = () => {
     };
   }, []);
 
-  // Tap handling function
+  const isTouchEvent = useRef(false); // Prevents duplicate taps
+
   const handleTap = (event) => {
-    //event.preventDefault();
+    // Detect touch events first to prevent mouse event duplication
+    if (event.pointerType === "touch") {
+      isTouchEvent.current = true; // Mark as touch event
+    } else if (event.pointerType === "mouse" && isTouchEvent.current) {
+      return; // Ignore the mouse event if touch was used
+    }
+
     if (electricBoost <= 0) return;
 
     if (rechargeInterval.current) {
@@ -291,28 +298,29 @@ const Dashboard = () => {
     lastTapTime.current = Date.now();
     localStorage.setItem("lastTapTime", lastTapTime.current.toString());
 
-    setTotalTaps((prev) => prev + tapMultiplier);
-    tapCountSinceLastUpdate.current += tapMultiplier;
+    const numTaps = event.touches ? event.touches.length : 1;
 
-    setElectricBoost((prev) => {
-      const newBoost = Math.max(prev - 1, 0);
-      return newBoost;
-    });
+    setTotalTaps((prev) => prev + tapMultiplier * numTaps);
+    tapCountSinceLastUpdate.current += tapMultiplier * numTaps;
 
-    const tapIcon = event.currentTarget.getBoundingClientRect();
-    const tapX = (event.touches ? event.touches[0].clientX : event.clientX) - tapIcon.left;
-    const tapY = (event.touches ? event.touches[0].clientY : event.clientY) - tapIcon.top;
-    const newTapEffect = { id: Date.now(), x: tapX, y: tapY };
+    setElectricBoost((prev) => Math.max(prev - numTaps, 0));
+
+    const tapElement = event.currentTarget;
+    const tapIconRect = tapElement.getBoundingClientRect();
+
+    const tapX = event.clientX - tapIconRect.left;
+    const tapY = event.clientY - tapIconRect.top;
+    const id = Date.now() + Math.random();
+    const newTapEffect = { id, x: tapX, y: tapY };
 
     setTapEffects((prev) => [...prev, newTapEffect]);
 
-    const tapElement = event.currentTarget;
+    setTimeout(() => {
+      setTapEffects((prev) => prev.filter((effect) => effect.id !== id));
+    }, 1000);
+
     tapElement.classList.add("tap-animation");
     setTimeout(() => tapElement.classList.remove("tap-animation"), 200);
-
-    setTimeout(() => {
-      setTapEffects((prev) => prev.filter((effect) => effect.id !== newTapEffect.id));
-    }, 1000);
   };
 
   useEffect(() => {
@@ -392,7 +400,7 @@ const Dashboard = () => {
           <img className="tap-logo-small" src={`${process.env.PUBLIC_URL}/logo.png`} alt="Small Icon" />
           <span>{totalTaps?.toLocaleString() ?? 0}</span>
         </div>
-        <div className="big-tap-icon" onTouchStart={handleTap}>
+        <div className="big-tap-icon" onPointerDown={handleTap}>
           <img className="tap-logo-big" src={`${process.env.PUBLIC_URL}/logo.png`} alt="Big Tap Icon" />
           {tapEffects.map((effect) => (
             <div key={effect.id} className="tap-effect" style={{ top: `${effect.y}px`, left: `${effect.x}px` }}>
