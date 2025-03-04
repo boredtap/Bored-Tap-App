@@ -61,7 +61,8 @@ def get_profile_url(user_id: int):
 @bot.message_handler(commands=['start'])
 def start_command(message: Message):
     # get user datails
-    print(f"message received: {message}")
+    print(f"message received: {message.text}")
+    print(f"message received splitted: {message.text.split(' ')}")
     try:
         user_id = str(message.from_user.id)
         referral_code = message.text.split(" ")[1]
