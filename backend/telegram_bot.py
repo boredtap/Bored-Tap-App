@@ -64,7 +64,7 @@ def start_command(message: Message):
     print(f"message received: {message.text}")
     print(f"message received splitted: {message.text.split(' ')}")
 
-    bot.send(message.chat.id, f"Welcome user, you sent: {message.text}")
+    bot.send_message(message.chat.id, f"Welcome user, you sent: {message.text}")
     
     try:
         user_id = str(message.from_user.id)
