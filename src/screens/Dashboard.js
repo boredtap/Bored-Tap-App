@@ -363,6 +363,23 @@ const Dashboard = () => {
     };
   }, []);
 
+  const addAutoBotTaps = () => {
+    setTotalTaps(totalTaps + autoBotTaps)
+    setAutoBotTaps(0)
+  }
+
+  // useEffect(() => {
+  //   console.log(autoBotTaps)
+  //   const storedTaps = localStorage.getItem("autoBotTaps");
+  //   console.log(storedTaps)
+  //   if (storedTaps !== null) {
+  //     setAutoBotTaps(parseInt(storedTaps, 10) + autoBotTaps); // Ensure it's a number
+  //   }
+  // }, []);
+
+  // useEffect(() => {
+  //   localStorage.setItem("autoBotTaps", autoBotTaps);
+  // }, [autoBotTaps]);
 
   return (
     <div className="dashboard-container">
@@ -373,7 +390,10 @@ const Dashboard = () => {
           <span className="autobot-modal">
             <h3>AutoBot Worked for you:</h3>
             <p>{autoBotTaps} Taps</p>
-            <button onClick={() => setAutoBotTaps(0)}>Got It!</button>
+            <span>
+              <button onClick={() => addAutoBotTaps()}>Add</button>
+              <button onClick={() => setAutoBotTaps(0)}>Ignore</button>
+            </span>
           </span>
         </div>
       ) : null}
