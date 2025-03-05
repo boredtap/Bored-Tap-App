@@ -8,11 +8,18 @@ const RECHARGE_TIMES = [5000, 4500, 3500, 2500, 1500, 500]; // Level 0 through 5
 
 const getFromStorage = (key, defaultValue) => {
     try {
+        // Check if running in Telegram WebApp
+        if (window.Telegram?.WebApp) {
+            const telegramData = window.Telegram.WebApp.initDataUnsafe[key];
+            if (telegramData !== undefined) return telegramData; // Telegram data found
+        }
+
+        // Fallback to localStorage for regular web users
         const saved = localStorage.getItem(key);
         if (saved === null) return defaultValue;
         return JSON.parse(saved);
     } catch (error) {
-        console.error(`Error loading ${key} from localStorage`, error);
+        console.error(`Error loading ${key} from storage`, error);
         return defaultValue;
     }
 };
@@ -42,10 +49,24 @@ const BoostersContext = ({ children }) => {
     const [boosters, setBoosters] = useState(initialState);
 
     useEffect(() => {
-        Object.keys(boosters).forEach((key) => {
-            localStorage.setItem(key, JSON.stringify(boosters[key]));
-        });
+        if (window.Telegram?.WebApp) {
+            Object.keys(boosters).forEach((key) => {
+                const value = JSON.stringify(boosters[key]);
+
+                // Store in localStorage for regular web
+                localStorage.setItem(key, value);
+
+                // Send data to Telegram WebApp if available
+                window.Telegram.WebApp.sendData(value);
+            });
+        } else {
+            // Fallback for normal web
+            Object.keys(boosters).forEach((key) => {
+                localStorage.setItem(key, JSON.stringify(boosters[key]));
+            });
+        }
     }, [boosters]);
+
 
     const setDailyBoosters = (newBoosters) => {
         setBoosters(prev => ({
@@ -271,7 +292,9 @@ const BoostersContext = ({ children }) => {
         if (!boosters || boosters.lastActiveTime === undefined) return;
 
         const now = Date.now();
-        const lastActiveTime = boosters?.lastActiveTime || parseInt(localStorage.getItem("lastActiveTime"), 10) || now;
+        const lastActiveTime = window.Telegram?.WebApp?.initDataUnsafe?.lastActiveTime
+            || parseInt(localStorage.getItem("lastActiveTime"), 10)
+            || now;
         const timeAway = now - lastActiveTime // ms
 
         const electricBoostsSinceLeaving = Math.floor(timeAway / boosters.rechargeTime)

@@ -135,6 +135,13 @@ const SplashScreen = () => {
     if (document.hidden) saveLastActiveTime();
   });
 
+  window.Telegram.WebApp.onEvent("main_button_pressed", () => {
+    const now = Date.now();
+    localStorage.setItem("lastActiveTime", now.toString());
+    Telegram.WebApp.sendData(JSON.stringify({ lastActiveTime: now }));
+  });
+
+
   return (
     <div className="splash-container">
       <div className="splash-content">
