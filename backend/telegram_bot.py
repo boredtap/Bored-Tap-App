@@ -87,7 +87,7 @@ def start_command(message: Message):
         username = message.from_user.username
         first_name = message.from_user.first_name
         last_name = message.from_user.last_name
-        image_url = get_profile_url(user_id)
+        image_url = "https://example.com"       # actual url would be updated from client side
 
         # Extract referral code
         message_parts = message.text.split(" ")
@@ -95,8 +95,8 @@ def start_command(message: Message):
         # referral_code = "1234521345"
 
         print(f"Received start command from user {user_id} (username: {username})")
-        bot.send_message(message.chat.id, f"Received start command from user {user_id} (username: {username})")
-        bot.send_message(message.chat.id, f"Message received: {message.text}")
+        # bot.send_message(message.chat.id, f"Received start command from user {user_id} (username: {username})")
+        # bot.send_message(message.chat.id, f"Message received: {message.text}")
 
         # instantiate Signup model with user details
         print("Setting user details in Signup model")
@@ -115,8 +115,7 @@ def start_command(message: Message):
 
         # send welcome message
         launch_btn = InlineKeyboardButton(
-            text="Launch WebApp",
-            # callback_data="launch_webapp"
+            text="Claim Invite Reward",
             web_app=telebot.types.WebAppInfo(url="https://boredtap.netlify.app/")
         )
         inline_keyboard = InlineKeyboardMarkup(row_width=1).add(launch_btn)
