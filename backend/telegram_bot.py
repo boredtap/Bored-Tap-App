@@ -69,6 +69,10 @@ def get_profile_url(user_id: int):
         file_path = bot.get_file(file_id).file_path
         photo_url = f"https://api.telegram.org/file/bot{BotToken}/{file_path}"
         return photo_url
+    return "https://example.com"
+
+
+
 
 
 
