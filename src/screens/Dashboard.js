@@ -10,7 +10,7 @@ const RECHARGE_TIMES = [5000, 4500, 3500, 2500, 1500, 500]; // Level 0 through 5
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  const { totalTaps, setTotalTaps, setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, setTapMultiplier, electricBoost, setElectricBoost, setMaxElectricBoost, maxElectricBoost, setRechargeTime, rechargeTime, autoTapActive, setAutoTapActive, applyAutoBotTaps, lastActiveTime, setLastActiveTime } = useContext(BoostContext)
+  const { totalTaps, setTotalTaps, setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, setTapMultiplier, electricBoost, setElectricBoost, setMaxElectricBoost, maxElectricBoost, setRechargeTime, rechargeTime, autoTapActive, setAutoTapActive, applyAutoBotTaps, lastActiveTime, setLastActiveTime, adjustElectricBoosts } = useContext(BoostContext)
 
   // State for Telegram user data
   const [telegramData, setTelegramData] = useState({
@@ -337,9 +337,13 @@ const Dashboard = () => {
 
       if (oldUser && isFirstVisit) {
         const offlineTaps = applyAutoBotTaps();
+        const newElectricBoost = adjustElectricBoosts();
         console.log("Offline taps", offlineTaps)
+        console.log("New Electric Boosts", newElectricBoost);
+
 
         setAutoBotTaps(offlineTaps);
+        setElectricBoost(newElectricBoost)
         sessionStorage.setItem("hasVisited", "true"); // Mark as visited for this session
       }
     };

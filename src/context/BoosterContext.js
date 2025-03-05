@@ -8,13 +8,6 @@ const RECHARGE_TIMES = [5000, 4500, 3500, 2500, 1500, 500]; // Level 0 through 5
 
 const getFromStorage = (key, defaultValue) => {
     try {
-        // Check if running in Telegram WebApp
-        if (window.Telegram?.WebApp) {
-            const telegramData = window.Telegram.WebApp.initDataUnsafe[key];
-            if (telegramData !== undefined) return telegramData; // Telegram data found
-        }
-
-        // Fallback to localStorage for regular web users
         const saved = localStorage.getItem(key);
         if (saved === null) return defaultValue;
         return JSON.parse(saved);
@@ -49,22 +42,9 @@ const BoostersContext = ({ children }) => {
     const [boosters, setBoosters] = useState(initialState);
 
     useEffect(() => {
-        if (window.Telegram?.WebApp) {
-            Object.keys(boosters).forEach((key) => {
-                const value = JSON.stringify(boosters[key]);
-
-                // Store in localStorage for regular web
-                localStorage.setItem(key, value);
-
-                // Send data to Telegram WebApp if available
-                window.Telegram.WebApp.sendData(value);
-            });
-        } else {
-            // Fallback for normal web
-            Object.keys(boosters).forEach((key) => {
-                localStorage.setItem(key, JSON.stringify(boosters[key]));
-            });
-        }
+        Object.keys(boosters).forEach((key) => {
+            localStorage.setItem(key, JSON.stringify(boosters[key]));
+        });
     }, [boosters]);
 
 
@@ -288,20 +268,16 @@ const BoostersContext = ({ children }) => {
         return offlineTaps
     };
 
-    useEffect(() => {
-        if (!boosters || boosters.lastActiveTime === undefined) return;
+    const adjustElectricBoosts = () => {
+        if (!boosters?.lastActiveTime) return;
 
         const now = Date.now();
-        const lastActiveTime = window.Telegram?.WebApp?.initDataUnsafe?.lastActiveTime
-            || parseInt(localStorage.getItem("lastActiveTime"), 10)
-            || now;
+        const lastActiveTime = boosters.lastActiveTime || now;
         const timeAway = now - lastActiveTime // ms
 
         const electricBoostsSinceLeaving = Math.floor(timeAway / boosters.rechargeTime)
-        setElectricBoost(Math.min(boosters.electricBoost + electricBoostsSinceLeaving, boosters.maxElectricBoost))
-
-        localStorage.setItem("lastActiveTime", now.toString());
-    }, [])
+        return Math.min(boosters.electricBoost + electricBoostsSinceLeaving, boosters.maxElectricBoost)
+    }
 
     useEffect(() => {
         if (boosters.extraBoosters?.length) {
@@ -402,6 +378,7 @@ const BoostersContext = ({ children }) => {
             setRechargeTime,
             resetAll,
             setAutoTapActive,
+            adjustElectricBoosts,
             setTotalTaps,
             applyAutoBotTaps,
             setLastActiveTime
