@@ -118,6 +118,13 @@
     width: 16px;
     height: 16px;
   }
+
+  .join-clan-message {
+    text-align: center;
+    font-size: 16px;
+    color: #ccc;
+    margin-top: 20px;
+  }
   
   .data-card {
     background-color: #414141;

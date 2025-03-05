@@ -93,6 +93,7 @@ const CreateClanScreen = () => {
     for (let [key, value] of formData.entries()) {
       console.log(`${key}:`, value);
     }
+    console.log("Request headers:", { Authorization: `Bearer ${token}` });
 
     setLoading(true);
     try {
@@ -113,11 +114,10 @@ const CreateClanScreen = () => {
       setShowOverlay(true);
     } catch (err) {
       const errorMessage = err.message.includes("Failed to fetch")
-        ? "Network error: Could not reach the server. This might be a CORS issue (server needs to allow requests from http://127.0.0.1:3000) or the server might be down. Check server status and CORS settings."
+        ? "Network error: Likely a CORS issue. The server allows GET requests but blocks POST with multipart/form-data. Add CORS headers (Access-Control-Allow-Methods: POST, Access-Control-Allow-Headers: Content-Type, Authorization) on the server, or use a proxy in package.json."
         : err.message;
       setError(errorMessage);
       console.error("Fetch error details:", err);
-      console.log("Request headers:", { Authorization: `Bearer ${token}` });
     } finally {
       setLoading(false);
     }

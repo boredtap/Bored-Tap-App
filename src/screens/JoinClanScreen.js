@@ -53,8 +53,8 @@ const JoinClanScreen = () => {
     setFilteredClans(filtered);
   };
 
-  const handleClanClick = (clanId) => {
-    navigate(`/clan/${clanId}`);
+  const handleClanClick = (clan) => {
+    navigate(`/clan/${clan.id}`, { state: { clan } });
   };
 
   return (
@@ -62,7 +62,7 @@ const JoinClanScreen = () => {
       <div className="find-clan-section">
         {!isSearchActive ? (
           <>
-            <p className="find-clan-title">Find a clan you like</p>
+            <p className="find-clan-title">All Clans</p>
             <div
               className="search-container"
               onClick={() => setIsSearchActive(true)}
@@ -104,15 +104,15 @@ const JoinClanScreen = () => {
         ) : filteredClans.length === 0 ? (
           <p className="no-clans">No clans found.</p>
         ) : (
-          filteredClans.map((clan) => (
+          filteredClans.map((clan, index) => (
             <div
               className="clan-card"
               key={clan.id}
-              onClick={() => handleClanClick(clan.id)}
+              onClick={() => handleClanClick(clan)}
             >
               <div className="clan-card-left">
                 <img
-                  src={clan.image_url || `${process.env.PUBLIC_URL}/default-clan.png`}
+                  src={`https://bt-coins.onrender.com/bored-tap/user_app/image?image_id=${clan.image_id}`}
                   alt={`${clan.name} Icon`}
                   className="clan-card-icon"
                 />
@@ -130,11 +130,29 @@ const JoinClanScreen = () => {
                   </div>
                 </div>
               </div>
-              <img
-                src={`${process.env.PUBLIC_URL}/front-arrow.png`}
-                alt="Join Icon"
-                className="join-icon"
-              />
+              <div className="clan-card-rank">
+                {index === 0 ? (
+                  <img
+                    src={`${process.env.PUBLIC_URL}/first-icon.png`}
+                    alt="1st Place"
+                    className="rank-icon"
+                  />
+                ) : index === 1 ? (
+                  <img
+                    src={`${process.env.PUBLIC_URL}/second-icon.png`}
+                    alt="2nd Place"
+                    className="rank-icon"
+                  />
+                ) : index === 2 ? (
+                  <img
+                    src={`${process.env.PUBLIC_URL}/third-icon.png`}
+                    alt="3rd Place"
+                    className="rank-icon"
+                  />
+                ) : (
+                  <span className="position-number">#{index + 1}</span>
+                )}
+              </div>
             </div>
           ))
         )}

@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./DetailedClanScreen.css";
 
 const DetailedClanScreen = () => {
-  const { clanId } = useParams();
-  const [clanData, setClanData] = useState(null);
+  const location = useLocation();
+  const { clan } = location.state;
   const [isMember, setIsMember] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchClanDetails = async () => {
+    const fetchProfile = async () => {
       const token = localStorage.getItem("accessToken");
       if (!token) {
         setError("No access token found");
@@ -21,32 +21,6 @@ const DetailedClanScreen = () => {
       }
 
       try {
-        const response = await fetch(`https://bt-coins.onrender.com/user/clan/${clanId}`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-        if (!response.ok) throw new Error("Failed to fetch clan details");
-        const data = await response.json();
-
-        setClanData({
-          id: clanId,
-          icon: "diamondbg.png",
-          name: data.name || "TON Station",
-          position: "#1",
-          topIcon: "first-icon.png",
-          joinIcon: "plus-icon.png",
-          ctaLeaveIcon: "leave-icon.png",
-          ctaInviteIcon: "invite-icon.png",
-          closeRank: "#1",
-          clanCoin: "675,127,478,606",
-          members: "7,308,114",
-          coinIcon: "logo.png",
-          seeAllIcon: "front-arrow.png",
-        });
-
         const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
           method: "GET",
           headers: {
@@ -56,29 +30,35 @@ const DetailedClanScreen = () => {
         });
         if (!profileResponse.ok) throw new Error("Failed to fetch profile");
         const profileData = await profileResponse.json();
-        setIsMember(profileData.clan_id === clanId);
+        setIsMember(profileData.clan_id === clan.id);
       } catch (err) {
         setError(err.message);
-        console.error("Error fetching clan details:", err);
+        console.error("Error fetching profile:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchClanDetails();
-  }, [clanId]);
+    fetchProfile();
+  }, [clan.id]);
 
   const handleJoinClan = async () => {
     const token = localStorage.getItem("accessToken");
     try {
-      const response = await fetch(`https://bt-coins.onrender.com/user/clan/join_clan?clan_id=${clanId}`, {
+      const response = await fetch(`https://bt-coins.onrender.com/user/clan/join_clan?clan_id=${clan.id}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
-      if (!response.ok) throw new Error("Failed to join clan");
+      if (!response.ok) {
+        if (response.status === 409) {
+          throw new Error("You are already a member of this clan.");
+        } else {
+          throw new Error("Failed to join clan");
+        }
+      }
       const result = await response.json();
       if (result.status) {
         setIsMember(true);
@@ -94,8 +74,7 @@ const DetailedClanScreen = () => {
   const handleLeaveClan = async () => {
     const token = localStorage.getItem("accessToken");
     try {
-      // Assuming a leave endpoint exists (not provided, so mocked)
-      const response = await fetch(`https://bt-coins.onrender.com/user/clan/leave_clan?clan_id=${clanId}`, {
+      const response = await fetch(`https://bt-coins.onrender.com/user/clan/leave_clan?clan_id=${clan.id}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -118,34 +97,47 @@ const DetailedClanScreen = () => {
 
   if (loading) return <div className="loading-message">Loading...</div>;
   if (error) return <div className="error-message">{error}</div>;
-  if (!clanData) return null;
 
   return (
     <div className="detailed-clan-screen">
       <div className="clan-icon-section">
         <img
-          src={`${process.env.PUBLIC_URL}/${clanData.icon}`}
+          src={`https://bt-coins.onrender.com/bored-tap/user_app/image?image_id=${clan.image_id}`}
           alt="Clan Icon"
           className="clan-icon"
         />
       </div>
 
-      <p className="clan-name">{clanData.name}</p>
+      <p className="clan-name">{clan.name}</p>
 
       <div className="clan-position">
-        <span className="position-text">{clanData.position}</span>
-        <img
-          src={`${process.env.PUBLIC_URL}/${clanData.topIcon}`}
-          alt="Top Icon"
-          className="top-icon"
-        />
+        <span className="position-text">{clan.rank}</span>
+        {clan.rank === "#1" ? (
+          <img
+            src={`${process.env.PUBLIC_URL}/first-icon.png`}
+            alt="1st Place"
+            className="top-icon"
+          />
+        ) : clan.rank === "#2" ? (
+          <img
+            src={`${process.env.PUBLIC_URL}/second-icon.png`}
+            alt="2nd Place"
+            className="top-icon"
+          />
+        ) : clan.rank === "#3" ? (
+          <img
+            src={`${process.env.PUBLIC_URL}/third-icon.png`}
+            alt="3rd Place"
+            className="top-icon"
+          />
+        ) : null}
       </div>
 
       {isMember ? (
         <div className="clan-actions">
           <div className="cta-button" onClick={handleLeaveClan}>
             <img
-              src={`${process.env.PUBLIC_URL}/${clanData.ctaLeaveIcon}`}
+              src={`${process.env.PUBLIC_URL}/leave-icon.png`}
               alt="Leave Icon"
               className="cta-icon"
             />
@@ -153,7 +145,7 @@ const DetailedClanScreen = () => {
           </div>
           <div className="cta-button" onClick={handleInvite}>
             <img
-              src={`${process.env.PUBLIC_URL}/${clanData.ctaInviteIcon}`}
+              src={`${process.env.PUBLIC_URL}/invite-icon.png`}
               alt="Invite Icon"
               className="cta-icon"
             />
@@ -163,7 +155,7 @@ const DetailedClanScreen = () => {
       ) : (
         <div className="join-btn-frame" onClick={handleJoinClan}>
           <img
-            src={`${process.env.PUBLIC_URL}/${clanData.joinIcon}`}
+            src={`${process.env.PUBLIC_URL}/plus-icon.png`}
             alt="Join Icon"
             className="join-icon"
           />
@@ -176,7 +168,7 @@ const DetailedClanScreen = () => {
         <div className="see-all-section">
           <span className="see-all-text">See all</span>
           <img
-            src={`${process.env.PUBLIC_URL}/${clanData.seeAllIcon}`}
+            src={`${process.env.PUBLIC_URL}/front-arrow.png`}
             alt="See All Icon"
             className="see-all-icon"
           />
@@ -184,62 +176,68 @@ const DetailedClanScreen = () => {
       </div>
 
       <div className="data-card">
-        {isMember && (
-          <>
-            <div className="data-row">
-              <span className="data-title">Earning</span>
-              <span className="data-value">x10% tapping</span>
-            </div>
-            <div className="data-row">
-              <span className="data-title">Clan Rank</span>
-              <span className="data-value">{clanData.position}</span>
-            </div>
-            <div className="data-row">
-              <span className="data-title">In-clan Rank</span>
-              <span className="data-value">Member</span>
-            </div>
-          </>
-        )}
         <div className="data-row">
-          <span className="data-title">{isMember ? "Clan's Coin Earn" : "Close Rank"}</span>
-          {isMember ? (
-            <div className="data-value">
+          <span className="data-title">Clan Rank</span>
+          <span className="data-value">
+            {clan.rank === "#1" ? (
               <img
-                src={`${process.env.PUBLIC_URL}/${clanData.coinIcon}`}
-                alt="Coin Icon"
-                className="coin-icon"
+                src={`${process.env.PUBLIC_URL}/first-icon.png`}
+                alt="1st Place"
+                className="rank-icon"
               />
-              {clanData.clanCoin}
-            </div>
-          ) : (
-            <span className="data-value">{clanData.closeRank}</span>
-          )}
+            ) : clan.rank === "#2" ? (
+              <img
+                src={`${process.env.PUBLIC_URL}/second-icon.png`}
+                alt="2nd Place"
+                className="rank-icon"
+              />
+            ) : clan.rank === "#3" ? (
+              <img
+                src={`${process.env.PUBLIC_URL}/third-icon.png`}
+                alt="3rd Place"
+                className="rank-icon"
+              />
+            ) : (
+              clan.rank
+            )}
+          </span>
+        </div>
+        <div className="data-row">
+          <span className="data-title">Clan's Coin Earn</span>
+          <div className="data-value">
+            <img
+              src={`${process.env.PUBLIC_URL}/logo.png`}
+              alt="Coin Icon"
+              className="coin-icon"
+            />
+            {clan.total_coins.toLocaleString()}
+          </div>
         </div>
         <div className="data-row">
           <span className="data-title">Members</span>
-          <span className="data-value">{clanData.members}</span>
+          <span className="data-value">{clan.members.toLocaleString()}</span>
         </div>
       </div>
 
-      {isMember && (
-        <>
-          <div className="top-earners-section">
-            <p className="top-earners-text">Clan Top Earners</p>
-            <div className="see-all-section">
-              <span className="see-all-text">See all</span>
-              <img
-                src={`${process.env.PUBLIC_URL}/${clanData.seeAllIcon}`}
-                alt="See All Icon"
-                className="see-all-icon"
-              />
-            </div>
-          </div>
-          <p className="join-clan-info">Top earners list here</p>
-        </>
-      )}
+      <div className="top-earners-section">
+        <p className="top-earners-text">Clan Top Earners</p>
+        <div className="see-all-section">
+          <span className="see-all-text">See all</span>
+          <img
+            src={`${process.env.PUBLIC_URL}/front-arrow.png`}
+            alt="See All Icon"
+            className="see-all-icon"
+          />
+        </div>
+      </div>
 
-      {!isMember && (
-        <p className="join-clan-info">Join clan to see top earners</p>
+      {isMember ? (
+        <div className="earners-list">
+          {/* Placeholder for top earners list */}
+          <p>Top earners list goes here...</p>
+        </div>
+      ) : (
+        <p className="join-clan-message">Join Clan to see top earners</p>
       )}
 
       <Navigation />
