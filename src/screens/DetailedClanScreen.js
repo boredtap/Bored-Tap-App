@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
+import DetailedClanScreen2 from "./DetailedClanScreen2";
 import "./DetailedClanScreen.css";
 
 const DetailedClanScreen = () => {
@@ -98,6 +99,16 @@ const DetailedClanScreen = () => {
   if (loading) return <div className="loading-message">Loading...</div>;
   if (error) return <div className="error-message">{error}</div>;
 
+  if (isMember) {
+    return (
+      <DetailedClanScreen2
+        clan={clan}
+        handleLeaveClan={handleLeaveClan}
+        handleInvite={handleInvite}
+      />
+    );
+  }
+
   return (
     <div className="detailed-clan-screen">
       <div className="clan-icon-section">
@@ -133,35 +144,14 @@ const DetailedClanScreen = () => {
         ) : null}
       </div>
 
-      {isMember ? (
-        <div className="clan-actions">
-          <div className="cta-button" onClick={handleLeaveClan}>
-            <img
-              src={`${process.env.PUBLIC_URL}/leave-icon.png`}
-              alt="Leave Icon"
-              className="cta-icon"
-            />
-            <span>Leave</span>
-          </div>
-          <div className="cta-button" onClick={handleInvite}>
-            <img
-              src={`${process.env.PUBLIC_URL}/invite-icon.png`}
-              alt="Invite Icon"
-              className="cta-icon"
-            />
-            <span>Invite</span>
-          </div>
-        </div>
-      ) : (
-        <div className="join-btn-frame" onClick={handleJoinClan}>
-          <img
-            src={`${process.env.PUBLIC_URL}/plus-icon.png`}
-            alt="Join Icon"
-            className="join-icon"
-          />
-          <span className="join-btn-text">Join</span>
-        </div>
-      )}
+      <div className="join-btn-frame" onClick={handleJoinClan}>
+        <img
+          src={`${process.env.PUBLIC_URL}/plus-icon.png`}
+          alt="Join Icon"
+          className="join-icon"
+        />
+        <span className="join-btn-text">Join</span>
+      </div>
 
       <div className="your-clan-section">
         <p className="your-clan-text">Your Clan</p>
@@ -231,14 +221,7 @@ const DetailedClanScreen = () => {
         </div>
       </div>
 
-      {isMember ? (
-        <div className="earners-list">
-          {/* Placeholder for top earners list */}
-          <p>Top earners list goes here...</p>
-        </div>
-      ) : (
-        <p className="join-clan-message">Join Clan to see top earners</p>
-      )}
+      <p className="join-clan-message">Join Clan to see top earners</p>
 
       <Navigation />
     </div>
