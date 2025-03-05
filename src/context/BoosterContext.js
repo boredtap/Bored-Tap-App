@@ -228,7 +228,7 @@ const BoostersContext = ({ children }) => {
     };
 
     const resetAll = () => {
-        updateBoosters({
+        const newBoosters = {
             tapMultiplier: 1,
             dailyBoosters: {
                 tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
@@ -240,8 +240,17 @@ const BoostersContext = ({ children }) => {
             rechargeTime: RECHARGE_TIMES[0],
             autoTapActive: false,
             totalTaps: 0,
+            lastActiveTime: Date.now()
+        };
+
+        updateBoosters(newBoosters); // Update state with new values
+
+        // Store updated values in localStorage immediately
+        Object.keys(newBoosters).forEach((key) => {
+            localStorage.setItem(key, JSON.stringify(newBoosters[key]));
         });
     };
+
 
     const applyAutoBotTaps = () => {
         if (!boosters?.autoTapActive) return; // Ensure boosters exist before checking
