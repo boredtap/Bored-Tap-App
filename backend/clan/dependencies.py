@@ -38,7 +38,11 @@ def create_clan(creator: str, clan: CreateClan):
     user: dict = user_collection.find_one({'telegram_user_id': creator})
     user_clan: str = user["clan"]["name"]
     user_invite: list = user["invite"]
+
+
     members: list = clan.members[0].split(",")
+    if not members:
+        members = clan.members
 
     # members yet to join a clan
     members = [member for member in members if user_collection.find_one({"telegram_user_id": member})["clan"]["name"] == None]
