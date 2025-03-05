@@ -62,6 +62,7 @@ const BoostersContext = ({ children }) => {
     }
 
     const setLastActiveTime = (time) => {
+        localStorage.setItem("lastActiveTime", JSON.stringify(time))
         setBoosters(prev => ({ ...prev, lastActiveTime: time }))
     }
 
