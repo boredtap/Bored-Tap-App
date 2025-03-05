@@ -268,11 +268,16 @@ const BoostersContext = ({ children }) => {
     };
 
     useEffect(() => {
+        if (!boosters || boosters.lastActiveTime === undefined) return;
+
         const now = Date.now();
-        const timeAway = now - boosters.lastActiveTime // ms
+        const lastActiveTime = boosters?.lastActiveTime || parseInt(localStorage.getItem("lastActiveTime"), 10) || now;
+        const timeAway = now - lastActiveTime // ms
 
         const electricBoostsSinceLeaving = Math.floor(timeAway / boosters.rechargeTime)
         setElectricBoost(Math.min(boosters.electricBoost + electricBoostsSinceLeaving, boosters.maxElectricBoost))
+
+        localStorage.setItem("lastActiveTime", now.toString());
     }, [])
 
     useEffect(() => {
