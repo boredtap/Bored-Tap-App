@@ -36,6 +36,7 @@ const BoostersContext = ({ children }) => {
         rechargeTime: getFromStorage("rechargeTime", RECHARGE_TIMES[0]),
         autoTapActive: getFromStorage("autoTapActive", false),
         totalTaps: getFromStorage("totalTaps", 0),
+        lastActiveTime: getFromStorage("lastActiveTime", Date.now())
     };
 
     const [boosters, setBoosters] = useState(initialState);
@@ -57,6 +58,10 @@ const BoostersContext = ({ children }) => {
         setBoosters(prev => ({
             ...prev, totalTaps: typeof taps === 'function' ? taps(prev.totalTaps) : taps,
         }))
+    }
+
+    const setLastActiveTime = (time) => {
+        setBoosters(prev => ({ ...prev, lastActiveTime: time }))
     }
 
     const activateTapperBoost = () => {
@@ -158,8 +163,6 @@ const BoostersContext = ({ children }) => {
     }
 
     const activateOtherBoosters = (effect, newLevel) => {
-        console.log(`Activating booster: ${effect}, Level: ${newLevel}`);
-
         switch (effect) {
             case "boost": {
                 const newMultiplier = 1 + newLevel;
@@ -192,8 +195,6 @@ const BoostersContext = ({ children }) => {
     };
 
     const activateOtherBoostersOnLoad = (effect, newLevel) => {
-        console.log(`Activating booster (On Load): ${effect}, Level: ${newLevel}`);
-
         switch (effect) {
             case "boost": {
                 const newMultiplier = 1 + newLevel;
@@ -245,21 +246,25 @@ const BoostersContext = ({ children }) => {
     const applyAutoBotTaps = () => {
         if (!boosters?.autoTapActive) return; // Ensure boosters exist before checking
 
-        const lastActiveTime = parseInt(localStorage.getItem("lastActiveTime") || Date.now(), 10);
         const now = Date.now();
-        const timeAway = (now - lastActiveTime) / 1000; // Convert ms to seconds
+        const timeAway = (now - boosters.lastActiveTime) / 1000; // Convert ms to seconds
 
         const tapsPerSecond = 1; // Example: Adjust based on game logic
 
         let offlineTaps = timeAway * tapsPerSecond;
 
-        // Update last active time with current timestamp
-        localStorage.setItem("lastActiveTime", JSON.stringify(now));
         offlineTaps = Math.floor(offlineTaps)
 
         return offlineTaps
     };
 
+    useEffect(() => {
+        const now = Date.now();
+        const timeAway = now - boosters.lastActiveTime // ms
+
+        const electricBoostsSinceLeaving = Math.floor(timeAway / boosters.rechargeTime)
+        setElectricBoost(Math.min(boosters.electricBoost + electricBoostsSinceLeaving, boosters.maxElectricBoost))
+    }, [])
 
     useEffect(() => {
         if (boosters.extraBoosters?.length) {
@@ -267,7 +272,6 @@ const BoostersContext = ({ children }) => {
                 if (title === "Auto-bot Tapping") {
                     activateOtherBoostersOnLoad(title, status)
                 } else {
-                    console.log("Activating Autobot", title)
                     activateOtherBoostersOnLoad(title, rawLevel)
                 }
             })
@@ -280,16 +284,12 @@ const BoostersContext = ({ children }) => {
         const { tapperBoost } = boosters.dailyBoosters;
 
         if (tapperBoost && tapperBoost.isActive) {
-            console.log("BoostersContext: Tapper Boost is active on load.");
-
             // Apply 2x multiplier
             setBoosters(prev => ({ ...prev, tapMultiplier: prev.tapMultiplier * 2 }));
 
             const remaining = tapperBoost.endTime - Date.now();
             if (remaining > 0) {
                 setTimeout(() => {
-                    console.log("BoostersContext: Tapper Boost expired on load check.");
-
                     setBoosters(prev => ({
                         ...prev,
                         tapMultiplier: Math.round(prev.tapMultiplier / 2), // Reset multiplier after boost ends
@@ -340,11 +340,7 @@ const BoostersContext = ({ children }) => {
                 }
             })
         }
-    }, []); // Runs only on mount
-
-    useEffect(() => {
-        console.log(boosters)
-    }, [boosters])
+    }, []);
 
     return (
         <BoostContext.Provider value={{
@@ -356,6 +352,7 @@ const BoostersContext = ({ children }) => {
             rechargeTime: boosters.rechargeTime,
             autoTapActive: boosters.autoTapActive,
             totalTaps: boosters.totalTaps,
+            lastActiveTime: boosters.lastActiveTime,
             setBoosters,
             setDailyBoosters,
             setTapMultiplier,
@@ -369,7 +366,8 @@ const BoostersContext = ({ children }) => {
             resetAll,
             setAutoTapActive,
             setTotalTaps,
-            applyAutoBotTaps
+            applyAutoBotTaps,
+            setLastActiveTime
         }}>
             {children}
         </BoostContext.Provider>

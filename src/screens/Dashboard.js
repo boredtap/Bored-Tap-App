@@ -10,7 +10,7 @@ const RECHARGE_TIMES = [5000, 4500, 3500, 2500, 1500, 500]; // Level 0 through 5
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  const { totalTaps, setTotalTaps, setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, setTapMultiplier, electricBoost, setElectricBoost, setMaxElectricBoost, maxElectricBoost, setRechargeTime, rechargeTime, autoTapActive, setAutoTapActive, applyAutoBotTaps } = useContext(BoostContext)
+  const { totalTaps, setTotalTaps, setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, setTapMultiplier, electricBoost, setElectricBoost, setMaxElectricBoost, maxElectricBoost, setRechargeTime, rechargeTime, autoTapActive, setAutoTapActive, applyAutoBotTaps, lastActiveTime, setLastActiveTime } = useContext(BoostContext)
 
   // State for Telegram user data
   const [telegramData, setTelegramData] = useState({
@@ -87,7 +87,6 @@ const Dashboard = () => {
           resetBoosters();
         } else {
           setProfile(data);
-          console.log('here', data.total_coins)
           if (data.total_coins) {
             setTotalTaps(data.total_coins)
           }
@@ -124,11 +123,6 @@ const Dashboard = () => {
     }
   }, [navigate]);
 
-  // --- Tapper Boost Integration ---
-
-  useEffect(() => {
-    console.log('Tap Multipliter', tapMultiplier)
-  }, [tapMultiplier])
 
   // Backend sync every 2 seconds
   const updateBackend = useCallback(async () => {
@@ -210,7 +204,6 @@ const Dashboard = () => {
   // Full Energy claim event listener
   useEffect(() => {
     const handleFullEnergyClaimed = () => {
-      console.log("Full Energy Claimed Event - Refilling to", maxElectricBoost);
       setElectricBoost(maxElectricBoost);
     };
 
@@ -222,12 +215,9 @@ const Dashboard = () => {
   useEffect(() => {
     // Extra Booster: Boost (permanent tap bonus)
     const handleBoostUpgraded = (event) => {
-      console.log("Boost Upgraded Event:", event.detail);
       const newLevel = event.detail?.level || 1;
       // Level 1: 2, Level 2: 3, etc. (level + 1)
       const newPermanent = newLevel + 1;
-
-      console.log("Setting new base multiplier:", newPermanent);
 
       // Only update tap multiplier if no temporary boost is active
       if (!boostMultiplierActive.current) {
@@ -347,7 +337,9 @@ const Dashboard = () => {
 
       if (oldUser && isFirstVisit) {
         const offlineTaps = applyAutoBotTaps();
-        setAutoBotTaps(offlineTaps)
+        console.log("Offline taps", offlineTaps)
+
+        setAutoBotTaps(offlineTaps);
         sessionStorage.setItem("hasVisited", "true"); // Mark as visited for this session
       }
     };
@@ -366,20 +358,25 @@ const Dashboard = () => {
   const addAutoBotTaps = () => {
     setTotalTaps(totalTaps + autoBotTaps)
     setAutoBotTaps(0)
+    localStorage.setItem("autoBotTaps", autoBotTaps);
   }
 
-  // useEffect(() => {
-  //   console.log(autoBotTaps)
-  //   const storedTaps = localStorage.getItem("autoBotTaps");
-  //   console.log(storedTaps)
-  //   if (storedTaps !== null) {
-  //     setAutoBotTaps(parseInt(storedTaps, 10) + autoBotTaps); // Ensure it's a number
-  //   }
-  // }, []);
+  useEffect(() => {
+    // Load stored value on component mount
+    const storedTaps = localStorage.getItem("autoBotTaps");
 
-  // useEffect(() => {
-  //   localStorage.setItem("autoBotTaps", autoBotTaps);
-  // }, [autoBotTaps]);
+    if (storedTaps !== null) {
+      const parsedTaps = parseInt(storedTaps, 10); // Convert to number first
+      if (parsedTaps > 0) {
+        setAutoBotTaps(prev => parsedTaps + prev);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    // Save updated value to localStorage whenever autoBotTaps changes
+    localStorage.setItem("autoBotTaps", autoBotTaps);
+  }, [autoBotTaps]);
 
   return (
     <div className="dashboard-container">
