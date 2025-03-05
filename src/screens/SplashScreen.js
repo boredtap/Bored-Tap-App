@@ -110,6 +110,8 @@ const SplashScreen = () => {
         if (oldUserId !== userInfo.telegramUserId) {
           resetAll()
         }
+      } else {
+        resetAll()
       }
       localStorage.setItem("telegramUser", JSON.stringify(userInfo));
       navigate("/dashboard");
