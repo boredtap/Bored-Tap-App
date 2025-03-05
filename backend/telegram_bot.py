@@ -36,18 +36,30 @@ set_webhook_url()
 # process incoming Updates from telegram
 @bot_interactions.post('/webhook', tags=["Registration/Authentication"])
 async def webhook_handler(request: Request):
-    print("Received webhook request")
-    # parse request body as json
-    json_string: Update = await request.json()
+    """Handles incoming Telegram updates via webhook"""
+    try:
+        print("Received webhook request")
+        # parse request body as json
+        json_data = await request.json()
 
-    # Process the update here
-    update = Update.de_json(json_string)
-    bot.process_new_updates([update])
+        # Process the update here
+        update = Update.de_json(json_data)
+        if not update:
+            print("Received update is None.")
+            return {
+                "status": "warning",
+                "message": "Invalid update received"
+            }
+        bot.process_new_updates([update])
 
-    return {
-        "message": "Webhook request processed successfully",
-        "status": "ok"
-    }
+        return {
+            "message": "Webhook request processed successfully",
+            "status": "ok"
+        }
+    except Exception as e:
+        print(f"Error processing webhook: {e}")
+        raise HTTPException(status_code=500, detail="internal server error")
+
 
 # get user profile picture
 def get_profile_url(user_id: int):
@@ -58,33 +70,40 @@ def get_profile_url(user_id: int):
         photo_url = f"https://api.telegram.org/file/bot{BotToken}/{file_path}"
         return photo_url
 
+
+
+
 @bot.message_handler(commands=['start'])
 def start_command(message: Message):
-    # get user datails
-    print(f"message received: {message}")
+    """Handles the /start command, registers users, and sends a welcome message"""
+
+    # get user datails    
     try:
         user_id = str(message.from_user.id)
-        referral_code = message.text.split(" ")[1]
-        # referral_code = "1234521345"
         username = message.from_user.username
         first_name = message.from_user.first_name
         last_name = message.from_user.last_name
         image_url = get_profile_url(user_id)
-    except Exception as e:
-        print(e)
-        # raise e
 
-    # instantiate Signup model with user details
-    print("Setting user details in Signup model")
-    user = Signup(
-        telegram_user_id=user_id,
-        username=username,
-        image_url=image_url
-    )
-    
-    print("calling sign_up function")
-    try:
+        # Extract referral code
+        message_parts = message.text.split(" ")
+        referral_code = message_parts[1] if len(message_parts) > 1 else None
+        # referral_code = "1234521345"
+
+        print(f"Received start command from user {user_id} (username: {username})")
+        bot.send_message(message.chat.id, f"Received start command from user {user_id} (username: {username})")
+        bot.send_message(message.chat.id, f"Message received: {message.text}")
+
+        # instantiate Signup model with user details
+        print("Setting user details in Signup model")
+        user = Signup(
+            telegram_user_id=user_id,
+            username=username,
+            image_url=image_url
+        )
+
         # run sign_up function
+        print("calling sign_up function")
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         referred_user = loop.run_until_complete(sign_up(user, referral_code))
@@ -104,6 +123,8 @@ def start_command(message: Message):
 
     # except user already exist
     except HTTPException as e:
+        print(f"HTTPException encountered: {e}")
+
         # send welcome message
         print(f"Error encountered: {e}")
         launch_btn = InlineKeyboardButton(
@@ -116,11 +137,15 @@ def start_command(message: Message):
             message.chat.id, f"Welcome back, {username}!\nPerform tasks and earn coins!",
             reply_markup=inline_keyboard
         )
+    
+    except IndexError:
+        print(f"Warning: Referral code not provided by user {user_id}.")
+        bot.send_message(message.chat.id, "Please provide a referral code after the /start command.")
 
     except Exception as e:
         print(f"Error: {e}")
 
-    print("Start command handled")
+    print(f"Start command handled for user {username, user_id}")
 
 
 # launch webapp button
