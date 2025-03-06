@@ -7,7 +7,7 @@ const SplashScreen = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { resetAll, applyAutoBotTaps } = useContext(BoostContext)
+  const { resetAll, setLastActiveTime } = useContext(BoostContext)
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -110,6 +110,8 @@ const SplashScreen = () => {
         if (oldUserId !== userInfo.telegramUserId) {
           resetAll()
         }
+      } else {
+        resetAll()
       }
       localStorage.setItem("telegramUser", JSON.stringify(userInfo));
       navigate("/dashboard");
@@ -125,7 +127,7 @@ const SplashScreen = () => {
   };
 
   const saveLastActiveTime = () => {
-    localStorage.setItem("lastActiveTime", Date.now());
+    setLastActiveTime(Date.now());
   };
 
   window.addEventListener("beforeunload", saveLastActiveTime);
