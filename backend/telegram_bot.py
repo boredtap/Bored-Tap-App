@@ -61,21 +61,6 @@ async def webhook_handler(request: Request):
         raise HTTPException(status_code=500, detail="internal server error")
 
 
-# get user profile picture
-def get_profile_url(user_id: int):
-    user_profile_photos = bot.get_user_profile_photos(user_id=user_id, limit=1)
-    if user_profile_photos.total_count > 0:
-        file_id = user_profile_photos.photos[0][-1].file_id
-        file_path = bot.get_file(file_id).file_path
-        photo_url = f"https://api.telegram.org/file/bot{BotToken}/{file_path}"
-        return photo_url
-    return "https://example.com"
-
-
-
-
-
-
 
 @bot.message_handler(commands=['start'])
 def start_command(message: Message):
