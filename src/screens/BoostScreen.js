@@ -81,7 +81,7 @@ const BoostScreen = () => {
             icon = `${process.env.PUBLIC_URL}/multiplier-icon.png`;
             break;
           case "boost":
-            icon = `${process.env.PUBLIC_URL}/boost-icon.png`;
+            icon = `${process.env.PUBLIC_URL}/boost-icon 2.png`;
             break;
           case "recharging speed":
             icon = `${process.env.PUBLIC_URL}/recharge-icon.png`;

@@ -277,6 +277,11 @@
   object-fit: contain;
 }
 
+.overlay2-title {
+  font-size: 18px;
+  font-weight: 500;
+}
+
 .boost-btn {
   display: flex;
   align-items: center;

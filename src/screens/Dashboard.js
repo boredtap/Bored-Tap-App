@@ -370,7 +370,7 @@ const Dashboard = () => {
       <div className="overlay-container">
         <div className={`boost-overlay ${showAutoBotOverlay ? "slide-in" : "slide-out"}`}>
           <div className="overlay-header">
-            <h2 className="overlay-title">Auto-Bot Earning</h2>
+            <h2 className="overlay2-title">Auto-Bot Earning</h2>
             <img
               src={`${process.env.PUBLIC_URL}/cancel.png`}
               alt="Cancel"
