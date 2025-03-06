@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Annotated
 from fastapi import Form, UploadFile
 from pydantic import BaseModel
@@ -28,3 +29,11 @@ class MyClan(BaseModel):
     in_clan_rank: str
     total_coins: int
     members: int
+
+
+class CreatorExitAction(str, Enum):
+    TRANSFER = "transfer"
+    CLOSE = "close"
+
+    def __repr__(self) -> str:
+        return self.value

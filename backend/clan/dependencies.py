@@ -270,16 +270,25 @@ def invite_to_clan(telegram_user_id: str, clan_id: str):
 
 
 # --------------------------------- EXIT CLAN ---------------------------------- #
-def exit_clan(telegram_user_id: str, clan_id: str):
+def exit_clan(telegram_user_id: str, creator_exit_action: str | None = None):
     user = user_collection.find_one({"telegram_user_id": telegram_user_id})
-    clan = clans_collection.find_one({"_id": ObjectId(clan_id)})
+    clan_id = user["clan"]["id"]
 
     # check if user is in clan
-    if user and user["clan"]["id"] == None:
-        raise HTTPException(status_code=404, detail="You need to be in a clan before you can exit")
+    if user and clan_id == None:
+        raise HTTPException(status_code=404, detail="You need to be in a clan to perform this action")
+
+    # check if clan exists
+    clan = clans_collection.find_one({"_id": ObjectId(clan_id)})
+
+    if not clan:
+        raise HTTPException(status_code=404, detail="Clan not found")
+
 
     # if user is not creator
-    if user and clan and clan["creator" != telegram_user_id]:
+    # set fields in clan object in user profile to None
+    # decrement clan member count
+    if clan["creator"] != telegram_user_id:
         # set clan in user profile to none
         update_user = user_collection.update_one(
             {"telegram_user_id": telegram_user_id},
@@ -305,9 +314,49 @@ def exit_clan(telegram_user_id: str, clan_id: str):
 
         if update_user.modified_count > 0 and update_clan_member_count.modified_count > 0:
             return {
-                "status": True, "message": "Exited clan successfully"
+                "status": True, "message": f"Exited clan \"{clan['name']}\" successfully"
         }
 
-    # if user is creator
-    if user and clan and clan["creator"] == telegram_user_id:
-        pass
+
+    # if user is the creator of the clan
+    # transfer clan ownership to next top member or close clan completely
+    if clan["creator"] == telegram_user_id:
+        # if exit action is none, raise error
+        if not creator_exit_action:
+            raise HTTPException(status_code=400, detail="You need to specify an exit action: transfer or close clan")
+
+
+        # transfer ownership to next top member
+        if creator_exit_action.lower() == "transfer":
+            return {
+                "status": "Ownership transfer feature coming soon 😊"
+            }
+
+
+        # close clan completely
+        if creator_exit_action.lower() == "close":
+            # set fields in clan object of members to none
+            remove_all_members = user_collection.update_many(
+                {"clan.id": clan_id},
+                {
+                    "$set": {
+                        "clan": {
+                            "id": None,
+                            "name": None,
+                        }
+                    }
+                }
+            )
+
+            # delete clan image
+            image_id = clan["image_id"]
+            fs.delete(ObjectId(image_id))
+
+            # delete clan
+            delete_clan = clans_collection.delete_one({"_id": ObjectId(clan_id)})
+
+            if remove_all_members.modified_count > 0 and delete_clan.deleted_count > 0:
+                return {
+                    "status": True, "message": "Clan closed successfully"
+                }
+        

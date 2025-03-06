@@ -2,7 +2,7 @@ import re
 from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
-from clan.schemas import CreateClan, ClanSearchResponse
+from clan.schemas import CreateClan, ClanSearchResponse, CreatorExitAction
 from user_reg_and_prof_mngmnt.user_authentication import get_current_user
 from clan.dependencies import (
     create_clan as create_clan_func,
@@ -10,6 +10,7 @@ from clan.dependencies import (
     all_clans as all_clans_func,
     top_clans as top_clans_func,
     my_clan as my_clan_func,
+    exit_clan as exit_clan_func
 )
 from database_connection import clans_collection, user_collection
 
@@ -117,9 +118,11 @@ async def invite_members_to_clan(telegram_user_id: Annotated[str, Depends(get_cu
 
 
 # ----------------------------- EXIT CLAN ------------------------------ #
-@user_clan_router.post("/exit_clan", deprecated=True)
-async def exit_clan(telegram_user_id: Annotated[str, Depends(get_current_user)]):
-    pass
+@user_clan_router.post("/exit_clan")
+async def exit_clan(telegram_user_id: Annotated[str, Depends(get_current_user)], creator_exit_action: CreatorExitAction | None = None):
+    leave_clan = exit_clan_func(telegram_user_id, creator_exit_action)
+
+    return leave_clan
 
 
 # ----------------------------- CLAN TOP EARNERS ------------------------------ #
