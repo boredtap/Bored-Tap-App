@@ -362,6 +362,12 @@ const Dashboard = () => {
     localStorage.setItem("autoBotTaps", "0");
   };
 
+  const handleClearAutoBotTaps = () => {
+    setAutoBotTaps(0)
+    setShowAutoBotOverlay(false)
+    localStorage.setItem("autoBotTaps", "0");
+  }
+
   // Render AutoBot overlay
   const renderAutoBotOverlay = () => {
     if (!showAutoBotOverlay || autoBotTaps <= 0) return null;
@@ -375,7 +381,7 @@ const Dashboard = () => {
               src={`${process.env.PUBLIC_URL}/cancel.png`}
               alt="Cancel"
               className="overlay-cancel"
-              onClick={() => setShowAutoBotOverlay(false)}
+              onClick={handleClearAutoBotTaps}
             />
           </div>
           <div className="overlay-divider"></div>

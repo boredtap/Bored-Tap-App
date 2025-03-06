@@ -9,6 +9,16 @@ const SplashScreen = () => {
   const [error, setError] = useState(null);
   const { resetAll, setLastActiveTime } = useContext(BoostContext)
 
+  const handleResetIfNewUser = (userID) => {
+    const oldUser = localStorage.getItem("telegramUser");
+    if (oldUser) {
+      const { telegramUserId: oldUserId } = JSON.parse(oldUser)
+      if (oldUserId !== userID) {
+        resetAll()
+      }
+    } else { resetAll() }
+  }
+
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -46,6 +56,7 @@ const SplashScreen = () => {
 
         if (signInResponse.ok) {
           const authData = await signInResponse.json();
+          handleResetIfNewUser(telegramUserId)
           handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl });
           return;
         }
@@ -67,6 +78,8 @@ const SplashScreen = () => {
         if (!signUpResponse.ok) {
           throw new Error("Registration failed");
         }
+
+        handleResetIfNewUser(telegramUserId)
 
         // Sign in after successful registration
         const signInAfterRegResponse = await fetch("https://bt-coins.onrender.com/signin", {
@@ -90,6 +103,7 @@ const SplashScreen = () => {
         }
 
         const authData = await signInAfterRegResponse.json();
+        handleResetIfNewUser(telegramUserId)
         handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl });
       } catch (err) {
         console.error("Authentication error:", err);
@@ -103,16 +117,7 @@ const SplashScreen = () => {
       localStorage.setItem("accessToken", authData.access_token);
       localStorage.setItem("tokenType", authData.token_type);
 
-      // Check if new user and adjust localstorage data accordingly
-      const oldUser = localStorage.getItem("telegramUser");
-      if (oldUser) {
-        const { telegramUserId: oldUserId } = JSON.parse(oldUser)
-        if (oldUserId !== userInfo.telegramUserId) {
-          resetAll()
-        }
-      } else {
-        resetAll()
-      }
+      // Adjust localstorage data accordingly
       localStorage.setItem("telegramUser", JSON.stringify(userInfo));
       navigate("/dashboard");
     };
