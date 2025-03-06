@@ -1,4 +1,4 @@
-.join-clan-screen {
+.clan-list-screen {
   background-color: #000;
   color: #fff;
   min-height: 100vh;
@@ -122,12 +122,18 @@
 }
 
 .loading-message,
-.error-message,
-.no-clans {
+.error-message {
   text-align: center;
   color: #c2bfbf;
   font-size: 16px;
   margin-top: 20px;
+}
+
+.no-clans {
+  text-align: center;
+    font-size: 14px;
+    color: #ccc;
+    margin-top: 10px;
 }
 
 @media (max-width: 600px) {

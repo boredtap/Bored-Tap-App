@@ -1,4 +1,4 @@
-.detailed-clan-screen {
+.clan-preview {
     background-color: #000;
     color: #fff;
     min-height: 100vh;
@@ -170,11 +170,11 @@
     font-weight: bold;
   }
   
-  .join-clan-info {
+  .clan-preview-info {
     text-align: center;
     font-size: 14px;
     color: #ccc;
-    margin-top: 10px;
+    margin-top: 24px;
   }
   
   .loading-message,

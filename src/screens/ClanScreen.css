@@ -68,6 +68,24 @@
   margin-top: 10px;
 }
 
+.loading-message {
+  text-align: center;
+  font-size: 16px;
+  color: #aaa;
+  margin-top: 20px;
+}
+
+.error-message {
+  text-align: center;
+  font-size: 16px;
+  color: #ff4444;
+  margin-top: 20px;
+}
+
+.clan-card {
+  cursor: pointer; /* Indicate clickability */
+}
+
 /* Top Clans Section */
 .top-clans-section {
   display: flex;
@@ -88,7 +106,7 @@
   cursor: pointer;
 }
 
-.see-all-icon {
+.see-all-icon2 {
   width: 16px;
   height: 16px;
   margin-left: 8px;
@@ -164,6 +182,13 @@
   color: #c2bfbf;
   font-size: 16px;
   margin-top: 20px;
+}
+
+.no-clans-message {
+  text-align: center;
+    font-size: 14px;
+    color: #ccc;
+    margin-top: 10px;
 }
 
 /* Responsive Adjustments */

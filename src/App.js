@@ -16,11 +16,11 @@ import InviteScreen from "./screens/InviteScreen";
 import BoostScreen from "./screens/BoostScreen";
 import WalletScreen from "./screens/WalletScreen";
 import ClanScreen from "./screens/ClanScreen";
-import JoinClanScreen from "./screens/JoinClanScreen";
-import DetailedClanScreen from "./screens/DetailedClanScreen";
-import DetailedClanScreen2 from "./screens/DetailedClanScreen2";
+import ClanPreviewScreen from "./screens/ClanPreviewScreen";
+import ClanDetailsScreen from "./screens/ClanDetailsScreen";
 import TopClanScreen from "./screens/TopClanScreen";
 import CreateClanScreen from "./screens/CreateClanScreen";
+import ClanListScreen from "./screens/ClanListScreen";
 
 
 const App = () => {
@@ -45,10 +45,10 @@ const App = () => {
         <Route path="/boost-screen" element={<BoostScreen />} />
         <Route path="/wallet-screen" element={<WalletScreen />} />
         <Route path="/clan-screen" element={<ClanScreen />} />
-        <Route path="/join-clan-screen" element={<JoinClanScreen />} />
+        <Route path="/clan-list-screen" element={<ClanListScreen />} />
         {/* <Route path="/detailed-clan-screen" element={<DetailedClanScreen />} /> */}
-        <Route path="/detailed-clan-screen2" element={<DetailedClanScreen2 />} />
-        <Route path="/clan/:clanId" element={<DetailedClanScreen />} />
+        <Route path="/clan-details-screen" element={<ClanDetailsScreen />} />
+        <Route path="/clan-preview/:clanId" element={<ClanPreviewScreen />} />
         <Route path="/top-clan-screen" element={<TopClanScreen />} />
         <Route path="/create-clan" element={<CreateClanScreen />} />
       </Routes>

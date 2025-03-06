@@ -420,19 +420,21 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-      <div className="frames-section">
-        {[
-          { name: "Rewards", icon: "reward.png", path: "/reward-screen" },
-          { name: "Challenge", icon: "challenge.png", path: "/challenge-screen" },
-          { name: "Clan", icon: "clan.png", path: "/clan-screen" },
-          { name: "Leaderboard", icon: "leaderboard.png", path: "/leaderboard-screen" },
-        ].map((frame, index) => (
-          <div className="frame" key={index} onClick={() => navigate(frame.path)}>
-            <img src={`${process.env.PUBLIC_URL}/${frame.icon}`} alt={`${frame.name} Icon`} className="frame-icon" />
-            <span>{frame.name}</span>
-          </div>
-        ))}
+
+      {/* // In Dashboard.js, within the frames-section div */}
+  <div className="frames-section">
+    {[
+      { name: "Rewards", icon: "reward.png", path: "/reward-screen" },
+      { name: "Challenge", icon: "challenge.png", path: "/challenge-screen" },
+      { name: "Clan", icon: "clan.png", path: "/clan-screen" }, // Clan navigation
+      { name: "Leaderboard", icon: "leaderboard.png", path: "/leaderboard-screen" },
+    ].map((frame, index) => (
+      <div className="frame" key={index} onClick={() => navigate(frame.path)}>
+        <img src={`${process.env.PUBLIC_URL}/${frame.icon}`} alt={`${frame.name} Icon`} className="frame-icon" />
+        <span>{frame.name}</span>
       </div>
+    ))}
+  </div>
       <div className="total-taps-section">
         <p className="total-taps-text">Your Total Taps:</p>
         <div className="total-taps-count">
