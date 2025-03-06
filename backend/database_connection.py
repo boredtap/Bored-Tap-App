@@ -99,26 +99,3 @@ challenges_collection = db['challenges']
 extra_boosts_collection = db['extra_boosts']
 levels_collection = db['levels']
 clans_collection = db['clans']
-
-
-
-# change the clan datatype in user collection from array to object
-def change_clan_datatype():
-    update_clan = user_collection.update_many(
-        {},
-        {
-            "$set": {
-                "clan": {
-                    "id": None,
-                    "name": None
-                }
-            }
-        }
-    )
-
-    if update_clan.modified_count > 0:
-        print(f"{update_clan.modified_count} users clan data changed successfully")
-    else:
-        print("Clan datatype change failed")
-
-# change_clan_datatype()

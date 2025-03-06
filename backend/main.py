@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 import json
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,7 +8,9 @@ from dependencies import (
     get_user_profile,
     update_coins_in_db,
     get_user_by_id,
-    get_image as get_image_func
+    get_image as get_image_func,
+    update_coins_power_limit_last_active_time,
+    update_power_limit_last_active_time
 )
 from superuser.level.dependencies import get_levels as get_levels_func
 from superuser.level.models import LevelModelResponse
@@ -102,7 +104,12 @@ async def home():
 
 # update user coins tapped
 @app.post('/update-coins', tags=["Global Routes"])
-async def update_coins(telegram_user_id: Annotated[str, Depends(get_current_user)], coins: int, request: Request):
+async def update_coins(
+    telegram_user_id: Annotated[str, Depends(get_current_user)],
+    request: Request,
+    coins: int | None = None,
+    current_power_limit: int | None = None,
+    last_active_time: datetime | None = None):
     """Update coins gannered from different activities to database
 
     Args:
@@ -119,18 +126,43 @@ async def update_coins(telegram_user_id: Annotated[str, Depends(get_current_user
     print("user agent: ", user_agent)
     print("referer: ", referer)
     print("origin: ", origin)
-    # print("request headers: ", request.headers)
 
-    result = update_coins_in_db(telegram_user_id, coins)
-    user = get_user_by_id(telegram_user_id)
-    if result:
-        return {
-            "message": "Coins updated successfully",
-            "current coins": user.total_coins,
-            "current level": user.level
-        }
+    response = {}
+
+    # update all (coins, power limit, last active time) at once
+    if coins and current_power_limit and last_active_time:
+        response = update_coins_power_limit_last_active_time(
+            telegram_user_id, coins, current_power_limit, last_active_time
+        )
+
+        return response
+
+    # update coins
+    if coins:
+        result = update_coins_in_db(telegram_user_id, coins)
+        user = get_user_by_id(telegram_user_id)
+        if result:
+            response["coin status"] = "Coins updated successfully"
+            response["current coins"] = user.total_coins
+            response["current level"] = user.level
+
+        return response
     
-    return {"message": "Coins not updated"}
+    # update power limit and last active time
+    if current_power_limit and last_active_time:
+        result = update_power_limit_last_active_time(telegram_user_id, current_power_limit, last_active_time)
+
+        if result:
+            response["status"] = "Success"
+            response["power limit status"] = "Power limit updated successfully"
+            response["last active status"] = "Last active time updated successfully"
+
+            return response
+    
+    return {
+        "status": False,
+        "message": "Enter either coins to update coins alone, power limit and last active time to update power limit and last active time or all parameters to update them at once"
+    }
 
 
 # get user data
