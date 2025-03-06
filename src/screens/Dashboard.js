@@ -119,7 +119,9 @@ const Dashboard = () => {
   // Backend sync every 2 seconds
   const updateBackend = useCallback(async () => {
     if (tapCountSinceLastUpdate.current === 0) return;
+
     const tapsToSync = tapCountSinceLastUpdate.current;
+
     tapCountSinceLastUpdate.current = 0;
     try {
       const token = localStorage.getItem("accessToken");
@@ -302,7 +304,6 @@ const Dashboard = () => {
       });
       if (!extraBoostersResponse.ok) throw new Error("Extra boosters fetch failed");
       const extraBoostersData = await extraBoostersResponse.json();
-      console.log('Splash Screen', extraBoostersData);
     };
 
     fetchData();
@@ -357,9 +358,14 @@ const Dashboard = () => {
   // Handle claiming AutoBot taps
   const handleClaimAutoBotTaps = () => {
     setTotalTaps((prev) => prev + autoBotTaps);
+    tapCountSinceLastUpdate.current = autoBotTaps
+
     setAutoBotTaps(0);
-    setShowAutoBotOverlay(false);
     localStorage.setItem("autoBotTaps", "0");
+    
+    setShowAutoBotOverlay(false);
+
+    updateBackend()
   };
 
   const handleClearAutoBotTaps = () => {
@@ -367,6 +373,26 @@ const Dashboard = () => {
     setShowAutoBotOverlay(false)
     localStorage.setItem("autoBotTaps", "0");
   }
+
+  useEffect(() => {
+    const handleUnload = () => {
+      updateBackend();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        updateBackend();
+      }
+    };
+
+    window.addEventListener("beforeunload", handleUnload);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
   // Render AutoBot overlay
   const renderAutoBotOverlay = () => {
