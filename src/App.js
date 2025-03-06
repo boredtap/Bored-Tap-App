@@ -18,7 +18,7 @@ import WalletScreen from "./screens/WalletScreen";
 import ClanScreen from "./screens/ClanScreen";
 import JoinClanScreen from "./screens/JoinClanScreen";
 import DetailedClanScreen from "./screens/DetailedClanScreen";
-// import DetailedClanScreen2 from "./screens/DetailedClanScreen2";
+import DetailedClanScreen2 from "./screens/DetailedClanScreen2";
 import TopClanScreen from "./screens/TopClanScreen";
 import CreateClanScreen from "./screens/CreateClanScreen";
 
@@ -47,7 +47,7 @@ const App = () => {
         <Route path="/clan-screen" element={<ClanScreen />} />
         <Route path="/join-clan-screen" element={<JoinClanScreen />} />
         {/* <Route path="/detailed-clan-screen" element={<DetailedClanScreen />} /> */}
-        {/* <Route path="/detailed-clan-screen2" element={<DetailedClanScreen2 />} /> */}
+        <Route path="/detailed-clan-screen2" element={<DetailedClanScreen2 />} />
         <Route path="/clan/:clanId" element={<DetailedClanScreen />} />
         <Route path="/top-clan-screen" element={<TopClanScreen />} />
         <Route path="/create-clan" element={<CreateClanScreen />} />

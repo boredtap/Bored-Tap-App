@@ -10,6 +10,7 @@ const DetailedClanScreen = () => {
   const [isMember, setIsMember] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showOverlay, setShowOverlay] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -55,7 +56,8 @@ const DetailedClanScreen = () => {
       });
       if (!response.ok) {
         if (response.status === 409) {
-          throw new Error("You are already a member of this clan.");
+          setShowOverlay(true);
+          return;
         } else {
           throw new Error("Failed to join clan");
         }
@@ -94,6 +96,10 @@ const DetailedClanScreen = () => {
   const handleInvite = () => {
     // Placeholder for invite functionality
     console.log("Invite clicked");
+  };
+
+  const handleCloseOverlay = () => {
+    setShowOverlay(false);
   };
 
   if (loading) return <div className="loading-message">Loading...</div>;
@@ -222,6 +228,15 @@ const DetailedClanScreen = () => {
       </div>
 
       <p className="join-clan-message">Join Clan to see top earners</p>
+
+      {showOverlay && (
+        <div className="overlay">
+          <div className="overlay-content">
+            <p>You are already a member of this clan.</p>
+            <button onClick={handleCloseOverlay}>Close</button>
+          </div>
+        </div>
+      )}
 
       <Navigation />
     </div>

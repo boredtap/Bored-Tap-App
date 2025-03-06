@@ -30,8 +30,8 @@ const RewardFrame = ({ day, reward, isActive, isClaimed, onClick }) => {
 };
 
 /**
- * DailyStreakScreen component for managing and displaying the daily streak feature.
- * Persists streak state across navigation, syncs with backend, and manages reward claiming.
+ * DailyStreakScreen component with account reset integration.
+ * Resets streak state when an account is deleted or a new user enters.
  */
 const DailyStreakScreen = () => {
   const [currentDay, setCurrentDay] = useState(() => {
@@ -43,18 +43,29 @@ const DailyStreakScreen = () => {
   const [profile, setProfile] = useState(null);
   const [showOverlay, setShowOverlay] = useState(false);
   const [countdownTime, setCountdownTime] = useState("11:59 PM");
-  // State to show the "Come back tomorrow" message only after claiming
   const [showClaimMessage, setShowClaimMessage] = useState(false);
 
-  // Fetch user profile on mount and sync with local storage
+  // Reset streak state function
+  const resetStreakState = () => {
+    setCurrentDay(1);
+    setClaimedDays([]);
+    setShowClaimMessage(false);
+    localStorage.removeItem("currentDay");
+    localStorage.removeItem("claimedDays");
+    console.log("Streak state reset for new user or deleted account.");
+  };
+
+  // Fetch profile and handle reset logic
   useEffect(() => {
-    /**
-     * Fetches user profile data from the backend to initialize streak information.
-     * Syncs with local storage to maintain state across navigation, prioritizing local state post-claim.
-     */
     const fetchProfile = async () => {
       const token = localStorage.getItem("accessToken");
-      if (!token) return;
+
+      // Reset if no token (new user or deleted account)
+      if (!token) {
+        resetStreakState();
+        // setLoading(false);
+        return;
+      }
 
       try {
         const response = await fetch("https://bt-coins.onrender.com/user/profile", {
@@ -64,28 +75,46 @@ const DailyStreakScreen = () => {
             "Content-Type": "application/json",
           },
         });
-        if (!response.ok) throw new Error("Failed to fetch profile");
+
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            // Token invalid (account deleted or new user with old token)
+            localStorage.removeItem("accessToken");
+            resetStreakState();
+          }
+          throw new Error("Failed to fetch profile");
+        }
+
         const data = await response.json();
         setProfile(data);
 
         const storedClaimedDays = JSON.parse(localStorage.getItem("claimedDays")) || [];
-        const backendClaimedDays = data.streak.claimed_days || [];
+        const backendClaimedDays = data.streak?.claimed_days || [];
         const backendLastClaimedDay = Math.max(...backendClaimedDays, 0);
 
+        // Sync with backend if local storage is behind
         if (storedClaimedDays.length <= backendClaimedDays.length) {
           setClaimedDays(backendClaimedDays);
           setCurrentDay(backendLastClaimedDay + 1);
           localStorage.setItem("claimedDays", JSON.stringify(backendClaimedDays));
           localStorage.setItem("currentDay", backendLastClaimedDay + 1);
         }
+
+        // Check if account was reset or new (backend streak data empty)
+        if (!data.streak || (data.streak.current_streak === 0 && backendClaimedDays.length === 0)) {
+          resetStreakState();
+        }
       } catch (err) {
         console.error("Error fetching profile:", err);
+        // setError(err.message);
+      } finally {
+        // setLoading(false);
       }
     };
+
     fetchProfile();
   }, []);
 
-  // Predefined rewards for each day
   const rewards = [
     { day: "Day 1", reward: "500" },
     { day: "Day 2", reward: "1000" },
@@ -97,9 +126,6 @@ const DailyStreakScreen = () => {
     { day: "Ultimate", reward: "5000" },
   ];
 
-  /**
-   * Handles claiming a daily reward, updating state and persisting to local storage.
-   */
   const handleClaim = async () => {
     if (!claimedDays.includes(currentDay)) {
       try {
@@ -118,7 +144,7 @@ const DailyStreakScreen = () => {
         });
         if (!response.ok) throw new Error("Failed to claim reward");
         const streakData = await response.json();
-  
+
         if (streakData.message === "Streak not updated") {
           const timeMatch = streakData.Countdown.match(/(\d{2}:\d{2})/);
           const time = timeMatch ? timeMatch[0] : "12:59 PM";
@@ -126,15 +152,14 @@ const DailyStreakScreen = () => {
           setShowOverlay(true);
           return;
         }
-  
-        // Update state and persist to local storage
+
         const newClaimedDays = [...claimedDays, currentDay];
         const newCurrentDay = currentDay + 1;
         setClaimedDays(newClaimedDays);
         setCurrentDay(newCurrentDay);
         localStorage.setItem("claimedDays", JSON.stringify(newClaimedDays));
         localStorage.setItem("currentDay", newCurrentDay);
-  
+
         setProfile((prev) => ({
           ...prev,
           total_coins: streakData.total_coins || prev.total_coins,
@@ -145,7 +170,6 @@ const DailyStreakScreen = () => {
             claimed_days: newClaimedDays,
           },
         }));
-        // Show claim message after successful claim
         setShowClaimMessage(true);
       } catch (err) {
         console.error("Error claiming reward:", err);
@@ -154,12 +178,10 @@ const DailyStreakScreen = () => {
     }
   };
 
-  // Close the ineligibility overlay
   const handleCloseOverlay = () => setShowOverlay(false);
 
   return (
     <div className="daily-streak-screen">
-      {/* Header with streak icon and text */}
       <div className="streak-header">
         <img
           src={`${process.env.PUBLIC_URL}/streak.png`}
@@ -170,7 +192,6 @@ const DailyStreakScreen = () => {
         <p className="streak-subtitle">Claim your daily bonuses!</p>
       </div>
 
-      {/* Daily rewards section */}
       <div className="daily-rewards">
         <p className="daily-rewards-title">Daily Rewards</p>
         <div className="rewards-grid">
@@ -190,7 +211,6 @@ const DailyStreakScreen = () => {
         )}
       </div>
 
-      {/* CTA button */}
       <div className="cta-container">
         <CTAButton
           isActive={!claimedDays.includes(currentDay)}
@@ -199,7 +219,6 @@ const DailyStreakScreen = () => {
         />
       </div>
 
-      {/* Overlay for ineligibility */}
       {showOverlay && (
         <div className="overlay-container">
           <div className={`streak-overlay ${showOverlay ? "slide-in" : "slide-out"}`}>
