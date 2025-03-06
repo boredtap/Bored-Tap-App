@@ -11,17 +11,8 @@ const BoostScreen = () => {
   const [activeOverlay, setActiveOverlay] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { totalTaps, setTotalTaps, setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, activateOtherBoosters, setExtraBoosters, boostersData, setElectricBoost, setAutoTapActive } = useContext(BoostContext)
-
-  // const [dailyBoosters, setDailyBoosters] = useState(() => {
-  //   const savedBoosters = localStorage.getItem("dailyBoosters");
-  //   return savedBoosters
-  //     ? JSON.parse(savedBoosters)
-  //     : {
-  //         tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
-  //         fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
-  //       };
-  // });
+  const { totalTaps, setTotalTaps, setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, activateOtherBoosters, setExtraBoosters, boostersData, setElectricBoost, setAutoTapActive } = useContext(BoostContext);
+  const [boosterImages, setBoosterImages] = useState({}); // Store fetched images
 
   const handleOverlayClose = () => setActiveOverlay(null);
 
@@ -32,20 +23,16 @@ const BoostScreen = () => {
       fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
     };
     setDailyBoosters(resetDailyState);
-    setExtraBoosters([])
+    setExtraBoosters([]);
     setTotalTaps(0);
     localStorage.removeItem("extraBoosters");
-    // Use consistent naming for localStorage keys
-    setElectricBoost(1000)
-    setAutoTapActive(false)
+    setElectricBoost(1000);
+    setAutoTapActive(false);
     localStorage.removeItem("lastTapTime");
-    localStorage.removeItem("telegram_user_id"); // Clear ID to force full reset on next login
+    localStorage.removeItem("telegram_user_id");
   };
 
-  // useEffect(() => {
-  //   localStorage.setItem("dailyBoosters", JSON.stringify(dailyBoosters));
-  // }, [dailyBoosters]);
-
+  // Fetch profile and boosters (critical data)
   const fetchProfileAndBoosters = useCallback(async () => {
     setLoading(true);
     try {
@@ -58,13 +45,6 @@ const BoostScreen = () => {
       });
       if (!profileResponse.ok) throw new Error("Profile fetch failed");
       const profileData = await profileResponse.json();
-
-      // Detect account deletion by checking if stats are reset to initial state
-      // if (profileData.total_coins === 0 && profileData.level === 1) {
-      //   resetAllLocalData(); // Wipe all local storage and reset state
-      // } else {
-      //   setTotalTaps(profileData.total_coins || 0);
-      // }
 
       const extraBoostersResponse = await fetch("https://bt-coins.onrender.com/user/boost/extra_boosters", {
         method: "GET",
@@ -80,23 +60,67 @@ const BoostScreen = () => {
         value: booster.upgrade_cost.toString(),
         level: booster.status === 'owned' ? "Owned" : booster.level === "-" ? "Not Owned" : `Level ${booster.level - 1}`,
         ctaText: booster.level === "-" ? "Buy" : `Upgrade to Level ${booster.level}`,
-        altCTA:  (booster.status === "owned") ? "Owned" : (parseInt(booster.level, 10) === 6) ? "Maximum Level Reached" : (profileData.total_coins || 0) < booster.upgrade_cost ? "Insufficient Funds" : null,
+        altCTA: (booster.status === "owned") ? "Owned" : (parseInt(booster.level, 10) === 6) ? "Maximum Level Reached" : (profileData.total_coins || 0) < booster.upgrade_cost ? "Insufficient Funds" : null,
         actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
-        icon: `${process.env.PUBLIC_URL}/extra-booster-icon.png`,
-        imageId: booster.image_id,
+        icon: booster.image_id ? null : `${process.env.PUBLIC_URL}/extra-booster-icon.png`,
+        imageId: booster.imageId,
         rawLevel: booster.level === "-" ? 0 : parseInt(booster.level, 10) - 1,
-        effect: booster.effect, // e.g., "boost", "multiplier", "recharge", "auto-tap"
+        effect: booster.effect,
         status: booster.status && booster.status === "owned" ? 1 : 0
       }));
 
-      setExtraBoosters(mappedExtraBoosters)
+      setExtraBoosters(mappedExtraBoosters);
+      setLoading(false); // Set loading false here to render UI quickly
 
+      // Fetch images asynchronously after critical data is set
+      fetchBoosterImages(mappedExtraBoosters, token);
     } catch (err) {
       setError(err.message);
-    } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setExtraBoosters]);
+
+  // Separate function to fetch images asynchronously
+  const fetchBoosterImages = async (boosters, token) => {
+    const imagePromises = boosters
+      .filter((booster) => booster.imageId)
+      .map(async (booster) => {
+        try {
+          const imageResponse = await fetch(
+            `https://bt-coins.onrender.com/bored-tap/user_app/image?image_id=${booster.imageId}`,
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+            }
+          );
+
+          if (!imageResponse.ok) {
+            throw new Error(`Failed to fetch image for booster ${booster.id}`);
+          }
+
+          const imageBlob = await imageResponse.blob();
+          const imageUrl = URL.createObjectURL(imageBlob);
+
+          setBoosterImages((prev) => ({
+            ...prev,
+            [booster.imageId]: imageUrl,
+          }));
+        } catch (err) {
+          console.error(`Error fetching image for booster ${booster.id}:`, err);
+          setBoosterImages((prev) => ({
+            ...prev,
+            [booster.imageId]: `${process.env.PUBLIC_URL}/extra-booster-icon.png`, // Fallback
+          }));
+        }
+      });
+
+    // Run in background without awaiting
+    Promise.all(imagePromises).catch((err) => console.error("Image fetching failed:", err));
+  };
 
   useEffect(() => {
     fetchProfileAndBoosters();
@@ -106,8 +130,8 @@ const BoostScreen = () => {
     let extraBoosters = JSON.parse(localStorage.getItem("extraBoosters") || "[]");
     let booster = extraBoosters.find((b) => b.id === boosterId);
 
-    if (booster.rawLevel == 5) return
-    if (booster.name === 'Auto-bot Tapping' && booster.status === 1) return
+    if (booster.rawLevel == 5) return;
+    if (booster.name === 'Auto-bot Tapping' && booster.status === 1) return;
 
     try {
       const token = localStorage.getItem("accessToken");
@@ -119,21 +143,20 @@ const BoostScreen = () => {
 
       if (!response.ok) throw new Error("Upgrade failed");
 
-      await fetchProfileAndBoosters(); // Ensure boosters are updated before accessing localStorage
+      await fetchProfileAndBoosters();
 
-      // Retrieve updated boosters from localStorage
       extraBoosters = JSON.parse(localStorage.getItem("extraBoosters") || "[]");
       booster = extraBoosters.find((b) => b.id === boosterId);
 
       if (booster) {
         const previousLevel = Number(booster.rawLevel) || 0;
         const newLevel = previousLevel + 1;
-        const status = booster.status
+        const status = booster.status;
 
         if (booster.name === 'Auto-bot Tapping') {
-          activateOtherBoosters(booster.effect, status)
+          activateOtherBoosters(booster.effect, status);
         } else {
-          activateOtherBoosters(booster.effect, newLevel)
+          activateOtherBoosters(booster.effect, newLevel);
         }
       }
 
@@ -143,12 +166,11 @@ const BoostScreen = () => {
     }
   };
 
-
   const handleClaimDailyBooster = (boosterType) => {
     if (boosterType === "tapperBoost") {
-      activateTapperBoost()
+      activateTapperBoost();
     } else if (boosterType === "fullEnergy") {
-      activateFullEnergy()
+      activateFullEnergy();
     }
 
     handleOverlayClose();
@@ -156,9 +178,10 @@ const BoostScreen = () => {
 
   const renderOverlay = () => {
     if (!activeOverlay) return null;
-    const { type, title, description, value, level, ctaText, altCTA, id, icon } = activeOverlay;
+    const { type, title, description, value, level, ctaText, altCTA, id, icon, imageId } = activeOverlay;
     const isExtraBooster = type === "extra";
     const isDisabled = altCTA && value !== "Free";
+    const overlayIcon = imageId ? boosterImages[imageId] || icon : icon;
 
     return (
       <div className="overlay-container">
@@ -174,7 +197,7 @@ const BoostScreen = () => {
           </div>
           <div className="overlay-divider"></div>
           <div className="overlay-content">
-            <img src={icon} alt={title} className="overlay-boost-icon" />
+            <img src={overlayIcon} alt={title} className="overlay-boost-icon" />
             <p className="overlay-description">{description}</p>
             <div className="overlay-value-container">
               <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Coin Icon" className="overlay-coin-icon" />
@@ -262,43 +285,52 @@ const BoostScreen = () => {
 
             <div className="extra-boosters-section">
               <p className="extra-boosters-title">Extra Boosters:</p>
-              {boostersData?.length && boostersData.length > 0 ? <div className="extra-boosters-container">
-                {boostersData.map((booster) => (
-                  <div
-                    className="extra-booster-card"
-                    key={booster.id}
-                    onClick={() =>
-                      setActiveOverlay({
-                        type: "extra",
-                        title: booster.title,
-                        description: booster.description,
-                        value: booster.value,
-                        level: booster.level,
-                        ctaText: booster.ctaText,
-                        altCTA: booster.altCTA,
-                        id: booster.id,
-                        icon: booster.icon,
-                      })
-                    }
-                  >
-                    <div className="booster-left">
-                      <img src={booster.icon} alt={booster.title} className="booster-icon" />
-                      <div className="booster-info">
-                        <p className="booster-title">{booster.title}</p>
-                        <div className="booster-meta">
-                          <img
-                            src={`${process.env.PUBLIC_URL}/logo.png`}
-                            alt="Coin Icon"
-                            className="small-icon"
-                          />
-                          <span>{booster.value}</span>
+              {boostersData?.length && boostersData.length > 0 ? (
+                <div className="extra-boosters-container">
+                  {boostersData.map((booster) => (
+                    <div
+                      className="extra-booster-card"
+                      key={booster.id}
+                      onClick={() =>
+                        setActiveOverlay({
+                          type: "extra",
+                          title: booster.title,
+                          description: booster.description,
+                          value: booster.value,
+                          level: booster.level,
+                          ctaText: booster.ctaText,
+                          altCTA: booster.altCTA,
+                          id: booster.id,
+                          icon: booster.imageId ? boosterImages[booster.imageId] : booster.icon,
+                          imageId: booster.imageId,
+                        })
+                      }
+                    >
+                      <div className="booster-left">
+                        <img
+                          src={booster.imageId ? boosterImages[booster.imageId] || booster.icon : booster.icon}
+                          alt={booster.title}
+                          className="booster-icon"
+                        />
+                        <div className="booster-info">
+                          <p className="booster-title">{booster.title}</p>
+                          <div className="booster-meta">
+                            <img
+                              src={`${process.env.PUBLIC_URL}/logo.png`}
+                              alt="Coin Icon"
+                              className="small-icon"
+                            />
+                            <span>{booster.value}</span>
+                          </div>
                         </div>
                       </div>
+                      <img src={booster.actionIcon} alt="Action Icon" className="action-icon" />
                     </div>
-                    <img src={booster.actionIcon} alt="Action Icon" className="action-icon" />
-                  </div>
-                ))}
-              </div> : <div className="extra-boosters-container"></div>}
+                  ))}
+                </div>
+              ) : (
+                <div className="extra-boosters-container"></div>
+              )}
             </div>
           </>
         )}

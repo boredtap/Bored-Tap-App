@@ -10,7 +10,7 @@ const RECHARGE_TIMES = [5000, 4500, 3500, 2500, 1500, 500]; // Level 0 through 5
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  const { totalTaps, setTotalTaps, setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, setTapMultiplier, electricBoost, setElectricBoost, setMaxElectricBoost, maxElectricBoost, setRechargeTime, rechargeTime, autoTapActive, setAutoTapActive, applyAutoBotTaps, lastActiveTime, setLastActiveTime, adjustElectricBoosts } = useContext(BoostContext)
+  const { totalTaps, setTotalTaps, setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, setTapMultiplier, electricBoost, setElectricBoost, setMaxElectricBoost, maxElectricBoost, setRechargeTime, rechargeTime, autoTapActive, setAutoTapActive, applyAutoBotTaps, lastActiveTime, setLastActiveTime, adjustElectricBoosts } = useContext(BoostContext);
 
   // State for Telegram user data
   const [telegramData, setTelegramData] = useState({
@@ -28,13 +28,16 @@ const Dashboard = () => {
   // State for total taps and tap effects
   const [tapEffects, setTapEffects] = useState([]); // For tap animations
 
+  // State for AutoBot overlay
+  const [showAutoBotOverlay, setShowAutoBotOverlay] = useState(false);
+  const [autoBotTaps, setAutoBotTaps] = useState(0);
+
   // Refs for tap and recharge management
   const tapCountSinceLastUpdate = useRef(0);
   const lastTapTime = useRef(Date.now());
   const rechargeInterval = useRef(null);
   const autoTapInterval = useRef(null);
   const boostMultiplierActive = useRef(false);
-
 
   // Reset function
   const resetBoosters = () => {
@@ -43,9 +46,7 @@ const Dashboard = () => {
       fullEnergy: { usesLeft: 3, isActive: false, resetTime: null },
     };
     setDailyBoosters(resetState);
-
-    // Reset booster states in localStorage
-    setAutoTapActive(false)
+    setAutoTapActive(false);
     setMaxElectricBoost(1000);
     setElectricBoost(1000);
     setRechargeTime(RECHARGE_TIMES[0]);
@@ -88,17 +89,9 @@ const Dashboard = () => {
         } else {
           setProfile(data);
           if (data.total_coins) {
-            setTotalTaps(data.total_coins)
+            setTotalTaps(data.total_coins);
           }
           setCurrentStreak(data.streak?.current_streak || 0);
-
-          // Load all saved booster states
-          //const baseMultiplier = loadSavedBoosterStates();
-
-          // // Set initial tap multiplier based on base multiplier
-          // setTapMultiplier(baseMultiplier);
-
-          // Load last tap time
           const savedTapTime = localStorage.getItem("lastTapTime");
           if (savedTapTime) {
             lastTapTime.current = parseInt(savedTapTime, 10);
@@ -123,7 +116,6 @@ const Dashboard = () => {
     }
   }, [navigate]);
 
-
   // Backend sync every 2 seconds
   const updateBackend = useCallback(async () => {
     if (tapCountSinceLastUpdate.current === 0) return;
@@ -144,7 +136,6 @@ const Dashboard = () => {
       if (response.ok) {
         const data = await response.json();
         if (data["current coins"] >= 0) {
-          //setTotalTaps(data["current coins"]);
           setProfile((prev) => ({
             ...prev,
             level: data["current level"] || prev.level,
@@ -213,42 +204,32 @@ const Dashboard = () => {
 
   // Extra boosters event listeners
   useEffect(() => {
-    // Extra Booster: Boost (permanent tap bonus)
     const handleBoostUpgraded = (event) => {
       const newLevel = event.detail?.level || 1;
-      // Level 1: 2, Level 2: 3, etc. (level + 1)
       const newPermanent = newLevel + 1;
-
-      // Only update tap multiplier if no temporary boost is active
       if (!boostMultiplierActive.current) {
         setTapMultiplier(newPermanent);
       } else {
-        setTapMultiplier(newPermanent * 2); // Keep the x2 boost if active
+        setTapMultiplier(newPermanent * 2);
       }
     };
 
-    // Extra Booster: Multiplier (max energy increase)
     const handleMultiplierUpgraded = (event) => {
       console.log("Multiplier Upgraded Event:", event.detail);
     };
 
-    // Extra Booster: Recharge Speed
     const handleRechargeSpeedUpgraded = (event) => {
       console.log("Recharge Speed Upgraded Event:", event.detail);
-
-      // Reset recharge interval with new timing
       if (rechargeInterval.current) {
         clearInterval(rechargeInterval.current);
         rechargeInterval.current = null;
       }
     };
 
-    // Extra Booster: Auto Bot Tapping (1 tap per second)
     const handleAutoTapActivated = (event) => {
       console.log("Auto Tap Activated Event:", event.detail);
     };
 
-    // Generic booster upgraded event
     const handleBoosterUpgraded = () => {
       console.log("Generic Booster Upgraded Event");
     };
@@ -268,14 +249,13 @@ const Dashboard = () => {
     };
   }, []);
 
-  const isTouchEvent = useRef(false); // Prevents duplicate taps
+  const isTouchEvent = useRef(false);
 
   const handleTap = (event) => {
-    // Detect touch events first to prevent mouse event duplication
     if (event.pointerType === "touch") {
-      isTouchEvent.current = true; // Mark as touch event
+      isTouchEvent.current = true;
     } else if (event.pointerType === "mouse" && isTouchEvent.current) {
-      return; // Ignore the mouse event if touch was used
+      return;
     }
 
     if (electricBoost <= 0) return;
@@ -322,13 +302,11 @@ const Dashboard = () => {
       });
       if (!extraBoostersResponse.ok) throw new Error("Extra boosters fetch failed");
       const extraBoostersData = await extraBoostersResponse.json();
-      console.log('Splash Screen', extraBoostersData)
-    }
+      console.log('Splash Screen', extraBoostersData);
+    };
 
-    fetchData()
-  }, [])
-
-  const [autoBotTaps, setAutoBotTaps] = useState(0)
+    fetchData();
+  }, []);
 
   useEffect(() => {
     const handleLoad = () => {
@@ -338,13 +316,15 @@ const Dashboard = () => {
       if (oldUser && isFirstVisit) {
         const offlineTaps = applyAutoBotTaps();
         const newElectricBoost = adjustElectricBoosts();
-        console.log("Offline taps", offlineTaps)
+        console.log("Offline taps", offlineTaps);
         console.log("New Electric Boosts", newElectricBoost);
 
-
-        setAutoBotTaps(offlineTaps);
-        setElectricBoost(newElectricBoost)
-        sessionStorage.setItem("hasVisited", "true"); // Mark as visited for this session
+        if (offlineTaps > 0) {
+          setAutoBotTaps(offlineTaps);
+          setShowAutoBotOverlay(true); // Show overlay if there are offline taps
+        }
+        setElectricBoost(newElectricBoost);
+        sessionStorage.setItem("hasVisited", "true");
       }
     };
 
@@ -357,48 +337,71 @@ const Dashboard = () => {
     return () => {
       window.removeEventListener("load", handleLoad);
     };
-  }, []);
-
-  const addAutoBotTaps = () => {
-    setTotalTaps(totalTaps + autoBotTaps)
-    setAutoBotTaps(0)
-    localStorage.setItem("autoBotTaps", autoBotTaps);
-  }
+  }, [applyAutoBotTaps, adjustElectricBoosts]);
 
   useEffect(() => {
-    // Load stored value on component mount
     const storedTaps = localStorage.getItem("autoBotTaps");
-
     if (storedTaps !== null) {
-      const parsedTaps = parseInt(storedTaps, 10); // Convert to number first
+      const parsedTaps = parseInt(storedTaps, 10);
       if (parsedTaps > 0) {
-        setAutoBotTaps(prev => parsedTaps + prev);
+        setAutoBotTaps((prev) => parsedTaps + prev);
+        setShowAutoBotOverlay(true); // Show overlay on mount if stored taps exist
       }
     }
   }, []);
 
   useEffect(() => {
-    // Save updated value to localStorage whenever autoBotTaps changes
     localStorage.setItem("autoBotTaps", autoBotTaps);
   }, [autoBotTaps]);
 
+  // Handle claiming AutoBot taps
+  const handleClaimAutoBotTaps = () => {
+    setTotalTaps((prev) => prev + autoBotTaps);
+    setAutoBotTaps(0);
+    setShowAutoBotOverlay(false);
+    localStorage.setItem("autoBotTaps", "0");
+  };
+
+  // Render AutoBot overlay
+  const renderAutoBotOverlay = () => {
+    if (!showAutoBotOverlay || autoBotTaps <= 0) return null;
+
+    return (
+      <div className="overlay-container">
+        <div className={`boost-overlay ${showAutoBotOverlay ? "slide-in" : "slide-out"}`}>
+          <div className="overlay-header">
+            <h2 className="overlay-title">Auto-Bot Earning</h2>
+            <img
+              src={`${process.env.PUBLIC_URL}/cancel.png`}
+              alt="Cancel"
+              className="overlay-cancel"
+              onClick={() => setShowAutoBotOverlay(false)}
+            />
+          </div>
+          <div className="overlay-divider"></div>
+          <div className="overlay-content">
+            <img
+              src={`${process.env.PUBLIC_URL}/extra-booster-icon.png`} // Assuming this is the AutoBot icon; adjust as needed
+              alt="AutoBot Icon"
+              className="overlay-boost-icon"
+            />
+            <p className="overlay-description">Your autobot worked for you</p>
+            <div className="overlay-value-container">
+              <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Coin Icon" className="overlay-coin-icon" />
+              <span className="overlay-value">{autoBotTaps.toLocaleString()}</span>
+            </div>
+            <button className="overlay-cta" onClick={handleClaimAutoBotTaps}>
+              Claim
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="dashboard-container">
-      {/* Temporary: Modal containing AutoBot information */}
-      {autoBotTaps ? (
-        <div className="autobot-result">
-          <span className="autobot-modal-bg"></span>
-          <span className="autobot-modal">
-            <h3>AutoBot Worked for you:</h3>
-            <p>{autoBotTaps} Taps</p>
-            <span>
-              <button onClick={() => addAutoBotTaps()}>Add</button>
-              <button onClick={() => setAutoBotTaps(0)}>Ignore</button>
-            </span>
-          </span>
-        </div>
-      ) : null}
-      {/* Temporary: Modal containing AutoBot information */}
+      {renderAutoBotOverlay()}
       <div className="profile1-streak-section">
         <div className="profile1-section" onClick={() => navigate("/profile-screen")}>
           <img src={telegramData.image_url} alt="Profile" className="profile1-picture" />
@@ -450,7 +453,6 @@ const Dashboard = () => {
           <img src={`${process.env.PUBLIC_URL}/electric-icon.png`} alt="Electric Icon" className="electric-icon" />
           <span>{Math.floor(electricBoost)}/{maxElectricBoost}</span>
         </div>
-
         <button className="boost-btn" onClick={() => navigate("/boost-screen")}>
           <img src={`${process.env.PUBLIC_URL}/boostx2.png`} alt="Boost Icon" className="boost-icon" />
           Boost
