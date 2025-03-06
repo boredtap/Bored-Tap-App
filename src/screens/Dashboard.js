@@ -381,7 +381,7 @@ const Dashboard = () => {
           <div className="overlay-divider"></div>
           <div className="overlay-content">
             <img
-              src={`${process.env.PUBLIC_URL}/extra-booster-icon.png`} // Assuming this is the AutoBot icon; adjust as needed
+              src={`${process.env.PUBLIC_URL}/autobot-icon.png`} // Assuming this is the AutoBot icon; adjust as needed
               alt="AutoBot Icon"
               className="overlay-boost-icon"
             />
