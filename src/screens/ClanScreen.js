@@ -70,7 +70,7 @@ const ClanScreen = () => {
   }, [navigate]);
 
   const handleCreateClick = () => {
-    navigate("/clan-create");
+    navigate("/clan-create-screen");
   };
 
   const handleJoinClick = () => {

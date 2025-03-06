@@ -50,7 +50,7 @@ const App = () => {
         <Route path="/clan-details-screen" element={<ClanDetailsScreen />} />
         <Route path="/clan-preview/:clanId" element={<ClanPreviewScreen />} />
         <Route path="/top-clan-screen" element={<TopClanScreen />} />
-        <Route path="/create-clan" element={<CreateClanScreen />} />
+        <Route path="/clan-create-screen" element={<CreateClanScreen />} />
       </Routes>
     </Router>
   );

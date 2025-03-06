@@ -184,8 +184,8 @@ export default SplashScreen;
 //             WebApp: {
 //               initDataUnsafe: {
 //                 user: {
-//                   id: "1234567", // Mock Telegram user ID
-//                   username: "yuiop3",
+//                   id: "3214", // Mock Telegram user ID
+//                   username: "yuiop4",
 //                   photo_url: "https://via.placeholder.com/150", // Placeholder image
 //                 },
 //               },
@@ -196,8 +196,8 @@ export default SplashScreen;
 //         const webApp = window.Telegram.WebApp;
 //         const userData =
 //           webApp.initDataUnsafe?.user || {
-//             id: "1234567",
-//             username: "yuiop3",
+//             id: "3214",
+//             username: "yuiop4",
 //             photo_url: "https://via.placeholder.com/150",
 //           };
 

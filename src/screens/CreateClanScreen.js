@@ -7,7 +7,7 @@ const CreateClanScreen = () => {
   const [clanName, setClanName] = useState("");
   const [clanImage, setClanImage] = useState(null);
   const [imageName, setImageName] = useState("");
-  const [invites, setInvites] = useState([]);
+  const [invitees, setInvitees] = useState([]); // Changed from invites to invitees for clarity
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -15,7 +15,7 @@ const CreateClanScreen = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
+    const fetchInvitees = async () => {
       const token = localStorage.getItem("accessToken");
       if (!token) {
         setError("No access token found");
@@ -24,26 +24,26 @@ const CreateClanScreen = () => {
       }
 
       try {
-        const response = await fetch("https://bt-coins.onrender.com/user/profile", {
+        const response = await fetch("https://bt-coins.onrender.com/invitees", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         });
-        if (!response.ok) throw new Error(`Failed to fetch profile: ${response.statusText}`);
-        const profileData = await response.json();
-        console.log("Profile data:", profileData);
-        setInvites(profileData.invite || []);
+        if (!response.ok) throw new Error(`Failed to fetch invitees: ${response.statusText}`);
+        const inviteesData = await response.json();
+        console.log("Invitees data:", inviteesData);
+        setInvitees(inviteesData || []);
       } catch (err) {
         setError(err.message);
-        console.error("Error fetching profile:", err);
+        console.error("Error fetching invitees:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUserProfile();
+    fetchInvitees();
   }, []);
 
   const handleImageChange = (e) => {
@@ -60,21 +60,15 @@ const CreateClanScreen = () => {
   };
 
   const toggleFriendSelection = (friendId) => {
-    setSelectedFriends((prev) => {
-      const newSelection = prev.includes(friendId)
-        ? prev.filter((id) => id !== friendId)
-        : [...prev, friendId];
-      console.log("Selected friends after toggle:", newSelection);
-      return newSelection;
-    });
+    setSelectedFriends((prev) =>
+      prev.includes(friendId) ? prev.filter((id) => id !== friendId) : [...prev, friendId]
+    );
   };
 
   const selectAllFriends = () => {
-    setSelectedFriends((prev) => {
-      const newSelection = prev.length === invites.length ? [] : invites.map((invite) => invite.telegram_user_id);
-      console.log("Selected friends after select all:", newSelection);
-      return newSelection;
-    });
+    setSelectedFriends((prev) =>
+      prev.length === invitees.length ? [] : invitees.map((invitee) => invitee.telegram_user_id)
+    );
   };
 
   const handleCreateClan = async () => {
@@ -83,41 +77,41 @@ const CreateClanScreen = () => {
       setError("No access token found");
       return;
     }
+    if (!clanName || !clanImage || selectedFriends.length === 0) {
+      setError("Please provide a clan name, image, and at least one member.");
+      return;
+    }
 
     const formData = new FormData();
     formData.append("image", clanImage);
     selectedFriends.forEach((id) => formData.append("members", id));
 
     const url = `https://bt-coins.onrender.com/user/clan/create_clan?name=${encodeURIComponent(clanName)}`;
-    console.log("Request URL:", url);
-    for (let [key, value] of formData.entries()) {
-      console.log(`${key}:`, value);
-    }
-    console.log("Request headers:", { Authorization: `Bearer ${token}` });
+    console.log("Creating clan with URL:", url, "and data:", { selectedFriends });
 
     setLoading(true);
     try {
       const response = await fetch(url, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: formData,
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error("Backend error response:", errorData);
-        throw new Error(JSON.stringify(errorData) || `HTTP error: ${response.status} ${response.statusText}`);
+        throw new Error(errorData.message || `HTTP error: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log("Clan creation successful:", data);
-      setShowOverlay(true);
+      console.log("Clan creation response:", data);
+      if (data.status === "awaiting verification") {
+        setShowOverlay(true);
+      }
     } catch (err) {
-      const errorMessage = err.message.includes("Failed to fetch")
-        ? "Network error: Likely a CORS issue. The server allows GET requests but blocks POST with multipart/form-data. Add CORS headers (Access-Control-Allow-Methods: POST, Access-Control-Allow-Headers: Content-Type, Authorization) on the server, or use a proxy in package.json."
-        : err.message;
-      setError(errorMessage);
-      console.error("Fetch error details:", err);
+      setError(err.message);
+      console.error("Error creating clan:", err);
     } finally {
       setLoading(false);
     }
@@ -125,17 +119,17 @@ const CreateClanScreen = () => {
 
   const handleOverlayClose = () => {
     setShowOverlay(false);
-    navigate("/clan");
+    navigate("/clan-details-screen"); // Redirect to clan details after creation
   };
 
   const isCtaActive = clanName && clanImage && selectedFriends.length > 0;
 
   return (
-    <div className="create-clan-screen">
+    <div className="clan-create-screen">
       <div className="create-clan-header">
         <img src={`${process.env.PUBLIC_URL}/clan.png`} alt="Clan Icon" className="clan-icon" />
         <p className="create-clan-title">Create a Clan</p>
-        <p className="create-clan-subtitle">Invite friends to join your clan (1+ required for testing)</p>
+        <p className="create-clan-subtitle">Invite friends to join your clan (1+ required)</p>
       </div>
 
       {loading ? (
@@ -172,12 +166,12 @@ const CreateClanScreen = () => {
             </div>
 
             <div className="friends-header">
-              <p className="friends-count">Your Friends ({invites.length})</p>
+              <p className="friends-count">Your Friends ({invitees.length})</p>
               <div className="select-all" onClick={selectAllFriends}>
                 <span>Select all</span>
                 <img
                   src={
-                    selectedFriends.length === invites.length && invites.length > 0
+                    selectedFriends.length === invitees.length && invitees.length > 0
                       ? `${process.env.PUBLIC_URL}/tick-icon.png`
                       : `${process.env.PUBLIC_URL}/add-icon.png`
                   }
@@ -188,20 +182,20 @@ const CreateClanScreen = () => {
             </div>
 
             <div className="friends-list">
-              {invites.length === 0 ? (
-                <p className="no-friends">No friends available.</p>
+              {invitees.length === 0 ? (
+                <p className="no-friends">No friends available to invite.</p>
               ) : (
-                invites.map((invite) => (
-                  <div className="friend-card" key={invite.telegram_user_id}>
+                invitees.map((invitee) => (
+                  <div className="friend-card" key={invitee.telegram_user_id}>
                     <img
-                      src={invite.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`}
-                      alt={`${invite.username || "Unknown"}'s Profile`}
+                      src={invitee.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`}
+                      alt={`${invitee.username || "Unknown"}'s Profile`}
                       className="friend-profile-img"
                     />
                     <div className="friend-details">
                       <p className="friend-name">
-                        {invite.username || "Unknown"}{" "}
-                        <span className="friend-level">.Lvl {invite.level || "?"}</span>
+                        {invitee.username || "Unknown"}{" "}
+                        <span className="friend-level">.Lvl {invitee.level || "?"}</span>
                       </p>
                       <div className="friend-icon-value">
                         <img
@@ -209,21 +203,18 @@ const CreateClanScreen = () => {
                           alt="Friends Icon"
                           className="icon-img"
                         />
-                        <span className="icon-value">+{invite.iconValue || 0}</span>
+                        <span className="icon-value">+{invitee.total_coins?.toLocaleString() || 0}</span>
                       </div>
                     </div>
                     <img
                       src={
-                        selectedFriends.includes(invite.telegram_user_id)
+                        selectedFriends.includes(invitee.telegram_user_id)
                           ? `${process.env.PUBLIC_URL}/tick-icon.png`
                           : `${process.env.PUBLIC_URL}/add-icon.png`
                       }
-                      alt={selectedFriends.includes(invite.telegram_user_id) ? "Selected" : "Add"}
+                      alt={selectedFriends.includes(invitee.telegram_user_id) ? "Selected" : "Add"}
                       className="friend-action-icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFriendSelection(invite.telegram_user_id);
-                      }}
+                      onClick={() => toggleFriendSelection(invitee.telegram_user_id)}
                     />
                   </div>
                 ))
@@ -235,9 +226,9 @@ const CreateClanScreen = () => {
             <button
               className={`create-clan-cta ${isCtaActive ? "" : "inactive"}`}
               onClick={isCtaActive ? handleCreateClan : null}
-              disabled={!isCtaActive}
+              disabled={!isCtaActive || loading}
             >
-              Create a Clan
+              {loading ? "Creating..." : "Create a Clan"}
             </button>
           </div>
         </>
