@@ -108,7 +108,7 @@ async def home():
 async def update_coins(
     request: Request,
     telegram_user_id: Annotated[str, Depends(get_current_user)],
-    auto_bot_active: bool,
+    auto_bot_active: bool | None = None,
     coins: int | None = None,
     current_power_limit: int | None = None,
     last_active_time: datetime | None = None,):
