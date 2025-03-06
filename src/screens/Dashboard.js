@@ -157,7 +157,7 @@ const Dashboard = () => {
     } catch (err) {
       console.error("Error syncing with backend:", err);
     }
-  }, []);
+  }, [electricBoost]);
 
   useEffect(() => {
     const interval = setInterval(updateBackend, 2000);
