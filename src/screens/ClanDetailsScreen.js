@@ -1,18 +1,39 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
-import "./ClanDetailsScreen.css"; 
+import "./ClanDetailsScreen.css"; // Assuming you renamed it from DetailedClanScreen.css
+
+// Utility function for fetching images (inline for simplicity; move to separate file if preferred)
+const fetchClanImage = async (imageId, token) => {
+  if (!imageId) return `${process.env.PUBLIC_URL}/default-clan-icon.png`;
+  try {
+    const response = await fetch(
+      `https://bt-coins.onrender.com/bored-tap/user_app/image?image_id=${imageId}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      }
+    );
+    if (!response.ok) throw new Error("Failed to fetch image");
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+  } catch (err) {
+    console.error("Error fetching clan image:", err);
+    return `${process.env.PUBLIC_URL}/default-clan-icon.png`;
+  }
+};
 
 const ClanDetailsScreen = () => {
   const navigate = useNavigate();
   const [clanData, setClanData] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [userRole, setUserRole] = useState("Member"); // Default to Member
+  const [userRole, setUserRole] = useState("Member");
 
   useEffect(() => {
     const fetchClanDetails = async () => {
-      setLoading(true);
       try {
         const token = localStorage.getItem("accessToken");
         if (!token) {
@@ -20,7 +41,6 @@ const ClanDetailsScreen = () => {
           return;
         }
 
-        // Fetch clan details
         const response = await fetch("https://bt-coins.onrender.com/user/clan/my_clan", {
           method: "GET",
           headers: {
@@ -30,9 +50,8 @@ const ClanDetailsScreen = () => {
         });
         if (!response.ok) throw new Error("Failed to fetch clan details");
         const data = await response.json();
-        console.log("Raw clan data:", data); // Debug log
+        console.log("Raw clan data:", data);
 
-        // Fetch user profile to determine role
         const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
           method: "GET",
           headers: {
@@ -43,32 +62,34 @@ const ClanDetailsScreen = () => {
         if (!profileResponse.ok) throw new Error("Failed to fetch user profile");
         const profileData = await profileResponse.json();
 
-        // Map clan data
+        const imageUrl = await fetchClanImage(data.image_id, token); // Fetch image
+
         setClanData({
           id: data.id,
-          icon: data.imageUrl || `${process.env.PUBLIC_URL}/default-clan-icon.png`, // Adjust if image_id needs a URL
+          icon: imageUrl, // Use fetched image URL
           name: data.name,
           position: data.rank || "#?",
           topIcon: `${process.env.PUBLIC_URL}/${
-            data.rank === "#1" ? "first-icon.png" : data.rank === "#2" ? "second-icon.png" : data.rank === "#3" ? "third-icon.png" : "default-rank.png"
+            data.rank === "#1"
+              ? "first-icon.png"
+              : data.rank === "#2"
+              ? "second-icon.png"
+              : data.rank === "#3"
+              ? "third-icon.png"
+              : "default-rank.png"
           }`,
-          ctaLeaveIcon: `${process.env.PUBLIC_URL}/leave-icon.png`,
-          ctaInviteIcon: `${process.env.PUBLIC_URL}/invite-icon.png`,
-          closeRank: data.rank || "#?", // Placeholder
+          ctaLeaveIcon: `${process.env.PUBLIC_URL}/exit.png`, // Changed to exit.png
+          ctaInviteIcon: `${process.env.PUBLIC_URL}/invitee.png`,
+          closeRank: data.rank || "#?",
           clanCoin: data.total_coins ? data.total_coins.toLocaleString() : "0",
           members: data.members ? data.members.toLocaleString() : "0",
           coinIcon: `${process.env.PUBLIC_URL}/logo.png`,
           seeAllIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
         });
 
-        // Determine user role (Owner if creator, Member otherwise)
-        // Assuming profileData has creator info or we infer from clan data
         setUserRole(data.creator_id === profileData.telegram_user_id ? "Owner" : "Member");
-
-        setLoading(false);
       } catch (err) {
         setError(err.message);
-        setLoading(false);
         console.error("Error:", err.message);
       }
     };
@@ -81,7 +102,7 @@ const ClanDetailsScreen = () => {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const action = userRole === "Owner" ? "close" : null; // Owners close clan, Members just leave
+      const action = userRole === "Owner" ? "close" : null;
       const url = `https://bt-coins.onrender.com/user/clan/exit_clan${action ? `?creator_exit_action=${action}` : ""}`;
 
       const response = await fetch(url, {
@@ -92,27 +113,25 @@ const ClanDetailsScreen = () => {
           Accept: "application/json",
         },
       });
-      if (!response.ok) throw new Error("Failed to leave clan");
+      if (!response.ok) throw new Error("Failed to exit clan");
       const result = await response.json();
 
       if (result.status === true || result.status === "Ownership transfer feature coming soon 😊") {
-        navigate("/clan-screen"); // Redirect back to ClanScreen after leaving
+        navigate("/clan-screen");
       }
     } catch (err) {
       setError(err.message);
-      console.error("Error leaving clan:", err.message);
+      console.error("Error exiting clan:", err.message);
     }
   };
 
   const handleInvite = () => {
-    // Placeholder for invite functionality
     alert("Invite feature coming soon!");
-    // Future: POST /clan/invite with friendIds
   };
 
-  if (loading) return <div className="detailed-clan-screen"><p>Loading...</p><Navigation /></div>;
-  if (error) return <div className="detailed-clan-screen"><p>Error: {error}</p><Navigation /></div>;
-  if (!clanData) return <div className="detailed-clan-screen"><p>No clan data available</p><Navigation /></div>;
+  // Removed loading state; render nothing until data loads to avoid white bg
+  if (error) return <div className="clan-details-screen"><p>Error: {error}</p><Navigation /></div>;
+  if (!clanData) return <div className="clan-details-screen"><Navigation /></div>;
 
   return (
     <div className="clan-details-screen">
@@ -126,8 +145,8 @@ const ClanDetailsScreen = () => {
       </div>
       <div className="clan-actions">
         <div className="cta-button" onClick={handleLeaveClan}>
-          <img src={clanData.ctaLeaveIcon} alt="Leave Icon" className="cta-icon" />
-          <span>Leave</span>
+          <img src={clanData.ctaLeaveIcon} alt="Exit Icon" className="cta-icon" />
+          <span>Exit</span>
         </div>
         <div className="cta-button" onClick={handleInvite}>
           <img src={clanData.ctaInviteIcon} alt="Invite Icon" className="cta-icon" />
@@ -144,7 +163,7 @@ const ClanDetailsScreen = () => {
       <div className="data-card">
         <div className="data-row">
           <span className="data-title">Earning</span>
-          <span className="data-value">x10% tapping</span> {/* Static for now, update if API provides */}
+          <span className="data-value">x10% tapping</span>
         </div>
         <div className="data-row">
           <span className="data-title">Clan Rank</span>
@@ -166,7 +185,6 @@ const ClanDetailsScreen = () => {
           <span className="data-value">{clanData.members}</span>
         </div>
       </div>
-      {/* Top Earners placeholder - add when API provides */}
       <div className="top-earners-section">
         <p className="top-earners-text">Clan Top Earners</p>
         <div className="see-all-section">

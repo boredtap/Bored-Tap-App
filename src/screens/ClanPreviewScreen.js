@@ -7,6 +7,7 @@ const ClanPreviewScreen = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [clanData, setClanData] = useState(null);
+  const [joining, setJoining] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -86,8 +87,9 @@ const ClanPreviewScreen = () => {
   }, [navigate, location]);
 
   const handleJoinClan = async () => {
-    if (!clanData?.id) return;
-
+    if (!clanData?.id || joining) return;
+  
+    setJoining(true);
     try {
       const token = localStorage.getItem("accessToken");
       const response = await fetch(
@@ -101,16 +103,29 @@ const ClanPreviewScreen = () => {
           },
         }
       );
-      if (!response.ok) throw new Error("Failed to join clan");
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          response.status === 409 ? "You are already in a clan!" : `Failed to join clan: ${errorText}`
+        );
+      }
       const result = await response.json();
-      if (result.success) {
-        navigate("/clan-details");
+      console.log("Join response:", result); // Debug log
+  
+      // Adjust success condition based on actual response
+      if (result.status === true || result.success) { // Broaden condition
+        navigate("/clan-details-screen");
+      } else {
+        throw new Error("Join request completed but no success confirmation");
       }
     } catch (err) {
       setError(err.message);
       console.error("Error joining clan:", err.message);
+    } finally {
+      setJoining(false);
     }
   };
+
 
   if (loading) return <div className="clan-preview"><p>Loading...</p><Navigation /></div>;
   if (error) return <div className="clan-preview"><p>Error: {error}</p><Navigation /></div>;
@@ -126,9 +141,9 @@ const ClanPreviewScreen = () => {
         <span className="position-text">{clanData.position}</span>
         <img src={clanData.topIcon} alt="Top Icon" className="top-icon" />
       </div>
-      <div className="join-btn-frame" onClick={handleJoinClan}>
+      <div className={`join-btn-frame ${joining ? "disabled" : ""}`} onClick={handleJoinClan}>
         <img src={clanData.joinIcon} alt="Join Icon" className="join-icon" />
-        <span className="join-btn-text">Join</span>
+        <span className="join-btn-text">{joining ? "Joining..." : "Join"}</span>
       </div>
       <div className="your-clan-section">
         <p className="your-clan-text">Your Clan</p>

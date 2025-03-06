@@ -9,6 +9,44 @@ const RECHARGE_TIMES = [5000, 4500, 3500, 2500, 1500, 500]; // Level 0 through 5
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [clanPath, setClanPath] = useState("/clan-screen");
+
+  useEffect(() => {
+    const checkClanStatus = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+          console.log("No token, skipping clan check");
+          return;
+        }
+
+        const response = await fetch("https://bt-coins.onrender.com/user/profile", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (!response.ok) {
+          console.error("Profile fetch failed:", response.status);
+          return;
+        }
+
+        const data = await response.json();
+        console.log("Profile data:", data); // Debug log
+        if (data.clanId) {
+          console.log("User in clan, setting path to /clan-details-screen");
+          setClanPath("/clan-details-screen");
+        } else {
+          console.log("User not in clan, keeping path as /clan-screen");
+          setClanPath("/clan-screen");
+        }
+      } catch (err) {
+        console.error("Error checking clan status:", err);
+      }
+    };
+    checkClanStatus();
+  }, []); // Runs on mount only
 
   const { totalTaps, setTotalTaps, setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, setTapMultiplier, electricBoost, setElectricBoost, setMaxElectricBoost, maxElectricBoost, setRechargeTime, rechargeTime, autoTapActive, setAutoTapActive, applyAutoBotTaps, lastActiveTime, setLastActiveTime, adjustElectricBoosts } = useContext(BoostContext);
 
@@ -26,7 +64,7 @@ const Dashboard = () => {
   const [currentStreak, setCurrentStreak] = useState(0);
 
   // State for total taps and tap effects
-  const [tapEffects, setTapEffects] = useState([]); // For tap animations
+  const [tapEffects, setTapEffects] = useState([]);
 
   // State for AutoBot overlay
   const [showAutoBotOverlay, setShowAutoBotOverlay] = useState(false);
@@ -322,7 +360,7 @@ const Dashboard = () => {
 
         if (offlineTaps > 0) {
           setAutoBotTaps(offlineTaps);
-          setShowAutoBotOverlay(true); // Show overlay if there are offline taps
+          setShowAutoBotOverlay(true);
         }
         setElectricBoost(newElectricBoost);
         sessionStorage.setItem("hasVisited", "true");
@@ -346,7 +384,7 @@ const Dashboard = () => {
       const parsedTaps = parseInt(storedTaps, 10);
       if (parsedTaps > 0) {
         setAutoBotTaps((prev) => parsedTaps + prev);
-        setShowAutoBotOverlay(true); // Show overlay on mount if stored taps exist
+        setShowAutoBotOverlay(true);
       }
     }
   }, []);
@@ -355,24 +393,23 @@ const Dashboard = () => {
     localStorage.setItem("autoBotTaps", autoBotTaps);
   }, [autoBotTaps]);
 
-  // Handle claiming AutoBot taps
   const handleClaimAutoBotTaps = () => {
     setTotalTaps((prev) => prev + autoBotTaps);
-    tapCountSinceLastUpdate.current = autoBotTaps
+    tapCountSinceLastUpdate.current = autoBotTaps;
 
     setAutoBotTaps(0);
     localStorage.setItem("autoBotTaps", "0");
-    
+
     setShowAutoBotOverlay(false);
 
-    updateBackend()
+    updateBackend();
   };
 
   const handleClearAutoBotTaps = () => {
-    setAutoBotTaps(0)
-    setShowAutoBotOverlay(false)
+    setAutoBotTaps(0);
+    setShowAutoBotOverlay(false);
     localStorage.setItem("autoBotTaps", "0");
-  }
+  };
 
   useEffect(() => {
     const handleUnload = () => {
@@ -394,7 +431,6 @@ const Dashboard = () => {
     };
   }, []);
 
-  // Render AutoBot overlay
   const renderAutoBotOverlay = () => {
     if (!showAutoBotOverlay || autoBotTaps <= 0) return null;
 
@@ -413,7 +449,7 @@ const Dashboard = () => {
           <div className="overlay-divider"></div>
           <div className="overlay-content">
             <img
-              src={`${process.env.PUBLIC_URL}/autobot-icon.png`} // Assuming this is the AutoBot icon; adjust as needed
+              src={`${process.env.PUBLIC_URL}/autobot-icon.png`}
               alt="AutoBot Icon"
               className="overlay-boost-icon"
             />
@@ -453,20 +489,20 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* // In Dashboard.js, within the frames-section div */}
-  <div className="frames-section">
-    {[
-      { name: "Rewards", icon: "reward.png", path: "/reward-screen" },
-      { name: "Challenge", icon: "challenge.png", path: "/challenge-screen" },
-      { name: "Clan", icon: "clan.png", path: "/clan-screen" }, // Clan navigation
-      { name: "Leaderboard", icon: "leaderboard.png", path: "/leaderboard-screen" },
-    ].map((frame, index) => (
-      <div className="frame" key={index} onClick={() => navigate(frame.path)}>
-        <img src={`${process.env.PUBLIC_URL}/${frame.icon}`} alt={`${frame.name} Icon`} className="frame-icon" />
-        <span>{frame.name}</span>
+      <div className="frames-section">
+        {[
+          { name: "Rewards", icon: "reward.png", path: "/reward-screen" },
+          { name: "Challenge", icon: "challenge.png", path: "/challenge-screen" },
+          { name: "Clan", icon: "clan.png", path: clanPath },
+          { name: "Leaderboard", icon: "leaderboard.png", path: "/leaderboard-screen" },
+        ].map((frame, index) => (
+          <div className="frame" key={index} onClick={() => navigate(frame.path)}>
+            <img src={`${process.env.PUBLIC_URL}/${frame.icon}`} alt={`${frame.name} Icon`} className="frame-icon" />
+            <span>{frame.name}</span>
+          </div>
+        ))}
       </div>
-    ))}
-  </div>
+
       <div className="total-taps-section">
         <p className="total-taps-text">Your Total Taps:</p>
         <div className="total-taps-count">

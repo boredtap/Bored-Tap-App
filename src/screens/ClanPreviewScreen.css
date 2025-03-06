@@ -56,6 +56,12 @@
     border-radius: 8px;
     padding: 10px 20px;
     cursor: pointer;
+    pointer-events: auto; /* Default */
+  }
+  
+  .join-btn-frame.disabled {
+    opacity: 0.6;
+    pointer-events: none; /* Disable clicks when joining */
   }
   
   .join-icon {
