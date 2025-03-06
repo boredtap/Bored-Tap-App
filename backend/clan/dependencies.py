@@ -227,7 +227,9 @@ def my_clan(telegram_user_id):
         image_id=clan["image_id"],
         in_clan_rank=in_clan_rank,
         total_coins=clan["total_coins"],
-        members=clan["members"]
+        members=clan["members"],
+        status=clan["status"]
+        # creator=clan["creator"]
     )
 
 

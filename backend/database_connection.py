@@ -100,23 +100,3 @@ extra_boosts_collection = db['extra_boosts']
 levels_collection = db['levels']
 clans_collection = db['clans']
 
-
-
-# change the clan datatype in user collection from array to object
-def update_user_profile():
-    update_user_profile = user_collection.update_many(
-        {},
-        {
-            "$set": {
-                "auto_bot_active": False
-            }
-        },
-        upsert=True
-    )
-
-    if update_user_profile.modified_count > 0:
-        print(f"{update_user_profile.modified_count} users profile updated successfully")
-    else:
-        print("User profile update failed")
-
-update_user_profile()
