@@ -77,6 +77,12 @@ const Dashboard = () => {
   const autoTapInterval = useRef(null);
   const boostMultiplierActive = useRef(false);
 
+  const electricBoostRef = useRef(electricBoost);
+
+  useEffect(() => {
+    electricBoostRef.current = electricBoost;
+  }, [electricBoost]);
+
   // Reset function
   const resetBoosters = () => {
     const resetState = {
@@ -163,16 +169,23 @@ const Dashboard = () => {
   }, [navigate]);
 
   // Backend sync every 2 seconds
-  const updateBackend = useCallback(async () => {
-    if (tapCountSinceLastUpdate.current === 0) return;
+  const updateBackend = useCallback(async (isUnloading = false) => {
+    if (tapCountSinceLastUpdate.current === 0 && !isUnloading) return;
 
     const tapsToSync = tapCountSinceLastUpdate.current;
+    const url = `https://bt-coins.onrender.com/update-coins?coins=${tapsToSync}&current_power_limit=${electricBoostRef.current}&last_active_time=${Date.now()}&auto_bot_active=${!isUnloading}`;
 
     tapCountSinceLastUpdate.current = 0;
+
     try {
       const token = localStorage.getItem("accessToken");
+      if (isUnloading) {
+        // Use navigator.sendBeacon() for page unload reliability
+        return navigator.sendBeacon(url);
+      }
+
       const response = await fetch(
-        `https://bt-coins.onrender.com/update-coins?coins=${tapsToSync}&current_power_limit=${electricBoost}&last_active_time=${Date.now()}`,
+        url,
         {
           method: "POST",
           headers: {
@@ -195,7 +208,7 @@ const Dashboard = () => {
     } catch (err) {
       console.error("Error syncing with backend:", err);
     }
-  }, [electricBoost]);
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(updateBackend, 2000);
@@ -421,12 +434,12 @@ const Dashboard = () => {
 
   useEffect(() => {
     const handleUnload = () => {
-      updateBackend();
+      updateBackend(true);
     };
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        updateBackend();
+        updateBackend(true);
       }
     };
 
