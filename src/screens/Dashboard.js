@@ -91,6 +91,14 @@ const Dashboard = () => {
           if (data.total_coins) {
             setTotalTaps(data.total_coins);
           }
+          if (data.current_power_limit) {
+            //localStorage.setItem('electricBoost', JSON.stringify(data.current_power_limit));
+            setElectricBoost(data.current_power_limit);
+          }
+          if (data.last_active_time) {
+            //localStorage.setItem('lastActiveTime', JSON.stringify(data.last_active_time));
+            setLastActiveTime(data.last_active_time)
+          }
           setCurrentStreak(data.streak?.current_streak || 0);
           const savedTapTime = localStorage.getItem("lastTapTime");
           if (savedTapTime) {
@@ -126,7 +134,7 @@ const Dashboard = () => {
     try {
       const token = localStorage.getItem("accessToken");
       const response = await fetch(
-        `https://bt-coins.onrender.com/update-coins?coins=${tapsToSync}`,
+        `https://bt-coins.onrender.com/update-coins?coins=${tapsToSync}&current_power_limit=${electricBoost}&last_active_time=${Date.now()}`,
         {
           method: "POST",
           headers: {
