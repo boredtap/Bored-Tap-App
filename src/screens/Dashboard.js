@@ -91,9 +91,9 @@ const Dashboard = () => {
           if (data.total_coins) {
             setTotalTaps(data.total_coins);
           }
-          if (data.current_power_limit) {
+          if (data.power_limit) {
             //localStorage.setItem('electricBoost', JSON.stringify(data.current_power_limit));
-            setElectricBoost(data.current_power_limit);
+            setElectricBoost(data.power_limit);
           }
           if (data.last_active_time) {
             //localStorage.setItem('lastActiveTime', JSON.stringify(data.last_active_time));
