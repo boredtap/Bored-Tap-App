@@ -40,6 +40,7 @@ def get_user_by_id(telegram_user_id: str) -> BasicProfile | SuspendedUser | None
             total_coins=user.get("total_coins", None),
             power_limit=user.get("power_limit", None),
             last_active_time=user.get("last_active_time", None),
+            auto_bot_active=user.get("auto_bot_active", None),
             referral_url=user.get("referral_url", None),
             is_active=user.get("is_active", None)
         )

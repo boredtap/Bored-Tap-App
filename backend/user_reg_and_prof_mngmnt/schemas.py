@@ -64,6 +64,7 @@ class BasicProfile(BaseModel):
     total_coins: int | None = 0
     power_limit: int | None = 1000
     last_active_time: datetime | None = None
+    auto_bot_active: bool = False
     level: int | None = 1
     level_name: str | None = "Novice"
     referral_url: str | None = None

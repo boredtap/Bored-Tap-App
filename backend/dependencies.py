@@ -1,3 +1,4 @@
+from enum import auto
 import json
 from typing import Any, Generator
 from pydantic import BaseModel
@@ -68,15 +69,34 @@ def update_coins_in_db(telegram_user_id: str, coins: int):
     }
 
 
-# update power limit and last active time
-def update_power_limit_last_active_time(telegram_user_id: str, power_limit: int, last_active_time: datetime):
+# update auto_bot_active status
+def update_auto_bot_active_status(telegram_user_id: str, auto_bot_active: bool):
+    query = {'telegram_user_id': telegram_user_id}
+    update_operation = {'$set': {'auto_bot_active': auto_bot_active}}
+
+    my_result = user_collection.update_one(query, update_operation)
+
+    if my_result.modified_count == 1:
+        my_result = True
+    else:
+        my_result = False
+
+    return my_result
+
+
+# update power limit, last active time and autobot active status
+def update_power_limit_last_active_time_autobot(
+        telegram_user_id: str,
+        power_limit: int,
+        last_active_time: datetime,
+        auto_bot_active: bool = False):
     query = {'telegram_user_id': telegram_user_id}
     power_limit_update_operation = {'$set':
         {
             'power_limit': power_limit,
-            'last_active_time': last_active_time
+            'last_active_time': last_active_time,
+            'auto_bot_active': auto_bot_active
         }
-
     }
     my_result = user_collection.update_one(query, power_limit_update_operation)
 
@@ -88,13 +108,20 @@ def update_power_limit_last_active_time(telegram_user_id: str, power_limit: int,
     return my_result
 
 
-# update coins, power limit and last active time at once
-def update_coins_power_limit_last_active_time(telegram_user_id: str, coins: int, power_limit: int, last_active_time: datetime):
+# update coins, power limit, last active time and autobot active status at once
+def update_coins_power_limit_last_active_time_autobot(
+        telegram_user_id: str,
+        coins: int,
+        power_limit: int,
+        last_active_time: datetime,
+        auto_bot_active: bool = False
+    ):
     query = {'telegram_user_id': telegram_user_id}
     update_operation = {
         '$set': {
                 'power_limit': power_limit,
-                'last_active_time': last_active_time
+                'last_active_time': last_active_time,
+                'auto_bot_active': auto_bot_active
             },
         '$inc': {
             'total_coins': coins
@@ -130,10 +157,10 @@ def update_coins_power_limit_last_active_time(telegram_user_id: str, coins: int,
         'coin update': my_result,
         'power limit update': my_result,
         'last active time update': my_result,
+        'auto bot active update': my_result,
         'level': new_level['level'],
         'level_name': new_level['level_name']
     }
-
 
 
 def update_coin_stats(telegram_user_id: str, coins_tapped:int):
@@ -261,6 +288,7 @@ def get_user_profile(telegram_user_id: str) -> UserProfile:
             total_coins=user.get('total_coins'),
             power_limit=user.get('power_limit'),
             last_active_time=user.get('last_active_time'),
+            auto_bot_active=user.get('auto_bot_active'),
             level=user.get('level'),
             level_name=user.get('level_name'),
             referral_url=referral_url_prefix + telegram_user_id,
@@ -271,6 +299,19 @@ def get_user_profile(telegram_user_id: str) -> UserProfile:
         )
         return user_data
     return None
+
+
+# update user photo_url
+def update_photo_url(telegram_user_id: str, photo_url: str):
+    user_query = {"telegram_user_id": telegram_user_id}
+    update_operation = {"$set": {"image_url": photo_url}}
+
+    my_result = user_collection.update_one(user_query, update_operation)
+
+    if my_result.modified_count > 0:
+        return {"status": True, "message": "Photo URL updated successfully"}
+    else:
+        return {"status": False, "message": "Failed to update photo URL"}
 
 
 def get_image(image_id: str):
