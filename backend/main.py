@@ -9,8 +9,9 @@ from dependencies import (
     update_coins_in_db,
     get_user_by_id,
     get_image as get_image_func,
-    update_coins_power_limit_last_active_time,
-    update_power_limit_last_active_time
+    update_coins_power_limit_last_active_time_autobot,
+    update_photo_url,
+    update_power_limit_last_active_time_autobot
 )
 from superuser.level.dependencies import get_levels as get_levels_func
 from superuser.level.models import LevelModelResponse
@@ -105,20 +106,31 @@ async def home():
 # update user coins tapped
 @app.post('/update-coins', tags=["Global Routes"])
 async def update_coins(
-    telegram_user_id: Annotated[str, Depends(get_current_user)],
     request: Request,
+    telegram_user_id: Annotated[str, Depends(get_current_user)],
+    auto_bot_active: bool,
     coins: int | None = None,
     current_power_limit: int | None = None,
-    last_active_time: datetime | None = None):
-    """Update coins gannered from different activities to database
+    last_active_time: datetime | None = None,):
 
-    Args:
-        telegram_user_id (Annotated[str, Depends): gets the telegram id of signed-in users
-        coins (int): total coins accumulated by user
-
-    Returns:
-        _type_: int
     """
+    This endpoint updates: 
+    - the user's coins, power limit, last active time and auto bot active status if all four parameters are provided.
+    - the user's coins alone if only the coins parameter is provided.
+    - the user's current power limit, last active time, and auto bot active status if only the three mentioned parameters are provided.
+    
+    Parameters:
+    - telegram_user_id (str): The telegram user ID of the user to update.
+    - request (Request): The request object.
+    - coins (int): The number of coins to add to the user's current coins.
+    - current_power_limit (int): The new power limit of the user.
+    - last_active_time (datetime): The new last active time of the user.
+    - auto_bot_active (bool): The new auto bot active status of the user.
+    
+    Returns:
+    - A dictionary containing the status of the update operation.
+    """
+
     user_agent = request.headers.get("User-Agent")
     referer = request.headers.get("Referer")
     origin = request.headers.get("Origin")
@@ -129,15 +141,15 @@ async def update_coins(
 
     response = {}
 
-    # update all (coins, power limit, last active time) at once
+    # --------- update all (coins, power limit, last active time, auto bot active) at once ------------- #
     if coins and current_power_limit and last_active_time:
-        response = update_coins_power_limit_last_active_time(
-            telegram_user_id, coins, current_power_limit, last_active_time
+        response = update_coins_power_limit_last_active_time_autobot(
+            telegram_user_id, coins, current_power_limit, last_active_time, auto_bot_active
         )
 
         return response
 
-    # update coins
+    # ------------------------- update coins only ----------------------------- #
     if coins:
         result = update_coins_in_db(telegram_user_id, coins)
         user = get_user_by_id(telegram_user_id)
@@ -148,14 +160,17 @@ async def update_coins(
 
         return response
     
-    # update power limit and last active time
+    # ---------------------- update power limit, last active time and auto_bot_active ------------------------ #
     if current_power_limit and last_active_time:
-        result = update_power_limit_last_active_time(telegram_user_id, current_power_limit, last_active_time)
+        result = update_power_limit_last_active_time_autobot(
+            telegram_user_id, current_power_limit, last_active_time, auto_bot_active
+        )
 
         if result:
             response["status"] = "Success"
             response["power limit status"] = "Power limit updated successfully"
             response["last active status"] = "Last active time updated successfully"
+            response["auto bot status"] = "Auto bot status updated successfully"
 
             return response
     
@@ -225,6 +240,15 @@ async def get_levels(request: Request, redis_client: Annotated[Redis, Depends(ge
             print(f"Error caching levels: {e}")
 
     return [LevelModelResponse(**level) for level in serialized_levels]
+
+
+# update profile photo url
+@app.post("/bored-tap/user_app", tags=["Global Routes"])
+async def update_profile_image_url(image_url: str, telegram_user_id: Annotated[str, Depends(get_current_user)]):
+    result = update_photo_url(telegram_user_id, image_url)
+
+    return result
+
 
 
 # get user image
