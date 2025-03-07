@@ -54,13 +54,14 @@ async def sign_up(user: Signup, referral_code: str | None = None) -> BasicProfil
     if referral_code and validate_referral_code(referral_code):
         invited_user = create_invited_user(invited=user)
         new_invite_ref = create_invite_ref(inviter_id=referral_code, ref=user)
-        insert_new_user(invited_user)
+        new_user_id = insert_new_user(invited_user)
         if new_invite_ref:
             insert_new_invite_ref(new_invite_ref)
         reward_inviter_and_invitee(inviter_id=referral_code, invitee_id=user.telegram_user_id, reward=100)
         add_invitee_to_inviter_list(inviter_id=referral_code, invitee_id=user.telegram_user_id)
 
         return BasicProfile(
+        id=str(new_user_id),
         telegram_user_id=user.telegram_user_id,
         username=user.username,
         image_url=serialize_any_http_url(url=user.image_url),
@@ -78,9 +79,10 @@ async def sign_up(user: Signup, referral_code: str | None = None) -> BasicProfil
     )
 
     # insert new user in database
-    insert_new_user(full_profile)
+    new_user_id = insert_new_user(full_profile)
 
     return BasicProfile(
+        id=str(new_user_id),
         telegram_user_id=user.telegram_user_id,
         username=user.username,
         image_url=serialize_any_http_url(url=user.image_url),

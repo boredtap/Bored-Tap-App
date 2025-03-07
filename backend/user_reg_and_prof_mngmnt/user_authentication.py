@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 from config import get_settings
 from database_connection import user_collection, invites_ref
 from dependencies import update_coin_stats
-from user_reg_and_prof_mngmnt.schemas import BasicProfile, InviteeData, Invites, Signup, TokenData, UserProfile
+from user_reg_and_prof_mngmnt.schemas import BasicProfile, InviteeData, Invites, Signup, TokenData
 from user_reg_and_prof_mngmnt.models import (
     UserProfile as UserProfileModel
 )
