@@ -105,12 +105,12 @@ const BoostScreen = () => {
           title: nameMapping[booster.name.toLowerCase()] || booster.name,
           description: booster.description,
           value: booster.upgrade_cost.toString(),
-          level: booster.status === 'owned' ? "Owned" : booster.level === "-" ? "Not Owned" : `Level ${booster.level - 1}`,
-          ctaText: booster.level === "-" ? "Buy" : `Upgrade to Level ${booster.level}`,
-          altCTA: (booster.status === "owned") ? "Owned" : (parseInt(booster.level, 10) === 6) ? "Maximum Level Reached" : (profileData.total_coins || 0) < booster.upgrade_cost ? "Insufficient Funds" : null,
+          level: booster.status === 'owned' ? "Owned" : booster.level === "-" ? "Not Owned" : `Level ${booster.level}`,
+          ctaText: booster.level === "-" ? "Buy" : `Upgrade to Level ${booster.level + 1}`,
+          altCTA: (booster.status === "owned") ? "Owned" : (parseInt(booster.level, 10) === 5) ? "Maximum Level Reached" : (profileData.total_coins || 0) < booster.upgrade_cost ? "Insufficient Funds" : null,
           actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
           icon, // Use the static icon assigned above
-          rawLevel: booster.level === "-" ? 0 : parseInt(booster.level, 10) - 1,
+          rawLevel: booster.level === "-" ? 0 : parseInt(booster.level, 10),
           effect: booster.effect,
           status: booster.status && booster.status === "owned" ? 1 : 0
         };

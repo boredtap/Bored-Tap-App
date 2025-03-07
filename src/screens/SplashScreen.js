@@ -156,10 +156,10 @@ const SplashScreen = () => {
           title: booster.name,
           description: booster.description,
           value: booster.upgrade_cost.toString(),
-          level: booster.status === 'owned' ? "Owned" : booster.level === "-" ? "Not Owned" : `Level ${booster.level - 1}`,
+          level: booster.status === 'owned' ? "Owned" : booster.level === "-" ? "Not Owned" : `Level ${booster.level}`,
           actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
           icon, // Use the static icon assigned above
-          rawLevel: booster.level === "-" ? 0 : parseInt(booster.level, 10) - 1,
+          rawLevel: booster.level === "-" ? 0 : parseInt(booster.level, 10),
           effect: booster.effect,
           status: booster.status && booster.status === "owned" ? 1 : 0
         };
