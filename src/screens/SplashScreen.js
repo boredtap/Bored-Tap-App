@@ -85,7 +85,7 @@ const SplashScreen = () => {
         if (signInResponse.ok) {
           const authData = await signInResponse.json();
           const data = await getProfileData()
-          if (data) {
+          if (data?.id) {
             handleResetIfNewUser(data.id)
           }
           handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl, uniqueId: data.id });
@@ -111,7 +111,7 @@ const SplashScreen = () => {
         }
 
         const data = await getProfileData()
-        if (data) {
+        if (data?.id) {
           handleResetIfNewUser(data.id)
         }
 
@@ -138,7 +138,7 @@ const SplashScreen = () => {
 
         const authData = await signInAfterRegResponse.json();
 
-        if (data) {
+        if (data?.id) {
           handleResetIfNewUser(data.id)
         }
 
