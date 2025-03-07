@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./Dashboard.css";
 import { BoostContext } from "../context/BoosterContext";
+import { throttle } from "lodash"; // Install lodash if not available
 
 // Updated Recharge times per spec (in ms) - now including all 5 levels
 const RECHARGE_TIMES = [5000, 4500, 3500, 2500, 1500, 500]; // Level 0 through 5
@@ -48,7 +49,7 @@ const Dashboard = () => {
     checkClanStatus();
   }, []); // Runs on mount only
 
-  const { totalTaps, setTotalTaps, setDailyBoosters, dailyBoosters, extraBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, setTapMultiplier, electricBoost, setElectricBoost, setMaxElectricBoost, maxElectricBoost, setRechargeTime, rechargeTime, autoTapActive, setAutoTapActive, applyAutoBotTaps, lastActiveTime, setLastActiveTime, adjustElectricBoosts } = useContext(BoostContext);
+  const { totalTaps, setTotalTaps, setDailyBoosters, dailyBoosters, extraBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, setTapMultiplier, setElectricBoost, setMaxElectricBoost, maxElectricBoost, setRechargeTime, rechargeTime, autoTapActive, setAutoTapActive, applyAutoBotTaps, lastActiveTime, setLastActiveTime, adjustElectricBoosts, electricBoost } = useContext(BoostContext);
 
   // State for Telegram user data
   const [telegramData, setTelegramData] = useState({
@@ -76,6 +77,11 @@ const Dashboard = () => {
   const rechargeInterval = useRef(null);
   const autoTapInterval = useRef(null);
   const boostMultiplierActive = useRef(false);
+  const electricBoostRef = useRef(electricBoost);
+
+  useEffect(() => {
+    electricBoostRef.current = electricBoost;
+  }, [electricBoost]);
 
   // Reset function
   const resetBoosters = () => {
@@ -154,48 +160,48 @@ const Dashboard = () => {
     }
   }, [navigate]);
 
-  // Backend sync every 2 seconds
-  const updateBackend = useCallback(async () => {
-    if (tapCountSinceLastUpdate.current === 0) return;
+  const updateBackend = useCallback(() => {
+    //if (tapCountSinceLastUpdate.current === 0) return;
 
     const tapsToSync = tapCountSinceLastUpdate.current;
-
     tapCountSinceLastUpdate.current = 0;
-    try {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch(
-        `https://bt-coins.onrender.com/update-coins?coins=${tapsToSync}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
+    const isoString = new Date(Date.now()).toISOString();
+
+    const token = localStorage.getItem("accessToken");
+    const url = `https://bt-coins.onrender.com/update-coins?coins=${tapsToSync}&current_power_limit=${electricBoostRef.current}&last_active_time=${isoString}&auto_bot_active=true`;
+
+    fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      keepalive: true, // ✅ Always ensure request completes, even if page is unloading
+    })
+      .then((response) => response.json())
+      .then((data) => {
         if (data["current coins"] >= 0) {
           setProfile((prev) => ({
             ...prev,
             level: data["current level"] || prev.level,
           }));
         }
-      } else {
-        console.error("Failed to sync coins:", await response.text());
-      }
-    } catch (err) {
-      console.error("Error syncing with backend:", err);
-    }
+      })
+      .catch((err) => console.error("Error syncing with backend:", err));
   }, []);
 
+
+  // ⏳ Throttle updates (send requests at most every 10 seconds)
+  const throttledUpdateBackend = useCallback(throttle(updateBackend, 10000), [updateBackend]);
+
   useEffect(() => {
-    const interval = setInterval(updateBackend, 2000);
+    const interval = setInterval(throttledUpdateBackend, 15000); // Update backend every 15 seconds
+
     return () => {
       clearInterval(interval);
-      updateBackend();
+      updateBackend(); // Send final update before unmount
     };
-  }, [updateBackend]);
+  }, [throttledUpdateBackend]);
 
   // Electric boost recharge logic
   useEffect(() => {
@@ -335,10 +341,16 @@ const Dashboard = () => {
 
   useEffect(() => {
     const handleLoad = () => {
-      const oldUser = localStorage.getItem("telegramUser");
-      const isFirstVisit = !sessionStorage.getItem("hasVisited");
+      const currentUser = JSON.parse(localStorage.getItem("telegramUser"));
+      const lastUser = JSON.parse(sessionStorage.getItem("lastUser"));
 
-      if (oldUser && isFirstVisit) {
+      console.log("Current User", currentUser.uniqueId)
+      console.log("Last User", lastUser?.uniqueId)
+      console.log('is Not Equal', currentUser.uniqueId !== lastUser?.uniqueId)
+
+      if (currentUser && currentUser.uniqueId !== lastUser?.uniqueId) {
+        console.log("Activating Auto Bot Calculations")
+        // If the user has changed OR it's their first visit, run the logic
         const offlineTaps = applyAutoBotTaps();
         const newElectricBoost = adjustElectricBoosts();
         console.log("Offline taps", offlineTaps);
@@ -349,8 +361,13 @@ const Dashboard = () => {
           setShowAutoBotOverlay(true);
         }
         setElectricBoost(newElectricBoost);
+
+        // Update sessionStorage for tracking visits & user changes
+        sessionStorage.setItem("lastUser", JSON.stringify(currentUser));
         sessionStorage.setItem("hasVisited", "true");
       }
+
+      sessionStorage.setItem("lastUser", JSON.stringify(currentUser));
     };
 
     if (document.readyState === "complete") {
@@ -363,6 +380,7 @@ const Dashboard = () => {
       window.removeEventListener("load", handleLoad);
     };
   }, [applyAutoBotTaps, adjustElectricBoosts]);
+
 
   useEffect(() => {
     const storedTaps = localStorage.getItem("autoBotTaps");
@@ -415,7 +433,7 @@ const Dashboard = () => {
       window.removeEventListener("beforeunload", handleUnload);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, []);
+  }, [updateBackend]);
 
   const renderAutoBotOverlay = () => {
     if (!showAutoBotOverlay || autoBotTaps <= 0) return null;

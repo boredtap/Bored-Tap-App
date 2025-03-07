@@ -8,7 +8,7 @@ const SplashScreen = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { resetAll, setLastActiveTime, setExtraBoosters, setAutoTapActive } = useContext(BoostContext)
+  const { resetAll, setLastActiveTime, setExtraBoosters, setAutoTapActive, setTotalTaps, setElectricBoost } = useContext(BoostContext)
 
   const handleResetIfNewUser = (userID) => {
     const oldUser = localStorage.getItem("telegramUser");
@@ -99,6 +99,15 @@ const SplashScreen = () => {
         // 4️⃣ Handle successful authentication
         console.log('Response', data)
         handleResetIfNewUser(data.id); // ✅ Only called ONCE now
+
+        const date = new Date(data.last_active_time);
+        const offset = date.getTimezoneOffset() * 60000; // Convert minutes to milliseconds
+        const correctedTime = new Date(date.getTime() - offset);
+
+        setLastActiveTime(correctedTime)
+        setElectricBoost(data.power_limit)
+        setTotalTaps(data.total_coins)
+
         handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl, uniqueId: data.id });
       } catch (err) {
         console.error("Authentication error:", err);

@@ -242,11 +242,11 @@ const BoostersContext = ({ children }) => {
             rechargeTime: RECHARGE_TIMES[0],
             autoTapActive: false,
             totalTaps: 0,
-            lastActiveTime: Date.now()
+            lastActiveTime: Date.now(),
+            autoBotTaps: 0
         };
 
         updateBoosters(newBoosters); // Update state with new values
-        sessionStorage.setItem("hasVisited", "true");
         // Store updated values in localStorage immediately
         Object.keys(newBoosters).forEach((key) => {
             localStorage.setItem(key, JSON.stringify(newBoosters[key]));
@@ -255,6 +255,7 @@ const BoostersContext = ({ children }) => {
 
 
     const applyAutoBotTaps = () => {
+        console.log(boosters?.autoTapActive)
         if (!boosters?.autoTapActive) return; // Ensure boosters exist before checking
 
         const now = Date.now();
@@ -263,7 +264,7 @@ const BoostersContext = ({ children }) => {
         const tapsPerSecond = 1; // Example: Adjust based on game logic
 
         let offlineTaps = timeAway * tapsPerSecond;
-
+        console.log("time away and taps and last active", timeAway, offlineTaps, boosters.lastActiveTime, now)
         offlineTaps = Math.floor(offlineTaps)
 
         return offlineTaps
