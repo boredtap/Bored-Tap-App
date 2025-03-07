@@ -2,33 +2,44 @@ from bson import ObjectId
 from fastapi import HTTPException
 from database_connection import extra_boosts_collection, user_collection
 from boosts.schemas import AutoBotTap, ExtraBoosters
-from superuser import boost
 
 
 
-def current_booster_status(booster: dict, boost_name: str, boost_level: int):
+def current_booster_status(extraBooster: dict, boost_name: str, boost_level: int):
     """
-    This function takes a booster document from the database and a boost name and level,
-    and returns the corresponding ExtraBoosters model if the booster name and level match.
+    This function takes a extraBooster document from the database and a boost name and level,
+    and returns the corresponding ExtraBoosters model if the extraBooster name and level match.
 
     Args:
-        booster (dict): A document from the database representing an extra booster.
+        extraBooster (dict): A document from the database representing an extra booster.
         boost_name (str): The name of the boost.
         boost_level (int): The level of the boost.
 
     Returns:
-        ExtraBoosters or None: The ExtraBoosters model if the booster name and level match, otherwise None.
+        ExtraBoosters or None: The ExtraBoosters model if the extraBooster name and level match, otherwise None.
     """
-    if booster["name"] == boost_name and booster["level"]-1 == boost_level:
-                return ExtraBoosters(
-                    booster_id=str(booster["_id"]),
-                    name=booster["name"],
-                    description=booster["description"],
-                    level=booster["level"],
-                    effect=booster["effect"],
-                    upgrade_cost=booster["upgrade_cost"],
-                    image_id=booster["image_id"]
-                )
+
+    if extraBooster["name"] == boost_name and extraBooster["level"]-1 == boost_level:
+        return ExtraBoosters(
+            booster_id=str(extraBooster["_id"]),
+            name=extraBooster["name"],
+            description=extraBooster["description"],
+            level=extraBooster["level"]-1,
+            effect=extraBooster["effect"],
+            upgrade_cost=extraBooster["upgrade_cost"],
+            image_id=extraBooster["image_id"]
+        )
+
+    elif extraBooster["name"] == boost_name and extraBooster["level"] == boost_level:
+        return ExtraBoosters(
+            booster_id=str(extraBooster["_id"]),
+            name=extraBooster["name"],
+            description=extraBooster["description"],
+            level=extraBooster["level"],
+            effect=extraBooster["effect"],
+            upgrade_cost=extraBooster["upgrade_cost"],
+            image_id=extraBooster["image_id"]
+        )
     return None
 
 
@@ -44,59 +55,59 @@ def my_extra_boosters(telegram_user_id: str):
     user_boosters = []
 
     if my_data and extra_boosters:
-        for booster in extra_boosters:
+        for extraBooster in extra_boosters:
             # boost
-            if boost_level == 5:
-                boost_status = current_booster_status(booster, "boost", 4)
-                if boost_status:
-                    user_boosters.append(boost_status)
+            # if boost_level == 5:
+            #     boost_status = current_booster_status(extraBooster, "boost", 4)
+            #     if boost_status:
+            #         user_boosters.append(boost_status)
 
-            boost_status = current_booster_status(booster, "boost", boost_level)
+            boost_status = current_booster_status(extraBooster, "boost", boost_level)
             if boost_status:
                 user_boosters.append(boost_status)
 
             # multiplier
-            multiplier_status = current_booster_status(booster, "multiplier", multiplier_level)
+            multiplier_status = current_booster_status(extraBooster, "multiplier", multiplier_level)
             if multiplier_status:
                 user_boosters.append(multiplier_status)
             elif multiplier_level == 5:
-                multiplier_status = current_booster_status(booster, "multiplier", 4)
+                multiplier_status = current_booster_status(extraBooster, "multiplier", 4)
                 if multiplier_status:
                     user_boosters.append(multiplier_status)
 
             # recharging speed
-            recharge_speed_status = current_booster_status(booster, "recharging speed", recharging_speed_level)
+            recharge_speed_status = current_booster_status(extraBooster, "recharging speed", recharging_speed_level)
             if recharge_speed_status:
                 user_boosters.append(recharge_speed_status)
             elif recharging_speed_level == 5:
-                recharge_speed_status = current_booster_status(booster, "recharging speed", 4)
+                recharge_speed_status = current_booster_status(extraBooster, "recharging speed", 4)
                 if recharge_speed_status:
                     user_boosters.append(recharge_speed_status)
 
             # auto bot tap
-            if booster["name"] == "Auto-bot Tapping" and not auto_bot_status:
+            if extraBooster["name"] == "Auto-bot Tapping" and not auto_bot_status:
                 user_boosters.append(
                      AutoBotTap(
-                        booster_id=str(booster["_id"]),
-                        name=booster["name"],
-                        description=booster["description"],
-                        level=booster["level"],
-                        effect=booster["effect"],
-                        upgrade_cost=booster["upgrade_cost"],
-                        image_id=booster["image_id"],
+                        booster_id=str(extraBooster["_id"]),
+                        name=extraBooster["name"],
+                        description=extraBooster["description"],
+                        level=extraBooster["level"],
+                        effect=extraBooster["effect"],
+                        upgrade_cost=extraBooster["upgrade_cost"],
+                        image_id=extraBooster["image_id"],
                         status="not owned"
                      )
                 )
-            elif booster["name"] == "Auto-bot Tapping" and auto_bot_status:
+            elif extraBooster["name"] == "Auto-bot Tapping" and auto_bot_status:
                 user_boosters.append(
                      AutoBotTap(
-                        booster_id=str(booster["_id"]),
-                        name=booster["name"],
-                        description=booster["description"],
-                        level=booster["level"],
-                        effect=booster["effect"],
-                        upgrade_cost=booster["upgrade_cost"],
-                        image_id=booster["image_id"],
+                        booster_id=str(extraBooster["_id"]),
+                        name=extraBooster["name"],
+                        description=extraBooster["description"],
+                        level=extraBooster["level"],
+                        effect=extraBooster["effect"],
+                        upgrade_cost=extraBooster["upgrade_cost"],
+                        image_id=extraBooster["image_id"],
                         status="owned"
                      )
                 )

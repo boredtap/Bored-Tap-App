@@ -171,7 +171,7 @@ def get_extra_boosters():
         pass
 
 
-# ----------------------------- UPDATE UPGRADE COST ------------------------------ #
+# ----------------------------- GET EXTRA BOOST IMAGE ------------------------------ #
 def get_extra_boost_image(image_id: str):
     image = fs.get(ObjectId(image_id))
     image_format = image.filename.split(".")[1]
