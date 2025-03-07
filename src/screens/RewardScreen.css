@@ -128,6 +128,33 @@
   height: 16px;
 }
 
+/* Confetti container */
+.confetti-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1002;
+  pointer-events: none;
+}
+
+.confetti-gif {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+/* Clicking effect for the Claim button */
+.reward-cta:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease-in-out;
+}
+
 /* Call-to-Action Button (Claim) */
 .reward-cta {
   padding: 8px 16px;

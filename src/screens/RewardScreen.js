@@ -5,12 +5,13 @@ import { BoostContext } from "../context/BoosterContext";
 
 const RewardScreen = () => {
   const [activeTab, setActiveTab] = useState("on_going");
-  const { totalTaps } = useContext(BoostContext)
+  const { totalTaps } = useContext(BoostContext);
   const [rewardsData, setRewardsData] = useState({ on_going: [], claimed: [] });
   const [rewardImages, setRewardImages] = useState({});
   const [loading, setLoading] = useState(true);
   const [showOverlay, setShowOverlay] = useState(false);
   const [selectedReward, setSelectedReward] = useState(null);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
     const fetchUserProfileAndRewards = async () => {
@@ -32,8 +33,6 @@ const RewardScreen = () => {
         if (!profileResponse.ok) {
           throw new Error(`Profile fetch failed: ${profileResponse.status}`);
         }
-
-        const profileData = await profileResponse.json();
 
         const rewardTypes = ["on_going", "claimed"];
         const fetchedRewards = {};
@@ -121,12 +120,15 @@ const RewardScreen = () => {
         const claimedReward = rewardsData.on_going.find((r) => r.reward_id === rewardId);
         setSelectedReward(claimedReward);
         setShowOverlay(true);
+        setShowConfetti(true);
 
         setRewardsData((prevData) => ({
           ...prevData,
           on_going: prevData.on_going.filter((reward) => reward.reward_id !== rewardId),
           claimed: [...prevData.claimed, result],
         }));
+
+        setTimeout(() => setShowConfetti(false), 3000); // Hide confetti after 3 seconds
       } else {
         alert(`Failed to claim reward: ${result.message}`);
       }
@@ -145,6 +147,11 @@ const RewardScreen = () => {
 
   return (
     <div className="reward-screen">
+      {showConfetti && (
+        <div className="confetti-container">
+          <img src={`${process.env.PUBLIC_URL}/confetti.gif`} alt="Confetti" className="confetti-gif" />
+        </div>
+      )}
       <div className="reward-body">
         <div className="total-taps">
           <p>Your Total Taps:</p>
