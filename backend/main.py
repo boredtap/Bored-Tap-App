@@ -25,6 +25,7 @@ from telegram_bot import bot_interactions
 from superuser.dashboard.router import adminDashboard
 from superuser.task.router import task_router
 from superuser.reward.router import rewardApp
+from superuser.clan.router import clan_router
 from superuser.challenge.router import challenge_router
 from superuser.leaderboard.router import adminLeaderboard
 from superuser.boost.router import boostApp
@@ -82,7 +83,7 @@ app.add_middleware(
 
 all_routers = [
     userApp, earnApp, user_clan_router, userExtraBoostApp, taskApp, inviteApp, bot_interactions, 
-    adminDashboard, task_router, rewardApp, challenge_router,
+    adminDashboard, task_router, rewardApp, clan_router, challenge_router,
     adminLeaderboard, boostApp, levelApp, userMgtApp, securityApp
 ]
 

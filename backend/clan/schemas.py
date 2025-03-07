@@ -29,6 +29,8 @@ class MyClan(BaseModel):
     in_clan_rank: str
     total_coins: int
     members: int
+    status: str
+    # creator: str
 
 
 class CreatorExitAction(str, Enum):
