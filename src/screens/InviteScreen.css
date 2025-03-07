@@ -75,23 +75,6 @@
 
 /* Friends section */
 
-/* Friends list container with scrollable content */
-.friends-list-container {
-  max-height: 60vh; /* Adjust the height as needed */
-  overflow-y: auto;
-  padding-bottom: 20px;
-}
-
-/* Hide scroll bars */
-.friends-list-container::-webkit-scrollbar {
-  display: none;
-}
-
-.friends-list-container {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
-}
-
 .your-friends-section {
   margin-top: 30px;
   flex: 1;
@@ -108,6 +91,15 @@
   flex-direction: column;
   gap: 10px;
 }
+
+/* Friends list container with scrollable content */
+.friends-list-container {
+  max-height: 50vh; /* Adjust the height as needed */
+  overflow-y: auto;
+  padding-bottom: 80px;
+}
+
+
 
 .friend-card {
   display: flex;
