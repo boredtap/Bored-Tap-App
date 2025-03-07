@@ -274,12 +274,14 @@
   gap: 12px;
   flex: 1;
   justify-content: center;
+  width: 100%;
+  height: 100%;
 }
 
-.overlay-reward-icon {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
+.overlay2-reward-icon {
+  width: 150px;
+  height: 150px;
+  /* border-radius: 50%; */
 }
 
 .overlay-text {

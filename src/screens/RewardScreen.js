@@ -241,7 +241,7 @@ const RewardScreen = () => {
               <img
                 src={`${process.env.PUBLIC_URL}/claim.gif`}
                 alt="Reward Icon"
-                className="overlay-reward-icon"
+                className="overlay2-reward-icon"
               />
               <p className="overlay-text">Your reward of</p>
               <div className="overlay-reward-value">
