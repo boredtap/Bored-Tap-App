@@ -13,6 +13,13 @@ const BoostScreen = () => {
   const [error, setError] = useState(null);
   const { totalTaps, setTotalTaps, setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, activateOtherBoosters, setExtraBoosters, boostersData, setElectricBoost, setAutoTapActive } = useContext(BoostContext)
 
+  const nameMapping = {
+    "multiplier": "Multiplier Boost",
+    "boost": "Boost",
+    "recharging speed": "Recharge Speed",
+    "auto-bot tapping": "Auto-Bot Tapping",
+    // Add more mappings as needed
+  };
   // const [dailyBoosters, setDailyBoosters] = useState(() => {
   //   const savedBoosters = localStorage.getItem("dailyBoosters");
   //   return savedBoosters
@@ -95,7 +102,7 @@ const BoostScreen = () => {
 
         return {
           id: booster.booster_id,
-          title: booster.name,
+          title: nameMapping[booster.name.toLowerCase()] || booster.name,
           description: booster.description,
           value: booster.upgrade_cost.toString(),
           level: booster.status === 'owned' ? "Owned" : booster.level === "-" ? "Not Owned" : `Level ${booster.level - 1}`,
