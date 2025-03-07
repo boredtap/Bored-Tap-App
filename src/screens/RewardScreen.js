@@ -149,7 +149,7 @@ const RewardScreen = () => {
     <div className="reward-screen">
       {showConfetti && (
         <div className="confetti-container">
-          <img src={`${process.env.PUBLIC_URL}/confetti.gif`} alt="Confetti" className="confetti-gif" />
+          <img src={`${process.env.PUBLIC_URL}/confetti copy.gif`} alt="Confetti" className="confetti-gif" />
         </div>
       )}
       <div className="reward-body">
