@@ -77,12 +77,6 @@ const Dashboard = () => {
   const autoTapInterval = useRef(null);
   const boostMultiplierActive = useRef(false);
 
-  const electricBoostRef = useRef(electricBoost);
-
-  useEffect(() => {
-    electricBoostRef.current = electricBoost;
-  }, [electricBoost]);
-
   // Reset function
   const resetBoosters = () => {
     const resetState = {
@@ -135,14 +129,6 @@ const Dashboard = () => {
           if (data.total_coins) {
             setTotalTaps(data.total_coins);
           }
-          if (data.power_limit) {
-            //localStorage.setItem('electricBoost', JSON.stringify(data.current_power_limit));
-            setElectricBoost(data.power_limit);
-          }
-          if (data.last_active_time) {
-            //localStorage.setItem('lastActiveTime', JSON.stringify(data.last_active_time));
-            setLastActiveTime(data.last_active_time)
-          }
           setCurrentStreak(data.streak?.current_streak || 0);
           const savedTapTime = localStorage.getItem("lastTapTime");
           if (savedTapTime) {
@@ -169,23 +155,16 @@ const Dashboard = () => {
   }, [navigate]);
 
   // Backend sync every 2 seconds
-  const updateBackend = useCallback(async (isUnloading = false) => {
-    if (tapCountSinceLastUpdate.current === 0 && !isUnloading) return;
+  const updateBackend = useCallback(async () => {
+    if (tapCountSinceLastUpdate.current === 0) return;
 
     const tapsToSync = tapCountSinceLastUpdate.current;
-    const url = `https://bt-coins.onrender.com/update-coins?coins=${tapsToSync}&current_power_limit=${electricBoostRef.current}&last_active_time=${Date.now()}&auto_bot_active=${!isUnloading}`;
 
     tapCountSinceLastUpdate.current = 0;
-
     try {
       const token = localStorage.getItem("accessToken");
-      if (isUnloading) {
-        // Use navigator.sendBeacon() for page unload reliability
-        return navigator.sendBeacon(url);
-      }
-
       const response = await fetch(
-        url,
+        `https://bt-coins.onrender.com/update-coins?coins=${tapsToSync}`,
         {
           method: "POST",
           headers: {
@@ -434,12 +413,12 @@ const Dashboard = () => {
 
   useEffect(() => {
     const handleUnload = () => {
-      updateBackend(true);
+      updateBackend();
     };
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        updateBackend(true);
+        updateBackend();
       }
     };
 

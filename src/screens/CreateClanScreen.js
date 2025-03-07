@@ -157,7 +157,7 @@ const CreateClanScreen = () => {
               <label htmlFor="clan-image" className="image-label">
                 {imageName || "Select Clan Image"}
                 <img
-                  src={`${process.env.PUBLIC_URL}/${clanImage ? "cancel.png" : "add-icon.png"}`}
+                  src={`${process.env.PUBLIC_URL}/${clanImage ? "cancel.png" : "pin.png"}`}
                   alt={clanImage ? "Cancel" : "Add"}
                   className="picker-icon"
                   onClick={clanImage ? clearImage : null}
@@ -173,7 +173,7 @@ const CreateClanScreen = () => {
                   src={
                     selectedFriends.length === invitees.length && invitees.length > 0
                       ? `${process.env.PUBLIC_URL}/tick-icon.png`
-                      : `${process.env.PUBLIC_URL}/add-icon.png`
+                      : `${process.env.PUBLIC_URL}/addd.png`
                   }
                   alt="Select All"
                   className="select-all-icon"
@@ -210,7 +210,7 @@ const CreateClanScreen = () => {
                       src={
                         selectedFriends.includes(invitee.telegram_user_id)
                           ? `${process.env.PUBLIC_URL}/tick-icon.png`
-                          : `${process.env.PUBLIC_URL}/add-icon.png`
+                          : `${process.env.PUBLIC_URL}/addd.png`
                       }
                       alt={selectedFriends.includes(invitee.telegram_user_id) ? "Selected" : "Add"}
                       className="friend-action-icon"
