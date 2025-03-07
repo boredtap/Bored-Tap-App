@@ -44,21 +44,25 @@ const SplashScreen = () => {
             return resetAll()
           }
 
-          const response = await fetch("https://bt-coins.onrender.com/user/profile", {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          });
-          if (!response.ok) {
-            console.error("Profile fetch failed:", response.status);
-            return;
+          try {
+            const response = await fetch("https://bt-coins.onrender.com/user/profile", {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            });
+
+            if (!response.ok) {
+              console.error("Profile fetch failed:", response.status);
+              return null; // Return null instead of undefined
+            }
+
+            return await response.json(); // Ensure valid data is returned
+          } catch (error) {
+            console.error("Error fetching profile:", error);
+            return null; // Handle fetch failure
           }
-
-          const data = await response.json()
-
-          return data
         }
 
         // First try to sign in
