@@ -7,3 +7,4 @@ class Invitee(BaseModel):
     level: int
     image_url: str
     total_coins: int
+    invites: int = 0

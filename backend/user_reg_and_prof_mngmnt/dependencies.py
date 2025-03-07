@@ -83,7 +83,7 @@ def insert_new_invite_ref(new_invite_ref: Invites):
         new_invite = invites_ref.insert_one(new_invite_ref.model_dump())
 
         if new_invite.inserted_id:
-            print(f"User: {new_invite_ref.inviter_telegram_id} invited user: {new_invite_ref.invitees[0]}. Invite inserted with ID: {new_invite.inserted_id}")
+            print(f"User: {new_invite_ref.inviter_telegram_id} invited user: {new_invite_ref.invitees[0]}.")
     except Exception as e:
         print(f"Error inserting invite: {e}")
 
