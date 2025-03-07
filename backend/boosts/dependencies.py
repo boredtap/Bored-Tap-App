@@ -30,7 +30,7 @@ def current_booster_status(extraBooster: dict, boost_name: str, boost_level: int
             image_id=extraBooster["image_id"]
         )
 
-    elif extraBooster["name"] == boost_name and extraBooster["level"] == boost_level:
+    elif extraBooster["name"] == boost_name and extraBooster["level"] == boost_level and extraBooster["level"] == 5:
         return ExtraBoosters(
             booster_id=str(extraBooster["_id"]),
             name=extraBooster["name"],
