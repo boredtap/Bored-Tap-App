@@ -32,6 +32,7 @@ def get_user_by_id(telegram_user_id: str) -> BasicProfile | SuspendedUser | None
 
     if user["is_active"]:
         user_data = BasicProfile(
+            id=str(user.get("_id", None)),
             telegram_user_id=user.get("telegram_user_id", None),
             username=user.get("username", None),
             firstname=user.get("firstname", None),
@@ -55,6 +56,7 @@ def get_user_by_id(telegram_user_id: str) -> BasicProfile | SuspendedUser | None
             # suspended users only have the {"is_active": False} field in their profile
             # handle suspended users
             user_data = SuspendedUser(
+                    id=str(user.get("_id", None)),
                     telegram_user_id=user.get("telegram_user_id", None),
                     username=user.get("username", None),
                     firstname=user.get("firstname", None),
@@ -72,7 +74,9 @@ def get_user_by_id(telegram_user_id: str) -> BasicProfile | SuspendedUser | None
 
 # insert new user in database
 def insert_new_user(new_user: UserProfileModel):
-    user_collection.insert_one(new_user.model_dump())
+    user = user_collection.insert_one(new_user.model_dump())
+
+    return user.inserted_id
 
 def insert_new_invite_ref(new_invite_ref: Invites):
     try:

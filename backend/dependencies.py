@@ -1,7 +1,3 @@
-from enum import auto
-import json
-from typing import Any, Generator
-from pydantic import BaseModel
 from database_connection import fs
 from datetime import date, datetime
 from io import BytesIO
@@ -9,7 +5,6 @@ from bson import ObjectId
 from fastapi.responses import StreamingResponse
 from models import CoinStats
 from database_connection import user_collection, invites_ref, coin_stats
-from superuser.level.models import LevelModelResponse
 from user_reg_and_prof_mngmnt.schemas import InviteeData, Update, UserProfile
 
 
@@ -281,6 +276,7 @@ def get_user_profile(telegram_user_id: str) -> UserProfile:
                     invitees.append(invitee_data)
 
         user_data = UserProfile(
+            id=str(user.get('_id')),
             telegram_user_id=user.get('telegram_user_id'),
             username=user.get('username', None),
             firstname=user.get('firstname', None),

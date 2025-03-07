@@ -57,6 +57,7 @@ class Invites(BaseModel):
     invitees: list[str]
 
 class BasicProfile(BaseModel):
+    id: str
     telegram_user_id: str
     username: str | None = None
     firstname: str | None = None
