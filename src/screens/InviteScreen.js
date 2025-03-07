@@ -104,30 +104,32 @@ const InviteScreen = () => {
         {invites.length === 0 ? (
           <p className="no-friends">No friends invited yet.</p>
         ) : (
-          <div className="friends-list">
-            {invites.map((invite) => (
-              <div className="friend-card" key={invite.id || invite.telegram_user_id}>
-                <img
-                  src={invite.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`}
-                  alt={`${invite.username || "Friend"}'s Profile`}
-                  className="friend-profile-img round-frame"
-                />
-                <div className="friend-details">
-                  <p className="friend-name">
-                    {invite.username || "Unknown"} <span className="friend-level">.Lvl {invite.level || "?"}</span>
-                  </p>
-                  <div className="friend-icon-value">
-                    <img
-                      src={`${process.env.PUBLIC_URL}/friends.png`}
-                      alt="Friends Icon"
-                      className="icon-img"
-                    />
-                    <span className="icon-value">+{invite.iconValue || 0}</span>
+          <div className="friends-list-container">
+            <div className="friends-list">
+              {invites.map((invite) => (
+                <div className="friend-card" key={invite.id || invite.telegram_user_id}>
+                  <img
+                    src={invite.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`}
+                    alt={`${invite.username || "Friend"}'s Profile`}
+                    className="friend-profile-img round-frame"
+                  />
+                  <div className="friend-details">
+                    <p className="friend-name">
+                      {invite.username || "Unknown"} <span className="friend-level">.Lvl {invite.level || "?"}</span>
+                    </p>
+                    <div className="friend-icon-value">
+                      <img
+                        src={`${process.env.PUBLIC_URL}/friends.png`}
+                        alt="Friends Icon"
+                        className="icon-img"
+                      />
+                      <span className="icon-value">+{invite.iconValue || 0}</span>
+                    </div>
                   </div>
+                  <p className="friend-bt-value">{invite.total_coins ? `${invite.total_coins} BT` : "0 BT"}</p>
                 </div>
-                <p className="friend-bt-value">{invite.total_coins ? `${invite.total_coins} BT` : "0 BT"}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>
