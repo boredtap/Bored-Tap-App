@@ -129,7 +129,7 @@
 }
 
 /* Confetti container */
-.confetti-container {
+/* .confetti-container {
   position: fixed;
   top: 0;
   left: 0;
@@ -147,7 +147,7 @@
   height: 40%;
   object-fit: cover;
   pointer-events: none;
-}
+} */
 
 /* Clicking effect for the Claim button */
 .reward-cta:active {
@@ -277,8 +277,8 @@
 }
 
 .overlay-reward-icon {
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
 }
 

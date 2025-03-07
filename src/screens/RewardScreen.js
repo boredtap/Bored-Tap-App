@@ -11,7 +11,7 @@ const RewardScreen = () => {
   const [loading, setLoading] = useState(true);
   const [showOverlay, setShowOverlay] = useState(false);
   const [selectedReward, setSelectedReward] = useState(null);
-  const [showConfetti, setShowConfetti] = useState(false);
+  // const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
     const fetchUserProfileAndRewards = async () => {
@@ -120,7 +120,7 @@ const RewardScreen = () => {
         const claimedReward = rewardsData.on_going.find((r) => r.reward_id === rewardId);
         setSelectedReward(claimedReward);
         setShowOverlay(true);
-        setShowConfetti(true);
+        // setShowConfetti(true);
 
         setRewardsData((prevData) => ({
           ...prevData,
@@ -128,7 +128,7 @@ const RewardScreen = () => {
           claimed: [...prevData.claimed, result],
         }));
 
-        setTimeout(() => setShowConfetti(false), 3000); // Hide confetti after 3 seconds
+        // setTimeout(() => setShowConfetti(false), 3000); // Hide confetti after 3 seconds
       } else {
         alert(`Failed to claim reward: ${result.message}`);
       }
@@ -147,11 +147,11 @@ const RewardScreen = () => {
 
   return (
     <div className="reward-screen">
-      {showConfetti && (
+      {/* {showConfetti && (
         <div className="confetti-container">
           <img src={`${process.env.PUBLIC_URL}/confetti copy.gif`} alt="Confetti" className="confetti-gif" />
         </div>
-      )}
+      )} */}
       <div className="reward-body">
         <div className="total-taps">
           <p>Your Total Taps:</p>
@@ -239,7 +239,7 @@ const RewardScreen = () => {
             <div className="overlay-divider"></div>
             <div className="overlay-content">
               <img
-                src={rewardImages[selectedReward.reward_image_id] || `${process.env.PUBLIC_URL}/default_reward.png`}
+                src={`${process.env.PUBLIC_URL}/claim.gif`}
                 alt="Reward Icon"
                 className="overlay-reward-icon"
               />

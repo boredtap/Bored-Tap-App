@@ -13,8 +13,8 @@ const SplashScreen = () => {
   const handleResetIfNewUser = (userID) => {
     const oldUser = localStorage.getItem("telegramUser");
     if (oldUser) {
-      const { uniqueId } = JSON.parse(oldUser)
-      if (uniqueId !== userID) {
+      const { telegramUserId: oldUserId } = JSON.parse(oldUser)
+      if (oldUserId !== userID) {
         resetAll()
       }
     } else { resetAll() }
@@ -38,32 +38,6 @@ const SplashScreen = () => {
         const telegramUserId = String(userData.id);
         const imageUrl = userData.photo_url || "";
 
-        const getProfileData = async (token) => {
-          if (!token) {
-            return resetAll()
-          }
-
-          try {
-            const response = await fetch("https://bt-coins.onrender.com/user/profile", {
-              method: "GET",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            });
-
-            if (!response.ok) {
-              console.error("Profile fetch failed:", response.status);
-              return null; // Return null instead of undefined
-            }
-
-            return await response.json(); // Ensure valid data is returned
-          } catch (error) {
-            console.error("Error fetching profile:", error);
-            return null; // Handle fetch failure
-          }
-        }
-
         // First try to sign in
         const signInResponse = await fetch("https://bt-coins.onrender.com/signin", {
           method: "POST",
@@ -83,11 +57,8 @@ const SplashScreen = () => {
 
         if (signInResponse.ok) {
           const authData = await signInResponse.json();
-          const data = await getProfileData(authData.access_token)
-          if (data?.id) {
-            handleResetIfNewUser(data.id)
-          }
-          handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl, uniqueId: data.id });
+          handleResetIfNewUser(telegramUserId)
+          handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl });
           return;
         }
 
@@ -108,6 +79,8 @@ const SplashScreen = () => {
         if (!signUpResponse.ok) {
           throw new Error("Registration failed");
         }
+
+        handleResetIfNewUser(telegramUserId)
 
         // Sign in after successful registration
         const signInAfterRegResponse = await fetch("https://bt-coins.onrender.com/signin", {
@@ -131,14 +104,8 @@ const SplashScreen = () => {
         }
 
         const authData = await signInAfterRegResponse.json();
-
-        const data = await getProfileData(authData.access_token)
-
-        if (data?.id) {
-          handleResetIfNewUser(data.id)
-        }
-
-        handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl, uniqueId: data.id });
+        handleResetIfNewUser(telegramUserId)
+        handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl });
       } catch (err) {
         console.error("Authentication error:", err);
         setError(err.message);
