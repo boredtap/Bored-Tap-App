@@ -8,7 +8,7 @@ const SplashScreen = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { resetAll, setLastActiveTime } = useContext(BoostContext)
+  const { resetAll, setLastActiveTime, setExtraBoosters, setAutoTapActive } = useContext(BoostContext)
 
   const handleResetIfNewUser = (userID) => {
     const oldUser = localStorage.getItem("telegramUser");
@@ -38,39 +38,9 @@ const SplashScreen = () => {
         const telegramUserId = String(userData.id);
         const imageUrl = userData.photo_url || "";
 
-        const getProfileData = async (token) => {
-          if (!token) {
-            return resetAll()
-          }
-
-          try {
-            const response = await fetch("https://bt-coins.onrender.com/user/profile", {
-              method: "GET",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            });
-
-            if (!response.ok) {
-              console.error("Profile fetch failed:", response.status);
-              return null; // Return null instead of undefined
-            }
-
-            return await response.json(); // Ensure valid data is returned
-          } catch (error) {
-            console.error("Error fetching profile:", error);
-            return null; // Handle fetch failure
-          }
-        }
-
-        // First try to sign in
         const signInResponse = await fetch("https://bt-coins.onrender.com/signin", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "accept": "application/json",
-          },
+          headers: { "Content-Type": "application/x-www-form-urlencoded", accept: "application/json" },
           body: new URLSearchParams({
             grant_type: "password",
             username,
@@ -81,63 +51,54 @@ const SplashScreen = () => {
           }),
         });
 
+        let authData;
         if (signInResponse.ok) {
-          const authData = await signInResponse.json();
-          const data = await getProfileData(authData.access_token)
-          if (data?.id) {
-            handleResetIfNewUser(data.id)
+          authData = await signInResponse.json();
+        } else {
+          // 2️⃣ If sign-in fails, register the user
+          const signUpResponse = await fetch("https://bt-coins.onrender.com/sign-up", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", accept: "application/json" },
+            body: JSON.stringify({ telegram_user_id: telegramUserId, username, image_url: imageUrl }),
+          });
+
+          if (!signUpResponse.ok) {
+            throw new Error(`Registration failed: ${await signUpResponse.text()}`);
           }
-          handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl, uniqueId: data.id });
-          return;
+
+          // 3️⃣ Sign in after successful registration
+          const signInAfterRegResponse = await fetch("https://bt-coins.onrender.com/signin", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded", accept: "application/json" },
+            body: new URLSearchParams({
+              grant_type: "password",
+              username,
+              password: telegramUserId,
+              scope: "",
+              client_id: "string",
+              client_secret: "string",
+            }),
+          });
+
+          if (!signInAfterRegResponse.ok) {
+            throw new Error("Failed to sign in after registration");
+          }
+
+          authData = await signInAfterRegResponse.json();
         }
 
-        // If sign-in fails, register the user
-        const signUpResponse = await fetch("https://bt-coins.onrender.com/sign-up", {
-          method: "POST",
+        const response = await fetch("https://bt-coins.onrender.com/user/profile", {
+          method: "GET",
           headers: {
+            Authorization: `Bearer ${authData.access_token}`,
             "Content-Type": "application/json",
-            "accept": "application/json",
           },
-          body: JSON.stringify({
-            telegram_user_id: telegramUserId,
-            username,
-            image_url: imageUrl,
-          }),
         });
-
-        if (!signUpResponse.ok) {
-          throw new Error("Registration failed");
-        }
-
-        // Sign in after successful registration
-        const signInAfterRegResponse = await fetch("https://bt-coins.onrender.com/signin", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "accept": "application/json",
-          },
-          body: new URLSearchParams({
-            grant_type: "password",
-            username,
-            password: telegramUserId,
-            scope: "",
-            client_id: "string",
-            client_secret: "string",
-          }),
-        });
-
-        if (!signInAfterRegResponse.ok) {
-          throw new Error("Failed to sign in after registration");
-        }
-
-        const authData = await signInAfterRegResponse.json();
-
-        const data = await getProfileData(authData.access_token)
-
-        if (data?.id) {
-          handleResetIfNewUser(data.id)
-        }
-
+        if (!response.ok) throw new Error("Failed to fetch profile");
+        const data = await response.json();
+        // 4️⃣ Handle successful authentication
+        console.log('Response', data)
+        handleResetIfNewUser(data.id); // ✅ Only called ONCE now
         handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl, uniqueId: data.id });
       } catch (err) {
         console.error("Authentication error:", err);
@@ -147,13 +108,62 @@ const SplashScreen = () => {
       }
     };
 
-    const handleSuccessfulAuth = (authData, userInfo) => {
+    const handleSuccessfulAuth = async (authData, userInfo) => {
       localStorage.setItem("accessToken", authData.access_token);
       localStorage.setItem("tokenType", authData.token_type);
-
-      // Adjust localstorage data accordingly
       localStorage.setItem("telegramUser", JSON.stringify(userInfo));
-      navigate("/dashboard");
+  
+      // ✅ Wait for fetchData before navigating
+      const token = authData.access_token;
+      const extraBoostersResponse = await fetch("https://bt-coins.onrender.com/user/boost/extra_boosters", {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      });
+  
+      if (!extraBoostersResponse.ok) throw new Error("Extra boosters fetch failed");
+  
+      const extraBoostersData = await extraBoostersResponse.json();
+      const mappedExtraBoosters = extraBoostersData.map((booster) => {
+        let icon;
+        switch (booster.name.toLowerCase()) {
+          case "multiplier":
+            icon = `${process.env.PUBLIC_URL}/multiplier-icon.png`;
+            break;
+          case "boost":
+            icon = `${process.env.PUBLIC_URL}/boost-icon 2.png`;
+            break;
+          case "recharging speed":
+            icon = `${process.env.PUBLIC_URL}/recharge-icon.png`;
+            break;
+          case "auto-bot tapping":
+            icon = `${process.env.PUBLIC_URL}/autobot-icon.png`;
+            break;
+          default:
+            icon = `${process.env.PUBLIC_URL}/extra-booster-icon.png`; // Fallback icon
+        }
+  
+        return {
+          id: booster.booster_id,
+          title: booster.name,
+          description: booster.description,
+          value: booster.upgrade_cost.toString(),
+          level: booster.status === 'owned' ? "Owned" : booster.level === "-" ? "Not Owned" : `Level ${booster.level - 1}`,
+          actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
+          icon, // Use the static icon assigned above
+          rawLevel: booster.level === "-" ? 0 : parseInt(booster.level, 10) - 1,
+          effect: booster.effect,
+          status: booster.status && booster.status === "owned" ? 1 : 0
+        };
+      });
+  
+      const autoTapBooster = mappedExtraBoosters.filter(booster => booster.title === 'Auto-bot Tapping')
+  
+      setExtraBoosters(mappedExtraBoosters)
+      setAutoTapActive(autoTapBooster[0].status === 1)
+      // ✅ Navigate after setting data
+      if (extraBoostersData && extraBoostersData.length) {
+        navigate("/dashboard");
+      }
     };
 
     initializeAuth();

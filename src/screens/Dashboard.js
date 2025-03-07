@@ -48,7 +48,7 @@ const Dashboard = () => {
     checkClanStatus();
   }, []); // Runs on mount only
 
-  const { totalTaps, setTotalTaps, setDailyBoosters, dailyBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, setTapMultiplier, electricBoost, setElectricBoost, setMaxElectricBoost, maxElectricBoost, setRechargeTime, rechargeTime, autoTapActive, setAutoTapActive, applyAutoBotTaps, lastActiveTime, setLastActiveTime, adjustElectricBoosts } = useContext(BoostContext);
+  const { totalTaps, setTotalTaps, setDailyBoosters, dailyBoosters, extraBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, setTapMultiplier, electricBoost, setElectricBoost, setMaxElectricBoost, maxElectricBoost, setRechargeTime, rechargeTime, autoTapActive, setAutoTapActive, applyAutoBotTaps, lastActiveTime, setLastActiveTime, adjustElectricBoosts } = useContext(BoostContext);
 
   // State for Telegram user data
   const [telegramData, setTelegramData] = useState({
@@ -332,20 +332,6 @@ const Dashboard = () => {
     tapElement.classList.add("tap-animation");
     setTimeout(() => tapElement.classList.remove("tap-animation"), 200);
   };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const token = localStorage.getItem("accessToken");
-      const extraBoostersResponse = await fetch("https://bt-coins.onrender.com/user/boost/extra_boosters", {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      });
-      if (!extraBoostersResponse.ok) throw new Error("Extra boosters fetch failed");
-      const extraBoostersData = await extraBoostersResponse.json();
-    };
-
-    fetchData();
-  }, []);
 
   useEffect(() => {
     const handleLoad = () => {

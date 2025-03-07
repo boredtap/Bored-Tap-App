@@ -246,7 +246,7 @@ const BoostersContext = ({ children }) => {
         };
 
         updateBoosters(newBoosters); // Update state with new values
-
+        sessionStorage.setItem("hasVisited", "true");
         // Store updated values in localStorage immediately
         Object.keys(newBoosters).forEach((key) => {
             localStorage.setItem(key, JSON.stringify(newBoosters[key]));
