@@ -94,7 +94,7 @@
 
 /* Friends list container with scrollable content */
 .friends-list-container {
-  max-height: 50vh; /* Adjust the height as needed */
+  max-height: 40vh; /* Adjust the height as needed */
   overflow-y: auto;
   padding-bottom: 80px;
 }
