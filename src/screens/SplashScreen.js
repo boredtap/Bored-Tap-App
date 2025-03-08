@@ -95,23 +95,23 @@ const SplashScreen = () => {
 
           if (isInvitee && imageUrl) {
             const imageUpdateResponse = await fetch(
-              `https://bt-coins.onrender.com/bored-tap/user_app?image_url=${encodeURIComponent(imageUrl)}`,
-              {
+            `https://bt-coins.onrender.com/bored-tap/user_app?image_url=${encodeURIComponent(imageUrl)}`,
+            {
                 method: "POST",
                 headers: {
-                  Authorization: `Bearer ${authData.access_token}`,
-                  "Content-Type": "application/json",
+                Authorization: `Bearer ${authData.access_token}`,
+                "Content-Type": "application/json",
                 },
                 body: JSON.stringify({}),
-              }
+            }
             );
             if (!imageUpdateResponse.ok) {
-              console.warn("Failed to update profile image:", await imageUpdateResponse.text());
+            console.warn("Failed to update profile image:", await imageUpdateResponse.text());
             } else {
-              console.log("Profile image updated successfully");
+            console.log("Profile image updated successfully");
             }
           } else {
-            console.log("Skipped image update: not an invitee or no image URL");
+          console.log("Skipped image update: not an invitee or no image URL");
           }
         }
 

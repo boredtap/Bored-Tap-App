@@ -676,6 +676,7 @@ const Dashboard = () => {
       }
     };
     fetchProfile();
+  }, [navigate]);
 
     // Remove Telegram WebApp fetch since we rely on backend now
     // if (window.Telegram?.WebApp) {
@@ -688,7 +689,7 @@ const Dashboard = () => {
     //     });
     //   }
     // }
-  }, [navigate]);
+  // }, [navigate]);
 
   const updateBackend = useCallback(() => {
     const tapsToSync = tapCountSinceLastUpdate.current;
