@@ -261,7 +261,7 @@ const BoostersContext = ({ children }) => {
         const now = Date.now();
         const timeAway = (now - boosters.lastActiveTime) / 1000; // Convert ms to seconds
 
-        const tapsPerSecond = 1; // Example: Adjust based on game logic
+        const tapsPerSecond = 1/3; // Example: Adjust based on game logic
 
         let offlineTaps = timeAway * tapsPerSecond;
         console.log("time away and taps and last active", timeAway, offlineTaps, boosters.lastActiveTime, now)
