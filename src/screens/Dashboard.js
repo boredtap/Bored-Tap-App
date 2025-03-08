@@ -541,6 +541,7 @@ import { throttle } from "lodash"; // Install lodash if not available
 const RECHARGE_TIMES = [5000, 4500, 3500, 2500, 1500, 500]; // Level 0 through 5
 
 const Dashboard = () => {
+  console.log("Dashboard rendering");
   const navigate = useNavigate();
   const [clanPath, setClanPath] = useState("/clan-screen");
 
@@ -572,17 +573,37 @@ const Dashboard = () => {
     checkClanStatus();
   }, [navigate]);
 
-  const { totalTaps, setTotalTaps, setDailyBoosters, dailyBoosters, extraBoosters, tapMultiplier, activateTapperBoost, activateFullEnergy, setTapMultiplier, setElectricBoost, setMaxElectricBoost, maxElectricBoost, setRechargeTime, rechargeTime, autoTapActive, setAutoTapActive, applyAutoBotTaps, lastActiveTime, setLastActiveTime, adjustElectricBoosts, electricBoost } = useContext(BoostContext);
+  const {
+    totalTaps,
+    setTotalTaps,
+    setDailyBoosters,
+    dailyBoosters,
+    extraBoosters,
+    tapMultiplier,
+    activateTapperBoost,
+    activateFullEnergy,
+    setTapMultiplier,
+    setElectricBoost,
+    setMaxElectricBoost,
+    maxElectricBoost,
+    setRechargeTime,
+    rechargeTime,
+    autoTapActive,
+    setAutoTapActive,
+    applyAutoBotTaps,
+    lastActiveTime,
+    setLastActiveTime,
+    adjustElectricBoosts,
+    electricBoost,
+  } = useContext(BoostContext);
 
   // State for Telegram user data
   const [telegramData, setTelegramData] = useState({
-    // eslint-disable-next-line no-undef
-    telegram_user_id: data.telegram_user_id || "",
-    // eslint-disable-next-line no-undef
-    username: data.username || "User",
-    // eslint-disable-next-line no-undef
-    image_url: data.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
+    telegram_user_id: "",
+    username: "User",
+    image_url: `${process.env.PUBLIC_URL}/profile-picture.png`,
   });
+  console.log("telegramData in Dashboard:", telegramData);
 
   // State for user profile data
   const [profile, setProfile] = useState({ level: 1, level_name: "Beginner" });
@@ -654,6 +675,7 @@ const Dashboard = () => {
         });
         if (!response.ok) throw new Error("Failed to fetch profile");
         const data = await response.json();
+        console.log("Data from /user/profile:", data);
         if (data.total_coins === 0 && data.level === 1) {
           resetBoosters();
         } else {
@@ -672,6 +694,7 @@ const Dashboard = () => {
             username: data.username || "User",
             image_url: data.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
           });
+          console.log("telegramData after update:", telegramData);
         }
       } catch (err) {
         console.error("Error fetching profile:", err);
@@ -681,18 +704,9 @@ const Dashboard = () => {
     fetchProfile();
   }, [navigate]);
 
-    // Remove Telegram WebApp fetch since we rely on backend now
-    // if (window.Telegram?.WebApp) {
-    //   const user = window.Telegram.WebApp.initDataUnsafe.user;
-    //   if (user) {
-    //     setTelegramData({
-    //       telegram_user_id: user.id,
-    //       username: user?.username ? user.username : `User${user.id}`,
-    //       image_url: user?.photo_url ? user.photo_url : `${process.env.PUBLIC_URL}/profile-picture.png`,
-    //     });
-    //   }
-    // }
-  // }, [navigate]);
+  useEffect(() => {
+    console.log("Current telegramData:", telegramData);
+  }, [telegramData]);
 
   const updateBackend = useCallback(() => {
     const tapsToSync = tapCountSinceLastUpdate.current;
@@ -874,9 +888,9 @@ const Dashboard = () => {
       const currentUser = JSON.parse(localStorage.getItem("telegramUser"));
       const lastUser = JSON.parse(sessionStorage.getItem("lastUser"));
 
-      console.log("Current User", currentUser.uniqueId);
-      console.log("Last User", lastUser?.uniqueId);
-      console.log("is Not Equal", currentUser.uniqueId !== lastUser?.uniqueId);
+      console.log("Current User", currentUser);
+      console.log("Last User", lastUser);
+      console.log("is Not Equal", currentUser?.uniqueId !== lastUser?.uniqueId);
 
       if (currentUser && currentUser.uniqueId !== lastUser?.uniqueId) {
         console.log("Activating Auto Bot Calculations");
