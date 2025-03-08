@@ -104,6 +104,13 @@
     margin-left: 8px;
    }
    
+   /* Friends list container with scrollable content */
+    .friends-list-container {
+     max-height: 40vh; /* Adjust the height as needed */
+     overflow-y: auto;
+     padding-bottom: 80px;
+    }  
+
    .friends-list {
     margin-top: 10px;
     display: flex;

@@ -4,16 +4,16 @@ import "./InviteScreen.css";
 
 /**
  * InviteScreen component for inviting friends and displaying invited friends list.
- * Fetches user profile and QR code, provides an invite link, and integrates sharing options.
+ * Fetches invitees list and QR code, provides an invite link, and integrates sharing options.
  */
 const InviteScreen = () => {
   const [isOverlayVisible, setOverlayVisible] = useState(false);
-  const [invites, setInvites] = useState([]);
+  const [invitees, setInvitees] = useState([]); // Changed from invites to invitees for clarity
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [showCopyPopup, setShowCopyPopup] = useState(false);
 
   useEffect(() => {
-    const fetchUserProfileAndQR = async () => {
+    const fetchInviteesAndQR = async () => {
       const token = localStorage.getItem("accessToken");
       if (!token) {
         console.error("No access token found");
@@ -21,17 +21,20 @@ const InviteScreen = () => {
       }
 
       try {
-        const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
+        // Fetch invitees list
+        const inviteesResponse = await fetch("https://bt-coins.onrender.com/invitees", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         });
-        if (!profileResponse.ok) throw new Error("Failed to fetch profile");
-        const profileData = await profileResponse.json();
-        setInvites(profileData.invite || []);
+        if (!inviteesResponse.ok) throw new Error("Failed to fetch invitees");
+        const inviteesData = await inviteesResponse.json();
+        console.log("Invitees data:", inviteesData);
+        setInvitees(inviteesData || []);
 
+        // Fetch QR code
         const qrResponse = await fetch("https://bt-coins.onrender.com/invite-qr-code", {
           method: "GET",
           headers: {
@@ -46,10 +49,10 @@ const InviteScreen = () => {
           console.error("Failed to fetch QR code:", await qrResponse.text());
         }
       } catch (err) {
-        console.error("Error fetching user profile or QR code:", err);
+        console.error("Error fetching invitees or QR code:", err);
       }
     };
-    fetchUserProfileAndQR();
+    fetchInviteesAndQR();
   }, []);
 
   const user = JSON.parse(localStorage.getItem("telegramUser")) || { telegramUserId: "" };
@@ -100,22 +103,22 @@ const InviteScreen = () => {
       </div>
 
       <div className="your-friends-section">
-        <p className="friends-title">Your Friends ({invites.length})</p>
-        {invites.length === 0 ? (
+        <p className="friends-title">Your Friends ({invitees.length})</p>
+        {invitees.length === 0 ? (
           <p className="no-friends">No friends invited yet.</p>
         ) : (
           <div className="friends-list-container">
             <div className="friends-list">
-              {invites.map((invite) => (
-                <div className="friend-card" key={invite.id || invite.telegram_user_id}>
+              {invitees.map((invitee) => (
+                <div className="friend-card" key={invitee.telegram_user_id}>
                   <img
-                    src={invite.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`}
-                    alt={`${invite.username || "Friend"}'s Profile`}
+                    src={invitee.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`}
+                    alt={`${invitee.username || "Friend"}'s Profile`}
                     className="friend-profile-img round-frame"
                   />
                   <div className="friend-details">
                     <p className="friend-name">
-                      {invite.username || "Unknown"} <span className="friend-level">.Lvl {invite.level || "?"}</span>
+                      {invitee.username || "Unknown"} <span className="friend-level">.Lvl {invitee.level || "?"}</span>
                     </p>
                     <div className="friend-icon-value">
                       <img
@@ -123,10 +126,10 @@ const InviteScreen = () => {
                         alt="Friends Icon"
                         className="icon-img"
                       />
-                      <span className="icon-value">+{invite.iconValue || 0}</span>
+                      <span className="icon-value">+{invitee.invites || 0}</span>
                     </div>
                   </div>
-                  <p className="friend-bt-value">{invite.total_coins ? `${invite.total_coins} BT` : "0 BT"}</p>
+                  <p className="friend-bt-value">{invitee.total_coins ? `${invitee.total_coins.toLocaleString()} BT` : "0 BT"}</p>
                 </div>
               ))}
             </div>

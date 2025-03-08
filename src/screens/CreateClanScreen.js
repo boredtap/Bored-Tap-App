@@ -7,7 +7,7 @@ const CreateClanScreen = () => {
   const [clanName, setClanName] = useState("");
   const [clanImage, setClanImage] = useState(null);
   const [imageName, setImageName] = useState("");
-  const [invitees, setInvitees] = useState([]); // Changed from invites to invitees for clarity
+  const [invitees, setInvitees] = useState([]);
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -107,6 +107,7 @@ const CreateClanScreen = () => {
       const data = await response.json();
       console.log("Clan creation response:", data);
       if (data.status === "awaiting verification") {
+        localStorage.setItem("pendingClanId", data.clan_id); // Store pending clan ID
         setShowOverlay(true);
       }
     } catch (err) {
@@ -119,7 +120,7 @@ const CreateClanScreen = () => {
 
   const handleOverlayClose = () => {
     setShowOverlay(false);
-    navigate("/clan-details-screen"); // Redirect to clan details after creation
+    navigate("/clan-screen"); // Redirect to ClanScreen post-creation per earlier flow
   };
 
   const isCtaActive = clanName && clanImage && selectedFriends.length > 0;
@@ -181,44 +182,46 @@ const CreateClanScreen = () => {
               </div>
             </div>
 
-            <div className="friends-list">
-              {invitees.length === 0 ? (
-                <p className="no-friends">No friends available to invite.</p>
-              ) : (
-                invitees.map((invitee) => (
-                  <div className="friend-card" key={invitee.telegram_user_id}>
-                    <img
-                      src={invitee.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`}
-                      alt={`${invitee.username || "Unknown"}'s Profile`}
-                      className="friend-profile-img"
-                    />
-                    <div className="friend-details">
-                      <p className="friend-name">
-                        {invitee.username || "Unknown"}{" "}
-                        <span className="friend-level">.Lvl {invitee.level || "?"}</span>
-                      </p>
-                      <div className="friend-icon-value">
-                        <img
-                          src={`${process.env.PUBLIC_URL}/friends.png`}
-                          alt="Friends Icon"
-                          className="icon-img"
-                        />
-                        <span className="icon-value">+{invitee.total_coins?.toLocaleString() || 0}</span>
+            <div className="friends-list-container">
+              <div className="friends-list">
+                {invitees.length === 0 ? (
+                  <p className="no-friends">No friends available to invite.</p>
+                ) : (
+                  invitees.map((invitee) => (
+                    <div className="friend-card" key={invitee.telegram_user_id}>
+                      <img
+                        src={invitee.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`}
+                        alt={`${invitee.username || "Unknown"}'s Profile`}
+                        className="friend-profile-img"
+                      />
+                      <div className="friend-details">
+                        <p className="friend-name">
+                          {invitee.username || "Unknown"}{" "}
+                          <span className="friend-level">.Lvl {invitee.level || "?"}</span>
+                        </p>
+                        <div className="friend-icon-value">
+                          <img
+                            src={`${process.env.PUBLIC_URL}/friends.png`}
+                            alt="Friends Icon"
+                            className="icon-img"
+                          />
+                          <span className="icon-value">+{invitee.invites || 0}</span>
+                        </div>
                       </div>
+                      <img
+                        src={
+                          selectedFriends.includes(invitee.telegram_user_id)
+                            ? `${process.env.PUBLIC_URL}/tick-icon.png`
+                            : `${process.env.PUBLIC_URL}/addd.png`
+                        }
+                        alt={selectedFriends.includes(invitee.telegram_user_id) ? "Selected" : "Add"}
+                        className="friend-action-icon"
+                        onClick={() => toggleFriendSelection(invitee.telegram_user_id)}
+                      />
                     </div>
-                    <img
-                      src={
-                        selectedFriends.includes(invitee.telegram_user_id)
-                          ? `${process.env.PUBLIC_URL}/tick-icon.png`
-                          : `${process.env.PUBLIC_URL}/addd.png`
-                      }
-                      alt={selectedFriends.includes(invitee.telegram_user_id) ? "Selected" : "Add"}
-                      className="friend-action-icon"
-                      onClick={() => toggleFriendSelection(invitee.telegram_user_id)}
-                    />
-                  </div>
-                ))
-              )}
+                  ))
+                )}
+              </div>
             </div>
           </div>
 
