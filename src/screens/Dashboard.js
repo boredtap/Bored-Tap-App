@@ -576,9 +576,12 @@ const Dashboard = () => {
 
   // State for Telegram user data
   const [telegramData, setTelegramData] = useState({
-    telegram_user_id: "",
-    username: "User",
-    image_url: `${process.env.PUBLIC_URL}/profile-picture.png`,
+    // eslint-disable-next-line no-undef
+    telegram_user_id: data.telegram_user_id || "",
+    // eslint-disable-next-line no-undef
+    username: data.username || "User",
+    // eslint-disable-next-line no-undef
+    image_url: data.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
   });
 
   // State for user profile data
@@ -708,11 +711,11 @@ const Dashboard = () => {
       keepalive: true,
     })
       .then((response) => response.json())
-      .then((data) => {
-        if (data["current coins"] >= 0) {
+      .then((response_data) => {
+        if (response_data["current coins"] >= 0) {
           setProfile((prev) => ({
             ...prev,
-            level: data["current level"] || prev.level,
+            level: response_data["current level"] || prev.level,
           }));
         }
       })
