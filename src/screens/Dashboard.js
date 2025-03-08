@@ -888,16 +888,9 @@ const Dashboard = () => {
       const currentUser = JSON.parse(localStorage.getItem("telegramUser"));
       const lastUser = JSON.parse(sessionStorage.getItem("lastUser"));
 
-      console.log("Current User", currentUser);
-      console.log("Last User", lastUser);
-      console.log("is Not Equal", currentUser?.uniqueId !== lastUser?.uniqueId);
-
-      if (currentUser && currentUser.uniqueId !== lastUser?.uniqueId) {
-        console.log("Activating Auto Bot Calculations");
+      if (currentUser && currentUser.uniqueId !== lastUser?.uniqueId) {     
         const offlineTaps = applyAutoBotTaps();
         const newElectricBoost = adjustElectricBoosts();
-        console.log("Offline taps", offlineTaps);
-        console.log("New Electric Boosts", newElectricBoost);
 
         if (offlineTaps > 0) {
           setAutoBotTaps(offlineTaps);

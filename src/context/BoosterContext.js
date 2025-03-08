@@ -255,17 +255,28 @@ const BoostersContext = ({ children }) => {
 
 
     const applyAutoBotTaps = () => {
-        console.log(boosters?.autoTapActive)
         if (!boosters?.autoTapActive) return; // Ensure boosters exist before checking
 
-        const now = Date.now();
-        const timeAway = (now - boosters.lastActiveTime) / 1000; // Convert ms to seconds
+        const nowUTC = new Date();
+        const nowWAT = new Date(nowUTC.getTime() + 3600000); // Convert to Nigerian time (UTC+1)
 
-        const tapsPerSecond = 1/3; // Example: Adjust based on game logic
+        const lastActiveUTC = new Date(boosters.lastActiveTime);
+        const lastActiveWAT = new Date(lastActiveUTC.getTime() + 3600000); // Convert last active to WAT
 
-        let offlineTaps = timeAway * tapsPerSecond;
-        console.log("time away and taps and last active", timeAway, offlineTaps, boosters.lastActiveTime, now)
-        offlineTaps = Math.floor(offlineTaps)
+        let totalValidTime = 0; // Total valid time within 12 AM - 12 PM WAT
+
+        let current = lastActiveWAT;
+        while (current < nowWAT) {
+            const hour = current.getUTCHours();
+            if (hour >= 0 && hour < 12) {
+                totalValidTime += Math.min(nowWAT - current, 3600000); // Add only valid time
+            }
+            current = new Date(current.getTime() + 3600000); // Move forward 1 hour
+        }
+
+        const timeAway = totalValidTime / 1000; // Convert ms to seconds
+        const tapsPerSecond = 1 / 3; // Example: Adjust based on game logic
+        let offlineTaps = Math.floor(timeAway * tapsPerSecond);
 
         return offlineTaps
     };
