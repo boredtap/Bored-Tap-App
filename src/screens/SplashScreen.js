@@ -1,4 +1,3 @@
-// import React, { useEffect, useState, useContext } from "react";
 import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import "./SplashScreen.css";
@@ -8,17 +7,19 @@ const SplashScreen = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { resetAll, setLastActiveTime, setExtraBoosters, setAutoTapActive, setTotalTaps, setElectricBoost } = useContext(BoostContext)
+  const { resetAll, setLastActiveTime, setExtraBoosters, setAutoTapActive, setTotalTaps, setElectricBoost } = useContext(BoostContext);
 
   const handleResetIfNewUser = (userID) => {
     const oldUser = localStorage.getItem("telegramUser");
     if (oldUser) {
-      const { telegramUserId: oldUserId } = JSON.parse(oldUser)
+      const { telegramUserId: oldUserId } = JSON.parse(oldUser);
       if (oldUserId !== userID) {
-        resetAll()
+        resetAll();
       }
-    } else { resetAll() }
-  }
+    } else {
+      resetAll();
+    }
+  };
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -37,6 +38,8 @@ const SplashScreen = () => {
         const username = userData.username || `User${userData.id}`;
         const telegramUserId = String(userData.id);
         const imageUrl = userData.photo_url || "";
+        const inviterId = webApp.initDataUnsafe?.start_param || ""; // From invite link ?start=<inviter_id>
+        console.log("Telegram User Data:", { username, telegramUserId, imageUrl, inviterId });
 
         const signInResponse = await fetch("https://bt-coins.onrender.com/signin", {
           method: "POST",
@@ -85,6 +88,31 @@ const SplashScreen = () => {
           }
 
           authData = await signInAfterRegResponse.json();
+
+          // Check if user is an invitee via start_param and update image
+          const isInvitee = !!inviterId; // True if signed up via invite link
+          console.log("Is Invitee:", isInvitee, "Image URL:", imageUrl);
+
+          if (isInvitee && imageUrl) {
+            const imageUpdateResponse = await fetch(
+              `https://bt-coins.onrender.com/bored-tap/user_app?image_url=${encodeURIComponent(imageUrl)}`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${authData.access_token}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({}),
+              }
+            );
+            if (!imageUpdateResponse.ok) {
+              console.warn("Failed to update profile image:", await imageUpdateResponse.text());
+            } else {
+              console.log("Profile image updated successfully");
+            }
+          } else {
+            console.log("Skipped image update: not an invitee or no image URL");
+          }
         }
 
         const response = await fetch("https://bt-coins.onrender.com/user/profile", {
@@ -96,17 +124,17 @@ const SplashScreen = () => {
         });
         if (!response.ok) throw new Error("Failed to fetch profile");
         const data = await response.json();
-        // 4️⃣ Handle successful authentication
-        console.log('Response', data)
-        handleResetIfNewUser(data.id); // ✅ Only called ONCE now
+        console.log("Profile response:", data);
+
+        handleResetIfNewUser(data.id);
 
         const date = new Date(data.last_active_time);
-        const offset = date.getTimezoneOffset() * 60000; // Convert minutes to milliseconds
+        const offset = date.getTimezoneOffset() * 60000;
         const correctedTime = new Date(date.getTime() - offset);
 
-        setLastActiveTime(correctedTime)
-        setElectricBoost(data.power_limit)
-        setTotalTaps(data.total_coins)
+        setLastActiveTime(correctedTime);
+        setElectricBoost(data.power_limit);
+        setTotalTaps(data.total_coins);
 
         handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl, uniqueId: data.id });
       } catch (err) {
@@ -121,16 +149,15 @@ const SplashScreen = () => {
       localStorage.setItem("accessToken", authData.access_token);
       localStorage.setItem("tokenType", authData.token_type);
       localStorage.setItem("telegramUser", JSON.stringify(userInfo));
-  
-      // ✅ Wait for fetchData before navigating
+
       const token = authData.access_token;
       const extraBoostersResponse = await fetch("https://bt-coins.onrender.com/user/boost/extra_boosters", {
         method: "GET",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       });
-  
+
       if (!extraBoostersResponse.ok) throw new Error("Extra boosters fetch failed");
-  
+
       const extraBoostersData = await extraBoostersResponse.json();
       const mappedExtraBoosters = extraBoostersData.map((booster) => {
         let icon;
@@ -148,28 +175,28 @@ const SplashScreen = () => {
             icon = `${process.env.PUBLIC_URL}/autobot-icon.png`;
             break;
           default:
-            icon = `${process.env.PUBLIC_URL}/extra-booster-icon.png`; // Fallback icon
+            icon = `${process.env.PUBLIC_URL}/extra-booster-icon.png`;
         }
-  
+
         return {
           id: booster.booster_id,
           title: booster.name,
           description: booster.description,
           value: booster.upgrade_cost.toString(),
-          level: booster.status === 'owned' ? "Owned" : booster.level === "-" ? "Not Owned" : `Level ${booster.level}`,
+          level: booster.status === "owned" ? "Owned" : booster.level === "-" ? "Not Owned" : `Level ${booster.level}`,
           actionIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
-          icon, // Use the static icon assigned above
+          icon,
           rawLevel: booster.level === "-" ? 0 : parseInt(booster.level, 10),
           effect: booster.effect,
-          status: booster.status && booster.status === "owned" ? 1 : 0
+          status: booster.status && booster.status === "owned" ? 1 : 0,
         };
       });
-  
-      const autoTapBooster = mappedExtraBoosters.filter(booster => booster.title === 'Auto-bot Tapping')
-  
-      setExtraBoosters(mappedExtraBoosters)
-      setAutoTapActive(autoTapBooster[0].status === 1)
-      // ✅ Navigate after setting data
+
+      const autoTapBooster = mappedExtraBoosters.filter((booster) => booster.title === "Auto-bot Tapping");
+
+      setExtraBoosters(mappedExtraBoosters);
+      setAutoTapActive(autoTapBooster[0].status === 1);
+
       if (extraBoostersData && extraBoostersData.length) {
         navigate("/dashboard");
       }
@@ -196,17 +223,15 @@ const SplashScreen = () => {
   return (
     <div className="splash-container">
       <div className="splash-content">
-        <img
-          src={`${process.env.PUBLIC_URL}/logo.png`}
-          alt="Bored Tap Logo"
-          className="splash-logo"
-        />
+        <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Bored Tap Logo" className="splash-logo" />
         <h1 className="splash-title">BoredTap App</h1>
         {loading && <div className="loader-bar"></div>}
         {error && (
           <div className="error-container">
             <p className="error-message">Error: {error}</p>
-            <button onClick={handleRetry} className="retry-button">Retry</button>
+            <button onClick={handleRetry} className="retry-button">
+              Retry
+            </button>
           </div>
         )}
       </div>
