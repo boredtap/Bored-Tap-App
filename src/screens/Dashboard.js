@@ -714,27 +714,27 @@ const Dashboard = () => {
     const isoString = new Date(Date.now()).toISOString();
 
     const token = localStorage.getItem("accessToken");
-    const url = `https://bt-coins.onrender.com/update-coins?coins=${tapsToSync}¤t_power_limit=${electricBoostRef.current}&last_active_time=${isoString}&auto_bot_active=true`;
+    const url = `https://bt-coins.onrender.com/update-coins?coins=${tapsToSync}&current_power_limit=${electricBoostRef.current}&last_active_time=${isoString}&auto_bot_active=true`;
 
     fetch(url, {
-      method: "POST",
-      headers: {
+    method: "POST",
+    headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
-      },
-      keepalive: true,
+    },
+    keepalive: true,
     })
-      .then((response) => response.json())
-      .then((response_data) => {
+    .then((response) => response.json())
+    .then((response_data) => {
         if (response_data["current coins"] >= 0) {
-          setProfile((prev) => ({
+        setProfile((prev) => ({
             ...prev,
             level: response_data["current level"] || prev.level,
-          }));
+        }));
         }
-      })
-      .catch((err) => console.error("Error syncing with backend:", err));
-  }, []);
+    })
+    .catch((err) => console.error("Error syncing with backend:", err));
+}, []);
 
   const throttledUpdateBackend = useCallback(throttle(updateBackend, 10000), [updateBackend]);
 
