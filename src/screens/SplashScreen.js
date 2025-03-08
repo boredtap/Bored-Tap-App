@@ -13,14 +13,16 @@ const SplashScreen = () => {
   const handleResetIfNewUser = (userID) => {
     const oldUser = localStorage.getItem("telegramUser");
     if (oldUser) {
-      const { telegramUserId: oldUserId } = JSON.parse(oldUser);
-      if (oldUserId !== userID) {
-        resetAll();
+      const { uniqueId } = JSON.parse(oldUser)
+
+      if (uniqueId !== userID) {
+        resetAll()
       }
     } else {
-      resetAll();
+      resetAll()
     }
-  };
+  }
+
 
   useEffect(() => {
     const initializeAuth = async () => {
