@@ -61,10 +61,18 @@ const SplashScreen = () => {
           console.log("Signin Success:", { token: authData.access_token });
         } else {
           console.log("Signin failed:", signInResponse.status, await signInResponse.text());
+          const signUpBody = {
+            telegram_user_id: telegramUserId,
+            username,
+            image_url: imageUrl,
+          };
+          if (inviterId) {
+            signUpBody.inviter_id = inviterId; // Pass inviter_id for invitees
+          }
           const signUpResponse = await fetch("https://bt-coins.onrender.com/sign-up", {
             method: "POST",
             headers: { "Content-Type": "application/json", accept: "application/json" },
-            body: JSON.stringify({ telegram_user_id: telegramUserId, username, image_url: imageUrl }),
+            body: JSON.stringify(signUpBody),
           });
 
           if (!signUpResponse.ok) {
@@ -115,6 +123,7 @@ const SplashScreen = () => {
 
           // Update image for invitees if available
           const isInvitee = !!inviterId;
+          console.log("Invitee status:", { isInvitee, inviterId });
           if (isInvitee && imageUrl) {
             console.log("Attempting image update with URL:", imageUrl);
             const imageUpdateResponse = await fetch(
@@ -251,14 +260,14 @@ const SplashScreen = () => {
 
   return (
     <div className="splash-container">
-      <div className="splash-content">
-        <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Bored Tap Logo" className="splash-logo" />
-        <h1 className="splash-title">BoredTap App</h1>
-        {loading && <div className="loader-bar"></div>}
+      <div class="splash-content">
+        <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Bored Tap Logo" class="splash-logo" />
+        <h1 class="splash-title">BoredTap App</h1>
+        {loading && <div class="loader-bar"></div>}
         {error && (
-          <div className="error-container">
-            <p className="error-message">Error: {error}</p>
-            <button onClick={handleRetry} className="retry-button">
+          <div class="error-container">
+            <p class="error-message">Error: {error}</p>
+            <button onClick={handleRetry} class="retry-button">
               Retry
             </button>
           </div>
