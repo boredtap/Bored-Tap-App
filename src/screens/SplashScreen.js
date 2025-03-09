@@ -120,39 +120,43 @@ const SplashScreen = () => {
             console.log("Signin after signup successful:", { token: authData.access_token });
           }
 
-          // Update image for invitees after authentication
+          // Update image for invitees
           const isInvitee = !!inviterId;
-          console.log("Invitee status:", { isInvitee, inviterId });
-          if (isInvitee && imageUrl) {
-            console.log("Attempting image update with URL:", imageUrl);
-            try {
-              const imageUpdateResponse = await fetch(
-                `https://bt-coins.onrender.com/bored-tap/user_app?image_url=${encodeURIComponent(imageUrl)}`,
-                {
-                  method: "POST",
-                  headers: {
-                    Authorization: `Bearer ${authData.access_token}`,
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                  },
+          console.log("Invitee status checked:", { isInvitee, inviterId, imageUrlExists: !!imageUrl });
+          if (isInvitee) {
+            if (imageUrl) {
+              console.log("Attempting image update with URL:", imageUrl);
+              try {
+                const imageUpdateResponse = await fetch(
+                  `https://bt-coins.onrender.com/bored-tap/user_app?image_url=${encodeURIComponent(imageUrl)}`,
+                  {
+                    method: "POST",
+                    headers: {
+                      Authorization: `Bearer ${authData.access_token}`,
+                      "Content-Type": "application/json",
+                      Accept: "application/json",
+                    },
+                  }
+                );
+                const responseText = await imageUpdateResponse.text();
+                console.log("Image update response:", {
+                  status: imageUpdateResponse.status,
+                  ok: imageUpdateResponse.ok,
+                  body: responseText,
+                });
+                if (!imageUpdateResponse.ok) {
+                  console.error("Image update failed with status:", imageUpdateResponse.status, responseText);
+                } else {
+                  console.log("Image update successful");
                 }
-              );
-              const responseText = await imageUpdateResponse.text();
-              console.log("Image update response:", {
-                status: imageUpdateResponse.status,
-                ok: imageUpdateResponse.ok,
-                body: responseText,
-              });
-              if (!imageUpdateResponse.ok) {
-                console.error("Image update failed:", responseText);
-              } else {
-                console.log("Image update successful");
+              } catch (updateError) {
+                console.error("Image update request error:", updateError.message);
               }
-            } catch (updateError) {
-              console.error("Image update request failed:", updateError.message);
+            } else {
+              console.log("No image URL available for invitee");
             }
           } else {
-            console.log("Skipped image update:", { isInvitee, hasImageUrl: !!imageUrl });
+            console.log("User is not an invitee, skipping image update");
           }
         }
 
