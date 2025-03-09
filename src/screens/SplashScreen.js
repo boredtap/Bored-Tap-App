@@ -60,6 +60,7 @@ const SplashScreen = () => {
           authData = await signInResponse.json();
           console.log("Signin Success:", { token: authData.access_token });
         } else {
+          console.log("Signin failed:", signInResponse.status, await signInResponse.text());
           const signUpResponse = await fetch("https://bt-coins.onrender.com/sign-up", {
             method: "POST",
             headers: { "Content-Type": "application/json", accept: "application/json" },
@@ -67,32 +68,54 @@ const SplashScreen = () => {
           });
 
           if (!signUpResponse.ok) {
-            throw new Error(`Registration failed: ${await signUpResponse.text()}`);
+            const errorText = await signUpResponse.text();
+            if (signUpResponse.status === 400 && errorText.includes("User already exists")) {
+              // Retry signin for existing user
+              const retrySignInResponse = await fetch("https://bt-coins.onrender.com/signin", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded", accept: "application/json" },
+                body: new URLSearchParams({
+                  grant_type: "password",
+                  username,
+                  password: telegramUserId,
+                  scope: "",
+                  client_id: "string",
+                  client_secret: "string",
+                }),
+              });
+              if (!retrySignInResponse.ok) {
+                throw new Error(`Retry signin failed: ${await retrySignInResponse.text()}`);
+              }
+              authData = await retrySignInResponse.json();
+              console.log("Retry Signin Success:", { token: authData.access_token });
+            } else {
+              throw new Error(`Registration failed: ${errorText}`);
+            }
+          } else {
+            console.log("Signup successful");
+            const signInAfterRegResponse = await fetch("https://bt-coins.onrender.com/signin", {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded", accept: "application/json" },
+              body: new URLSearchParams({
+                grant_type: "password",
+                username,
+                password: telegramUserId,
+                scope: "",
+                client_id: "string",
+                client_secret: "string",
+              }),
+            });
+
+            if (!signInAfterRegResponse.ok) {
+              throw new Error("Failed to sign in after registration");
+            }
+            authData = await signInAfterRegResponse.json();
+            console.log("Signin after signup successful:", { token: authData.access_token });
           }
-          console.log("Signup successful");
 
-          const signInAfterRegResponse = await fetch("https://bt-coins.onrender.com/signin", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded", accept: "application/json" },
-            body: new URLSearchParams({
-              grant_type: "password",
-              username,
-              password: telegramUserId,
-              scope: "",
-              client_id: "string",
-              client_secret: "string",
-            }),
-          });
-
-          if (!signInAfterRegResponse.ok) {
-            throw new Error("Failed to sign in after registration");
-          }
-
-          authData = await signInAfterRegResponse.json();
-          console.log("Signin after signup successful:", { token: authData.access_token });
-
-          // Update image for new users if available (matches local success)
-          if (imageUrl) {
+          // Update image for invitees if available
+          const isInvitee = !!inviterId;
+          if (isInvitee && imageUrl) {
             console.log("Attempting image update with URL:", imageUrl);
             const imageUpdateResponse = await fetch(
               `https://bt-coins.onrender.com/bored-tap/user_app?image_url=${encodeURIComponent(imageUrl)}`,
@@ -117,7 +140,7 @@ const SplashScreen = () => {
               console.log("Image update successful");
             }
           } else {
-            console.log("Skipped image update: No image URL");
+            console.log("Skipped image update:", { isInvitee, hasImageUrl: !!imageUrl });
           }
         }
 
