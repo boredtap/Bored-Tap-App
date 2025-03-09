@@ -38,9 +38,21 @@ const SplashScreen = () => {
 
         const username = userData.username || `User${userData.id}`;
         const telegramUserId = String(userData.id);
-        const imageUrl = userData.photo_url || "";
+        
+        // Explicitly log if photo_url exists or not
+        console.log("User photo_url status:", userData.photo_url ? "Available" : "Not available", 
+                    userData.photo_url ? userData.photo_url : "");
+        
+        const imageUrl = userData.photo_url || "https://example.com/";
         const inviterId = webApp.initDataUnsafe?.start_param || "";
-        console.log("Telegram User Data:", { username, telegramUserId, imageUrl, inviterId });
+        
+        console.log("Telegram User Data:", { 
+          username, 
+          telegramUserId, 
+          imageUrl, 
+          inviterId,
+          rawUserData: JSON.stringify(userData)
+        });
 
         const signInResponse = await fetch("https://bt-coins.onrender.com/signin", {
           method: "POST",
@@ -56,6 +68,8 @@ const SplashScreen = () => {
         });
 
         let authData;
+        let isNewUser = false;
+        
         if (signInResponse.ok) {
           authData = await signInResponse.json();
           console.log("Signin Success:", { token: authData.access_token });
@@ -100,6 +114,7 @@ const SplashScreen = () => {
             }
           } else {
             console.log("Signup successful");
+            isNewUser = true;
             const signInAfterRegResponse = await fetch("https://bt-coins.onrender.com/signin", {
               method: "POST",
               headers: { "Content-Type": "application/x-www-form-urlencoded", accept: "application/json" },
@@ -119,45 +134,77 @@ const SplashScreen = () => {
             authData = await signInAfterRegResponse.json();
             console.log("Signin after signup successful:", { token: authData.access_token });
           }
+        }
 
-          // Update image for invitees
-          const isInvitee = !!inviterId;
-          console.log("Invitee status checked:", { isInvitee, inviterId, imageUrlExists: !!imageUrl });
-          if (isInvitee) {
-            if (imageUrl) {
-              console.log("Attempting image update with URL:", imageUrl);
-              try {
-                const imageUpdateResponse = await fetch(
-                  `https://bt-coins.onrender.com/bored-tap/user_app?image_url=${encodeURIComponent(imageUrl)}`,
-                  {
-                    method: "POST",
-                    headers: {
-                      Authorization: `Bearer ${authData.access_token}`,
-                      "Content-Type": "application/json",
-                      Accept: "application/json",
-                    },
-                  }
-                );
-                const responseText = await imageUpdateResponse.text();
-                console.log("Image update response:", {
-                  status: imageUpdateResponse.status,
-                  ok: imageUpdateResponse.ok,
-                  body: responseText,
-                });
-                if (!imageUpdateResponse.ok) {
-                  console.error("Image update failed with status:", imageUpdateResponse.status, responseText);
-                } else {
-                  console.log("Image update successful");
+        // Always attempt to update the image if photo_url is available, for both new and existing users
+        if (userData.photo_url) {
+          console.log("Attempting image update for user:", { 
+            isNewUser, 
+            hasInviterId: !!inviterId, 
+            imageUrl: userData.photo_url 
+          });
+          
+          try {
+            // Create a structured body to ensure the image_url is properly sent
+            const imageUpdateBody = { image_url: userData.photo_url };
+            
+            // First try with query parameter as in original code
+            const imageUpdateResponse = await fetch(
+              `https://bt-coins.onrender.com/bored-tap/user_app?image_url=${encodeURIComponent(userData.photo_url)}`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${authData.access_token}`,
+                  "Content-Type": "application/json",
+                  Accept: "application/json",
+                },
+              }
+            );
+            
+            const responseText = await imageUpdateResponse.text();
+            console.log("Image update response (query param):", {
+              status: imageUpdateResponse.status,
+              ok: imageUpdateResponse.ok,
+              body: responseText,
+            });
+            
+            // If first attempt failed, try with request body instead
+            if (!imageUpdateResponse.ok) {
+              console.log("Trying alternative image update method with request body");
+              
+              const altImageUpdateResponse = await fetch(
+                "https://bt-coins.onrender.com/bored-tap/user_app",
+                {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${authData.access_token}`,
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                  },
+                  body: JSON.stringify(imageUpdateBody),
                 }
-              } catch (updateError) {
-                console.error("Image update request error:", updateError.message);
+              );
+              
+              const altResponseText = await altImageUpdateResponse.text();
+              console.log("Alternative image update response (request body):", {
+                status: altImageUpdateResponse.status,
+                ok: altImageUpdateResponse.ok,
+                body: altResponseText,
+              });
+              
+              if (!altImageUpdateResponse.ok) {
+                console.error("Both image update methods failed");
+              } else {
+                console.log("Alternative image update method successful");
               }
             } else {
-              console.log("No image URL available for invitee");
+              console.log("Image update successful");
             }
-          } else {
-            console.log("User is not an invitee, skipping image update");
+          } catch (updateError) {
+            console.error("Image update request error:", updateError.message, updateError.stack);
           }
+        } else {
+          console.log("No photo_url available from Telegram WebApp");
         }
 
         const response = await fetch("https://bt-coins.onrender.com/user/profile", {
@@ -170,6 +217,9 @@ const SplashScreen = () => {
         if (!response.ok) throw new Error("Failed to fetch profile");
         const data = await response.json();
         console.log("Profile response:", data);
+        
+        // Verify if the image was actually updated on the server
+        console.log("Current image_url in profile:", data.image_url);
 
         handleResetIfNewUser(data.id);
 
@@ -181,7 +231,7 @@ const SplashScreen = () => {
         setElectricBoost(data.power_limit);
         setTotalTaps(data.total_coins);
 
-        handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl, uniqueId: data.id });
+        handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl: userData.photo_url || "", uniqueId: data.id });
       } catch (err) {
         console.error("Authentication error:", err);
         setError(err.message);
