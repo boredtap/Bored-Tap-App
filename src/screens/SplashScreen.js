@@ -67,7 +67,7 @@ const SplashScreen = () => {
             image_url: imageUrl,
           };
           if (inviterId) {
-            signUpBody.inviter_id = inviterId; // Pass inviter_id for invitees
+            signUpBody.inviter_id = inviterId;
           }
           const signUpResponse = await fetch("https://bt-coins.onrender.com/sign-up", {
             method: "POST",
@@ -78,7 +78,6 @@ const SplashScreen = () => {
           if (!signUpResponse.ok) {
             const errorText = await signUpResponse.text();
             if (signUpResponse.status === 400 && errorText.includes("User already exists")) {
-              // Retry signin for existing user
               const retrySignInResponse = await fetch("https://bt-coins.onrender.com/signin", {
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded", accept: "application/json" },
@@ -121,32 +120,36 @@ const SplashScreen = () => {
             console.log("Signin after signup successful:", { token: authData.access_token });
           }
 
-          // Update image for invitees if available
+          // Update image for invitees after authentication
           const isInvitee = !!inviterId;
           console.log("Invitee status:", { isInvitee, inviterId });
           if (isInvitee && imageUrl) {
             console.log("Attempting image update with URL:", imageUrl);
-            const imageUpdateResponse = await fetch(
-              `https://bt-coins.onrender.com/bored-tap/user_app?image_url=${encodeURIComponent(imageUrl)}`,
-              {
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${authData.access_token}`,
-                  "Content-Type": "application/json",
-                  Accept: "application/json",
-                },
+            try {
+              const imageUpdateResponse = await fetch(
+                `https://bt-coins.onrender.com/bored-tap/user_app?image_url=${encodeURIComponent(imageUrl)}`,
+                {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${authData.access_token}`,
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                  },
+                }
+              );
+              const responseText = await imageUpdateResponse.text();
+              console.log("Image update response:", {
+                status: imageUpdateResponse.status,
+                ok: imageUpdateResponse.ok,
+                body: responseText,
+              });
+              if (!imageUpdateResponse.ok) {
+                console.error("Image update failed:", responseText);
+              } else {
+                console.log("Image update successful");
               }
-            );
-            const responseText = await imageUpdateResponse.text();
-            console.log("Image update response:", {
-              status: imageUpdateResponse.status,
-              ok: imageUpdateResponse.ok,
-              body: responseText,
-            });
-            if (!imageUpdateResponse.ok) {
-              console.error("Image update failed:", responseText);
-            } else {
-              console.log("Image update successful");
+            } catch (updateError) {
+              console.error("Image update request failed:", updateError.message);
             }
           } else {
             console.log("Skipped image update:", { isInvitee, hasImageUrl: !!imageUrl });
@@ -260,14 +263,14 @@ const SplashScreen = () => {
 
   return (
     <div className="splash-container">
-      <div class="splash-content">
-        <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Bored Tap Logo" class="splash-logo" />
-        <h1 class="splash-title">BoredTap App</h1>
-        {loading && <div class="loader-bar"></div>}
+      <div className="splash-content">
+        <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Bored Tap Logo" className="splash-logo" />
+        <h1 className="splash-title">BoredTap App</h1>
+        {loading && <div className="loader-bar"></div>}
         {error && (
-          <div class="error-container">
-            <p class="error-message">Error: {error}</p>
-            <button onClick={handleRetry} class="retry-button">
+          <div className="error-container">
+            <p className="error-message">Error: {error}</p>
+            <button onClick={handleRetry} className="retry-button">
               Retry
             </button>
           </div>
