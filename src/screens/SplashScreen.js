@@ -23,7 +23,6 @@ const SplashScreen = () => {
     }
   }
 
-
   useEffect(() => {
     const initializeAuth = async () => {
       try {

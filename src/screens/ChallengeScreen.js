@@ -287,11 +287,10 @@ const ChallengeScreen = () => {
             <div className="overlay-content">
               <img
                 src={
-                  challengeImages[selectedChallenge.imageId] ||
-                  `${process.env.PUBLIC_URL}/default-challenge-icon.png`
+                  `${process.env.PUBLIC_URL}/claim.gif`
                 }
                 alt="Challenge Icon"
-                className="overlay-challenge-icon"
+                className="overlay2-challenge-icon"
               />
               <p className="overlay-text">Your reward of</p>
               <div className="overlay-reward-value">
