@@ -22,15 +22,6 @@ const SplashScreen = () => {
     }
   };
 
-  // Helper to force logs in Telegram WebApp
-  const logToScreen = (message) => {
-    console.log(message);
-    // Fallback for Telegram WebApp where console might not be visible
-    if (window.Telegram?.WebApp) {
-      window.Telegram.WebApp.showAlert(`Log: ${JSON.stringify(message)}`);
-    }
-  };
-
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -49,7 +40,7 @@ const SplashScreen = () => {
         const telegramUserId = String(userData.id);
         const imageUrl = userData.photo_url || "";
         const inviterId = webApp.initDataUnsafe?.start_param || "";
-        logToScreen({ event: "Telegram User Data", data: { username, telegramUserId, imageUrl, inviterId } });
+        console.log("Telegram User Data:", { username, telegramUserId, imageUrl, inviterId });
 
         const signInResponse = await fetch("https://bt-coins.onrender.com/signin", {
           method: "POST",
@@ -67,7 +58,7 @@ const SplashScreen = () => {
         let authData;
         if (signInResponse.ok) {
           authData = await signInResponse.json();
-          logToScreen({ event: "Signin Success", token: authData.access_token });
+          console.log("Signin Success:", { token: authData.access_token });
         } else {
           const signUpResponse = await fetch("https://bt-coins.onrender.com/sign-up", {
             method: "POST",
@@ -78,6 +69,7 @@ const SplashScreen = () => {
           if (!signUpResponse.ok) {
             throw new Error(`Registration failed: ${await signUpResponse.text()}`);
           }
+          console.log("Signup successful");
 
           const signInAfterRegResponse = await fetch("https://bt-coins.onrender.com/signin", {
             method: "POST",
@@ -97,11 +89,11 @@ const SplashScreen = () => {
           }
 
           authData = await signInAfterRegResponse.json();
-          logToScreen({ event: "Signup + Signin Success", token: authData.access_token });
+          console.log("Signin after signup successful:", { token: authData.access_token });
 
-          // Update image unconditionally for new users to test
+          // Update image for new users if available (matches local success)
           if (imageUrl) {
-            logToScreen({ event: "Attempting image update", imageUrl });
+            console.log("Attempting image update with URL:", imageUrl);
             const imageUpdateResponse = await fetch(
               `https://bt-coins.onrender.com/bored-tap/user_app?image_url=${encodeURIComponent(imageUrl)}`,
               {
@@ -114,17 +106,18 @@ const SplashScreen = () => {
               }
             );
             const responseText = await imageUpdateResponse.text();
-            logToScreen({
-              event: "Image update response",
+            console.log("Image update response:", {
               status: imageUpdateResponse.status,
               ok: imageUpdateResponse.ok,
               body: responseText,
             });
             if (!imageUpdateResponse.ok) {
-              throw new Error(`Image update failed: ${responseText}`);
+              console.error("Image update failed:", responseText);
+            } else {
+              console.log("Image update successful");
             }
           } else {
-            logToScreen({ event: "Skipped image update", reason: "No image URL" });
+            console.log("Skipped image update: No image URL");
           }
         }
 
@@ -137,7 +130,7 @@ const SplashScreen = () => {
         });
         if (!response.ok) throw new Error("Failed to fetch profile");
         const data = await response.json();
-        logToScreen({ event: "Profile response", data });
+        console.log("Profile response:", data);
 
         handleResetIfNewUser(data.id);
 
@@ -152,7 +145,6 @@ const SplashScreen = () => {
         handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl, uniqueId: data.id });
       } catch (err) {
         console.error("Authentication error:", err);
-        logToScreen({ event: "Error", message: err.message });
         setError(err.message);
       } finally {
         setLoading(false);
@@ -277,8 +269,9 @@ export default SplashScreen;
 //                 user: {
 //                   id: "32141", // Mock Telegram user ID
 //                   username: "yuiop6", // Mock Telegram username
-//                   photo_url: "https://via.placeholder.com/150", // Placeholder image
+//                   photo_url: "https://t.me/i/userpic/320/w1rd6s7RjypJpbHZRzETgLACa4GaM0uhz88rMnregJs.svg", // Mock Telegram image URL
 //                 },
+//                 start_param: "12345", // Mock inviter ID
 //               },
 //             },
 //           };
@@ -289,8 +282,9 @@ export default SplashScreen;
 //           webApp.initDataUnsafe?.user || {
 //             id: "32141",
 //             username: "yuiop6",
-//             photo_url: "https://via.placeholder.com/150",
+//             photo_url: "https://t.me/i/userpic/320/w1rd6s7RjypJpbHZRzETgLACa4GaM0uhz88rMnregJs.svg",
 //           };
+//         const inviterId = webApp.initDataUnsafe?.start_param || "";
 
 //         if (!userData || !userData.id) {
 //           throw new Error("User data is missing or invalid");
@@ -299,8 +293,7 @@ export default SplashScreen;
 //         const username = userData.username || `User${userData.id}`;
 //         const telegramUserId = String(userData.id);
 //         const imageUrl = userData.photo_url || "";
-
-//         console.log("Using Telegram Data:", { telegramUserId, username, imageUrl });
+//         console.log("Using Telegram Data:", { telegramUserId, username, imageUrl, inviterId });
 
 //         // First try to sign in
 //         const signInResponse = await fetch("https://bt-coins.onrender.com/signin", {
@@ -319,52 +312,97 @@ export default SplashScreen;
 //           }),
 //         });
 
+//         let authData;
 //         if (signInResponse.ok) {
-//           const authData = await signInResponse.json();
-//           handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl });
-//           return;
+//           authData = await signInResponse.json();
+//           console.log("Signin successful:", authData);
+//         } else {
+//           // If sign-in fails, register the user
+//           const signUpResponse = await fetch("https://bt-coins.onrender.com/sign-up", {
+//             method: "POST",
+//             headers: {
+//               "Content-Type": "application/json",
+//               accept: "application/json",
+//             },
+//             body: JSON.stringify({
+//               telegram_user_id: telegramUserId,
+//               username,
+//               image_url: imageUrl,
+//             }),
+//           });
+
+//           if (!signUpResponse.ok) {
+//             throw new Error(`Registration failed: ${await signUpResponse.text()}`);
+//           }
+//           console.log("Signup successful");
+
+//           // Sign in after successful registration
+//           const signInAfterRegResponse = await fetch("https://bt-coins.onrender.com/signin", {
+//             method: "POST",
+//             headers: {
+//               "Content-Type": "application/x-www-form-urlencoded",
+//               accept: "application/json",
+//             },
+//             body: new URLSearchParams({
+//               grant_type: "password",
+//               username,
+//               password: telegramUserId,
+//               scope: "",
+//               client_id: "string",
+//               client_secret: "string",
+//             }),
+//           });
+
+//           if (!signInAfterRegResponse.ok) {
+//             throw new Error("Failed to sign in after registration");
+//           }
+
+//           authData = await signInAfterRegResponse.json();
+//           console.log("Signin after signup successful:", authData);
+
+//           // Update profile image for new users (or invitees)
+//           const isInvitee = !!inviterId;
+//           if (imageUrl) { // Removed isInvitee condition for testing
+//             console.log("Attempting to update image with URL:", imageUrl);
+//             const imageUpdateResponse = await fetch(
+//               `https://bt-coins.onrender.com/bored-tap/user_app?image_url=${encodeURIComponent(imageUrl)}`,
+//               {
+//                 method: "POST",
+//                 headers: {
+//                   Authorization: `Bearer ${authData.access_token}`,
+//                   "Content-Type": "application/json",
+//                   Accept: "application/json",
+//                 },
+//               }
+//             );
+//             const responseText = await imageUpdateResponse.text();
+//             console.log("Image update response:", {
+//               status: imageUpdateResponse.status,
+//               ok: imageUpdateResponse.ok,
+//               body: responseText,
+//             });
+//             if (!imageUpdateResponse.ok) {
+//               console.error("Image update failed:", responseText);
+//             } else {
+//               console.log("Image update successful");
+//             }
+//           } else {
+//             console.log("No image URL to update");
+//           }
 //         }
 
-//         // If sign-in fails, register the user
-//         const signUpResponse = await fetch("https://bt-coins.onrender.com/sign-up", {
-//           method: "POST",
+//         // Fetch profile to verify
+//         const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
+//           method: "GET",
 //           headers: {
+//             Authorization: `Bearer ${authData.access_token}`,
 //             "Content-Type": "application/json",
-//             accept: "application/json",
 //           },
-//           body: JSON.stringify({
-//             telegram_user_id: telegramUserId,
-//             username,
-//             image_url: imageUrl,
-//           }),
 //         });
+//         if (!profileResponse.ok) throw new Error("Failed to fetch profile");
+//         const profileData = await profileResponse.json();
+//         console.log("Profile data after update:", profileData);
 
-//         if (!signUpResponse.ok) {
-//           throw new Error(`Registration failed: ${await signUpResponse.text()}`);
-//         }
-
-//         // Sign in after successful registration
-//         const signInAfterRegResponse = await fetch("https://bt-coins.onrender.com/signin", {
-//           method: "POST",
-//           headers: {
-//             "Content-Type": "application/x-www-form-urlencoded",
-//             accept: "application/json",
-//           },
-//           body: new URLSearchParams({
-//             grant_type: "password",
-//             username,
-//             password: telegramUserId,
-//             scope: "",
-//             client_id: "string",
-//             client_secret: "string",
-//           }),
-//         });
-
-//         if (!signInAfterRegResponse.ok) {
-//           throw new Error("Failed to sign in after registration");
-//         }
-
-//         const authData = await signInAfterRegResponse.json();
 //         handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl });
 //       } catch (err) {
 //         console.error("Authentication error:", err);
