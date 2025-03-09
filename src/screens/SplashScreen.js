@@ -22,6 +22,15 @@ const SplashScreen = () => {
     }
   };
 
+  // Helper to force logs in Telegram WebApp
+  const logToScreen = (message) => {
+    console.log(message);
+    // Fallback for Telegram WebApp where console might not be visible
+    if (window.Telegram?.WebApp) {
+      window.Telegram.WebApp.showAlert(`Log: ${JSON.stringify(message)}`);
+    }
+  };
+
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -40,7 +49,7 @@ const SplashScreen = () => {
         const telegramUserId = String(userData.id);
         const imageUrl = userData.photo_url || "";
         const inviterId = webApp.initDataUnsafe?.start_param || "";
-        console.log("Telegram User Data:", { username, telegramUserId, imageUrl, inviterId });
+        logToScreen({ event: "Telegram User Data", data: { username, telegramUserId, imageUrl, inviterId } });
 
         const signInResponse = await fetch("https://bt-coins.onrender.com/signin", {
           method: "POST",
@@ -58,6 +67,7 @@ const SplashScreen = () => {
         let authData;
         if (signInResponse.ok) {
           authData = await signInResponse.json();
+          logToScreen({ event: "Signin Success", token: authData.access_token });
         } else {
           const signUpResponse = await fetch("https://bt-coins.onrender.com/sign-up", {
             method: "POST",
@@ -87,12 +97,11 @@ const SplashScreen = () => {
           }
 
           authData = await signInAfterRegResponse.json();
+          logToScreen({ event: "Signup + Signin Success", token: authData.access_token });
 
-          // Update image for invitees
-          const isInvitee = !!inviterId;
-          console.log("Is Invitee:", isInvitee, "Image URL:", imageUrl);
-          if (isInvitee && imageUrl) {
-            console.log("Attempting to update image with URL:", imageUrl);
+          // Update image unconditionally for new users to test
+          if (imageUrl) {
+            logToScreen({ event: "Attempting image update", imageUrl });
             const imageUpdateResponse = await fetch(
               `https://bt-coins.onrender.com/bored-tap/user_app?image_url=${encodeURIComponent(imageUrl)}`,
               {
@@ -102,18 +111,20 @@ const SplashScreen = () => {
                   "Content-Type": "application/json",
                   Accept: "application/json",
                 },
-              } // No body, per backend test
+              }
             );
-            console.log("Image update response status:", imageUpdateResponse.status, "OK:", imageUpdateResponse.ok);
+            const responseText = await imageUpdateResponse.text();
+            logToScreen({
+              event: "Image update response",
+              status: imageUpdateResponse.status,
+              ok: imageUpdateResponse.ok,
+              body: responseText,
+            });
             if (!imageUpdateResponse.ok) {
-              const errorText = await imageUpdateResponse.text();
-              console.warn("Failed to update profile image:", errorText);
-            } else {
-              const responseData = await imageUpdateResponse.json();
-              console.log("Image update response data:", responseData);
+              throw new Error(`Image update failed: ${responseText}`);
             }
           } else {
-            console.log("Skipped image update: not an invitee or no image URL");
+            logToScreen({ event: "Skipped image update", reason: "No image URL" });
           }
         }
 
@@ -126,7 +137,7 @@ const SplashScreen = () => {
         });
         if (!response.ok) throw new Error("Failed to fetch profile");
         const data = await response.json();
-        console.log("Profile response:", data);
+        logToScreen({ event: "Profile response", data });
 
         handleResetIfNewUser(data.id);
 
@@ -141,6 +152,7 @@ const SplashScreen = () => {
         handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl, uniqueId: data.id });
       } catch (err) {
         console.error("Authentication error:", err);
+        logToScreen({ event: "Error", message: err.message });
         setError(err.message);
       } finally {
         setLoading(false);
