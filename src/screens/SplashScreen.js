@@ -295,7 +295,7 @@ const SplashScreen = () => {
         };
       });
 
-      const autoTapBooster = mappedExtraBoosters.filter((booster) => booster.title === "Auto-bot Tapping");
+      const autoTapBooster = mappedExtraBoosters.filter((booster) => booster.title === "Auto-Bot Tapping");
 
       setExtraBoosters(mappedExtraBoosters);
       setAutoTapActive(autoTapBooster[0].status === 1);
