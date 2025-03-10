@@ -166,26 +166,26 @@ const BoostersContext = ({ children }) => {
 
     const activateOtherBoosters = (effect, newLevel) => {
         switch (effect) {
-            case "boost": {
+            case "Boost": {
                 const newMultiplier = 1 + newLevel;
                 setTapMultiplier(newMultiplier);
                 window.dispatchEvent(new CustomEvent("boostUpgraded", { detail: { level: newLevel, multiplier: newMultiplier } }));
                 break;
             }
-            case "multiplier": {
+            case "Multiplier Boost": {
                 const newMaxEnergy = 1000 + newLevel * 500;
                 setMaxElectricBoost(newMaxEnergy);
                 window.dispatchEvent(new CustomEvent("multiplierUpgraded", { detail: { level: newLevel, maxEnergy: newMaxEnergy } }));
                 break;
             }
-            case "recharging speed": {
+            case "Recharge Speed": {
                 const rechargeIndex = Math.min(newLevel, RECHARGE_TIMES.length - 1);
                 const newRechargeTime = RECHARGE_TIMES[rechargeIndex];
                 setRechargeTime(newRechargeTime)
                 window.dispatchEvent(new CustomEvent("rechargeSpeedUpgraded", { detail: { level: newLevel } }));
                 break;
             }
-            case "Auto-bot Tapping": {
+            case "Auto-Bot Tapping": {
                 setAutoTapActive(true)
                 window.dispatchEvent(new CustomEvent("autoTapActivated", { detail: { level: newLevel } }));
                 break;
@@ -198,23 +198,23 @@ const BoostersContext = ({ children }) => {
 
     const activateOtherBoostersOnLoad = (effect, newLevel) => {
         switch (effect) {
-            case "boost": {
+            case "Boost": {
                 const newMultiplier = 1 + newLevel;
                 setTapMultiplier(newMultiplier);
                 break;
             }
-            case "multiplier": {
+            case "Multiplier Boost": {
                 const newMaxEnergy = 1000 + newLevel * 500;
                 setMaxElectricBoost(newMaxEnergy);
                 break;
             }
-            case "recharging speed": {
+            case "Recharge Speed": {
                 const rechargeIndex = Math.min(newLevel, RECHARGE_TIMES.length - 1);
                 const newRechargeTime = RECHARGE_TIMES[rechargeIndex];
                 setRechargeTime(newRechargeTime)
                 break;
             }
-            case "Auto-bot Tapping": {
+            case "Auto-Bot Tapping": {
                 if (newLevel) {
                     setAutoTapActive(true)
                 }
@@ -255,7 +255,6 @@ const BoostersContext = ({ children }) => {
 
 
     const applyAutoBotTaps = () => {
-        console.log(boosters?.autoTapActive);
         if (!boosters?.autoTapActive) return;
     
         const nowLocal = new Date();
