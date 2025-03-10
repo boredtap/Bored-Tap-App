@@ -256,40 +256,18 @@ const BoostersContext = ({ children }) => {
 
 
     const applyAutoBotTaps = () => {
-        if (!boosters?.autoTapActive) return;
-    
-        const nowLocal = new Date();
-        const lastActiveLocal = new Date(boosters.lastActiveTime);
-    
-        let totalValidTime = 0;
-    
-        // Clone lastActiveLocal to avoid mutating it
-        let current = new Date(lastActiveLocal);
-    
-        // Loop through from last active time to now
-        while (current < nowLocal) {
-            const hour = current.getHours(); // Local time hour
-            if (hour >= 0 && hour < 12) {
-                const nextStep = new Date(current);
-                nextStep.setHours(nextStep.getHours() + 1);
-    
-                // Calculate the time difference to add
-                const endTime = nextStep < nowLocal ? nextStep : nowLocal;
-                const timeDiff = endTime - current;
-    
-                totalValidTime += timeDiff;
-            }
-    
-            // Move forward by 1 hour
-            current.setHours(current.getHours() + 1);
-        }
-    
-        const timeAwayInSeconds = totalValidTime / 1000; // ms to seconds
-        const tapsPerSecond = 1 / 3; // Adjust as needed
-        const offlineTaps = Math.floor(timeAwayInSeconds * tapsPerSecond);
-    
-        console.log("Valid time (sec):", timeAwayInSeconds, "Offline taps:", offlineTaps);
-        return offlineTaps;
+        console.log(boosters?.autoTapActive)
+        if (!boosters?.autoTapActive) return; // Ensure boosters exist before checking
+
+        const now = Date.now();
+        const timeAway = (now - boosters.lastActiveTime) / 1000; // Convert ms to seconds
+
+        const tapsPerSecond = 3; // Example: Adjust based on game logic
+
+        let offlineTaps = timeAway * tapsPerSecond;
+        offlineTaps = Math.floor(offlineTaps)
+
+        return offlineTaps
     };
     
 
