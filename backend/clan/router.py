@@ -8,6 +8,7 @@ from clan.dependencies import (
     create_clan as create_clan_func,
     join_clan as join_clan_func,
     all_clans as all_clans_func,
+    run_clan_earnings,
     top_clans as top_clans_func,
     my_clan as my_clan_func,
     exit_clan as exit_clan_func
@@ -20,7 +21,7 @@ user_clan_router = APIRouter(
     prefix="/user/clan",
     tags=["Clan"],
     # responses={404: {"description": "Not found"}},
-    dependencies=[Depends(get_current_user)]
+    dependencies=[Depends(get_current_user), Depends(run_clan_earnings)]
 )
 
 

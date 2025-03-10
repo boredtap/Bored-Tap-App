@@ -1,12 +1,10 @@
-from datetime import datetime
-from datetime import timezone
-from enum import member
+from datetime import datetime, timedelta, timezone
 from bson import ObjectId
 from fastapi import HTTPException
-from database_connection import user_collection, fs, clans_collection
-from clan.schemas import CreateClan, ClanResponse, ClanSearchResponse, MyClan
+from database_connection import user_collection, fs, clans_collection, coin_stats
+from clan.schemas import CreateClan, ClanSearchResponse, MyClan
 from user_reg_and_prof_mngmnt.models import Clan as UserProfileClan
-from superuser.clan.models import Clan, ClanModelResponse
+from superuser.clan.models import Clan
 
 
 
@@ -362,3 +360,89 @@ def exit_clan(telegram_user_id: str, creator_exit_action: str | None = None):
                     "status": True, "message": "Clan closed successfully"
                 }
         
+
+# --------------------------------- CLAN EARNINGS STRATEGY ---------------------------------- #
+def run_clan_earnings():
+    """
+    Updates clan earnings and user coins daily.
+
+    This function only runs once a day, preferably at midnight UTC time.
+    It calculates 0.1% of the coins a user earned the previous day and distributes it to the user's clan and the user themselves.
+    It also updates the clan's last earn date and the clan rankings.
+
+    Returns a dictionary with the clan earnings and the member earnings for each user in the clan.
+    """
+    # operations before clan earnings update
+    clans = clans_collection.find()
+    today_date = datetime.now(timezone.utc).date()
+    previous_day = today_date - timedelta(days=1)
+
+    response = {}
+    for clan in clans:
+        clan_id = clan["_id"]
+        members = user_collection.find({"clan.id": str(clan_id)})  
+
+        clans_last_earn_date = clans_collection.find_one({"_id": ObjectId(clan_id)})["last_earn_date"]
+
+        if clans_last_earn_date == previous_day.strftime("%Y-%m-%d"):
+            print("Clan earnings already distributed for today.")
+        else:
+            if members:
+                members_telegram_ids = [member["telegram_user_id"] for member in members]
+
+                # get 0.1% of coins a user earned the previous day
+                user_coin_stats = coin_stats.find_one({"telegram_user_id": {"$in": members_telegram_ids}})
+                clan_earnings = 0
+
+                if user_coin_stats:
+                    for date, coins in user_coin_stats["date"].items():
+                        if date == previous_day.strftime("%Y-%m-%d"):
+                            clan_earnings += int(coins * 0.001)
+
+                # add earnings to clan earnings, user coins and update clan's last earn date
+
+                clan_update_operation = {
+                    "$inc": {
+                        "total_coins": clan_earnings
+                    },
+                    "$set": {
+                        "last_earn_date": previous_day.strftime("%Y-%m-%d")
+                    }
+                }
+
+                clan_update = clans_collection.update_one({"_id": ObjectId(clan_id)}, clan_update_operation)
+                if clan_update.modified_count > 0:
+                    response["clan_earnings"] = f"+{clan_earnings}"
+
+                members_update_operation = {
+                    "$inc": {
+                        "total_coins": clan_earnings
+                    }
+                }
+
+                members_update = user_collection.update_many({"telegram_user_id": {"$in": members_telegram_ids}}, members_update_operation)
+                if members_update.modified_count > 0:
+                    response["member_earnings (each)"] = f"+{clan_earnings}"
+
+                print(response)
+
+
+
+    # operations after clan earnings update
+    # update clan rankings in from highest to lowest of total coins
+    updated_clans = clans_collection.find().sort("total_coins", -1)
+
+    if clan:
+        rank = 1
+        for clan in updated_clans:
+            clan_id = clan["_id"]
+            update_clan_rank = clans_collection.update_one(
+                {"_id": ObjectId(clan_id)}, 
+                {
+                    "$set": {"rank": rank}
+                }
+            )
+            rank += 1
+
+    return response
+

@@ -113,9 +113,14 @@ async def perform_streak(telegram_user_id: Annotated[str, Depends(get_current_us
 
         return reset_streak
     
+    remaining_wait_time = timedelta(hours=24) - time_difference
+    hrs = remaining_wait_time.total_seconds() // 3600
+    mins = (remaining_wait_time.total_seconds() // 60) % 60
+    secs = remaining_wait_time.total_seconds() % 60
+
     return {
         "message": "Streak not updated",
-        "Countdown": f"check again by this time: {old_streak.last_action_date.strftime('%I:%M %p')} tomorrow"
+        "Count": f"check again in the next {int(hrs)} hrs:{int(mins)} mins:{int(secs)} secs"
     }
 
 
