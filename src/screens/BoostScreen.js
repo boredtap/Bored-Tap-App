@@ -199,7 +199,7 @@ const BoostScreen = () => {
               onClick={handleOverlayClose}
             />
           </div>
-          <div className="overlay-divider"></div>
+          <div className="overlay-divider2"></div>
           <div className="overlay-content">
             <img src={icon} alt={title} className="overlay-boost-icon" />
             <p className="overlay-description">{description}</p>
