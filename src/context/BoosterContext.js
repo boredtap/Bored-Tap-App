@@ -255,31 +255,43 @@ const BoostersContext = ({ children }) => {
 
 
     const applyAutoBotTaps = () => {
-        if (!boosters?.autoTapActive) return; // Ensure boosters exist before checking
-
-        const nowUTC = new Date();
-        const nowWAT = new Date(nowUTC.getTime() + 3600000); // Convert to Nigerian time (UTC+1)
-
-        const lastActiveUTC = new Date(boosters.lastActiveTime);
-        const lastActiveWAT = new Date(lastActiveUTC.getTime() + 3600000); // Convert last active to WAT
-
-        let totalValidTime = 0; // Total valid time within 12 AM - 12 PM WAT
-
-        let current = lastActiveWAT;
-        while (current < nowWAT) {
-            const hour = current.getUTCHours();
+        console.log(boosters?.autoTapActive);
+        if (!boosters?.autoTapActive) return;
+    
+        const nowLocal = new Date();
+        const lastActiveLocal = new Date(boosters.lastActiveTime);
+    
+        let totalValidTime = 0;
+    
+        // Clone lastActiveLocal to avoid mutating it
+        let current = new Date(lastActiveLocal);
+    
+        // Loop through from last active time to now
+        while (current < nowLocal) {
+            const hour = current.getHours(); // Local time hour
             if (hour >= 0 && hour < 12) {
-                totalValidTime += Math.min(nowWAT - current, 3600000); // Add only valid time
+                const nextStep = new Date(current);
+                nextStep.setHours(nextStep.getHours() + 1);
+    
+                // Calculate the time difference to add
+                const endTime = nextStep < nowLocal ? nextStep : nowLocal;
+                const timeDiff = endTime - current;
+    
+                totalValidTime += timeDiff;
             }
-            current = new Date(current.getTime() + 3600000); // Move forward 1 hour
+    
+            // Move forward by 1 hour
+            current.setHours(current.getHours() + 1);
         }
-
-        const timeAway = totalValidTime / 1000; // Convert ms to seconds
-        const tapsPerSecond = 1 / 3; // Example: Adjust based on game logic
-        let offlineTaps = Math.floor(timeAway * tapsPerSecond);
-
-        return offlineTaps
+    
+        const timeAwayInSeconds = totalValidTime / 1000; // ms to seconds
+        const tapsPerSecond = 1 / 3; // Adjust as needed
+        const offlineTaps = Math.floor(timeAwayInSeconds * tapsPerSecond);
+    
+        console.log("Valid time (sec):", timeAwayInSeconds, "Offline taps:", offlineTaps);
+        return offlineTaps;
     };
+    
 
     const adjustElectricBoosts = () => {
         if (!boosters?.lastActiveTime) return;
