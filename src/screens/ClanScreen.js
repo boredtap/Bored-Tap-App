@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./ClanScreen.css";
+import { fetchClanImage } from "../utils/fetchImage"; // Adjust path if needed
 
 const ClanScreen = () => {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ const ClanScreen = () => {
         if (!profileResponse.ok) throw new Error("Failed to fetch user profile");
         const profileData = await profileResponse.json();
 
-        if (profileData.clanId) {
+        if (profileData.clan.id) {
           navigate("/clan-details");
           return;
         }
@@ -45,17 +46,21 @@ const ClanScreen = () => {
         const topClansData = await topClansResponse.json();
         console.log("Raw top clans data:", topClansData);
 
-        const mappedTopClans = topClansData.map((clan, index) => ({
-          id: clan.id || index + 1, // Use 'id' from API
-          name: clan.name,
-          members: clan.members ? clan.members.toLocaleString() : "0", // Updated to 'members'
-          rank: clan.rank || `#${index + 1}`, // Add rank for preview
-          total_coins: clan.total_coins || 0, // Add total_coins for preview
-          rankIcon: `${process.env.PUBLIC_URL}/${
-            index === 0 ? "first-icon.png" : index === 1 ? "second-icon.png" : "third-icon.png"
-          }`,
-          cardIcon: clan.imageUrl || `${process.env.PUBLIC_URL}/default-clan-icon.png`,
-        }));
+        const mappedTopClans = await Promise.all(
+          topClansData.map(async (clan, index) => {
+            const imageUrl = await fetchClanImage(clan.image_id, token);
+            return {
+              id: clan.id || index + 1,
+              name: clan.name,
+              rank: clan.rank || `#${index + 1}`, // Use backend rank or fallback
+              total_coins: clan.total_coins ? clan.total_coins.toLocaleString() : "0", // Total coins earned
+              rankIcon: `${process.env.PUBLIC_URL}/${
+                index === 0 ? "first-icon.png" : index === 1 ? "second-icon.png" : "third-icon.png"
+              }`,
+              cardIcon: imageUrl,
+            };
+          })
+        );
 
         setTopClans(mappedTopClans);
         setLoading(false);
@@ -74,7 +79,7 @@ const ClanScreen = () => {
   };
 
   const handleJoinClick = () => {
-    navigate("/clan-list-screen"); // Fixed to match route in App.js
+    navigate("/clan-list-screen");
   };
 
   const handleClanClick = (clanId) => {
@@ -97,8 +102,7 @@ const ClanScreen = () => {
         </div>
       </div>
 
-       {/* Top Clans Section */}
-       <div className="top-clans-section">
+      <div className="top-clans-section">
         <p className="section-title">Top Clans</p>
         <div className="see-all" onClick={() => navigate("/clan-list-screen")}>
           <span>See all</span>
@@ -110,7 +114,6 @@ const ClanScreen = () => {
         </div>
       </div>
 
-
       {loading ? (
         <p className="loading-message">Loading clans...</p>
       ) : error ? (
@@ -118,13 +121,13 @@ const ClanScreen = () => {
       ) : topClans.length > 0 ? (
         <div className="clan-cards">
           {topClans.map((clan) => (
-            <div className="clan-card" key={clan.id} onClick={() => handleClanClick(clan.id)}>
+            <div className="clan-card2" key={clan.id} onClick={() => handleClanClick(clan.id)}>
               <img src={clan.cardIcon} alt="Clan Profile" className="clan-card-icon" />
               <div className="clan-card-details">
                 <p className="clan-card-name">{clan.name}</p>
                 <div className="clan-card-stats">
-                  <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Members Icon" className="members-icon" />
-                  <span className="clan-card-members">{clan.members}</span>
+                  <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Coins Icon" className="members-icon" />
+                  <span className="clan-card-members">{clan.total_coins}</span> {/* Show total_coins instead of members */}
                 </div>
               </div>
               <img src={clan.rankIcon} alt="Rank Icon" className="rank-icon" />
