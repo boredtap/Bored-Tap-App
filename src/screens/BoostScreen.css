@@ -208,7 +208,7 @@
 }
 
 /* Overlay Header */
-.overlay-header {
+.overlay-header2 {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -216,8 +216,9 @@
   margin-bottom: 10px;
 }
 
-.overlay-title {
+.overlay-title2 {
   font-size: 18px;
+ 
 }
 
 .overlay-cancel {
@@ -249,12 +250,14 @@
 .overlay-boost-icon {
   width: 60px;
   height: 60px;
+  margin-bottom: 48px;
 }
 
 .overlay-description {
   font-size: 14px;
   color: #e0e0e0;
   text-align: center;
+  margin-bottom: 48px;
 }
 
 .overlay-value-container {
@@ -275,7 +278,8 @@
 
 .overlay-level {
   font-size: 14px;
-  color: orange;
+  color: #666;
+  
 }
 
 .overlay-cta {
@@ -288,6 +292,7 @@
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
+  margin-top: 48px;
 }
 
 .overlay-cta:disabled {

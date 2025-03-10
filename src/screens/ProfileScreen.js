@@ -102,9 +102,11 @@ const ProfileScreen = () => {
       icon: `${process.env.PUBLIC_URL}/task.png`,
       label: "Completed Tasks",
       value: profile.completed_tasks || "0", // Assuming backend might add this later; default to 0
-    },
-    { icon: `${process.env.PUBLIC_URL}/leaderboard12-icon.png`, label: "Rank", value: rank },
-    { icon: `${process.env.PUBLIC_URL}/invite.png`, label: "Invited Friends", value: invitedFriendsCount },
+      onClick: () => navigate("/task-screen"),},
+    { icon: `${process.env.PUBLIC_URL}/leaderboard12-icon.png`, label: "Rank", value: rank,
+    onClick: () => navigate("/leaderboard-screen"), },
+    { icon: `${process.env.PUBLIC_URL}/invite.png`, label: "Invited Friends", value: invitedFriendsCount, 
+    onClick: () => navigate("/invite-screen"),},
     {
       icon: `${process.env.PUBLIC_URL}/level.png`,
       label: "Level",

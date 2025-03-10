@@ -104,7 +104,7 @@ const BoostScreen = () => {
           id: booster.booster_id,
           title: nameMapping[booster.name.toLowerCase()] || booster.name,
           description: booster.description,
-          value: booster.upgrade_cost.toString(),
+          value: booster.upgrade_cost.toLocaleString(),
           level: booster.status === 'owned' ? "Owned" : booster.level === "-" ? "Not Owned" : `Level ${booster.level}`,
           ctaText: booster.level === "-" ? "Buy" : `Upgrade to Level ${booster.level + 1}`,
           altCTA: (booster.status === "owned") ? "Owned" : (parseInt(booster.level, 10) === 5) ? "Maximum Level Reached" : (profileData.total_coins || 0) < booster.upgrade_cost ? "Insufficient Funds" : null,
@@ -188,10 +188,10 @@ const BoostScreen = () => {
     const isDisabled = altCTA && value !== "Free";
 
     return (
-      <div className="overlay-container">
+      <div className="overlay-container" onClick={handleOverlayClose}>
         <div className={`boost-overlay ${activeOverlay ? "slide-in" : "slide-out"}`}>
-          <div className="overlay-header">
-            <h2 className="overlay-title">{title}</h2>
+          <div className="overlay-header2">
+            <h2 className="overlay-title2">{title}</h2>
             <img
               src={`${process.env.PUBLIC_URL}/cancel.png`}
               alt="Cancel"
@@ -206,8 +206,9 @@ const BoostScreen = () => {
             <div className="overlay-value-container">
               <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Coin Icon" className="overlay-coin-icon" />
               <span className="overlay-value">{value}</span>
+              {level && <div className="overlay-level">/{level}</div>}
             </div>
-            {level && <p className="overlay-level">{level}</p>}
+            
             <button
               className="overlay-cta"
               disabled={isDisabled}
@@ -270,7 +271,7 @@ const BoostScreen = () => {
                         description:
                           booster.type === "tapperBoost"
                             ? "Multiply your tap income by X2 for 20 seconds."
-                            : "Instantly refill energy to maximum.",
+                            : "Fill your Energy to 100% Instantly.",
                         value: "Free",
                         ctaText: "Claim",
                         icon: booster.icon,
