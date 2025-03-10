@@ -16,35 +16,40 @@
 .clan-header {
   text-align: center;
   margin-top: 20px;
-  margin-bottom: 24px; /* Space before Top Clans section */
+  margin-bottom: 150px; /* Space before Top Clans section */
 }
 
 .clan-image-icon {
   width: 80px;
   height: 80px;
   margin: 0 auto;
+  margin-bottom: 48px;
 }
 
 .clan-title {
-  font-size: 32px;
-  font-weight: 500;
+  font-size: 120px;
+  font-weight: bold;
   margin: 10px 0; /* Matches original spacing */
+  margin-bottom: 80px;
 }
 
 .clan-cta-buttons {
   display: flex;
   justify-content: center;
   gap: 16px;
-  margin-top: 20px; /* Matches original placement */
+  margin-top: 0px; /* Matches original placement */
+  margin-bottom: 24px;
 }
 
 .clan-cta {
   border: none;
   border-radius: 25px;
-  padding: 10px 20px;
+  padding: 10px 30px;
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+  
 }
 
 .clan-cta.active {
@@ -82,8 +87,22 @@
   margin-top: 20px;
 }
 
-.clan-card {
-  cursor: pointer; /* Indicate clickability */
+.clan-card2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #414141;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.clan-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 20px;
+
 }
 
 /* Top Clans Section */

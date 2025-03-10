@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./ClanListScreen.css";
+import { fetchClanImage } from "../utils/fetchImage"; // Adjust path if needed
 
 const ClanListScreen = () => {
   const navigate = useNavigate();
@@ -33,20 +34,23 @@ const ClanListScreen = () => {
         const clansData = await response.json();
         console.log("Raw clans data:", clansData); // Debug log
 
-        // In ClanListScreen.js
-        const mappedClans = clansData.map((clan, index) => ({
-          id: clan.id,
-          name: clan.name,
-          members: clan.members ? clan.members.toLocaleString() : "0",
-          icon: clan.imageUrl || `${process.env.PUBLIC_URL}/default-clan-icon.png`,
-          rank: clan.rank || `#${index + 1}`, // Add rank
-          total_coins: clan.total_coins || 0, // Add total_coins
-          rankIcon: `${process.env.PUBLIC_URL}/${
-            index === 0 ? "first-icon.png" : index === 1 ? "second-icon.png" : index === 2 ? "third-icon.png" : "front-arrow.png"
-          }`,
-        }));
+        // Map clans with image fetching
+        const mappedClans = await Promise.all(
+          clansData.map(async (clan, index) => {
+            const imageUrl = await fetchClanImage(clan.image_id, token); // Fetch image
+            return {
+              id: clan.id,
+              name: clan.name,
+              icon: imageUrl, // Use fetched image URL
+              rank: clan.rank || `#${index + 1}`,
+              total_coins: clan.total_coins ? clan.total_coins.toLocaleString() : "0", // Total coins earned
+              rankIcon: `${process.env.PUBLIC_URL}/${
+                index === 0 ? "first-icon.png" : index === 1 ? "second-icon.png" : index === 2 ? "third-icon.png" : "front-arrow.png"
+              }`,
+            };
+          })
+        );
 
-        
         setClans(mappedClans);
         setFilteredClans(mappedClans);
         setLoading(false);
@@ -116,7 +120,7 @@ const ClanListScreen = () => {
                   <p className="clan-card-name">{clan.name}</p>
                   <div className="clan-card-stats">
                     <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Members Icon" className="members-icon" />
-                    <span className="clan-card-members">{clan.members}</span>
+                    <span className="clan-card-members">{clan.total_coins}</span>
                   </div>
                 </div>
               </div>
