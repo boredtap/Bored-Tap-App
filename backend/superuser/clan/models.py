@@ -24,6 +24,7 @@ class Clan(BaseModel):
     status: str = ClanStatus.PENDING
     image_id: str
     members: int
+    last_earn_date: datetime | None = None
 
 
 class ClanModelResponse(Clan, ID):
