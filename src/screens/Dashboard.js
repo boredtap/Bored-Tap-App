@@ -16,7 +16,7 @@
 //     const checkClanStatus = async () => {
 //       const token = localStorage.getItem("accessToken");
 //       if (!token) return;
-  
+
 //       try {
 //         const response = await fetch("https://bt-coins.onrender.com/user/clan/my_clan", {
 //           method: "GET",
@@ -541,7 +541,7 @@ import { throttle } from "lodash"; // Install lodash if not available
 const RECHARGE_TIMES = [5000, 4500, 3500, 2500, 1500, 500]; // Level 0 through 5
 
 const Dashboard = () => {
-  console.log("Dashboard rendering");
+  //console.log("Dashboard rendering");
   const navigate = useNavigate();
   const [clanPath, setClanPath] = useState("/clan-screen");
 
@@ -603,7 +603,7 @@ const Dashboard = () => {
     username: "User",
     image_url: `${process.env.PUBLIC_URL}/profile-picture.png`,
   });
-  console.log("telegramData in Dashboard:", telegramData);
+  //console.log("telegramData in Dashboard:", telegramData);
 
   // State for user profile data
   const [profile, setProfile] = useState({ level: 1, level_name: "Beginner" });
@@ -657,7 +657,7 @@ const Dashboard = () => {
     });
   };
 
-  
+
 
   // Fetch profile on mount
   useEffect(() => {
@@ -677,7 +677,7 @@ const Dashboard = () => {
         });
         if (!response.ok) throw new Error("Failed to fetch profile");
         const data = await response.json();
-        console.log("Data from /user/profile:", data);
+        //console.log("Data from /user/profile:", data);
         if (data.total_coins === 0 && data.level === 1) {
           resetBoosters();
         } else {
@@ -696,7 +696,7 @@ const Dashboard = () => {
             username: data.username || "User",
             image_url: data.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
           });
-          console.log("telegramData after update:", telegramData);
+          //console.log("telegramData after update:", telegramData);
         }
       } catch (err) {
         console.error("Error fetching profile:", err);
@@ -707,7 +707,7 @@ const Dashboard = () => {
   }, [navigate]);
 
   useEffect(() => {
-    console.log("Current telegramData:", telegramData);
+    //console.log("Current telegramData:", telegramData);
   }, [telegramData]);
 
   const updateBackend = useCallback(() => {
@@ -719,24 +719,24 @@ const Dashboard = () => {
     const url = `https://bt-coins.onrender.com/update-coins?coins=${tapsToSync}&current_power_limit=${electricBoostRef.current}&last_active_time=${isoString}&auto_bot_active=true`;
 
     fetch(url, {
-    method: "POST",
-    headers: {
+      method: "POST",
+      headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
-    },
-    keepalive: true,
+      },
+      keepalive: true,
     })
-    .then((response) => response.json())
-    .then((response_data) => {
+      .then((response) => response.json())
+      .then((response_data) => {
         if (response_data["current coins"] >= 0) {
-        setProfile((prev) => ({
+          setProfile((prev) => ({
             ...prev,
             level: response_data["current level"] || prev.level,
-        }));
+          }));
         }
-    })
-    .catch((err) => console.error("Error syncing with backend:", err));
-}, []);
+      })
+      .catch((err) => console.error("Error syncing with backend:", err));
+  }, []);
 
   const throttledUpdateBackend = useCallback(throttle(updateBackend, 10000), [updateBackend]);
 
@@ -758,6 +758,7 @@ const Dashboard = () => {
       if (timeSinceLastTap >= rechargeTime && electricBoost < maxElectricBoost) {
         if (!rechargeInterval.current) {
           rechargeInterval.current = setInterval(() => {
+            console.log("Setting Electric Boost from interval update")
             setElectricBoost((prev) => {
               const newBoost = Math.min(prev + 1, maxElectricBoost);
               if (newBoost === maxElectricBoost) {
@@ -890,15 +891,15 @@ const Dashboard = () => {
       const currentUser = JSON.parse(localStorage.getItem("telegramUser"));
       const lastUser = JSON.parse(sessionStorage.getItem("lastUser"));
 
-      if (currentUser && currentUser.uniqueId !== lastUser?.uniqueId) {     
+      if (currentUser && currentUser.uniqueId !== lastUser?.uniqueId) {
         const offlineTaps = applyAutoBotTaps();
         const newElectricBoost = adjustElectricBoosts();
+        setElectricBoost(newElectricBoost);
 
         if (offlineTaps > 0) {
           setAutoBotTaps(offlineTaps);
           setShowAutoBotOverlay(true);
         }
-        setElectricBoost(newElectricBoost);
 
         sessionStorage.setItem("lastUser", JSON.stringify(currentUser));
         sessionStorage.setItem("hasVisited", "true");
@@ -916,7 +917,7 @@ const Dashboard = () => {
     return () => {
       window.removeEventListener("load", handleLoad);
     };
-  }, [applyAutoBotTaps, adjustElectricBoosts]);
+  }, [applyAutoBotTaps]);
 
   useEffect(() => {
     const storedTaps = localStorage.getItem("autoBotTaps");

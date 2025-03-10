@@ -3,7 +3,7 @@ import { createContext, useState, useEffect } from "react";
 const BOOST_DURATION = 20000; // 20 seconds for Tapper Boost
 const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
 // Updated Recharge times per spec (in ms) - now including all 5 levels
-const RECHARGE_TIMES = [5000, 4500, 3500, 2500, 1500, 500]; // Level 0 through 5
+const RECHARGE_TIMES = [2000, 1500, 1000, 500, 300, 200]; // Level 0 through 5
 
 
 const getFromStorage = (key, defaultValue) => {
@@ -134,6 +134,7 @@ const BoostersContext = ({ children }) => {
     }
 
     const setElectricBoost = (newElectricBoost) => {
+        console.log("Setting Electric Boost: ", newElectricBoost)
         setBoosters(prev => ({
             ...prev, electricBoost: typeof newElectricBoost === 'function' ? newElectricBoost(prev.electricBoost) : newElectricBoost,
         }))
@@ -293,6 +294,7 @@ const BoostersContext = ({ children }) => {
     
 
     const adjustElectricBoosts = () => {
+        console.log("Adjusting Electric Boost Time")
         if (!boosters?.lastActiveTime) return;
 
         const now = Date.now();
