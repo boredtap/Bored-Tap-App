@@ -40,7 +40,8 @@ def get_clans(category: ClanCategories, skip: int, page_size: int):
             creator=clan["creator"],
             coins_earned=clan["total_coins"],
             members=clan["members"],
-            created_at=clan["created_at"]
+            created_at=clan["created_at"],
+            image_id=clan["image_id"]
         )
 
         yield clan_data
