@@ -13,6 +13,15 @@ class ClanCategories(str, Enum):
         return self.value
 
 
+class AlterClanStatus(str, Enum):
+    APPROVE="approve"
+    DISBAND="disband"
+    RESUME="resume"
+
+    def __repr__(self):
+        return self.value
+
+
 class ClanTopMembers(BaseModel):
     username: str
     level: int
@@ -29,6 +38,7 @@ class ClanProfile(BaseModel):
     coins_earned: int
     members: int
     created_at: datetime
+    image_id: str
 
 
 class ClanProfileMembers(ClanProfile):

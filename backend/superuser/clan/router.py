@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, Query
 from superuser.clan.dependencies import (
-    get_clans as get_clans_func
+    get_clans as get_clans_func,
+    get_clan_profile as get_clan_profile_func,
+    alter_clan_status as alter_clan_status_func
 )
-from superuser.clan.schemas import ClanCategories
+from superuser.clan.schemas import AlterClanStatus, ClanCategories
 from superuser.dashboard.admin_auth import get_current_admin
 
 
@@ -14,6 +16,7 @@ clan_router = APIRouter(
 )
 
 
+# ----------------------------- GET CLANS ------------------------------ #
 @clan_router.get("/get_clans")
 async def get_clans(
     category: ClanCategories,
@@ -37,3 +40,18 @@ async def get_clans(
 
     return list(response)
 
+
+# ----------------------------- CLAN PROFILE ------------------------------ #
+@clan_router.get("/get_clan/{clan_id}")
+async def get_clan_profile(clan_id: str):
+    profile = get_clan_profile_func(clan_id)
+
+    return profile
+
+
+# ----------------------------- ALTER CLAN STATUS ------------------------------ #
+@clan_router.post("/alter_clan_status/{clan_id}")
+async def alter_clan_status(alter_action: AlterClanStatus, clan_id: str):
+    response = alter_clan_status_func(clan_id, alter_action)
+
+    return response
