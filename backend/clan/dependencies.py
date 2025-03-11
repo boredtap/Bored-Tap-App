@@ -361,6 +361,11 @@ def exit_clan(telegram_user_id: str, creator_exit_action: str | None = None):
                 }
         
 
+# --------------------------------- CLAN TOP EARNERS ---------------------------------- #
+def clan_top_earners():
+    pass
+
+
 # --------------------------------- CLAN EARNINGS STRATEGY ---------------------------------- #
 def run_clan_earnings():
     """
@@ -373,7 +378,7 @@ def run_clan_earnings():
     Returns a dictionary with the clan earnings and the member earnings for each user in the clan.
     """
     # operations before clan earnings update
-    clans = clans_collection.find()
+    clans = clans_collection.find({"status": "active"})
     today_date = datetime.now(timezone.utc).date()
     previous_day = today_date - timedelta(days=1)
 
