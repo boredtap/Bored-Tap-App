@@ -137,7 +137,7 @@ def start_command(message: Message):
             print("sending photo...")
             bot.send_photo(
                 message.chat.id, photo=welcome_photo_url,
-                caption=f"Welcome, {referred_user.username}!\nPerform tasks and earn coins!",
+                caption=f"Welcome, {username}!\nPerform tasks and earn coins!",
                 reply_markup=inline_keyboard
             )
             print("photo sent")
