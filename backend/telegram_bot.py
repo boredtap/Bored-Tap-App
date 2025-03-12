@@ -14,6 +14,7 @@ bot_interactions = APIRouter()
 BotToken = get_settings().bot_token
 bot = telebot.TeleBot(token=BotToken)
 base_url = get_settings().base_url
+welcome_photo_url = "https://s3-alpha-sig.figma.com/img/dae9/c267/ada3d9ffded20bd58885388f77afe727?Expires=1742774400&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=ZBO6yNdqTRlD0XyGntGkEQFbLbwOT8fWv2qJA-NqOyoVDfhp9iir5YNT57eHVM6KU~paRqUHBDlk4DKyv3Ql2bHLLV9RpM33~Lly6s-0vtzX~AL1dypHbdCX31vhNmFR-NMifARX6KUUJMmzkllcrsU70j-XYtBJRoXB-3OhXtuzEZ8YIfYHR3XA~tMNxM-kyo9fL6CtYcKwglzQBf1nmBYnb2Zrp~eYE1ujcLoTbMPwsbEMXsA6Y81KtTrjhRA5CsJacvrPsT5R2UdBXNyWoAw-XTztpQTXqetCWq1MD5-yZTQkMlT5~aUQxG~ghMgEigv0rKisSQPtoogmKVclSg__"
 
 
 # --------------------------------- Set Webhook URL ----------------------------------- #
@@ -135,7 +136,7 @@ def start_command(message: Message):
         try:
             print("sending photo...")
             bot.send_photo(
-                message.chat.id, photo="./boredtap coin.png",
+                message.chat.id, photo=welcome_photo_url,
                 caption=f"Welcome back, {username}!\nPerform tasks and earn coins!",
                 reply_markup=inline_keyboard
             )
