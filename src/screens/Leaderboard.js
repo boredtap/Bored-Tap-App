@@ -123,50 +123,52 @@ const Leaderboard = () => {
         {currentLeaderboard.length === 0 ? (
           <p className="no-leaderboard">No leaderboard entries available yet.</p>
         ) : (
-          <div className="leaderboard-cards">
-            {currentLeaderboard.map((entry, index) => (
-              <div
-                className={`leaderboard-card ${index > 2 ? "transparent-card" : ""}`}
-                key={entry.telegram_user_id || index}
-              >
-                <div className="leaderboard-left">
-                  <img
-                    src={entry.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`}
-                    alt={`${entry.username}'s Profile`}
-                    className="leaderboard-logo round-frame"
-                  />
-                  <div className="leaderboard-info">
-                    <p className="leaderboard-title">
-                      {entry.username} <span className="level">.Lvl {entry.level || 1}</span>
-                    </p>
-                    <p className="leaderboard-value">{entry.coins_earned || 0} BT Coin</p>
+          <div className="leaderboard-cards-container">
+            <div className="leaderboard-cards">
+              {currentLeaderboard.map((entry, index) => (
+                <div
+                  className={`leaderboard-card ${index > 2 ? "transparent-card" : ""}`}
+                  key={entry.telegram_user_id || index}
+                >
+                  <div className="leaderboard-left">
+                    <img
+                      src={entry.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`}
+                      alt={`${entry.username}'s Profile`}
+                      className="leaderboard-logo round-frame"
+                    />
+                    <div className="leaderboard-info">
+                      <p className="leaderboard-title">
+                        {entry.username} <span className="level">.Lvl {entry.level || 1}</span>
+                      </p>
+                      <p className="leaderboard-value">{entry.coins_earned || 0} BT Coin</p>
+                    </div>
+                  </div>
+                  <div className="leaderboard-right">
+                    {index === 0 ? (
+                      <img
+                        src={`${process.env.PUBLIC_URL}/first-icon.png`}
+                        alt="1st Place"
+                        className="leaderboard-right-icon"
+                      />
+                    ) : index === 1 ? (
+                      <img
+                        src={`${process.env.PUBLIC_URL}/second-icon.png`}
+                        alt="2nd Place"
+                        className="leaderboard-right-icon"
+                      />
+                    ) : index === 2 ? (
+                      <img
+                        src={`${process.env.PUBLIC_URL}/third-icon.png`}
+                        alt="3rd Place"
+                        className="leaderboard-right-icon"
+                      />
+                    ) : (
+                      <span className="position-number">#{index + 1}</span>
+                    )}
                   </div>
                 </div>
-                <div className="leaderboard-right">
-                  {index === 0 ? (
-                    <img
-                      src={`${process.env.PUBLIC_URL}/first-icon.png`}
-                      alt="1st Place"
-                      className="leaderboard-right-icon"
-                    />
-                  ) : index === 1 ? (
-                    <img
-                      src={`${process.env.PUBLIC_URL}/second-icon.png`}
-                      alt="2nd Place"
-                      className="leaderboard-right-icon"
-                    />
-                  ) : index === 2 ? (
-                    <img
-                      src={`${process.env.PUBLIC_URL}/third-icon.png`}
-                      alt="3rd Place"
-                      className="leaderboard-right-icon"
-                    />
-                  ) : (
-                    <span className="position-number">#{index + 1}</span>
-                  )}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>
