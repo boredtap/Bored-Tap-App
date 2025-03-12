@@ -31,7 +31,7 @@ const ClanScreen = () => {
         const profileData = await profileResponse.json();
 
         if (profileData.clan.id) {
-          navigate("/clan-details");
+          navigate("/clan-details-screen");
           return;
         }
 

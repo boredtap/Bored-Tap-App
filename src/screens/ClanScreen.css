@@ -30,7 +30,7 @@
   font-size: 120px;
   font-weight: bold;
   margin: 10px 0; /* Matches original spacing */
-  margin-bottom: 80px;
+  margin-bottom: 60px;
 }
 
 .clan-cta-buttons {
@@ -38,7 +38,7 @@
   justify-content: center;
   gap: 16px;
   margin-top: 0px; /* Matches original placement */
-  margin-bottom: 24px;
+  margin-bottom: 8px;
 }
 
 .clan-cta {

@@ -231,7 +231,7 @@ const DailyStreakScreen = () => {
         )}
       </div>
 
-      <div className="cta-container">
+      <div className="cta-container clickable">
         <CTAButton
           ref={ctaButtonRef}
           isActive={!isClaimed}
@@ -262,7 +262,7 @@ const DailyStreakScreen = () => {
               <p className="overlay-text">Streak Not Updated</p>
               <p className="overlay-subtext">Check again by this time tomorrow</p>
               <p className="overlay-time">{countdownTime}</p>
-              <button className="overlay-cta-button" onClick={handleCloseOverlay}>
+              <button className="overlay-cta-button clickable" onClick={handleCloseOverlay}>
                 Ok
               </button>
             </div>

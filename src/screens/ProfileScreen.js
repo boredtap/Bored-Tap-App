@@ -135,7 +135,7 @@ const ProfileScreen = () => {
         <div className="profile-username">{profile.username || "User"}</div>
 
         {/* Profile data cards */}
-        <div className="profile-data-cards">
+        <div className="profile-data-cards clickable">
           {profileData.map((item, index) => (
             <div
               key={index}

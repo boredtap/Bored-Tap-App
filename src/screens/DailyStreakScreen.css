@@ -137,6 +137,12 @@
   color: #000000;
 }
 
+/* Clicking effect for all clickables */
+.clickable:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease-in-out;
+}
+
 .cta-button.inactive {
   background-color: #414141;
   color: #aaa;
