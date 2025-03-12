@@ -106,24 +106,23 @@ def start_command(message: Message):
         )
         inline_keyboard = InlineKeyboardMarkup(row_width=1).add(launch_btn)
 
-        # # set welcome message
-        # bot.send_photo(
-        #     message.chat.id, photo="./boredtap coin.png",
-        #     caption=f"Welcome, {referred_user.username}!\nPerform tasks and earn coins!",
-        #     reply_markup=inline_keyboard
-        # )
-
-
-        bot.send_message(
-            message.chat.id, f"Welcome, {referred_user.username}!\nPerform tasks and earn coins!",
+        # send welcome message
+        bot.send_photo(
+            message.chat.id, photo=welcome_photo_url,
+            caption=f"Welcome, {referred_user.username}!\nPerform tasks and earn coins!",
             reply_markup=inline_keyboard
         )
+
+        # bot.send_message(
+        #     message.chat.id, f"Welcome, {referred_user.username}!\nPerform tasks and earn coins!",
+        #     reply_markup=inline_keyboard
+        # )
 
     # except user already exist
     except HTTPException as e:
         print(f"HTTPException encountered: {e}")
 
-        # set welcome message
+        # set welcome message action button
         print(f"Error encountered: {e}")
         launch_btn = InlineKeyboardButton(
             text="Launch WebApp",
