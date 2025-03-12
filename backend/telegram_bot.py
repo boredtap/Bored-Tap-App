@@ -98,12 +98,21 @@ def start_command(message: Message):
         referred_user = loop.run_until_complete(sign_up(user, referral_code))
         loop.close()
 
-        # send welcome message
+        # set welcome message action button
         launch_btn = InlineKeyboardButton(
             text="Claim Invite Reward",
             web_app=telebot.types.WebAppInfo(url="https://boredtap.netlify.app/")
         )
         inline_keyboard = InlineKeyboardMarkup(row_width=1).add(launch_btn)
+
+        # # set welcome message
+        # bot.send_photo(
+        #     message.chat.id, photo="./boredtap coin.png",
+        #     caption=f"Welcome, {referred_user.username}!\nPerform tasks and earn coins!",
+        #     reply_markup=inline_keyboard
+        # )
+
+
         bot.send_message(
             message.chat.id, f"Welcome, {referred_user.username}!\nPerform tasks and earn coins!",
             reply_markup=inline_keyboard
@@ -113,7 +122,7 @@ def start_command(message: Message):
     except HTTPException as e:
         print(f"HTTPException encountered: {e}")
 
-        # send welcome message
+        # set welcome message
         print(f"Error encountered: {e}")
         launch_btn = InlineKeyboardButton(
             text="Launch WebApp",
@@ -121,10 +130,19 @@ def start_command(message: Message):
             web_app=telebot.types.WebAppInfo(url="https://boredtap.netlify.app/")
         )
         inline_keyboard = InlineKeyboardMarkup(row_width=1).add(launch_btn)
-        bot.send_message(
-            message.chat.id, f"Welcome back, {username}!\nPerform tasks and earn coins!",
+
+        # send welcome message
+        bot.send_photo(
+            message.chat.id, photo="boredtap coin.png",
+            caption=f"Welcome, {referred_user.username}!\nPerform tasks and earn coins!",
             reply_markup=inline_keyboard
         )
+        print("photo sent")
+
+        # bot.send_message(
+        #     message.chat.id, f"Welcome back, {username}!\nPerform tasks and earn coins!",
+        #     reply_markup=inline_keyboard
+        # )
     
     except IndexError:
         print(f"Warning: Referral code not provided by user {user_id}.")
@@ -134,11 +152,4 @@ def start_command(message: Message):
         print(f"Error: {e}")
 
     print(f"Start command handled for user {username, user_id}")
-
-
-# launch webapp button
-# @bot.callback_query_handler(func=lambda call: True)
-# def launch_webapp(call):
-#     if call.data == "launch_webapp":
-#         bot.answer_callback_query(call.id, url="https://veenzent.netlify.app/", show_alert=True)
 
