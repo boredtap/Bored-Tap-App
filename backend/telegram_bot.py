@@ -133,13 +133,16 @@ def start_command(message: Message):
         inline_keyboard = InlineKeyboardMarkup(row_width=1).add(launch_btn)
 
         # send welcome message
-        print("sending photo...")
-        bot.send_photo(
-            message.chat.id, photo=welcome_photo_url,
-            caption=f"Welcome, {referred_user.username}!\nPerform tasks and earn coins!",
-            reply_markup=inline_keyboard
-        )
-        print("photo sent")
+        try:
+            print("sending photo...")
+            bot.send_photo(
+                message.chat.id, photo=welcome_photo_url,
+                caption=f"Welcome, {referred_user.username}!\nPerform tasks and earn coins!",
+                reply_markup=inline_keyboard
+            )
+            print("photo sent")
+        except Exception as e:
+            print(f"Error sending photo: {e}")
 
         # bot.send_message(
         #     message.chat.id, f"Welcome back, {username}!\nPerform tasks and earn coins!",
