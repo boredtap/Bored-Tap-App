@@ -67,31 +67,39 @@ async def webhook_handler(request: Request):
 def start_command(message: Message):
     """Handles the /start command, registers users, and sends a welcome message"""
 
+    # inline keyboard button to join community
+    join_community_btn = InlineKeyboardButton(
+        text="Join Community",
+        callback_data="join_community",
+        # web_app=telebot.types.WebAppInfo(url="https://boredtap.netlify.app/")
+    )
+    inline_keyboard = InlineKeyboardMarkup(row_width=1)
+
     # get user datails    
+    user_id = str(message.from_user.id)
+    username = message.from_user.username
+    first_name = message.from_user.first_name
+    last_name = message.from_user.last_name
+    image_url = "https://example.com"       # actual url would be updated from client side
+
+    # Extract referral code
+    message_parts = message.text.split(" ")
+    referral_code = message_parts[1] if len(message_parts) > 1 else None
+    # referral_code = "1234521345"
+
+    print(f"Received start command from user {user_id} (username: {username})")
+    # bot.send_message(message.chat.id, f"Received start command from user {user_id} (username: {username})")
+    # bot.send_message(message.chat.id, f"Message received: {message.text}")
+
+    # instantiate Signup model with user details
+    print("Setting user details in Signup model")
+    user = Signup(
+        telegram_user_id=user_id,
+        username=username,
+        image_url=image_url
+    )
+
     try:
-        user_id = str(message.from_user.id)
-        username = message.from_user.username
-        first_name = message.from_user.first_name
-        last_name = message.from_user.last_name
-        image_url = "https://example.com"       # actual url would be updated from client side
-
-        # Extract referral code
-        message_parts = message.text.split(" ")
-        referral_code = message_parts[1] if len(message_parts) > 1 else None
-        # referral_code = "1234521345"
-
-        print(f"Received start command from user {user_id} (username: {username})")
-        # bot.send_message(message.chat.id, f"Received start command from user {user_id} (username: {username})")
-        # bot.send_message(message.chat.id, f"Message received: {message.text}")
-
-        # instantiate Signup model with user details
-        print("Setting user details in Signup model")
-        user = Signup(
-            telegram_user_id=user_id,
-            username=username,
-            image_url=image_url
-        )
-
         # run sign_up function
         print("calling sign_up function")
         loop = asyncio.new_event_loop()
@@ -104,19 +112,28 @@ def start_command(message: Message):
             text="Claim Invite Reward",
             web_app=telebot.types.WebAppInfo(url="https://boredtap.netlify.app/")
         )
-        inline_keyboard = InlineKeyboardMarkup(row_width=1).add(launch_btn)
+
+        # add buttons to inline keyboard
+        inline_keyboard.add(launch_btn)
+        inline_keyboard.add(join_community_btn)
 
         # send welcome message
-        bot.send_photo(
-            message.chat.id, photo=welcome_photo_url,
-            caption=f"Welcome, {referred_user.username}!\nPerform tasks and earn coins!",
-            reply_markup=inline_keyboard
-        )
-
-        # bot.send_message(
-        #     message.chat.id, f"Welcome, {referred_user.username}!\nPerform tasks and earn coins!",
-        #     reply_markup=inline_keyboard
-        # )
+        with open("./boredtap.png", "rb") as welcome_photo:
+            bot.send_photo(
+                message.chat.id, photo=welcome_photo,
+                caption=f"""
+                Hey, {referred_user.username}!👋 Welcome to BoredTap!\n\
+                Tap, complete tasks, and stack up your coins!\n\n\
+                
+                BoredTap is a fun and rewarding platform where users earn \
+                coins by engaging with the app’s features. The more you \
+                tap, the more you earn—simple!\n\n\
+                
+                Invite your friends, family & colleagues to join the game! \
+                More taps = More coins = More rewards! 🚀🔥.
+                """,
+                reply_markup=inline_keyboard
+            )
 
     # except user already exist
     except HTTPException as e:
@@ -125,28 +142,26 @@ def start_command(message: Message):
         # set welcome message action button
         print(f"Error encountered: {e}")
         launch_btn = InlineKeyboardButton(
-            text="Launch WebApp",
+            text="Launch App",
             # callback_data="launch_webapp",
             web_app=telebot.types.WebAppInfo(url="https://boredtap.netlify.app/")
         )
-        inline_keyboard = InlineKeyboardMarkup(row_width=1).add(launch_btn)
+        inline_keyboard = InlineKeyboardMarkup(row_width=1)
+        inline_keyboard.add(launch_btn)
+        inline_keyboard.add(join_community_btn)
 
         # send welcome message
         try:
-            print("sending photo...")
-            bot.send_photo(
-                message.chat.id, photo=welcome_photo_url,
-                caption=f"Welcome back, {username}!\nPerform tasks and earn coins!",
-                reply_markup=inline_keyboard
-            )
-            print("photo sent")
+            print("sending photo ...")
+            with open("./boredtap.png", "rb") as welcome_photo:
+                bot.send_photo(
+                    message.chat.id, photo=welcome_photo,
+                    caption=f"Welcome back, {username}!\nPerform tasks and earn coins!",
+                    reply_markup=inline_keyboard
+                )
+                print("photo sent")
         except Exception as e:
             print(f"Error sending photo: {e}")
-
-        # bot.send_message(
-        #     message.chat.id, f"Welcome back, {username}!\nPerform tasks and earn coins!",
-        #     reply_markup=inline_keyboard
-        # )
     
     except IndexError:
         print(f"Warning: Referral code not provided by user {user_id}.")
