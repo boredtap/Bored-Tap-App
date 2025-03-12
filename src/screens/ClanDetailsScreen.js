@@ -155,10 +155,10 @@ const ClanDetailsScreen = () => {
       </div>
       <div className="your-clan-section">
         <p className="your-clan-text">Your Clan</p>
-        <div className="see-all-section">
+        {/* <div className="see-all-section">
           <span className="see-all-text">See all</span>
           <img src={clanData.seeAllIcon} alt="See All Icon" className="see-all-icon" />
-        </div>
+        </div> */}
       </div>
       <div className="data-card">
         <div className="data-row">
@@ -187,10 +187,10 @@ const ClanDetailsScreen = () => {
       </div>
       <div className="top-earners-section">
         <p className="top-earners-text">Clan Top Earners</p>
-        <div className="see-all-section">
+        {/* <div className="see-all-section">
           <span className="see-all-text">See all</span>
           <img src={clanData.seeAllIcon} alt="See All Icon" className="see-all-icon" />
-        </div>
+        </div> */}
       </div>
       <p className="clan-preview-info">Top earners feature coming soon!</p>
       <Navigation />
