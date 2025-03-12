@@ -395,3 +395,44 @@
     height: 20px;
   }
 }
+
+/* Media Queries for Responsiveness */
+@media (max-width: 480px) {
+  .profile1-username {
+    font-size: 12px;
+    font-weight: bold;
+  }
+
+  .streak-text {
+    font-size: 12px;
+  }
+
+  .profile1-level,
+  .streak-days {
+    font-size: 10px;
+  }
+
+  .big-tap-icon img {
+    width: 220px;
+    height: 220px;
+  }
+
+  .total-taps-count {
+    font-size: 22px;
+  }
+
+  .tap-effect {
+    font-size: 14px;
+  }
+
+  .boost-btn {
+    padding: 10px 14px;
+    /* Slightly smaller but still larger than original */
+    font-size: 14px;
+  }
+
+  .boost-icon {
+    width: 16px;
+    height: 16px;
+  }
+}
