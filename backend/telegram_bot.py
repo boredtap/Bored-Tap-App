@@ -132,6 +132,7 @@ def start_command(message: Message):
         inline_keyboard = InlineKeyboardMarkup(row_width=1).add(launch_btn)
 
         # send welcome message
+        print("sending photo...")
         bot.send_photo(
             message.chat.id, photo="boredtap coin.png",
             caption=f"Welcome, {referred_user.username}!\nPerform tasks and earn coins!",
