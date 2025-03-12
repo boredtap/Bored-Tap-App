@@ -210,7 +210,7 @@ const BoostScreen = () => {
             </div>
             
             <button
-              className="overlay-cta"
+              className="overlay-cta clickable"
               disabled={isDisabled}
               onClick={isExtraBooster ? () => handleUpgradeBoost(id) : () => handleClaimDailyBooster(type)}
             >
@@ -260,7 +260,7 @@ const BoostScreen = () => {
                   },
                 ].map((booster) => (
                   <div
-                    className="booster-frame"
+                    className="booster-frame clickable"
                     key={booster.type}
                     onClick={() =>
                       booster.usesLeft > 0 &&
@@ -293,7 +293,7 @@ const BoostScreen = () => {
               {boostersData?.length && boostersData.length > 0 ? <div className="extra-boosters-container">
                 {boostersData.map((booster) => (
                   <div
-                    className="extra-booster-card"
+                    className="extra-booster-card clickable"
                     key={booster.id}
                     onClick={() =>
                       setActiveOverlay({

@@ -372,16 +372,16 @@
   }
 
   .big-tap-icon img {
-    width: 280px;
-    height: 280px;
+    width: 260px;
+    height: 260px;
   }
 
   .total-taps-count {
-    font-size: 28px;
+    font-size: 24px;
   }
 
   .tap-effect {
-    font-size: 16px;
+    font-size: 14px;
   }
 
   .boost-btn {
@@ -391,13 +391,13 @@
   }
 
   .boost-icon {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
   }
 }
 
 /* Media Queries for Responsiveness */
-@media (max-width: 480px) {
+/* @media (max-width: 480px) {
   .profile1-username {
     font-size: 12px;
     font-weight: bold;
@@ -427,7 +427,7 @@
 
   .boost-btn {
     padding: 10px 14px;
-    /* Slightly smaller but still larger than original */
+    
     font-size: 14px;
   }
 
@@ -435,4 +435,4 @@
     width: 16px;
     height: 16px;
   }
-}
+} */
