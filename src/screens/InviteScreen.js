@@ -97,7 +97,7 @@ const InviteScreen = () => {
           <p className="invite-link-title">My Invite Link:</p>
           <p className="invite-link">{inviteLink}</p>
         </div>
-        <button className="reward-cta" onClick={handleCopy}>
+        <button className="reward-cta clickable" onClick={handleCopy}>
           Copy
         </button>
       </div>
@@ -138,7 +138,7 @@ const InviteScreen = () => {
       </div>
 
       <div className="cta-container">
-        <button className="invite-cta-button" onClick={toggleOverlay}>
+        <button className="invite-cta-button clickable" onClick={toggleOverlay}>
           Invite a Friend
         </button>
       </div>
@@ -164,13 +164,13 @@ const InviteScreen = () => {
               />
               <p className="overlay-text">Share via:</p>
               <div className="share-options">
-                <button className="overlay-cta-button" onClick={handleTelegramShare}>
+                <button className="overlay-cta-button clickable" onClick={handleTelegramShare}>
                   Telegram
                 </button>
-                <button className="overlay-cta-button" onClick={handleWhatsAppShare}>
+                <button className="overlay-cta-button clickable" onClick={handleWhatsAppShare}>
                   WhatsApp
                 </button>
-                <button className="overlay-cta-button" onClick={handleCopy}>
+                <button className="overlay-cta-button clickable" onClick={handleCopy}>
                   Copy Link
                 </button>
               </div>

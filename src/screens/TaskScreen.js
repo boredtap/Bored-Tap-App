@@ -175,7 +175,7 @@ const TaskScreen = () => {
                       </div>
                     </div>
                     <button
-                      className={`task-action ${isClaimable ? "active" : "inactive"}`}
+                      className={`task-action ${isClaimable ? "active clickable" : "inactive"}`}
                       onClick={() => handleClaimClick(task.id)}
                       disabled={!isClaimable}
                     >
@@ -217,7 +217,7 @@ const TaskScreen = () => {
                 <span>{selectedTask.task_reward}</span>
               </div>
               <p className="overlay-message">has been added to your coin balance</p>
-              <button className="overlay-cta" onClick={handleCloseOverlay}>
+              <button className="overlay-cta clickable" onClick={handleCloseOverlay}>
                 Ok
               </button>
             </div>

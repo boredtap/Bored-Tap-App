@@ -999,7 +999,7 @@ const Dashboard = () => {
               <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Coin Icon" className="overlay-coin-icon" />
               <span className="overlay-value">{autoBotTaps.toLocaleString()}</span>
             </div>
-            <button className="overlay-cta" onClick={handleClaimAutoBotTaps}>
+            <button className="overlay-cta clickable" onClick={handleClaimAutoBotTaps}>
               Claim
             </button>
           </div>
@@ -1012,7 +1012,7 @@ const Dashboard = () => {
     <div className="dashboard-container">
       {renderAutoBotOverlay()}
       <div className="profile1-streak-section">
-        <div className="profile1-section" onClick={() => navigate("/profile-screen")}>
+        <div className="profile1-section clickable" onClick={() => navigate("/profile-screen")}>
           <img src={telegramData.image_url} alt="Profile" className="profile1-picture" />
           <div className="profile1-info">
             <span className="profile1-username">{telegramData.username}</span>
@@ -1021,7 +1021,7 @@ const Dashboard = () => {
             </span>
           </div>
         </div>
-        <div className="streak-section" onClick={() => navigate("/daily-streak-screen")}>
+        <div className="streak-section clickable" onClick={() => navigate("/daily-streak-screen")}>
           <img src={`${process.env.PUBLIC_URL}/streak.png`} alt="Streak Icon" className="streak-icon" />
           <div className="streak-info">
             <span className="streak-text">Current Streak</span>
@@ -1037,7 +1037,7 @@ const Dashboard = () => {
           { name: "Clan", icon: "clan.png", path: clanPath },
           { name: "Leaderboard", icon: "leaderboard.png", path: "/leaderboard-screen" },
         ].map((frame, index) => (
-          <div className="frame" key={index} onClick={() => navigate(frame.path)}>
+          <div className="frame clickable" key={index} onClick={() => navigate(frame.path)}>
             <img src={`${process.env.PUBLIC_URL}/${frame.icon}`} alt={`${frame.name} Icon`} className="frame-icon" />
             <span>{frame.name}</span>
           </div>
@@ -1064,7 +1064,7 @@ const Dashboard = () => {
           <img src={`${process.env.PUBLIC_URL}/electric-icon.png`} alt="Electric Icon" className="electric-icon" />
           <span>{Math.floor(electricBoost)}/{maxElectricBoost}</span>
         </div>
-        <button className="boost-btn" onClick={() => navigate("/boost-screen")}>
+        <button className="boost-btn clickable" onClick={() => navigate("/boost-screen")}>
           <img src={`${process.env.PUBLIC_URL}/boostx2.png`} alt="Boost Icon" className="boost-icon" />
           Boost
         </button>

@@ -189,6 +189,12 @@
   align-items: flex-end;
 }
 
+/* Clicking effect for all clickables */
+.clickable:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease-in-out;
+}
+
 /* Overlay for Claim Confirmation */
 .task-overlay {
   position: fixed;
