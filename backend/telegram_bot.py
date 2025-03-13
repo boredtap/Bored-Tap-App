@@ -158,7 +158,7 @@ def start_command(message: Message):
                     message.chat.id, photo=welcome_photo,
                     # caption=f"Welcome back, {username}!\nPerform tasks and earn coins!",
                     caption=f"""
-                Hey, {referred_user.username}!👋 Welcome to BoredTap!\
+                Hey, {username}!👋 Welcome to BoredTap!\
                 Tap, complete tasks, and stack up your coins!\
                 
                 BoredTap is a fun and rewarding platform where users earn \
