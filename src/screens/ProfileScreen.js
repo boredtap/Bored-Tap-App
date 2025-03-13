@@ -97,7 +97,7 @@ const ProfileScreen = () => {
 
   // Profile data for cards, mapped to backend response
   const profileData = [
-    { icon: `${process.env.PUBLIC_URL}/logo.png`, label: "Total Coin", value: profile.total_coins || "0" },
+    { icon: `${process.env.PUBLIC_URL}/logo.png`, label: "Total Coin", value: profile.total_coins.toLocaleString() || "0" },
     {
       icon: `${process.env.PUBLIC_URL}/task.png`,
       label: "Completed Tasks",

@@ -549,7 +549,7 @@ const Dashboard = () => {
     const checkClanStatus = async () => {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
-
+  
       try {
         const response = await fetch("https://bt-coins.onrender.com/user/clan/my_clan", {
           method: "GET",
@@ -560,10 +560,19 @@ const Dashboard = () => {
         });
         if (response.ok) {
           const data = await response.json();
-          setClanPath(data.id ? "/clan-details-screen" : "/clan-screen");
-          if (data.id) localStorage.removeItem("pendingClanId");
+          if (data.id) {
+            if (data.status === "active") {
+              setClanPath("/clan-details-screen");
+              localStorage.removeItem("pendingClanId");
+            } else if (data.status === "pending") {
+              setClanPath("/clan-screen"); // Pending state, will show "Join" and "Awaiting verification"
+              localStorage.setItem("pendingClanId", data.id); // Store pending clan ID if needed
+            }
+          } else {
+            setClanPath("/clan-screen"); // No clan, show both CTAs
+          }
         } else {
-          setClanPath("/clan-screen");
+          setClanPath("/clan-screen"); // Default to clan screen on error
         }
       } catch (err) {
         console.error("Error checking clan status:", err);
