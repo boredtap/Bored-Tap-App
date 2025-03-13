@@ -122,12 +122,12 @@ def start_command(message: Message):
             bot.send_photo(
                 message.chat.id, photo=welcome_photo,
                 caption=f"""
-                Hey, {referred_user.username}!👋 Welcome to BoredTap!\n\
-                Tap, complete tasks, and stack up your coins!\n\n\
+                Hey, {referred_user.username}!👋 Welcome to BoredTap!\
+                Tap, complete tasks, and stack up your coins!\
                 
                 BoredTap is a fun and rewarding platform where users earn \
                 coins by engaging with the app’s features. The more you \
-                tap, the more you earn—simple!\n\n\
+                tap, the more you earn--simple!\
                 
                 Invite your friends, family & colleagues to join the game! \
                 More taps = More coins = More rewards! 🚀🔥.
@@ -156,7 +156,18 @@ def start_command(message: Message):
             with open("./boredtap.png", "rb") as welcome_photo:
                 bot.send_photo(
                     message.chat.id, photo=welcome_photo,
-                    caption=f"Welcome back, {username}!\nPerform tasks and earn coins!",
+                    # caption=f"Welcome back, {username}!\nPerform tasks and earn coins!",
+                    caption=f"""
+                Hey, {referred_user.username}!👋 Welcome to BoredTap!\
+                Tap, complete tasks, and stack up your coins!\
+                
+                BoredTap is a fun and rewarding platform where users earn \
+                coins by engaging with the app’s features. The more you \
+                tap, the more you earn--simple!\
+                
+                Invite your friends, family & colleagues to join the game! \
+                More taps = More coins = More rewards! 🚀🔥.
+                """,
                     reply_markup=inline_keyboard
                 )
                 print("photo sent")
