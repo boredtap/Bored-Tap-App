@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from bson import ObjectId
 from fastapi import HTTPException
 from database_connection import user_collection, fs, clans_collection, coin_stats
-from clan.schemas import CreateClan, ClanSearchResponse, MyClan
+from clan.schemas import ClanTopEarners, CreateClan, ClanSearchResponse, MyClan
 from user_reg_and_prof_mngmnt.models import Clan as UserProfileClan
 from superuser.clan.models import Clan
 
@@ -220,6 +220,7 @@ def my_clan(telegram_user_id):
         in_clan_rank = "creator"
 
     return MyClan(
+        id=str(clan["_id"]),
         name=clan["name"],
         rank=f"#{clan['rank']}",
         image_id=clan["image_id"],
@@ -362,8 +363,28 @@ def exit_clan(telegram_user_id: str, creator_exit_action: str | None = None):
         
 
 # --------------------------------- CLAN TOP EARNERS ---------------------------------- #
-def clan_top_earners():
-    pass
+def clan_top_earners(clan_id: str, limit: int = 10, skip: int = 0):
+    clan = clans_collection.find_one({"_id": ObjectId(clan_id)})
+
+    if not clan:
+        raise HTTPException(status_code=404, detail="Clan not found")
+    
+    members = user_collection.find({"clan.id": clan_id}).sort("total_coins", -1).skip(skip).limit(limit)
+
+    top_earners = []
+    for index, member in enumerate(members):
+        top_earner = ClanTopEarners(
+            username=member["username"],
+            level=member["level"],
+            total_coins=member["total_coins"],
+            image_url=member["image_url"],
+            rank=f"#{index + 1}"
+        )
+
+        top_earners.append(top_earner)
+
+    return top_earners
+
 
 
 # --------------------------------- CLAN EARNINGS STRATEGY ---------------------------------- #

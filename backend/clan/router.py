@@ -11,6 +11,7 @@ from clan.dependencies import (
     run_clan_earnings,
     top_clans as top_clans_func,
     my_clan as my_clan_func,
+    clan_top_earners as clan_top_earners_func,
     exit_clan as exit_clan_func
 )
 from database_connection import clans_collection, user_collection
@@ -55,27 +56,28 @@ async def top_clans():
 @user_clan_router.get("/search")
 async def search_clans(
     query: str = Query(..., description="Search query"),
-    limit: int = Query(10, description="Maximum number of results"),
-    skip: int = Query(0, description="Number of results to skip"),
+    page_size: int = Query(10, description="Page size/maximum number of results"),
+    page_number: int = Query(1, description="Page number"),
 ):
     """
     Search for clans by name.
 
     Args:
         query (str): The search query to match against clan names.
-        limit (int): The maximum number of results to return.
-        skip (int): The number of results to skip.
+        page_size (int): The maximum number of results to return.
+        page_number (int): The index of the page to retrieve.
 
     Returns:
         StreamingResponse: A json response containing the search results.
     """
+    skip = (page_number - 1) * page_size
     search_filter = {}
 
     if query:
         # Use a case-insensitive regex search for partial matches
         search_filter["name"] = {"$regex": query, "$options": "i"}
 
-    clans = clans_collection.find(search_filter).sort("total_coins", -1).skip(skip).limit(limit)
+    clans = clans_collection.find(search_filter).sort("total_coins", -1).skip(skip).limit(page_size)
 
     for clan in clans:
         if clan["status"] == "active":
@@ -127,7 +129,13 @@ async def exit_clan(telegram_user_id: Annotated[str, Depends(get_current_user)],
 
 
 # ----------------------------- CLAN TOP EARNERS ------------------------------ #
-@user_clan_router.get("/clan/{clan_id}/top_earners", deprecated=True)
-async def clan_top_earners(clan_id: str, limit: Optional[int] = 10):
-    pass
+@user_clan_router.get("/clan/{clan_id}/top_earners")
+async def clan_top_earners(
+    clan_id: str,
+    page_number: int = Query(1, description="Page number"),
+    page_size: int = Query(10, description="Page size/maximum number of results"),
+):
+    skip_value = (page_number -1) * page_size
+    
+    return clan_top_earners_func(clan_id, page_size, skip_value)
 
