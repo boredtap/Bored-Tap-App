@@ -23,6 +23,7 @@ class ClanSearchResponse(ClanResponse):
 
 
 class MyClan(BaseModel):
+    id: str
     name: str
     rank: str
     image_id: str
@@ -31,6 +32,14 @@ class MyClan(BaseModel):
     members: int
     status: str
     # creator: str
+
+
+class ClanTopEarners(BaseModel):
+    username: str
+    level: int
+    total_coins: int
+    image_url: str
+    rank: str
 
 
 class CreatorExitAction(str, Enum):
