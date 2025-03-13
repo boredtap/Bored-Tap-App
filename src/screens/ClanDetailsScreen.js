@@ -31,6 +31,7 @@ const ClanDetailsScreen = () => {
   const [clanData, setClanData] = useState(null);
   const [error, setError] = useState(null);
   const [userRole, setUserRole] = useState("Member");
+  const [topEarners, setTopEarners] = useState([]); // New state for top earners
 
   useEffect(() => {
     const fetchClanDetails = async () => {
@@ -88,6 +89,21 @@ const ClanDetailsScreen = () => {
         });
 
         setUserRole(data.creator_id === profileData.telegram_user_id ? "Owner" : "Member");
+
+        // Fetch top earners
+        const topEarnersResponse = await fetch(
+          `https://bt-coins.onrender.com/user/clan/clan/${data.id}/top_earners?page_number=1&page_size=10`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          }
+        );
+        if (!topEarnersResponse.ok) throw new Error("Failed to fetch top earners");
+        const topEarnersData = await topEarnersResponse.json();
+        setTopEarners(topEarnersData);
       } catch (err) {
         setError(err.message);
         console.error("Error:", err.message);
@@ -185,14 +201,36 @@ const ClanDetailsScreen = () => {
           <span className="data-value">{clanData.members}</span>
         </div>
       </div>
-      <div className="top-earners-section">
-        <p className="top-earners-text">Clan Top Earners</p>
-        {/* <div className="see-all-section">
-          <span className="see-all-text">See all</span>
-          <img src={clanData.seeAllIcon} alt="See All Icon" className="see-all-icon" />
-        </div> */}
-      </div>
-      <p className="clan-preview-info">Top earners feature coming soon!</p>
+        <div className="top-earners-section1">
+          <p className="top-earners-text1">Clan Top Earners</p>
+          <div className="top-earners-cards-container1">
+            {topEarners.map((earner, index) => (
+              <div className="top-earner-card1" key={index}>
+                <div className="top-earner-left">
+                  <img src={earner.image_url} alt={`${earner.username}'s Profile`} className="top-earner-icon round-frame" />
+                  <div className="top-earner-info">
+                    <p className="top-earner-username">
+                      {earner.username} <span className="level">.Lvl {earner.level}</span>
+                    </p>
+                    <p className="top-earner-coins">{earner.total_coins.toLocaleString()} BT Coin</p>
+                  </div>
+                </div>
+                <div className="top-earner-right">
+                  {index === 0 ? (
+                    <img src={`${process.env.PUBLIC_URL}/first-icon.png`} alt="1st Place" className="top-earner-right-icon" />
+                  ) : index === 1 ? (
+                    <img src={`${process.env.PUBLIC_URL}/second-icon.png`} alt="2nd Place" className="top-earner-right-icon" />
+                  ) : index === 2 ? (
+                    <img src={`${process.env.PUBLIC_URL}/third-icon.png`} alt="3rd Place" className="top-earner-right-icon" />
+                  ) : (
+                    <span className="position-number">#{index + 1}</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+       
       <Navigation />
     </div>
   );

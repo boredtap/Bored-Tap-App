@@ -93,3 +93,88 @@
   height: 16px;
   margin-right: 5px;
 }
+
+/* Top Earners Section */
+.top-earners-section1 {
+  margin-top: 20px;
+}
+
+.top-earners-text1 {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-align: left; /* Center the text */
+}
+
+.top-earners-cards-container1 {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.top-earner-card1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #414141;
+}
+
+.top-earner-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.top-earner-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.top-earner-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.top-earner-username {
+  font-size: 14px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.top-earner-username .level {
+  color: orange;
+}
+
+.top-earner-coins {
+  font-size: 12px;
+  color: #d9d9d9;
+}
+
+.top-earner-right {
+  display: flex;
+  align-items: center;
+}
+
+.top-earner-right-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.position-number {
+  font-size: 14px;
+  color: #fff;
+}
+
+/* Responsive design adjustments */
+@media (max-width: 600px) {
+  .top-earner-card {
+    padding: 12px;
+  }
+
+  .top-earner-icon {
+    width: 36px;
+    height: 36px;
+  }
+}
