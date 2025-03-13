@@ -213,8 +213,15 @@ def join_clan(telegram_user_id: str, clan_id: str):
 # --------------------------------- MY CLAN ---------------------------------- #
 def my_clan(telegram_user_id):
     user_clan_id = user_collection.find_one({"telegram_user_id": telegram_user_id})["clan"]["id"]
+
+    if not user_clan_id:
+        raise HTTPException(status_code=404, detail="You are not in a clan")
+
     clan = clans_collection.find_one({"_id": ObjectId(user_clan_id)})
     in_clan_rank = "member"
+
+    if not clan:
+        raise HTTPException(status_code=404, detail="Clan not found")
 
     if clan["creator"] == telegram_user_id:
         in_clan_rank = "creator"
