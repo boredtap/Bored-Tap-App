@@ -3,14 +3,6 @@ import Navigation from "../components/Navigation";
 import CTAButton from "../components/CTAButton";
 import "./DailyStreakScreen.css";
 
-/**
- * RewardFrame component for displaying individual daily streak rewards.
- * @param {string} day - The day label (e.g., "Day 1")
- * @param {string} reward - The reward value (e.g., "500")
- * @param {boolean} isActive - Whether this day is currently claimable
- * @param {boolean} isClaimed - Whether this day has been claimed
- * @param {Function} onClick - Click handler for claiming the reward
- */
 const RewardFrame = ({ day, reward, isActive, isClaimed, onClick }) => {
   return (
     <div
@@ -29,10 +21,6 @@ const RewardFrame = ({ day, reward, isActive, isClaimed, onClick }) => {
   );
 };
 
-/**
- * DailyStreakScreen component with account reset integration.
- * Resets streak state when an account is deleted or a new user enters.
- */
 const DailyStreakScreen = () => {
   const [currentDay, setCurrentDay] = useState(() => {
     return parseInt(localStorage.getItem("currentDay")) || 1;
@@ -42,9 +30,13 @@ const DailyStreakScreen = () => {
   });
   const [profile, setProfile] = useState(null);
   const [showOverlay, setShowOverlay] = useState(false);
-  const [countdownTime, setCountdownTime] = useState("11:59 PM");
+  const [countdownTime, setCountdownTime] = useState(() => {
+    return localStorage.getItem("countdownTime") || "23:59:59";
+  });
   const [showClaimMessage, setShowClaimMessage] = useState(false);
-  const [ctaButtonText, setCtaButtonText] = useState("Claim Reward");
+  const [ctaButtonText, setCtaButtonText] = useState(() => {
+    return localStorage.getItem("ctaButtonText") || "Claim Reward";
+  });
   const rewards = [
     { day: "Day 1", reward: "500" },
     { day: "Day 2", reward: "1000" },
@@ -58,29 +50,51 @@ const DailyStreakScreen = () => {
   const ctaButtonRef = useRef(null);
   const isClaimed = claimedDays.includes(currentDay);
 
+  // Countdown timer effect
   useEffect(() => {
-    console.log("ctaButtonText changed:", ctaButtonText);
-  }, [ctaButtonText]);
+    if (ctaButtonText === "Come Back Tomorrow") {
+      const timer = setInterval(() => {
+        const [hours, minutes, seconds] = countdownTime.split(":").map(Number);
+        let totalSeconds = hours * 3600 + minutes * 60 + seconds;
 
-  // Reset streak state function
+        if (totalSeconds > 0) {
+          totalSeconds--;
+          const newHours = Math.floor(totalSeconds / 3600);
+          const newMinutes = Math.floor((totalSeconds % 3600) / 60);
+          const newSeconds = totalSeconds % 60;
+          const newTime = `${String(newHours).padStart(2, "0")}:${String(newMinutes).padStart(2, "0")}:${String(newSeconds).padStart(2, "0")}`;
+          setCountdownTime(newTime);
+          localStorage.setItem("countdownTime", newTime);
+        } else {
+          clearInterval(timer);
+          setCtaButtonText("Claim Reward");
+          localStorage.setItem("ctaButtonText", "Claim Reward");
+          setCountdownTime("23:59:59");
+          localStorage.setItem("countdownTime", "23:59:59");
+        }
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [countdownTime, ctaButtonText]);
+
   const resetStreakState = () => {
     setCurrentDay(1);
     setClaimedDays([]);
     setShowClaimMessage(false);
+    setCtaButtonText("Claim Reward");
+    setCountdownTime("23:59:59");
     localStorage.removeItem("currentDay");
     localStorage.removeItem("claimedDays");
-    console.log("Streak state reset for new user or deleted account.");
+    localStorage.setItem("ctaButtonText", "Claim Reward");
+    localStorage.setItem("countdownTime", "23:59:59");
   };
 
-  // Fetch profile and handle reset logic
   useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem("accessToken");
-
-      // Reset if no token (new user or deleted account)
       if (!token) {
         resetStreakState();
-        // setLoading(false);
         return;
       }
 
@@ -95,7 +109,6 @@ const DailyStreakScreen = () => {
 
         if (!response.ok) {
           if (response.status === 401 || response.status === 403) {
-            // Token invalid (account deleted or new user with old token)
             localStorage.removeItem("accessToken");
             resetStreakState();
           }
@@ -109,7 +122,6 @@ const DailyStreakScreen = () => {
         const backendClaimedDays = data.streak?.claimed_days || [];
         const backendLastClaimedDay = Math.max(...backendClaimedDays, 0);
 
-        // Sync with backend if local storage is behind
         if (storedClaimedDays.length <= backendClaimedDays.length) {
           setClaimedDays(backendClaimedDays);
           setCurrentDay(backendLastClaimedDay + 1);
@@ -117,20 +129,16 @@ const DailyStreakScreen = () => {
           localStorage.setItem("currentDay", backendLastClaimedDay + 1);
         }
 
-        // Check if account was reset or new (backend streak data empty)
         if (!data.streak || (data.streak.current_streak === 0 && backendClaimedDays.length === 0)) {
           resetStreakState();
         }
       } catch (err) {
         console.error("Error fetching profile:", err);
-        // setError(err.message);
-      } finally {
-        // setLoading(false);
       }
     };
 
     fetchProfile();
-  }, [claimedDays]);
+  }, []);
 
   const handleClaim = async () => {
     const isLastDay = currentDay === rewards.length;
@@ -153,13 +161,14 @@ const DailyStreakScreen = () => {
         const streakData = await response.json();
 
         if (streakData.message === "Streak not updated") {
-          const timeMatch = streakData.Countdown.match(/(\d{2}:\d{2})/);
-          const time = timeMatch ? timeMatch[0] : "12:59 PM";
+          const timeMatch = streakData.Count.match(/(\d{2} hrs:\d{2} mins:\d{2} secs)/);
+          const time = timeMatch ? timeMatch[0].replace(/ hrs| mins| secs/g, "") : "23:59:59";
           setCountdownTime(time);
+          localStorage.setItem("countdownTime", time);
           setShowOverlay(true);
           return;
         }
-        // Update local storage first
+
         const newClaimedDays = [...claimedDays, currentDay];
         let newCurrentDay = currentDay + 1;
         if (isLastDay) {
@@ -167,14 +176,14 @@ const DailyStreakScreen = () => {
         }
         localStorage.setItem("claimedDays", JSON.stringify(newClaimedDays));
         localStorage.setItem("currentDay", newCurrentDay);
-        console.log("New Claimed Days:", newClaimedDays);
-        console.log("New Current Day:", newCurrentDay);
+        localStorage.setItem("ctaButtonText", "Come Back Tomorrow");
+        localStorage.setItem("countdownTime", "23:59:59");
 
-        // Then update the component's state
         setClaimedDays(newClaimedDays);
         setCurrentDay(newCurrentDay);
-        setCtaButtonText("Checking claim...");
         setCtaButtonText("Come Back Tomorrow");
+        setCountdownTime("23:59:59");
+        setShowClaimMessage(true);
 
         setProfile((prev) => ({
           ...prev,
@@ -186,7 +195,6 @@ const DailyStreakScreen = () => {
             claimed_days: newClaimedDays,
           },
         }));
-        setShowClaimMessage(true);
       } catch (err) {
         console.error("Error claiming reward:", err);
         setShowOverlay(true);
@@ -212,7 +220,6 @@ const DailyStreakScreen = () => {
         <p className="daily-rewards-title">Daily Rewards</p>
         <div className="rewards-grid">
           {rewards.map((reward, index) => {
-            // Calculate the displayed day number for each reward
             const displayedDay = index + 1;
             return (
               <RewardFrame
@@ -227,14 +234,14 @@ const DailyStreakScreen = () => {
           })}
         </div>
         {showClaimMessage && (
-          <p className="rewards-note">Come back tomorrow to pick up your next reward</p>
+          <p className="rewards-note">Come back in {countdownTime} for your next reward</p>
         )}
       </div>
 
       <div className="cta-container clickable">
         <CTAButton
           ref={ctaButtonRef}
-          isActive={!isClaimed}
+          isActive={!isClaimed && ctaButtonText === "Claim Reward"}
           text={ctaButtonText}
           onClick={handleClaim}
         />
@@ -260,7 +267,7 @@ const DailyStreakScreen = () => {
                 className="overlay-streak-icon"
               />
               <p className="overlay-text">Streak Not Updated</p>
-              <p className="overlay-subtext">Check again by this time tomorrow</p>
+              <p className="overlay-subtext">Check again in</p>
               <p className="overlay-time">{countdownTime}</p>
               <button className="overlay-cta-button clickable" onClick={handleCloseOverlay}>
                 Ok
