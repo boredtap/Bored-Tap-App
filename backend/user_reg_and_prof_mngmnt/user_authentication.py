@@ -191,7 +191,7 @@ def create_invite_ref(inviter_id: str, ref = Signup):
     Returns:
         Invites: A new invite reference if the inviter does not have any existing invites.
     """
-    # check if inviter has reference of their invitees in db
+    # check if inviter has reference of their invitees in db invites_ref collection
     reference_in_db = invites_ref.find_one({'inviter_telegram_id': inviter_id})
 
     if not reference_in_db:
@@ -202,7 +202,7 @@ def create_invite_ref(inviter_id: str, ref = Signup):
         return invite_ref
     
     inviter = {'inviter_telegram_id': inviter_id}
-    update_operation = {'$push':
+    update_operation = {'$addToSet':
         {'invitees': ref.telegram_user_id}
     }
     invites_ref.update_one(inviter, update_operation)
