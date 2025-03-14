@@ -176,17 +176,22 @@
 }
 
 /* Overlay Container */
-.overlay-container {
+.overlay-container7 {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 400px;
+  height: auto;
   z-index: 1001;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
-  align-items: flex-end;
+  align-items: center;
+  border-radius: 15px;
+  padding: 10px; /* Add padding to ensure content doesn't touch the edges */
+  box-sizing: border-box;
 }
 
 /* Clicking effect for all clickables */
@@ -196,12 +201,10 @@
 }
 
 /* Overlay for Claim Confirmation */
-.task-overlay {
-  position: fixed;
-  bottom: 0;
-  left: 0;
+.task-overlay7 {
+  position: relative;
   width: 100%;
-  height: 60%; /* Matches RewardScreen */
+  height: auto;
   background-color: #1d1d1d;
   color: #fff;
   display: flex;
@@ -209,9 +212,8 @@
   padding: 20px;
   box-sizing: border-box;
   z-index: 1000;
-  animation: slideIn 0.3s ease-out forwards;
-  border-top-left-radius: 25px;
-  border-top-right-radius: 25px;
+  animation: fadeIn 0.3s ease-out forwards;
+  border-radius: 15px;
 }
 
 .task-overlay.slide-out {
@@ -231,7 +233,7 @@
 }
 
 /* Overlay Header */
-.overlay-header {
+.overlay-header7 {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -261,13 +263,11 @@
 }
 
 /* Overlay Content */
-.overlay-content {
+.overlay-content7 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  flex: 1;
-  justify-content: center;
+  gap: 15px;
 }
 
 .overlay-task-icon {

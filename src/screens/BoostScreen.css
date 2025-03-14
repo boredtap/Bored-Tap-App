@@ -157,7 +157,7 @@
 }
 
 /* Overlay Container */
-.overlay-container {
+.overlay-container2 {
   position: fixed;
   top: 50%;
   left: 50%;
@@ -176,7 +176,7 @@
 }
 
 /* Boost Overlay */
-.boost-overlay {
+.boost-overlay2 {
   position: relative;
   width: 100%;
   height: auto;

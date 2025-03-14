@@ -241,10 +241,10 @@ const DailyStreakScreen = () => {
       </div>
 
       {showOverlay && (
-        <div className="overlay-container">
-          <div className={`streak-overlay ${showOverlay ? "slide-in" : "slide-out"}`}>
-            <div className="overlay-header">
-              <h2 className="overlay-title">Daily Streak</h2>
+        <div className="overlay-container6">
+          <div className={`streak-overlay6 ${showOverlay ? "slide-in" : "slide-out"}`}>
+            <div className="overlay-header6">
+              <h2 className="overlay-title6">Daily Streak</h2>
               <img
                 src={`${process.env.PUBLIC_URL}/cancel.png`}
                 alt="Close"
@@ -253,7 +253,7 @@ const DailyStreakScreen = () => {
               />
             </div>
             <div className="overlay-divider"></div>
-            <div className="overlay-content">
+            <div className="overlay-content6">
               <img
                 src={`${process.env.PUBLIC_URL}/streak.png`}
                 alt="Streak Icon"

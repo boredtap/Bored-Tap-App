@@ -144,10 +144,10 @@ const InviteScreen = () => {
       </div>
 
       {isOverlayVisible && (
-        <div className="overlay-container">
-          <div className={`invite-overlay ${isOverlayVisible ? "slide-in" : "slide-out"}`}>
-            <div className="overlay-header">
-              <h2 className="overlay-title">Invite a Friend</h2>
+        <div className="overlay-container4">
+          <div className={`invite-overlay4 ${isOverlayVisible ? "slide-in" : "slide-out"}`}>
+            <div className="overlay-header4">
+              <h2 className="overlay-title4">Invite a Friend</h2>
               <img
                 src={`${process.env.PUBLIC_URL}/cancel.png`}
                 alt="Close"
@@ -156,7 +156,7 @@ const InviteScreen = () => {
               />
             </div>
             <div className="overlay-divider"></div>
-            <div className="overlay-content">
+            <div className="overlay-content4">
               <img
                 src={qrCodeUrl || `${process.env.PUBLIC_URL}/qr-code.png`}
                 alt="Invite QR Code"

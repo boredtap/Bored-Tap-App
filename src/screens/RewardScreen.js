@@ -225,10 +225,10 @@ const RewardScreen = () => {
       </div>
 
       {showOverlay && selectedReward && (
-        <div className="overlay-container">
-          <div className={`reward-overlay ${showOverlay ? "slide-in" : "slide-out"}`}>
-            <div className="overlay-header">
-              <h2 className="overlay-title">Claim Reward</h2>
+        <div className="overlay-container5">
+          <div className={`reward-overlay5 ${showOverlay ? "slide-in" : "slide-out"}`}>
+            <div className="overlay-header5">
+              <h2 className="overlay-title5">Claim Reward</h2>
               <img
                 src={`${process.env.PUBLIC_URL}/cancel.png`}
                 alt="Cancel"
@@ -237,7 +237,7 @@ const RewardScreen = () => {
               />
             </div>
             <div className="overlay-divider"></div>
-            <div className="overlay-content">
+            <div className="overlay-content5">
               <img
                 src={`${process.env.PUBLIC_URL}/claim.gif`}
                 alt="Reward Icon"

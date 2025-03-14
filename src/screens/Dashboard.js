@@ -985,9 +985,9 @@ const Dashboard = () => {
     if (!showAutoBotOverlay || autoBotTaps <= 0) return null;
 
     return (
-      <div className="overlay-container">
-        <div className={`boost-overlay ${showAutoBotOverlay ? "slide-in" : "slide-out"}`}>
-          <div className="overlay-header">
+      <div className="overlay-container2">
+        <div className={`boost-overlay2 ${showAutoBotOverlay ? "slide-in" : "slide-out"}`}>
+          <div className="overlay-header2">
             <h2 className="overlay2-title">Auto-Bot Earning</h2>
             <img
               src={`${process.env.PUBLIC_URL}/cancel.png`}

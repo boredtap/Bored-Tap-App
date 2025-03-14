@@ -193,10 +193,10 @@ const TaskScreen = () => {
 
       {/* Overlay for Claim Confirmation */}
       {showOverlay && selectedTask && (
-        <div className="overlay-container">
-          <div className={`task-overlay ${showOverlay ? "slide-in" : "slide-out"}`}>
-            <div className="overlay-header">
-              <h2 className="overlay-title">Claim Reward</h2>
+        <div className="overlay-container7">
+          <div className={`task-overlay7 ${showOverlay ? "slide-in" : "slide-out"}`}>
+            <div className="overlay-header7">
+              <h2 className="overlay-title7">Claim Reward</h2>
               <img
                 src={`${process.env.PUBLIC_URL}/cancel.png`}
                 alt="Cancel"
@@ -205,7 +205,7 @@ const TaskScreen = () => {
               />
             </div>
             <div className="overlay-divider"></div>
-            <div className="overlay-content">
+            <div className="overlay-content7">
               <img
                 src={`data:image/png;base64,${selectedTask.task_image}`}
                 alt="Task Icon"

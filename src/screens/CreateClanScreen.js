@@ -238,10 +238,10 @@ const CreateClanScreen = () => {
       )}
 
       {showOverlay && (
-        <div className="overlay-container">
-          <div className={`clan-overlay ${showOverlay ? "slide-in" : "slide-out"}`}>
-            <div className="overlay-header">
-              <h2 className="overlay-title">Awaiting Verification</h2>
+        <div className="overlay-container3">
+          <div className={`clan-overlay3 ${showOverlay ? "slide-in" : "slide-out"}`}>
+            <div className="overlay-header3">
+              <h2 className="overlay-title3">Awaiting Verification</h2>
               <img
                 src={`${process.env.PUBLIC_URL}/cancel.png`}
                 alt="Cancel"
