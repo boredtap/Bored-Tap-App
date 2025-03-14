@@ -223,6 +223,7 @@ import { fetchClanImage } from "../utils/fetchImage"; // Adjust path if needed
 // };
 
 // export default ClanScreen;
+
 const ClanScreen = () => {
   const navigate = useNavigate();
   const [topClans, setTopClans] = useState([]);
@@ -240,7 +241,6 @@ const ClanScreen = () => {
       }
 
       try {
-        // Check clan status with my_clan route
         const myClanResponse = await fetch("https://bt-coins.onrender.com/user/clan/my_clan", {
           method: "GET",
           headers: {
@@ -252,19 +252,18 @@ const ClanScreen = () => {
           const myClanData = await myClanResponse.json();
           if (myClanData.id) {
             if (myClanData.status === "active") {
-              navigate("/clan-details-screen"); // Redirect if active
+              navigate("/clan-details-screen");
               return;
             } else if (myClanData.status === "pending") {
-              setClanStatus("pending"); // Show pending UI
+              setClanStatus("pending");
             }
           } else {
-            setClanStatus(null); // No clan, show default UI
+            setClanStatus(null);
           }
         } else {
-          setClanStatus(null); // Default to no clan on error
+          setClanStatus(null);
         }
 
-        // Fetch top clans
         const topClansResponse = await fetch("https://bt-coins.onrender.com/user/clan/top_clans", {
           method: "GET",
           headers: {
@@ -321,23 +320,23 @@ const ClanScreen = () => {
       <div className="clan-header">
         <img src={`${process.env.PUBLIC_URL}/clan.png`} alt="Clan Icon" className="clan-image-icon" />
         <p className="clan-title">Start your <br/> clan journey</p>
-        <div className="clan-cta-buttons">
+        <div className={`clan-cta-buttons ${clanStatus === "pending" ? "pending" : "default"}`}>
           {clanStatus === "pending" ? (
-            <>
-              <button className="clan-cta solo inactive" onClick={handleJoinClick}>
+            <div className="pending-container">
+              <button className="clan-cta inactive" onClick={handleJoinClick}>
                 Join Clan
               </button>
-              <p className="pending-message1">Your clan is awaiting verification</p>
-            </>
+              <p className="pending-message">Your clan is awaiting verification</p>
+            </div>
           ) : (
-            <>
+            <div className="button-container">
               <button className="clan-cta active" onClick={handleCreateClick}>
                 Create New
               </button>
               <button className="clan-cta inactive" onClick={handleJoinClick}>
                 Join Clan
               </button>
-            </>
+            </div>
           )}
         </div>
       </div>

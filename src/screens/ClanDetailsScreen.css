@@ -94,6 +94,139 @@
   margin-right: 5px;
 }
 
+.loading-text {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  font-size: 14px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+.error-text {
+  color: #ff4444;
+  text-align: center;
+  margin: 10px 0;
+}
+
+.overlay-container8 {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 400px;
+  height: auto;
+  z-index: 1001;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 15px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.streak-overlay8 {
+  width: 100%;
+  background-color: #1d1d1d;
+  color: #fff;
+  padding: 20px;
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.overlay-header8 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.overlay-title8 {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.overlay-cancel {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  position: absolute;
+  right: 0;
+}
+
+.overlay-divider {
+  width: 100%;
+  height: 1px;
+  background-color: #777777;
+  margin: 20px 0;
+}
+
+.overlay-content8 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.overlay-streak-icon1 {
+  width: 100px;
+  height: 100px;
+}
+
+.overlay-text {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.overlay-subtext {
+  font-size: 14px;
+  color: #c2bfbf;
+  text-align: center;
+}
+
+.overlay-cta-container{
+  display: row;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.overlay-cta-button {
+  width: 100%;
+  padding: 12px;
+  background-color: #fff;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.overlay-cta-button.inactive {
+  background-color: #414141;
+  color: #aaa;
+  margin-bottom: 16px;
+}
+
+.overlay-cta-button.active {
+  background-color: #fff;
+  color: #000;
+}
+
 /* Top Earners Section */
 .top-earners-section1 {
   margin-top: 20px;
