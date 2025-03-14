@@ -38,7 +38,7 @@ def create_clan(creator: str, clan: CreateClan):
     user_invite: list = user["invite"]
 
 
-    members: list = clan.members[0].split(",")
+    members: list = clan.members[0].split(",")  # swaggerUI takes list[str] as ["'item1', 'item2', 'item3'"]
     if not members:
         members = clan.members
 
