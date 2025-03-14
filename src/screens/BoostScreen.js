@@ -186,10 +186,10 @@ const BoostScreen = () => {
     const { type, title, description, value, level, ctaText, altCTA, id, icon } = activeOverlay;
     const isExtraBooster = type === "extra";
     const isDisabled = altCTA && value !== "Free";
-
+  
     return (
       <div className="overlay-container" onClick={handleOverlayClose}>
-        <div className={`boost-overlay ${activeOverlay ? "slide-in" : "slide-out"}`}>
+        <div className={`boost-overlay ${activeOverlay ? "slide-in" : "slide-out"}`} onClick={(e) => e.stopPropagation()}>
           <div className="overlay-header2">
             <h2 className="overlay-title2">{title}</h2>
             <img
@@ -208,7 +208,6 @@ const BoostScreen = () => {
               <span className="overlay-value">{value}</span>
               {level && <div className="overlay-level">/{level}</div>}
             </div>
-            
             <button
               className="overlay-cta clickable"
               disabled={isDisabled}
