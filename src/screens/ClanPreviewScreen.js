@@ -7,7 +7,7 @@ import { fetchClanImage } from "../utils/fetchImage";
 const ClanPreviewScreen = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [clanData, setClanData] = useState(null);
+  const [clanData, setClanData] = useState(null); // No localStorage to avoid stale data
   const [joining, setJoining] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -23,6 +23,8 @@ const ClanPreviewScreen = () => {
         }
 
         const clanId = location.pathname.split("/").pop();
+        console.log("Clan ID from URL:", clanId); // Debug: Verify clanId
+
         if (!clanId) throw new Error("No clan ID provided");
 
         const passedClan = location.state?.clan;
@@ -38,12 +40,16 @@ const ClanPreviewScreen = () => {
           });
           if (!response.ok) throw new Error("Failed to fetch clans");
           const clansData = await response.json();
+          console.log("All clans response:", clansData); // Debug: Full response
+
           const clan = clansData.find((c) => c.id === clanId);
-          if (!clan) throw new Error("Clan not found");
+          if (!clan) throw new Error(`Clan with ID ${clanId} not found`);
+
+          console.log("Matched clan:", clan); // Debug: Check matched clan
 
           imageUrl = await fetchClanImage(clan.image_id, token);
 
-          setClanData({
+          const newClanData = {
             id: clan.id,
             icon: imageUrl,
             name: clan.name,
@@ -57,30 +63,40 @@ const ClanPreviewScreen = () => {
                 ? "third-icon.png"
                 : "default-rank.png"
             }`,
-            joinIcon: `${process.env.PUBLIC_URL}/plus-icon.png`,
+            joinIcon: `${process.env.PUBLIC_URL}/add2.png`,
             closeRank: clan.rank || "#?",
-            clanCoin: clan.total_coins.toLocaleString(),
-            members: clan.members.toLocaleString(),
+            clanCoin: clan.total_coins ? clan.total_coins.toLocaleString() : "0",
+            members: clan.members !== undefined ? clan.members.toLocaleString() : "0", // Match ClanDetailsScreen
             coinIcon: `${process.env.PUBLIC_URL}/logo.png`,
             seeAllIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
-          });
+          };
+
+          console.log("Setting clanData (fetched):", newClanData); // Debug: Final data
+          setClanData(newClanData);
         } else {
-          // Check for either cardIcon (ClanScreen) or icon (ClanListScreen), fallback to fetch or default
-          imageUrl = passedClan.cardIcon || passedClan.icon || (await fetchClanImage(passedClan.image_id || null, token));
-          
-          setClanData({
+          console.log("Passed clan:", passedClan); // Debug: Passed data
+
+          imageUrl =
+            passedClan.cardIcon ||
+            passedClan.icon ||
+            (await fetchClanImage(passedClan.image_id || null, token));
+
+          const newClanData = {
             id: passedClan.id,
             icon: imageUrl,
             name: passedClan.name,
             position: passedClan.rank || "#?",
             topIcon: passedClan.rankIcon,
-            joinIcon: `${process.env.PUBLIC_URL}/plus-icon.png`,
+            joinIcon: `${process.env.PUBLIC_URL}/add2.png`,
             closeRank: passedClan.rank || "#?",
             clanCoin: passedClan.total_coins ? passedClan.total_coins.toLocaleString() : "0",
-            members: passedClan.members,
+            members: passedClan.members !== undefined ? passedClan.members.toLocaleString() : "0", // Match ClanDetailsScreen
             coinIcon: `${process.env.PUBLIC_URL}/logo.png`,
             seeAllIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
-          });
+          };
+
+          console.log("Setting clanData (passed):", newClanData); // Debug: Final data
+          setClanData(newClanData);
         }
 
         setLoading(false);
@@ -137,6 +153,8 @@ const ClanPreviewScreen = () => {
   if (error) return <div className="clan-preview"><p>Error: {error}</p><Navigation /></div>;
   if (!clanData) return <div className="clan-preview"><p>No clan data available</p><Navigation /></div>;
 
+  console.log("Rendering clanData:", clanData); // Debug: Final state before render
+
   return (
     <div className="clan-preview">
       <div className="clan-icon-section">
@@ -147,7 +165,7 @@ const ClanPreviewScreen = () => {
         <span className="position-text">{clanData.position}</span>
         <img src={clanData.topIcon} alt="Top Icon" className="top-icon" />
       </div>
-      <div className={`join-btn-frame ${joining ? "disabled" : ""}`} onClick={handleJoinClan}>
+      <div className={`join-btn-frame clickable ${joining ? "disabled" : ""}`} onClick={handleJoinClan}>
         <img src={clanData.joinIcon} alt="Join Icon" className="join-icon" />
         <span className="join-btn-text">{joining ? "Joining..." : "Join"}</span>
       </div>

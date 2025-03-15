@@ -47,6 +47,12 @@
   height: 24px;
 }
 
+/* Clicking effect for all clickables */
+.clickable:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease-in-out;
+}
+
 .join-btn-frame {
   display: flex;
   justify-content: center;
@@ -57,7 +63,7 @@
   padding: 10px 20px;
   cursor: pointer;
   pointer-events: auto;
-  width: 50%; /* Added */
+  width: 40%; /* Added */
   max-width: 200px; /* Added, adjust as needed */
   margin-left: auto; /* Added for centering */
   margin-right: auto; /* Added for centering */

@@ -46,6 +46,58 @@
   height: 24px;
 }
 
+/* Share options for invite overlay */
+.share-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+/* Copy confirmation popup */
+.copy-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #1d1d1d;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1002;
+  font-size: 14px;
+  max-height: 32px;
+  animation: fadeInOut 2s ease-in-out;
+}
+
+.copy-popup-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.copy-popup-text {
+  font-weight: 500;
+  color: #fff;
+}
+
+/* Fade in and out animation for popup */
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+
+/* Clicking effect for all clickables */
+.clickable:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease-in-out;
+}
+
 .clan-actions {
   display: flex;
   justify-content: center;
@@ -309,5 +361,19 @@
   .top-earner-icon {
     width: 36px;
     height: 36px;
+  }
+}
+/* Responsive adjustments */
+@media (min-width: 768px) {
+  .share-options {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+  }
+
+  .overlay-cta-button {
+    width: auto;
+    min-width: 120px;
   }
 }

@@ -35,7 +35,8 @@ const ClanDetailsScreen = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [topEarners, setTopEarners] = useState([]);
-  const [overlayState, setOverlayState] = useState(null); // Overlay state: null, "confirmExit", "transferComplete", "closeComplete"
+  const [overlayState, setOverlayState] = useState(null);
+  const [showCopyPopup, setShowCopyPopup] = useState(false);
 
   useEffect(() => {
     const fetchClanDetails = async () => {
@@ -113,17 +114,14 @@ const ClanDetailsScreen = () => {
     fetchClanDetails();
   }, [navigate]);
 
-  // Handle clicking the "Exit" button
   const handleExitClick = () => {
     setOverlayState("confirmExit");
   };
 
-  // Handle clicking the "Invite" button
   const handleInvite = () => {
-    alert("Invite feature coming soon!"); // Replace with backend call when ready
+    setOverlayState("invite"); // Trigger the invite overlay
   };
 
-  // Handle transferring leadership
   const handleTransferLeadership = async () => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -145,7 +143,6 @@ const ClanDetailsScreen = () => {
     }
   };
 
-  // Handle closing the clan
   const handleCloseClan = async () => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -167,7 +164,6 @@ const ClanDetailsScreen = () => {
     }
   };
 
-  // Handle closing the overlay and navigating if necessary
   const handleOverlayClose = () => {
     setOverlayState(null);
     if (overlayState === "transferComplete" || overlayState === "closeComplete") {
@@ -176,7 +172,32 @@ const ClanDetailsScreen = () => {
     }
   };
 
-  // Render the overlay based on the current state
+  // Invite link using clan ID
+  const inviteLink = clanData?.id
+    ? `https://t.me/Bored_Tap_Bot?start=clan_${clanData.id}`
+    : `https://t.me/Bored_Tap_Bot?start=clan_default`;
+
+  const handleTelegramShare = () => {
+    const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent(
+      `Join my clan ${clanData?.name || "Unknown"} on Bored Tap!`
+    )}`;
+    window.open(telegramUrl, "_blank");
+  };
+
+  const handleWhatsAppShare = () => {
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(
+      `Join my clan ${clanData?.name || "Unknown"} on Bored Tap! ${inviteLink}`
+    )}`;
+    window.open(whatsappUrl, "_blank");
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(inviteLink);
+    setShowCopyPopup(true);
+    setTimeout(() => setShowCopyPopup(false), 2000);
+  };
+
+
   const renderOverlay = () => {
     switch (overlayState) {
       case "confirmExit":
@@ -205,12 +226,12 @@ const ClanDetailsScreen = () => {
                 </p>
                 <div className="overlay-cta-container">
                   <button
-                    className="overlay-cta-button inactive"
+                    className="overlay-cta-button inactive clickable"
                     onClick={handleTransferLeadership}
                   >
                     Transfer Leadership
                   </button>
-                  <button className="overlay-cta-button active" onClick={handleCloseClan}>
+                  <button className="overlay-cta-button active clickable" onClick={handleCloseClan}>
                     Close
                   </button>
                 </div>
@@ -242,7 +263,7 @@ const ClanDetailsScreen = () => {
                 <p className="overlay-subtext">
                   You have transferred your title to Ridwan007 (the next in line)
                 </p>
-                <button className="overlay-cta-button active" onClick={handleOverlayClose}>
+                <button className="overlay-cta-button active clickable" onClick={handleOverlayClose}>
                   Done
                 </button>
               </div>
@@ -273,9 +294,40 @@ const ClanDetailsScreen = () => {
                 <p className="overlay-subtext">
                   Please note: All members' clan earning will be stopped
                 </p>
-                <button className="overlay-cta-button active" onClick={handleOverlayClose}>
+                <button className="overlay-cta-button active clickable" onClick={handleOverlayClose}>
                   Got it
                 </button>
+              </div>
+            </div>
+          </div>
+        );
+      case "invite":
+        return (
+          <div className="overlay-container8">
+            <div className="streak-overlay8 slide-in">
+              <div className="overlay-header8">
+                <h2 className="overlay-title8">Invite a Friend</h2>
+                <img
+                  src={`${process.env.PUBLIC_URL}/cancel.png`}
+                  alt="Close"
+                  className="overlay-cancel"
+                  onClick={handleOverlayClose}
+                />
+              </div>
+              <div className="overlay-divider"></div>
+              <div className="overlay-content8">
+                <p className="overlay-text">Share via:</p>
+                <div className="share-options">
+                  <button className="overlay-cta-button clickable" onClick={handleTelegramShare}>
+                    Telegram
+                  </button>
+                  <button className="overlay-cta-button clickable" onClick={handleWhatsAppShare}>
+                    WhatsApp
+                  </button>
+                  <button className="overlay-cta-button clickable" onClick={handleCopy}>
+                    Copy Link
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -298,11 +350,11 @@ const ClanDetailsScreen = () => {
             <img src={clanData.topIcon} alt="Top Icon" className="top-icon" />
           </div>
           <div className="clan-actions">
-            <div className="cta-button" onClick={handleExitClick}>
+            <div className="cta-button clickable" onClick={handleExitClick}>
               <img src={clanData.ctaLeaveIcon} alt="Exit Icon" className="cta-icon" />
               <span>Exit</span>
             </div>
-            <div className="cta-button" onClick={handleInvite}>
+            <div className="cta-button clickable" onClick={handleInvite}>
               <img src={clanData.ctaInviteIcon} alt="Invite Icon" className="cta-icon" />
               <span>Invite</span>
             </div>
@@ -313,7 +365,7 @@ const ClanDetailsScreen = () => {
           <div className="data-card">
             <div className="data-row">
               <span className="data-title">Earning</span>
-              <span className="data-value">x10% tapping</span>
+              <span className="data-value">x0.001% tapping</span>
             </div>
             <div className="data-row">
               <span className="data-title">Clan Rank</span>
@@ -387,6 +439,16 @@ const ClanDetailsScreen = () => {
       {loading && <p className="loading-text">Updating data...</p>}
       {error && <p className="error-text">Error: {error}</p>}
       {renderOverlay()}
+      {showCopyPopup && (
+        <div className="copy-popup">
+          <img
+            src={`${process.env.PUBLIC_URL}/tick-icon.png`}
+            alt="Tick Icon"
+            className="copy-popup-icon"
+          />
+          <span className="copy-popup-text">Invite link is copied</span>
+        </div>
+      )}
       <Navigation />
     </div>
   );
