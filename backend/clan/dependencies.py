@@ -465,7 +465,7 @@ def run_clan_earnings():
     # update clan rankings in from highest to lowest of total coins
     updated_clans = clans_collection.find().sort("total_coins", -1)
 
-    if clan:
+    if updated_clans:
         rank = 1
         for clan in updated_clans:
             clan_id = clan["_id"]
