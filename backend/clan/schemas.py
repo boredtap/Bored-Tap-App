@@ -10,6 +10,13 @@ class CreateClan(BaseModel):
     image: Annotated[UploadFile, Form(description="Upload clan image", media_type="multipart/form-data")]
 
 
+class MyEligibleMembers(BaseModel):
+    username: str
+    level: int
+    invitees: int
+    image_url: str
+
+
 class ClanResponse(BaseModel):
     id: str
     name: str
