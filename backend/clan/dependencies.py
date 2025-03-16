@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from bson import ObjectId
 from fastapi import HTTPException
 from database_connection import user_collection, fs, clans_collection, coin_stats,  invites_ref
-from clan.schemas import ClanTopEarners, CreateClan, ClanSearchResponse, MyClan
+from clan.schemas import ClanTopEarners, CreateClan, ClanSearchResponse, MyClan, MyEligibleMembers
 from user_reg_and_prof_mngmnt.models import Clan as UserProfileClan
 from superuser.clan.models import Clan
 
@@ -18,16 +18,31 @@ def verify_image(format: str):
 
 # --------------------------------------------- CREATE CLAN --------------------------------------------- #
 def my_eligible_members(telegram_user_id: str):
-    invitees = invites_ref.find_one({"inviter_telegram_id": telegram_user_id})['invitees']
+    invitees = invites_ref.find_one({"inviter_telegram_id": telegram_user_id})
     
     # no invitees
     if not invitees:
         raise HTTPException(status_code=403, detail="You have no invitees")
     
+    invitees = invitees['invitees']
+    
     # get eligible members
     for member in invitees:
-        if user_collection.find_one({"telegram_user_id": member})["clan"]["name"] == None:
-            yield member
+        member_profile = user_collection.find_one({"telegram_user_id": member})
+        member_invitees = invites_ref.find_one({"inviter_telegram_id": member})
+        member_invitees_count = 0
+        
+        if member_profile["clan"]["name"] == None:
+            print(member_profile['username'])
+            if member_invitees:
+                member_invitees_count = len(member_invitees['invitees'])
+
+            yield MyEligibleMembers(
+                username=member_profile["username"],
+                level=member_profile["level"],
+                invitees=member_invitees_count,
+                image_url=member_profile["image_url"]
+            )
 
 
 # --------------------------------------------- CREATE CLAN --------------------------------------------- #
