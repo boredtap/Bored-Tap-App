@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from bson import ObjectId
 from fastapi import HTTPException
-from database_connection import user_collection, fs, clans_collection, coin_stats
+from database_connection import user_collection, fs, clans_collection, coin_stats,  invites_ref
 from clan.schemas import ClanTopEarners, CreateClan, ClanSearchResponse, MyClan
 from user_reg_and_prof_mngmnt.models import Clan as UserProfileClan
 from superuser.clan.models import Clan
@@ -14,6 +14,20 @@ def verify_image(format: str):
         raise HTTPException(status_code=400, detail="Invalid badge file. Please upload a valid badge file.")
     
     return True
+
+
+# --------------------------------------------- CREATE CLAN --------------------------------------------- #
+def my_eligible_members(telegram_user_id: str):
+    invitees = invites_ref.find_one({"inviter_telegram_id": telegram_user_id})['invitees']
+    
+    # no invitees
+    if not invitees:
+        raise HTTPException(status_code=403, detail="You have no invitees")
+    
+    # get eligible members
+    for member in invitees:
+        if user_collection.find_one({"telegram_user_id": member})["clan"]["name"] == None:
+            yield member
 
 
 # --------------------------------------------- CREATE CLAN --------------------------------------------- #
@@ -413,7 +427,7 @@ def run_clan_earnings():
     response = {}
     for clan in clans:
         clan_id = clan["_id"]
-        members = user_collection.find({"clan.id": str(clan_id)})  
+        members = user_collection.find({"clan.id": str(clan_id)})
 
         clans_last_earn_date = clans_collection.find_one({"_id": ObjectId(clan_id)})["last_earn_date"]
 
@@ -465,7 +479,7 @@ def run_clan_earnings():
     # update clan rankings in from highest to lowest of total coins
     updated_clans = clans_collection.find().sort("total_coins", -1)
 
-    if clan:
+    if updated_clans:
         rank = 1
         for clan in updated_clans:
             clan_id = clan["_id"]

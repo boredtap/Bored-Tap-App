@@ -5,6 +5,7 @@ from fastapi.responses import StreamingResponse
 from clan.schemas import CreateClan, ClanSearchResponse, CreatorExitAction
 from user_reg_and_prof_mngmnt.user_authentication import get_current_user
 from clan.dependencies import (
+    my_eligible_members as my_eligible_members_func,
     create_clan as create_clan_func,
     join_clan as join_clan_func,
     all_clans as all_clans_func,
@@ -24,6 +25,13 @@ user_clan_router = APIRouter(
     # responses={404: {"description": "Not found"}},
     dependencies=[Depends(get_current_user), Depends(run_clan_earnings)]
 )
+
+
+# ----------------------------- ELIGIBLE CLAN MEMBERS ------------------------------ #
+@user_clan_router.get("/my_eligible_members")
+async def my_eligible_members(telegram_user_id: Annotated[str, Depends(get_current_user)]):
+    
+    return my_eligible_members_func(telegram_user_id)
 
 
 # ----------------------------- CREATE CLAN ------------------------------ #
