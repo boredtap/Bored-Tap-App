@@ -50,7 +50,7 @@ const ClanPreviewScreen = () => {
           console.log("Clan members value:", clan.members);
 
           imageUrl = await fetchClanImage(clan.image_id, token);
-          console.log("Fetched image URL:", imageUrl);
+          // console.log("Fetched image URL:", imageUrl);
 
           const newClanData = {
             id: clan.id,
@@ -69,7 +69,7 @@ const ClanPreviewScreen = () => {
             joinIcon: `${process.env.PUBLIC_URL}/add2.png`,
             closeRank: clan.rank || "#?",
             clanCoin: clan.total_coins ? clan.total_coins.toLocaleString() : "0",
-            members: clan.members ? clan.members.toLocaleString() : "0",
+            // members: clan.members ? clan.members.toLocaleString() : "0",
             coinIcon: `${process.env.PUBLIC_URL}/logo.png`,
             seeAllIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
           };

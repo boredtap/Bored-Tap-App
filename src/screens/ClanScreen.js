@@ -323,7 +323,7 @@ const ClanScreen = () => {
         <div className={`clan-cta-buttons ${clanStatus === "pending" ? "pending" : "default"}`}>
           {clanStatus === "pending" ? (
             <div className="pending-container">
-              <button className="clan-cta inactive" onClick={handleJoinClick}>
+              <button className="clan-cta inactive">
                 Join Clan
               </button>
               <p className="pending-message">Your clan is awaiting verification</p>
