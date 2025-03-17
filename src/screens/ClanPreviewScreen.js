@@ -69,7 +69,7 @@ const ClanPreviewScreen = () => {
             joinIcon: `${process.env.PUBLIC_URL}/add2.png`,
             closeRank: clan.rank || "#?",
             clanCoin: clan.total_coins ? clan.total_coins.toLocaleString() : "0",
-            // members: clan.members ? clan.members.toLocaleString() : "0",
+            members: clan.members.toLocaleString(),
             coinIcon: `${process.env.PUBLIC_URL}/logo.png`,
             seeAllIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
           };
@@ -94,7 +94,7 @@ const ClanPreviewScreen = () => {
             joinIcon: `${process.env.PUBLIC_URL}/add2.png`,
             closeRank: passedClan.rank || "#?",
             clanCoin: passedClan.total_coins ? passedClan.total_coins.toLocaleString() : "0",
-            members: passedClan.members ? passedClan.members.toLocaleString() : "0",
+            members: passedClan.members.toLocaleString(),
             coinIcon: `${process.env.PUBLIC_URL}/logo.png`,
             seeAllIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
           };

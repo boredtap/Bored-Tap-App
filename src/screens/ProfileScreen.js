@@ -117,6 +117,7 @@ const ProfileScreen = () => {
       icon: `${process.env.PUBLIC_URL}/wallet.png`,
       label: "Connect Wallet",
       value: <img src={`${process.env.PUBLIC_URL}/plus-icon.png`} alt="Add Wallet" className="wallet-icon" />,
+      onClick: () => navigate("/wallet-screen"),
     },
   ];
 

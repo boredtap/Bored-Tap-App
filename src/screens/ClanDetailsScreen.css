@@ -247,8 +247,18 @@
 }
 
 .overlay-streak-icon1 {
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
+}
+
+.overlay-streak-icon2 {
+  width: 80px;
+  height: 80x;
+}
+
+.overlay-streak-icon3 {
+  width: 80px;
+  height: 80x;
 }
 
 .overlay-text {

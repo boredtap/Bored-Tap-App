@@ -693,7 +693,7 @@ const ClanDetailsScreen = () => {
                     Transfer Leadership
                   </button>
                   <button className="overlay-cta-button active clickable" onClick={handleCloseClan}>
-                    Close
+                    Close Clan
                   </button>
                 </div>
               </div>
@@ -744,7 +744,7 @@ const ClanDetailsScreen = () => {
                 <img
                   src={`${process.env.PUBLIC_URL}/transfer.gif`}
                   alt="Transfer Icon"
-                  className="overlay-streak-icon1"
+                  className="overlay-streak-icon3"
                 />
                 <p className="overlay-text">Clan leadership transfer is complete</p>
                 <p className="overlay-subtext">
@@ -806,7 +806,7 @@ const ClanDetailsScreen = () => {
                 <img
                   src={`${process.env.PUBLIC_URL}/close.gif`}
                   alt="Close Icon"
-                  className="overlay-streak-icon1"
+                  className="overlay-streak-icon2"
                 />
                 <p className="overlay-text">You have left the clan</p>
                 <button className="overlay-cta-button active clickable" onClick={handleOverlayClose}>
