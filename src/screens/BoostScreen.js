@@ -188,6 +188,7 @@ const BoostScreen = () => {
     const isDisabled = altCTA && value !== "Free";
   
     return (
+      <div className="overlay-backdrop"> 
       <div className="overlay-container2" onClick={handleOverlayClose}>
         <div className={`boost-overlay2 ${activeOverlay ? "slide-in" : "slide-out"}`} onClick={(e) => e.stopPropagation()}>
           <div className="overlay-header2">
@@ -217,6 +218,7 @@ const BoostScreen = () => {
             </button>
           </div>
         </div>
+      </div>
       </div>
     );
   };

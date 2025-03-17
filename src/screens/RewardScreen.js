@@ -225,6 +225,7 @@ const RewardScreen = () => {
       </div>
 
       {showOverlay && selectedReward && (
+        <div className="overlay-backdrop">
         <div className="overlay-container5">
           <div className={`reward-overlay5 ${showOverlay ? "slide-in" : "slide-out"}`}>
             <div className="overlay-header5">
@@ -254,6 +255,7 @@ const RewardScreen = () => {
               </button>
             </div>
           </div>
+        </div>
         </div>
       )}
 

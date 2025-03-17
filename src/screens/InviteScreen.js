@@ -144,6 +144,7 @@ const InviteScreen = () => {
       </div>
 
       {isOverlayVisible && (
+        <div className="overlay-backdrop">
         <div className="overlay-container4">
           <div className={`invite-overlay4 ${isOverlayVisible ? "slide-in" : "slide-out"}`}>
             <div className="overlay-header4">
@@ -176,6 +177,7 @@ const InviteScreen = () => {
               </div>
             </div>
           </div>
+        </div>
         </div>
       )}
 

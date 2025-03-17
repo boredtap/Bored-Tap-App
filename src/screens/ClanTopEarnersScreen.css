@@ -1,0 +1,128 @@
+.clan-top-earners-screen {
+    background-color: #000;
+    color: #fff;
+    min-height: 100vh;
+    padding: 80px 16px;
+    padding-top: 0px;
+    font-family: "Roboto", sans-serif;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .clan-icon-section {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  
+  .clan-icon {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+  }
+  
+  .top-earners-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+  }
+  
+  .top-earners-title1 {
+    font-size: 24px;
+    font-weight: 500;
+    align-items: center;
+  }
+  
+  /* .back-icon {
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+  } */
+  
+  .clickable:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease-in-out;
+  }
+  
+  .top-earners-list {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 80px; /* Space for Navigation */
+  }
+  
+  .top-earner-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-radius: 8px;
+    background-color: #414141;
+    margin-bottom: 10px;
+  }
+  
+  .top-earner-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .top-earner-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .top-earner-info {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .top-earner-username {
+    font-size: 14px;
+    font-weight: bold;
+    color: #fff;
+  }
+  
+  .top-earner-username .level {
+    color: orange;
+  }
+  
+  .top-earner-coins {
+    font-size: 12px;
+    color: #d9d9d9;
+  }
+  
+  .top-earner-right {
+    display: flex;
+    align-items: center;
+  }
+  
+  .top-earner-right-icon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .position-number {
+    font-size: 14px;
+    color: #fff;
+  }
+  
+  .no-earners {
+    text-align: center;
+    color: #c2bfbf;
+    font-size: 16px;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 600px) {
+    .top-earner-card {
+      padding: 12px;
+    }
+  
+    .top-earner-icon {
+      width: 36px;
+      height: 36px;
+    }
+  }

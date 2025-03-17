@@ -7,7 +7,7 @@ import { fetchClanImage } from "../utils/fetchImage";
 const ClanPreviewScreen = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [clanData, setClanData] = useState(null); // No localStorage to avoid stale data
+  const [clanData, setClanData] = useState(null);
   const [joining, setJoining] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -23,7 +23,7 @@ const ClanPreviewScreen = () => {
         }
 
         const clanId = location.pathname.split("/").pop();
-        console.log("Clan ID from URL:", clanId); // Debug: Verify clanId
+        console.log("Clan ID from URL:", clanId);
 
         if (!clanId) throw new Error("No clan ID provided");
 
@@ -31,6 +31,7 @@ const ClanPreviewScreen = () => {
         let imageUrl;
 
         if (!passedClan) {
+          console.log("Fetching from /all_clans since no passed clan data");
           const response = await fetch("https://bt-coins.onrender.com/user/clan/all_clans", {
             method: "GET",
             headers: {
@@ -40,14 +41,16 @@ const ClanPreviewScreen = () => {
           });
           if (!response.ok) throw new Error("Failed to fetch clans");
           const clansData = await response.json();
-          console.log("All clans response:", clansData); // Debug: Full response
+          console.log("Raw clans response:", clansData);
 
-          const clan = clansData.find((c) => c.id === clanId);
+          const clan = clansData.find((c) => String(c.id) === String(clanId));
           if (!clan) throw new Error(`Clan with ID ${clanId} not found`);
 
-          console.log("Matched clan:", clan); // Debug: Check matched clan
+          console.log("Matched clan:", clan);
+          console.log("Clan members value:", clan.members);
 
           imageUrl = await fetchClanImage(clan.image_id, token);
+          console.log("Fetched image URL:", imageUrl);
 
           const newClanData = {
             id: clan.id,
@@ -66,20 +69,21 @@ const ClanPreviewScreen = () => {
             joinIcon: `${process.env.PUBLIC_URL}/add2.png`,
             closeRank: clan.rank || "#?",
             clanCoin: clan.total_coins ? clan.total_coins.toLocaleString() : "0",
-            members: clan.members !== undefined ? clan.members.toLocaleString() : "0", // Match ClanDetailsScreen
+            members: clan.members ? clan.members.toLocaleString() : "0",
             coinIcon: `${process.env.PUBLIC_URL}/logo.png`,
             seeAllIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
           };
 
-          console.log("Setting clanData (fetched):", newClanData); // Debug: Final data
-          setClanData(newClanData);
+          console.log("Setting clanData (fetched):", newClanData);
+          setClanData(newClanData); // Set data before loading false
         } else {
-          console.log("Passed clan:", passedClan); // Debug: Passed data
+          console.log("Using passed clan data:", passedClan);
 
           imageUrl =
             passedClan.cardIcon ||
             passedClan.icon ||
             (await fetchClanImage(passedClan.image_id || null, token));
+          console.log("Passed image URL:", imageUrl);
 
           const newClanData = {
             id: passedClan.id,
@@ -90,20 +94,19 @@ const ClanPreviewScreen = () => {
             joinIcon: `${process.env.PUBLIC_URL}/add2.png`,
             closeRank: passedClan.rank || "#?",
             clanCoin: passedClan.total_coins ? passedClan.total_coins.toLocaleString() : "0",
-            members: passedClan.members !== undefined ? passedClan.members.toLocaleString() : "0", // Match ClanDetailsScreen
+            members: passedClan.members ? passedClan.members.toLocaleString() : "0",
             coinIcon: `${process.env.PUBLIC_URL}/logo.png`,
             seeAllIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
           };
 
-          console.log("Setting clanData (passed):", newClanData); // Debug: Final data
-          setClanData(newClanData);
+          console.log("Setting clanData (passed):", newClanData);
+          setClanData(newClanData); // Set data before loading false
         }
-
-        setLoading(false);
       } catch (err) {
         setError(err.message);
-        setLoading(false);
         console.error("Error fetching clan preview:", err.message);
+      } finally {
+        setLoading(false); // Moved to finally to ensure it runs after setClanData
       }
     };
 
@@ -149,11 +152,26 @@ const ClanPreviewScreen = () => {
     }
   };
 
-  if (loading) return <div className="clan-preview"><p>Loading...</p><Navigation /></div>;
-  if (error) return <div className="clan-preview"><p>Error: {error}</p><Navigation /></div>;
-  if (!clanData) return <div className="clan-preview"><p>No clan data available</p><Navigation /></div>;
+  // Only render loading state until clanData is fully set
+  if (loading || !clanData) {
+    return (
+      <div className="clan-preview">
+        <p>Loading...</p>
+        <Navigation />
+      </div>
+    );
+  }
 
-  console.log("Rendering clanData:", clanData); // Debug: Final state before render
+  if (error) {
+    return (
+      <div className="clan-preview">
+        <p>Error: {error}</p>
+        <Navigation />
+      </div>
+    );
+  }
+
+  console.log("Rendering clanData:", clanData);
 
   return (
     <div className="clan-preview">
