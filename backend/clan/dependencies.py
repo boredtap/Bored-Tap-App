@@ -18,6 +18,23 @@ def verify_image(format: str):
 
 # --------------------------------------------- CREATE CLAN --------------------------------------------- #
 def my_eligible_members(telegram_user_id: str):
+    """
+    Retrieve eligible members who can be added to a clan by clan owner during clan creation.
+
+    This function retrieves invitees of a given user who are not currently in any clan. 
+    For each eligible invitee, it yields an instance of MyEligibleMembers containing necessary
+    data from their profile details.
+
+    Args:
+        telegram_user_id (str): The Telegram user ID of the inviter.
+
+    Yields:
+        MyEligibleMembers: An object containing details of each eligible member.
+    
+    Raises:
+        HTTPException: If the user has no invitees.
+    """
+
     invitees = invites_ref.find_one({"inviter_telegram_id": telegram_user_id})
     
     # no invitees
@@ -33,11 +50,11 @@ def my_eligible_members(telegram_user_id: str):
         member_invitees_count = 0
         
         if member_profile["clan"]["name"] == None:
-            print(member_profile['username'])
             if member_invitees:
                 member_invitees_count = len(member_invitees['invitees'])
 
             yield MyEligibleMembers(
+                telegram_user_id=member_profile["telegram_user_id"],
                 username=member_profile["username"],
                 level=member_profile["level"],
                 invitees=member_invitees_count,
@@ -71,8 +88,7 @@ def create_clan(creator: str, clan: CreateClan):
     if not members:
         members = clan.members
 
-    # members yet to join a clan
-    members = [member for member in members if user_collection.find_one({"telegram_user_id": member})["clan"]["name"] == None]
+    # add clan creater/owner to members list
     members.insert(0, creator)
 
     # # Check if user exists
@@ -87,7 +103,7 @@ def create_clan(creator: str, clan: CreateClan):
     if clans_collection.find_one({"name": clan.name}):
         raise HTTPException(status_code=409, detail="Clan name already exists")
 
-    # Check if user has enough invites    
+    # Check if user has enough invites
     if len(user_invite) < 1:
         raise HTTPException(status_code=403, detail="You don't have enough invites to create a clan")
 
@@ -109,7 +125,7 @@ def create_clan(creator: str, clan: CreateClan):
         created_at=datetime.now(timezone.utc),
         # status=Clan.PENDING
         image_id=str(image_id),
-        members=0
+        members=len(members)
     )
 
     created_clan = clans_collection.insert_one(new_clan.model_dump())
@@ -131,15 +147,15 @@ def create_clan(creator: str, clan: CreateClan):
         )
 
         # update clan members count
-        update_clan_member_count = clans_collection.update_one(
-            {"_id": ObjectId(clan_id)},
-            {
-                "$inc": {
-                    "members": update_members_profile.modified_count 
-            }}
-        )
+        # update_clan_member_count = clans_collection.update_one(
+        #     {"_id": ObjectId(clan_id)},
+        #     {
+        #         "$inc": {
+        #             "members": update_members_profile.modified_count 
+        #     }}
+        # )
 
-        if update_clan_member_count.modified_count > 0:
+        if update_members_profile.modified_count > 0:
             return {
                 "status": True,
                 "message": clan_creation_status,

@@ -11,6 +11,7 @@ class CreateClan(BaseModel):
 
 
 class MyEligibleMembers(BaseModel):
+    telegram_user_id: str
     username: str
     level: int
     invitees: int
