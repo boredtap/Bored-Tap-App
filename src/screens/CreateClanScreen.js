@@ -7,8 +7,8 @@ const CreateClanScreen = () => {
   const [clanName, setClanName] = useState("");
   const [clanImage, setClanImage] = useState(null);
   const [imageName, setImageName] = useState("");
-  const [eligibleMembers, setEligibleMembers] = useState([]); // Changed from invitees
-  const [selectedMembers, setSelectedMembers] = useState([]); // Changed from selectedFriends
+  const [eligibleMembers, setEligibleMembers] = useState([]);
+  const [selectedMembers, setSelectedMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showOverlay, setShowOverlay] = useState(false);
@@ -17,6 +17,7 @@ const CreateClanScreen = () => {
   useEffect(() => {
     const fetchEligibleMembers = async () => {
       const token = localStorage.getItem("accessToken");
+      console.log("Access token for fetchEligibleMembers:", token);
       if (!token) {
         setError("No access token found");
         setLoading(false);
@@ -29,10 +30,14 @@ const CreateClanScreen = () => {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
-            Accept: "application/json", // Added for consistency with backend test
+            Accept: "application/json",
           },
         });
-        if (!response.ok) throw new Error(`Failed to fetch eligible members: ${response.statusText}`);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.log("Fetch eligible members failed with status:", response.status, "Response:", errorText);
+          throw new Error(`Failed to fetch eligible members: ${response.status} - ${errorText}`);
+        }
         const membersData = await response.json();
         console.log("Eligible members data:", membersData);
         setEligibleMembers(membersData || []);
@@ -70,12 +75,13 @@ const CreateClanScreen = () => {
     setSelectedMembers((prev) =>
       prev.length === eligibleMembers.length
         ? []
-        : eligibleMembers.map((member) => member.telegram_user_id || member.username) // Fallback to username if telegram_user_id is missing
+        : eligibleMembers.map((member) => member.telegram_user_id || member.username)
     );
   };
 
   const handleCreateClan = async () => {
     const token = localStorage.getItem("accessToken");
+    console.log("Access token for createClan:", token);
     if (!token) {
       setError("No access token found");
       return;
@@ -103,8 +109,9 @@ const CreateClanScreen = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error: ${response.status}`);
+        const errorData = await response.text();
+        console.log("Clan creation failed with status:", response.status, "Response:", errorData);
+        throw new Error(`HTTP error: ${response.status} - ${errorData}`);
       }
 
       const data = await response.json();
@@ -244,31 +251,31 @@ const CreateClanScreen = () => {
         </>
       )}
 
-          {showOverlay && (
-            <div className="overlay-backdrop">
-              <div className="overlay-container3">
-                <div className={`clan-overlay3 ${showOverlay ? "slide-in" : "slide-out"}`}>
-                  <div className="overlay-header3">
-                    <h2 className="overlay-title3">Awaiting Verification</h2>
-                    <img
-                      src={`${process.env.PUBLIC_URL}/cancel.png`}
-                      alt="Cancel"
-                      className="overlay-cancel"
-                      onClick={handleOverlayClose}
-                    />
-                  </div>
-                  <div className="overlay-divider"></div>
-                  <div className="overlay-content">
-                    <img src={`${process.env.PUBLIC_URL}/clan.png`} alt="Clan Icon" className="overlay-icon" />
-                    <p className="overlay-text">We’ll notify you once verification is complete</p>
-                    <button className="overlay-cta" onClick={handleOverlayClose}>
-                      Continue
-                    </button>
-                  </div>
-                </div>
+      {showOverlay && (
+        <div className="overlay-backdrop">
+          <div className="overlay-container3">
+            <div className={`clan-overlay3 ${showOverlay ? "slide-in" : "slide-out"}`}>
+              <div className="overlay-header3">
+                <h2 className="overlay-title3">Awaiting Verification</h2>
+                <img
+                  src={`${process.env.PUBLIC_URL}/cancel.png`}
+                  alt="Cancel"
+                  className="overlay-cancel"
+                  onClick={handleOverlayClose}
+                />
+              </div>
+              <div className="overlay-divider"></div>
+              <div className="overlay-content">
+                <img src={`${process.env.PUBLIC_URL}/clan.png`} alt="Clan Icon" className="overlay-icon" />
+                <p className="overlay-text">We’ll notify you once verification is complete</p>
+                <button className="overlay-cta" onClick={handleOverlayClose}>
+                  Continue
+                </button>
               </div>
             </div>
-          )}
+          </div>
+        </div>
+      )}
 
       <Navigation />
     </div>
