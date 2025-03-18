@@ -340,9 +340,12 @@ def next_potential_clan_leader(clan_id: str):
 
     for id in member_ids:
         if id != clan["creator"]:
-            invitees = len(invites_ref.find_one({"inviter_telegram_id": id})["invitees"])
-            if invitees >= CLAN_LEADER_INVITEE_REQUIREMENTS:
-                members_id_with_50_invitees.append(id)
+            invitees = invites_ref.find_one({"inviter_telegram_id": id})
+
+            if invitees:
+                invitees = len(invitees["invitees"])
+                if invitees >= CLAN_LEADER_INVITEE_REQUIREMENTS:
+                    members_id_with_50_invitees.append(id)
     
     # no eligible leader for leadership transfer
     if len(members_id_with_50_invitees) == 0:
