@@ -260,6 +260,11 @@
   width: 80px;
   height: 80x;
 }
+.overlay-streak-icon4 {
+  width: 80px;
+  height: 80x;
+}
+
 
 .overlay-text {
   font-size: 16px;
@@ -292,12 +297,17 @@
 }
 
 .overlay-cta-button.inactive {
-  background-color: #414141;
-  color: #aaa;
-  margin-bottom: 10px;
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .overlay-cta-button.active {
+  background-color: #181818; /* Or your active color */
+  cursor: pointer;
+}
+
+.overlay-cta-button {
   background-color: #fff;
   color: #000;
 }
