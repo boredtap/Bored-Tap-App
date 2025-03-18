@@ -455,11 +455,35 @@ def exit_clan(telegram_user_id: str, creator_exit_action: str | None = None):
             )
 
             if transfer_ownership.modified_count > 0:
-                return {
-                    "status": True,
-                    "message": "Ownership transferred",
-                    "new leader": eligible_leader["leader"]
-                }
+                # remove current leader from clan members
+                remove_current_leader = user_collection.update_one(
+                    {"telegram_user_id": clan["creator"]},
+                    {
+                        "$set": {
+                            "clan": {
+                                "id": None,
+                                "name": None,
+                            }
+                        }
+                    }
+                )
+
+                # update clan member count
+                update_clan_member_count = clans_collection.update_one(
+                    {"_id": ObjectId(clan_id)},
+                    {
+                        "$inc": {
+                            "members": -1
+                        }
+                    }
+                )
+
+                if remove_current_leader.modified_count > 0 and update_clan_member_count.modified_count > 0:
+                    return {
+                        "status": True,
+                        "message": "Ownership transferred",
+                        "new leader": eligible_leader["leader"]
+                    }
 
 
         # close clan completely
