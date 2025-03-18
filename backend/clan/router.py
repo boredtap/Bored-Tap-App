@@ -9,6 +9,7 @@ from clan.dependencies import (
     create_clan as create_clan_func,
     join_clan as join_clan_func,
     all_clans as all_clans_func,
+    next_potential_clan_leader,
     run_clan_earnings,
     top_clans as top_clans_func,
     my_clan as my_clan_func,
@@ -126,6 +127,13 @@ async def my_clan(telegram_user_id: Annotated[str, Depends(get_current_user)]):
 @user_clan_router.post("/invite_members", deprecated=True)
 async def invite_members_to_clan(telegram_user_id: Annotated[str, Depends(get_current_user)]):
     pass
+
+
+# ----------------------------- CLAN LEADERSHIP TRANSFER CANDIDATE ------------------------------ #
+@user_clan_router.get("/clan/{clan_id}/leadership_transfer_candidate")
+async def clan_leadership_transfer_candidate(clan_id: str):
+
+    return next_potential_clan_leader(clan_id)
 
 
 # ----------------------------- EXIT CLAN ------------------------------ #

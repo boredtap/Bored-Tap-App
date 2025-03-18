@@ -7,6 +7,8 @@ from user_reg_and_prof_mngmnt.models import Clan as UserProfileClan
 from superuser.clan.models import Clan
 
 
+CLAN_LEADER_INVITEE_REQUIREMENTS = 1
+
 
 # =----------------------------- VERIFY IMAGE ------------------------------ #
 def verify_image(format: str):
@@ -48,7 +50,7 @@ def my_eligible_members(telegram_user_id: str):
         member_profile = user_collection.find_one({"telegram_user_id": member})
         member_invitees = invites_ref.find_one({"inviter_telegram_id": member})
         member_invitees_count = 0
-        
+
         if member_profile["clan"]["name"] == None:
             if member_invitees:
                 member_invitees_count = len(member_invitees['invitees'])
@@ -104,7 +106,7 @@ def create_clan(creator: str, clan: CreateClan):
         raise HTTPException(status_code=409, detail="Clan name already exists")
 
     # Check if user has enough invites
-    if len(user_invite) < 1:
+    if len(user_invite) < CLAN_LEADER_INVITEE_REQUIREMENTS:
         raise HTTPException(status_code=403, detail="You don't have enough invites to create a clan")
 
     # process image
@@ -322,6 +324,56 @@ def invite_to_clan(telegram_user_id: str, clan_id: str):
                     }
 
 
+# --------------------------------- NEXT POTENTIAL LEADER ---------------------------------- #
+def next_potential_clan_leader(clan_id: str):
+    clan = clans_collection.find_one({"_id": ObjectId(clan_id)})
+
+    if not clan:
+        raise HTTPException(status_code=404, detail="Clan not found")
+    
+    # clan members
+    members = user_collection.find({"clan.id": clan_id})
+    member_ids = [member["telegram_user_id"] for member in members]
+
+    # members with 50/50+ invitees
+    members_id_with_50_invitees = []
+
+    for id in member_ids:
+        if id != clan["creator"]:
+            invitees = len(invites_ref.find_one({"inviter_telegram_id": id})["invitees"])
+            if invitees >= CLAN_LEADER_INVITEE_REQUIREMENTS:
+                members_id_with_50_invitees.append(id)
+    
+    # no eligible leader for leadership transfer
+    if len(members_id_with_50_invitees) == 0:
+        return None
+    
+    # only one eligible leader
+    if len(members_id_with_50_invitees) == 1:
+        return {
+            "status": "success",
+            "message": f"{len(members_id_with_50_invitees)} potential leader found",
+            "leader": members_id_with_50_invitees[0]
+        }
+    
+    # multiple eligible leaders
+    if len(members_id_with_50_invitees) > 1:
+        # get top earner from list of eligible leaders
+        top_earner = user_collection.find_one({"telegram_user_id": members_id_with_50_invitees[0]})
+
+        for i in range(1, len(members_id_with_50_invitees)):
+            leader = user_collection.find_one({"telegram_user_id": members_id_with_50_invitees[i]})
+
+            if leader["total_coins"] > top_earner["total_coins"]:
+                top_earner = leader
+
+        return {
+            "status": "success",
+            "message": f"{len(members_id_with_50_invitees)} potential leader(s) found",
+            "leader": top_earner["telegram_user_id"]
+        }
+
+
 # --------------------------------- EXIT CLAN ---------------------------------- #
 def exit_clan(telegram_user_id: str, creator_exit_action: str | None = None):
     user = user_collection.find_one({"telegram_user_id": telegram_user_id})
@@ -381,9 +433,30 @@ def exit_clan(telegram_user_id: str, creator_exit_action: str | None = None):
 
         # transfer ownership to next top member
         if creator_exit_action.lower() == "transfer":
-            return {
-                "status": "Ownership transfer feature coming soon 😊"
-            }
+            eligible_leader = next_potential_clan_leader(clan_id)
+
+            if not eligible_leader:
+                return {
+                    "status": "error",
+                    "message": "No eligible leader for leadership transfer"
+                }
+
+            # transfer ownership to next member with 50/50+ invitees and is the top earner
+            transfer_ownership = clans_collection.update_one(
+                {"_id": ObjectId(clan_id)},
+                {
+                    "$set": {
+                        "creator": eligible_leader["leader"]
+                    }
+                }
+            )
+
+            if transfer_ownership.modified_count > 0:
+                return {
+                    "status": True,
+                    "message": "Ownership transferred",
+                    "new leader": eligible_leader["leader"]
+                }
 
 
         # close clan completely
@@ -426,6 +499,7 @@ def clan_top_earners(clan_id: str, limit: int = 10, skip: int = 0):
     top_earners = []
     for index, member in enumerate(members):
         top_earner = ClanTopEarners(
+            telegram_user_id=member["telegram_user_id"],
             username=member["username"],
             level=member["level"],
             total_coins=member["total_coins"],
