@@ -31,12 +31,13 @@ const ClanDetailsScreen = () => {
     const storedData = localStorage.getItem("clanData");
     return storedData ? JSON.parse(storedData) : null;
   });
-  const [error, setError] = useState(null); // Only for critical UI errors
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [topEarners, setTopEarners] = useState([]);
   const [overlayState, setOverlayState] = useState(null);
   const [isCreator, setIsCreator] = useState(false);
   const [hasTransferCandidates, setHasTransferCandidates] = useState(false);
+  const [nextLeader, setNextLeader] = useState(null); // Store the next leader's username
 
   useEffect(() => {
     const fetchClanDetails = async () => {
@@ -111,7 +112,7 @@ const ClanDetailsScreen = () => {
         const topEarnersData = await topEarnersResponse.json();
         setTopEarners(topEarnersData);
 
-        // Fetch leadership transfer candidates (background, no UI error unless critical)
+        // Fetch leadership transfer candidates
         if (data.in_clan_rank === "creator") {
           try {
             const transferResponse = await fetch(
@@ -131,23 +132,31 @@ const ClanDetailsScreen = () => {
                 transferResponse.status,
                 errorText
               );
-              setHasTransferCandidates(false); // Silently fail
+              setHasTransferCandidates(false);
+              setNextLeader(null);
             } else {
               const transferData = await transferResponse.json();
               console.log("Transfer candidates data:", transferData);
-              setHasTransferCandidates(
-                Array.isArray(transferData) ? transferData.length > 0 : !!transferData
-              );
+              if (transferData.status === "success" && transferData.username) {
+                setHasTransferCandidates(true);
+                setNextLeader(transferData.username);
+                console.log("Next leader set to:", transferData.username); // Debug log
+              } else {
+                setHasTransferCandidates(false);
+                setNextLeader(null);
+                console.log("No valid transfer candidate found");
+              }
             }
           } catch (err) {
             console.error("Error fetching transfer candidates:", err.message);
-            setHasTransferCandidates(false); // Silently fail
+            setHasTransferCandidates(false);
+            setNextLeader(null);
           }
         }
 
         setLoading(false);
       } catch (err) {
-        setError(err.message); // Only set for critical errors affecting UI
+        setError(err.message);
         setLoading(false);
         console.error("Critical error in fetchClanDetails:", err.message);
       }
@@ -178,10 +187,12 @@ const ClanDetailsScreen = () => {
         const errorText = await response.text();
         throw new Error(`Failed to transfer leadership: ${response.status} - ${errorText}`);
       }
+      const transferResult = await response.json();
+      console.log("Transfer POST response:", transferResult); // Log the POST response
       setOverlayState("transferComplete");
     } catch (err) {
       console.error("Error transferring leadership:", err.message);
-      setError(err.message); // Show error if transfer fails
+      setError(err.message);
     }
   };
 
@@ -269,7 +280,9 @@ const ClanDetailsScreen = () => {
                   />
                   <p className="overlay-text">Are you sure you want to exit your clan?</p>
                   <p className="overlay-subtext">
-                    You can either transfer your title to the next top member or close your clan entirely.
+                    {hasTransferCandidates && nextLeader
+                      ? `You can transfer leadership to ${nextLeader} or close your clan entirely.`
+                      : "You can close your clan entirely. No eligible leaders found to transfer to."}
                   </p>
                   <div className="overlay-cta-container">
                     <button
@@ -277,7 +290,9 @@ const ClanDetailsScreen = () => {
                       onClick={hasTransferCandidates ? handleTransferLeadership : null}
                       disabled={!hasTransferCandidates}
                     >
-                      Transfer Leadership
+                      {hasTransferCandidates && nextLeader
+                        ? `Transfer to ${nextLeader}`
+                        : "Transfer Leadership"}
                     </button>
                     <button className="overlay-cta-button clickable" onClick={handleCloseClan}>
                       Close Clan
@@ -314,6 +329,7 @@ const ClanDetailsScreen = () => {
             </div>
           );
         case "transferComplete":
+          console.log("Rendering transferComplete, nextLeader:", nextLeader); // Debug log
           return (
             <div className="overlay-container8">
               <div className="streak-overlay8 slide-in">
@@ -335,7 +351,9 @@ const ClanDetailsScreen = () => {
                   />
                   <p className="overlay-text">Clan leadership transfer is complete</p>
                   <p className="overlay-subtext">
-                    You have transferred your title to the next in line.
+                    {nextLeader
+                      ? `You have transferred your title to ${nextLeader}.`
+                      : "You have transferred your title to the next in line."}
                   </p>
                   <button className="overlay-cta-button clickable" onClick={handleOverlayClose}>
                     Done

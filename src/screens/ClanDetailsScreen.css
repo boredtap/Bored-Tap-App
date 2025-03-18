@@ -169,14 +169,14 @@
   padding: 10px;
 }
 
-.streak-overlay6 {
+/* .streak-overlay6 {
   width: 100%;
   background-color: #1d1d1d;
   color: #fff;
   padding: 20px;
   border-radius: 15px;
   animation: slideIn 0.3s ease-out forwards;
-}
+} */
 
 .overlay-container8 {
   position: fixed;
@@ -194,14 +194,14 @@
   padding: 10px;
 }
 
-.streak-overlay8 {
+/* .streak-overlay8 {
   width: 100%;
   background-color: #1d1d1d;
   color: #fff;
   padding: 20px;
   border-radius: 15px;
   animation: slideIn 0.3s ease-out forwards;
-}
+} */
 
 @keyframes slideIn {
   from { transform: translateY(100%); }
@@ -303,7 +303,8 @@
 }
 
 .overlay-cta-button.active {
-  background-color: #181818; /* Or your active color */
+  background-color: #fff; /* Or your active color */
+  color:#000;
   cursor: pointer;
 }
 

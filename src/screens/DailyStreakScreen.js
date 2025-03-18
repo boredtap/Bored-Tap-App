@@ -29,7 +29,7 @@ const DailyStreakScreen = () => {
     return JSON.parse(localStorage.getItem("claimedDays")) || [];
   });
   const [profile, setProfile] = useState(null);
-  const [showOverlay, setShowOverlay] = useState(false);
+  const [showOverlay, setShowOverlay] = useState(true);
   const [countdownTime, setCountdownTime] = useState(() => {
     return localStorage.getItem("countdownTime") || "23:59:59";
   });

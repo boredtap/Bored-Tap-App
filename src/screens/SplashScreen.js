@@ -403,8 +403,8 @@ export default SplashScreen;
 //         const webApp = window.Telegram.WebApp;
 //         const userData =
 //           webApp.initDataUnsafe?.user || {
-//             id: "579076",
-//             username: "yuiop6",
+//             id: "111",
+//             username: "ore1",
 //             photo_url: "https://t.me/i/userpic/320/w1rd6s7RjypJpbHZRzETgLACa4GaM0uhz88rMnregJs.svg",
 //           };
 
