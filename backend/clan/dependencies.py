@@ -356,7 +356,8 @@ def next_potential_clan_leader(clan_id: str):
         return {
             "status": "success",
             "message": f"{len(members_id_with_50_invitees)} potential leader found",
-            "leader": members_id_with_50_invitees[0]
+            "leader": members_id_with_50_invitees[0],
+            "username": user_collection.find_one({"telegram_user_id": members_id_with_50_invitees[0]})["username"]
         }
     
     # multiple eligible leaders
@@ -373,7 +374,8 @@ def next_potential_clan_leader(clan_id: str):
         return {
             "status": "success",
             "message": f"{len(members_id_with_50_invitees)} potential leader(s) found",
-            "leader": top_earner["telegram_user_id"]
+            "leader": top_earner["telegram_user_id"],
+            "username": top_earner["username"]
         }
 
 
