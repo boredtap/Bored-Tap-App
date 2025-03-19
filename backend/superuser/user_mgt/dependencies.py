@@ -1,4 +1,6 @@
-from database_connection import user_collection, task_collection, coin_stats, invites_ref
+from bson import ObjectId
+from database_connection import user_collection, task_collection, coin_stats, invites_ref, clans_collection
+from clan.dependencies import next_potential_clan_leader, exit_clan
 from superuser.user_mgt.schemas import OverallAchievement, TodayAchievement, UserMgtDashboard, UserProfile
 from superuser.leaderboard.dependencies import all_time_achievement, daily_achievement
 
@@ -99,14 +101,42 @@ def get_user_profile(telegram_user_id: str):
 
 # --------------------------- DELETE ONE USER ------------------------------- #
 def delete_one_user(telegram_user_id: str):
-    delete_coin_stats = coin_stats.delete_many({"telegram_user_id": telegram_user_id})
-    # delete_user_invites = invites_ref.delete_many({"telegram_user_id": telegram_user_id})
+    user = user_collection.find_one({"telegram_user_id": telegram_user_id})
+
+    if not user:
+        return {"message": "User not found."}
+    
+    # clan handler: if user is in a clan
+    if user["clan"]["id"] != None:
+        clan_id = user["clan"]["id"]
+        clan = clans_collection.find_one({"_id": ObjectId(clan_id)})
+
+        # close clan or transfer leadership if user is the clan creator
+        if clan["creator"] == telegram_user_id:
+            potential_leader = next_potential_clan_leader(clan_id)
+            if potential_leader:
+                exit_clan(clan_id, creator_exit_action="transfer")
+            else:
+                exit_clan(clan_id, creator_exit_action="close")
+
+        # if user is a member
+        else:
+            exit_clan(clan_id)
+    
+    # delete user coin referencesd
+    deleted_coins = coin_stats.delete_one({"telegram_user_id": telegram_user_id})
+
+    # invite handler:
+    # delete_user_invitees_references
+    deleted_invitees_ref = invites_ref.delete_one({"inviter_telegram_id": telegram_user_id})
+
+    # ToDo remove user from other users invite's list of invitees
+
+
+    # delete user profile data
     deleted_user = user_collection.delete_one({"telegram_user_id": telegram_user_id})
 
-    if deleted_user.deleted_count > 0 and delete_coin_stats.deleted_count > 0:
-        return {"message": "User deleted successfully."}
-    else:
-        return {"message": "User not found."}
+    return {"message": "User deleted successfully."}
 
 
 # --------------------------- DELETE MANY USERS ------------------------------- #
