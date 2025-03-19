@@ -2,15 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./ClanListScreen.css";
-import { fetchClanImage } from "../utils/fetchImage"; // Adjust path if needed
+import { fetchImage } from "../utils/fetchImage"; // Updated import
 
 const ClanListScreen = () => {
   const navigate = useNavigate();
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [clans, setClans] = useState([]);
-  const [filteredClans, setFilteredClans] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -23,37 +22,56 @@ const ClanListScreen = () => {
           return;
         }
 
-        const response = await fetch("https://bt-coins.onrender.com/user/clan/all_clans", {
+        let url = searchQuery.trim()
+          ? `https://bt-coins.onrender.com/user/clan/search?query=${encodeURIComponent(searchQuery)}`
+          : "https://bt-coins.onrender.com/user/clan/all_clans";
+
+        const response = await fetch(url, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+            Accept: "application/json",
           },
         });
-        if (!response.ok) throw new Error("Failed to fetch clans");
-        const clansData = await response.json();
-        console.log("Raw clans data:", clansData); // Debug log
 
-        // Map clans with image fetching
-        const mappedClans = await Promise.all(
-          clansData.map(async (clan, index) => {
-            const imageUrl = await fetchClanImage(clan.image_id, token); // Fetch image
-            return {
-              id: clan.id,
-              name: clan.name,
-              icon: imageUrl, // Use fetched image URL
-              rank: clan.rank || `#${index + 1}`,
-              total_coins: clan.total_coins ? clan.total_coins.toLocaleString() : "0", // Total coins earned
-              rankIcon: `${process.env.PUBLIC_URL}/${
-                index === 0 ? "first-icon.png" : index === 1 ? "second-icon.png" : index === 2 ? "third-icon.png" : "front-arrow.png"
-              }`,
-            };
-          })
-        );
+        if (!response.ok) {
+          throw new Error(`Failed to fetch clans: ${response.status}`);
+        }
 
-        setClans(mappedClans);
-        setFilteredClans(mappedClans);
+        const data = await response.json();
+        console.log("Fetched data:", data);
+
+        const clanData = Array.isArray(data) ? data : data ? [data] : [];
+
+        const initialClans = clanData.map((clan, index) => ({
+          id: clan.id,
+          name: clan.name,
+          icon: `${process.env.PUBLIC_URL}/default-clan-icon.png`,
+          rank: clan.rank || `#${index + 1}`,
+          total_coins: clan.total_coins ? clan.total_coins.toLocaleString() : "0",
+          rankIcon: `${process.env.PUBLIC_URL}/${
+            index === 0 ? "first-icon.png" : index === 1 ? "second-icon.png" : index === 2 ? "third-icon.png" : "front-arrow.png"
+          }`,
+          image_id: clan.image_id,
+        }));
+
+        setClans(initialClans);
         setLoading(false);
+
+        // Fetch images in parallel
+        const imagePromises = initialClans.map((clan) =>
+          clan.image_id
+            ? fetchImage(clan.image_id, token, "clan_image", `${process.env.PUBLIC_URL}/default-clan-icon.png`)
+            : Promise.resolve(`${process.env.PUBLIC_URL}/default-clan-icon.png`)
+        );
+        const imageUrls = await Promise.all(imagePromises);
+
+        setClans((prev) =>
+          prev.map((clan, index) => ({
+            ...clan,
+            icon: imageUrls[index],
+          }))
+        );
       } catch (err) {
         setError(err.message);
         setLoading(false);
@@ -62,21 +80,10 @@ const ClanListScreen = () => {
     };
 
     fetchClans();
-  }, [navigate]);
-
-  useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredClans(clans);
-    } else {
-      const filtered = clans.filter((clan) =>
-        clan.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredClans(filtered);
-    }
-  }, [searchQuery, clans]);
+  }, [navigate, searchQuery]);
 
   const handleClanClick = (clanId) => {
-    const clan = filteredClans.find((c) => c.id === clanId);
+    const clan = clans.find((c) => c.id === clanId);
     navigate(`/clan-preview/${clanId}`, { state: { clan } });
   };
 
@@ -100,8 +107,16 @@ const ClanListScreen = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               autoFocus
-              onBlur={() => setIsSearchActive(false)}
             />
+            <button
+              className="search-close-button"
+              onClick={() => {
+                setSearchQuery("");
+                setIsSearchActive(false);
+              }}
+            >
+              <img src={`${process.env.PUBLIC_URL}/cancel.png`} alt="Close" className="close-icon" />
+            </button>
           </div>
         )}
       </div>
@@ -110,16 +125,22 @@ const ClanListScreen = () => {
         <p className="loading-message">Loading clans...</p>
       ) : error ? (
         <p className="error-message">Error: {error}</p>
-      ) : filteredClans.length > 0 ? (
+      ) : clans.length > 0 ? (
         <div className="clan-cards">
-          {filteredClans.map((clan) => (
+          {clans.map((clan) => (
             <div className="clan-card" key={clan.id} onClick={() => handleClanClick(clan.id)}>
               <div className="clan-card-left">
-                <img src={clan.icon} alt={`${clan.name} Icon`} className="clan-card-icon" />
+                <img
+                  src={clan.icon}
+                  alt={`${clan.name} Icon`}
+                  className="clan-card-icon"
+                  loading="lazy"
+                  onError={(e) => (e.target.src = `${process.env.PUBLIC_URL}/default-clan-icon.png`)}
+                />
                 <div className="clan-card-details">
                   <p className="clan-card-name">{clan.name}</p>
                   <div className="clan-card-stats">
-                    <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Members Icon" className="members-icon" />
+                    <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Coins Icon" className="members-icon" />
                     <span className="clan-card-members">{clan.total_coins}</span>
                   </div>
                 </div>
