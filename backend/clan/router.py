@@ -48,17 +48,26 @@ async def create_clan(
 
 # ----------------------------- ALL CLANS ------------------------------ #
 @user_clan_router.get("/all_clans")
-async def all_clans():
-    all_active_clans = all_clans_func()
+async def all_clans(
+    page_size: int = Query(10, description="Page size/maximum number of results"),
+    page_number: int = Query(1, description="Page number"),
+):
+    skip = (page_number - 1) * page_size
+    all_active_clans = all_clans_func(skip=skip, limit=page_size)
 
     return all_active_clans
 
 
 # ----------------------------- TOP CLANS ------------------------------ #
 @user_clan_router.get("/top_clans")
-async def top_clans():
-    
-    return top_clans_func()
+async def top_clans(
+    page_size: int = Query(10, description="Page size/maximum number of results"),
+    page_number: int = Query(1, description="Page number"),
+):
+    skip = (page_number - 1) * page_size
+    search_filter = {}
+
+    return top_clans_func(skip=skip, limit=page_size)
 
 
 # ----------------------------- SEARCH CLANS ------------------------------ #

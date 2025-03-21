@@ -171,8 +171,8 @@ def create_clan(creator: str, clan: CreateClan):
 
 
 # --------------------------------- ALL CLANS ---------------------------------- #
-def all_clans():
-    clans = clans_collection.find().sort("total_coins", -1)
+def all_clans(skip: int, limit: int):
+    clans = clans_collection.find().sort("total_coins", -1).skip(skip).limit(limit)
 
     for clan in clans:
         if clan["status"] == "active":
@@ -187,14 +187,14 @@ def all_clans():
 
 
 # --------------------------------- TOP CLAN ---------------------------------- #
-def top_clans():
+def top_clans(skip: int, limit: int):
     """
-    Return the top 10 clans with the most coins.
+    Return the top clans with the most coins.
 
     Yields:
         dict: A dictionary containing the details of each clan.
     """
-    clans = clans_collection.find().sort("total_coins", -1).limit(10)
+    clans = clans_collection.find().sort("total_coins", -1).skip(skip).limit(limit)
 
     for clan in clans:
         if clan["status"] == "active":
