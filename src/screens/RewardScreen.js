@@ -48,11 +48,11 @@ const RewardScreen = () => {
         const initialRewards = {
           on_going: fetchedRewards[0].map((reward) => ({
             ...reward,
-            imageUrl: `${process.env.PUBLIC_URL}/default-reward-icon.png`,
+            imageUrl: `${process.env.PUBLIC_URL}/logo.png`,
           })),
           claimed: fetchedRewards[1].map((reward) => ({
             ...reward,
-            imageUrl: `${process.env.PUBLIC_URL}/default-reward-icon.png`,
+            imageUrl: `${process.env.PUBLIC_URL}/logo.png`,
           })),
         };
 
@@ -63,7 +63,7 @@ const RewardScreen = () => {
         const imagePromises = allRewards.map((reward) =>
           reward.reward_image_id
             ? fetchImage(reward.reward_image_id, token, "reward_image")
-            : Promise.resolve(`${process.env.PUBLIC_URL}/default-reward-icon.png`)
+            : Promise.resolve(`${process.env.PUBLIC_URL}/logo.png`)
         );
         const imageUrls = await Promise.all(imagePromises);
 

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./ClanListScreen.css";
-import { fetchImage } from "../utils/fetchImage"; // Updated import
+import { fetchImage } from "../utils/fetchImage";
 import { BASE_URL } from "../utils/BaseVariables";
 
 const ClanListScreen = () => {
@@ -12,9 +12,30 @@ const ClanListScreen = () => {
   const [clans, setClans] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const observer = useRef();
+  const pageSize = 10;
 
-  useEffect(() => {
-    const fetchClans = async () => {
+  const lastClanElementRef = useCallback(
+    (node) => {
+      if (loading || !hasMore) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting && hasMore) {
+            setPageNumber((prev) => prev + 1);
+          }
+        },
+        { threshold: 0.1 }
+      );
+      if (node) observer.current.observe(node);
+    },
+    [loading, hasMore]
+  );
+
+  const fetchClans = useCallback(
+    async (page, append = false) => {
       setLoading(true);
       try {
         const token = localStorage.getItem("accessToken");
@@ -23,9 +44,19 @@ const ClanListScreen = () => {
           return;
         }
 
-        let url = searchQuery.trim()
-          ? `${BASE_URL}/user/clan/search?query=${encodeURIComponent(searchQuery)}`
-          : `${BASE_URL}/user/clan/all_clans`;
+        // Construct URL with proper query parameters
+        const params = new URLSearchParams({
+          page_size: pageSize,
+          page_number: page,
+        });
+        if (searchQuery.trim()) {
+          params.append("query", searchQuery.trim());
+        }
+
+        const endpoint = searchQuery.trim() ? "search" : "all_clans";
+        const url = `${BASE_URL}/user/clan/${endpoint}?${params.toString()}`;
+
+        console.log("Fetching clans from:", url); // Debug log
 
         const response = await fetch(url, {
           method: "GET",
@@ -40,48 +71,68 @@ const ClanListScreen = () => {
         }
 
         const data = await response.json();
-        console.log("Fetched data:", data);
-
         const clanData = Array.isArray(data) ? data : data ? [data] : [];
 
-        const initialClans = clanData.map((clan, index) => ({
+        if (clanData.length === 0) {
+          setHasMore(false);
+          setLoading(false);
+          return;
+        }
+
+        const newClans = clanData.map((clan, index) => ({
           id: clan.id,
           name: clan.name,
           icon: `${process.env.PUBLIC_URL}/default-clan-icon.png`,
-          rank: clan.rank || `#${index + 1}`,
+          rank: clan.rank || `#${index + 1 + (page - 1) * pageSize}`,
           total_coins: clan.total_coins ? clan.total_coins.toLocaleString() : "0",
           rankIcon: `${process.env.PUBLIC_URL}/${
-            index === 0 ? "first-icon.png" : index === 1 ? "second-icon.png" : index === 2 ? "third-icon.png" : "front-arrow.png"
+            index + (page - 1) * pageSize === 0
+              ? "first-icon.png"
+              : index + (page - 1) * pageSize === 1
+              ? "second-icon.png"
+              : index + (page - 1) * pageSize === 2
+              ? "third-icon.png"
+              : "front-arrow.png"
           }`,
           image_id: clan.image_id,
         }));
 
-        setClans(initialClans);
-        setLoading(false);
-
-        // Fetch images in parallel
-        const imagePromises = initialClans.map((clan) =>
+        const imagePromises = newClans.map((clan) =>
           clan.image_id
             ? fetchImage(clan.image_id, token, "clan_image", `${process.env.PUBLIC_URL}/default-clan-icon.png`)
             : Promise.resolve(`${process.env.PUBLIC_URL}/default-clan-icon.png`)
         );
         const imageUrls = await Promise.all(imagePromises);
 
-        setClans((prev) =>
-          prev.map((clan, index) => ({
-            ...clan,
-            icon: imageUrls[index],
-          }))
-        );
+        const clansWithImages = newClans.map((clan, index) => ({
+          ...clan,
+          icon: imageUrls[index],
+        }));
+
+        setClans((prev) => (append ? [...prev, ...clansWithImages] : clansWithImages));
+        setHasMore(clanData.length === pageSize);
       } catch (err) {
         setError(err.message);
-        setLoading(false);
         console.error("Error fetching clans:", err.message);
+      } finally {
+        setLoading(false);
       }
-    };
+    },
+    [navigate, searchQuery]
+  );
 
-    fetchClans();
-  }, [navigate, searchQuery]);
+  useEffect(() => {
+    setClans([]); // Reset clans on search change
+    setPageNumber(1); // Reset page
+    setHasMore(true); // Reset hasMore
+    fetchClans(1, false);
+  }, [searchQuery, fetchClans]);
+
+  useEffect(() => {
+    if (pageNumber > 1) {
+      fetchClans(pageNumber, true);
+    }
+  }, [pageNumber, fetchClans]);
 
   const handleClanClick = (clanId) => {
     const clan = clans.find((c) => c.id === clanId);
@@ -122,21 +173,26 @@ const ClanListScreen = () => {
         )}
       </div>
 
-      {loading ? (
+      {loading && clans.length === 0 ? (
         <p className="loading-message">Loading clans...</p>
       ) : error ? (
         <p className="error-message">Error: {error}</p>
       ) : clans.length > 0 ? (
         <div className="clan-cards">
-          {clans.map((clan) => (
-            <div className="clan-card" key={clan.id} onClick={() => handleClanClick(clan.id)}>
+          {clans.map((clan, index) => (
+            <div
+              className="clan-card"
+              key={clan.id}
+              onClick={() => handleClanClick(clan.id)}
+              ref={index === clans.length - 1 ? lastClanElementRef : null}
+            >
               <div className="clan-card-left">
                 <img
                   src={clan.icon}
                   alt={`${clan.name} Icon`}
                   className="clan-card-icon"
                   loading="lazy"
-                  onError={(e) => (e.target.src = `${process.env.PUBLIC_URL}/default-clan-icon.png`)}
+                  onError={(e) => (e.target.src = `${process.env.PUBLIC_URL}/logo.png`)}
                 />
                 <div className="clan-card-details">
                   <p className="clan-card-name">{clan.name}</p>
@@ -149,6 +205,8 @@ const ClanListScreen = () => {
               <img src={clan.rankIcon} alt="Rank Icon" className="join-icon" />
             </div>
           ))}
+          {loading && <p className="loading-message">Loading more clans...</p>}
+          {!hasMore && <p className="end-message">No more clans to load.</p>}
         </div>
       ) : (
         <p className="no-clans">No clans found. Try a different search or create one!</p>

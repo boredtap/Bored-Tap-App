@@ -170,6 +170,13 @@
   height: 24px;
 }
 
+.end-message {
+  text-align: center;
+  color: #c2bfbf;
+  font-size: 16px;
+  margin-top: 20px;
+}
+
 /* Messages */
 .loading-message,
 .error-message,

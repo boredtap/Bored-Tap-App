@@ -70,7 +70,7 @@ const ChallengeScreen = () => {
             status: "ongoing",
             id: challenge.challenge_id,
             imageId: challenge.image_id,
-            imageUrl: `${process.env.PUBLIC_URL}/default-challenge-icon.png`,
+            imageUrl: `${process.env.PUBLIC_URL}/logo.png`,
           })),
           ...completedChallenges.map((challenge) => ({
             title: challenge.name,
@@ -80,7 +80,7 @@ const ChallengeScreen = () => {
             status: "completed",
             id: challenge.challenge_id,
             imageId: challenge.image_id,
-            imageUrl: `${process.env.PUBLIC_URL}/default-challenge-icon.png`,
+            imageUrl: `${process.env.PUBLIC_URL}/logo.png`,
           })),
         ];
 

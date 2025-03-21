@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./ClanScreen.css";
 import { fetchImage } from "../utils/fetchImage";
-import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
+import { BASE_URL } from "../utils/BaseVariables";
 
 const ClanScreen = () => {
   const navigate = useNavigate();
@@ -11,9 +11,30 @@ const ClanScreen = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [clanStatus, setClanStatus] = useState(null);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const observer = useRef();
+  const pageSize = 10;
 
-  useEffect(() => {
-    const fetchClanData = async () => {
+  const lastClanElementRef = useCallback(
+    (node) => {
+      if (loading || !hasMore) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting && hasMore) {
+            setPageNumber((prev) => prev + 1);
+          }
+        },
+        { threshold: 0.1 }
+      );
+      if (node) observer.current.observe(node);
+    },
+    [loading, hasMore]
+  );
+
+  const fetchClanData = useCallback(
+    async (page, append = false) => {
       setLoading(true);
       const token = localStorage.getItem("accessToken");
       if (!token) {
@@ -22,7 +43,8 @@ const ClanScreen = () => {
       }
 
       try {
-        const myClanResponse = await fetch(`${BASE_URL}/user/clan/my_clan`, { // Updated URL
+        // Check user's clan status first
+        const myClanResponse = await fetch(`${BASE_URL}/user/clan/my_clan`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -46,54 +68,83 @@ const ClanScreen = () => {
           setClanStatus(null);
         }
 
-        const topClansResponse = await fetch(`${BASE_URL}/user/clan/top_clans`, { // Updated URL
+        // Fetch top clans with pagination
+        const params = new URLSearchParams({
+          page_size: pageSize,
+          page_number: page,
+        });
+        const url = `${BASE_URL}/user/clan/top_clans?${params.toString()}`;
+        console.log("Fetching top clans from:", url);
+
+        const topClansResponse = await fetch(url, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         });
+
         if (!topClansResponse.ok) throw new Error("Failed to fetch top clans");
         const topClansData = await topClansResponse.json();
         console.log("Raw top clans data:", topClansData);
 
-        const initialClans = topClansData.map((clan, index) => ({
-          id: clan.id || index + 1,
+        if (!Array.isArray(topClansData) || topClansData.length === 0) {
+          setHasMore(false);
+          setLoading(false);
+          return;
+        }
+
+        const newClans = topClansData.map((clan, index) => ({
+          id: clan.id || `${page}-${index}`, // Fallback ID if missing
           name: clan.name,
-          rank: clan.rank || `#${index + 1}`,
+          rank: clan.rank || `#${index + 1 + (page - 1) * pageSize}`,
           total_coins: clan.total_coins ? clan.total_coins.toLocaleString() : "0",
           rankIcon: `${process.env.PUBLIC_URL}/${
-            index === 0 ? "first-icon.png" : index === 1 ? "second-icon.png" : index === 2 ? "third-icon.png" : "front-arrow.png"
+            index + (page - 1) * pageSize === 0
+              ? "first-icon.png"
+              : index + (page - 1) * pageSize === 1
+              ? "second-icon.png"
+              : index + (page - 1) * pageSize === 2
+              ? "third-icon.png"
+              : "front-arrow.png"
           }`,
-          cardIcon: `${process.env.PUBLIC_URL}/default-clan-icon.png`,
+          cardIcon: `${process.env.PUBLIC_URL}/logo.png`,
           image_id: clan.image_id,
         }));
 
-        setTopClans(initialClans);
-        setLoading(false);
-
-        const imagePromises = initialClans.map((clan) =>
+        const imagePromises = newClans.map((clan) =>
           clan.image_id
             ? fetchImage(clan.image_id, token, "clan_image", `${process.env.PUBLIC_URL}/default-clan-icon.png`)
             : Promise.resolve(`${process.env.PUBLIC_URL}/default-clan-icon.png`)
         );
         const imageUrls = await Promise.all(imagePromises);
 
-        setTopClans((prev) =>
-          prev.map((clan, index) => ({
-            ...clan,
-            cardIcon: imageUrls[index],
-          }))
-        );
+        const clansWithImages = newClans.map((clan, index) => ({
+          ...clan,
+          cardIcon: imageUrls[index],
+        }));
+
+        setTopClans((prev) => (append ? [...prev, ...clansWithImages] : clansWithImages));
+        setHasMore(topClansData.length === pageSize);
       } catch (err) {
         setError(err.message);
-        setLoading(false);
         console.error("Error fetching clan data:", err.message);
+      } finally {
+        setLoading(false);
       }
-    };
+    },
+    [navigate]
+  );
 
-    fetchClanData();
-  }, [navigate]);
+  useEffect(() => {
+    fetchClanData(1, false);
+  }, [fetchClanData]);
+
+  useEffect(() => {
+    if (pageNumber > 1) {
+      fetchClanData(pageNumber, true);
+    }
+  }, [pageNumber, fetchClanData]);
 
   const handleCreateClick = () => {
     navigate("/clan-create-screen");
@@ -148,14 +199,19 @@ const ClanScreen = () => {
         </div>
       </div>
 
-      {loading ? (
+      {loading && topClans.length === 0 ? (
         <p className="loading-message">Loading clans...</p>
       ) : error ? (
         <p className="error-message">Error: {error}</p>
       ) : topClans.length > 0 ? (
         <div className="clan-cards">
-          {topClans.map((clan) => (
-            <div className="clan-card2" key={clan.id} onClick={() => handleClanClick(clan.id)}>
+          {topClans.map((clan, index) => (
+            <div
+              className="clan-card2"
+              key={clan.id}
+              onClick={() => handleClanClick(clan.id)}
+              ref={index === topClans.length - 1 ? lastClanElementRef : null}
+            >
               <img
                 src={clan.cardIcon}
                 alt={`${clan.name} Icon`}
@@ -173,6 +229,8 @@ const ClanScreen = () => {
               <img src={clan.rankIcon} alt="Rank Icon" className="rank-icon" />
             </div>
           ))}
+          {loading && <p className="loading-message">Loading more clans...</p>}
+          {!hasMore && <p className="end-message">No more top clans to load.</p>}
         </div>
       ) : (
         <p className="no-clans-message">No top clans available yet. Be the first to create one!</p>

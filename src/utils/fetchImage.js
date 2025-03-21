@@ -6,7 +6,7 @@ export const fetchImage = async (
   imageId,
   token,
   type = "image",
-  defaultImage = `${process.env.PUBLIC_URL}/default-reward-icon.png`
+  defaultImage = `${process.env.PUBLIC_URL}/logo.png`
 ) => {
   if (!imageId) return defaultImage;
   const cacheKey = `${imageId}-${type}-${token}`;

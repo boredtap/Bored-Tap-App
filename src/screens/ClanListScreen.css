@@ -120,6 +120,13 @@
   margin-top: 4px;
 }
 
+.end-message {
+  text-align: center;
+  color: #c2bfbf;
+  font-size: 16px;
+  margin-top: 20px;
+}
+
 .members-icon {
   width: 16px;
   height: 16px;
