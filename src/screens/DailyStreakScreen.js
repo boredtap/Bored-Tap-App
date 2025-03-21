@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Navigation from "../components/Navigation";
 import CTAButton from "../components/CTAButton";
 import "./DailyStreakScreen.css";
+import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
 
 const RewardFrame = ({ day, reward, isActive, isClaimed, onClick }) => {
   return (
@@ -99,7 +100,7 @@ const DailyStreakScreen = () => {
       }
 
       try {
-        const response = await fetch("https://bt-coins.onrender.com/user/profile", {
+        const response = await fetch(`${BASE_URL}/user/profile`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -149,7 +150,7 @@ const DailyStreakScreen = () => {
           console.error("No access token found");
           return;
         }
-        const response = await fetch("https://bt-coins.onrender.com/perform-streak", {
+        const response = await fetch(`${BASE_URL}/perform-streak`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,

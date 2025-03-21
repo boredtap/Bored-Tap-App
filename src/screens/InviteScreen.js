@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Navigation from "../components/Navigation";
 import "./InviteScreen.css";
+import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
 
 /**
  * InviteScreen component for inviting friends and displaying invited friends list.
@@ -22,7 +23,7 @@ const InviteScreen = () => {
 
       try {
         // Fetch invitees list
-        const inviteesResponse = await fetch("https://bt-coins.onrender.com/invitees", {
+        const inviteesResponse = await fetch(`${BASE_URL}/invitees`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -35,7 +36,7 @@ const InviteScreen = () => {
         setInvitees(inviteesData || []);
 
         // Fetch QR code
-        const qrResponse = await fetch("https://bt-coins.onrender.com/invite-qr-code", {
+        const qrResponse = await fetch(`${BASE_URL}/invite-qr-code`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,

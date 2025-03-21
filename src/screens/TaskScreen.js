@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import Navigation from "../components/Navigation";
 import "./TaskScreen.css";
 import { BoostContext } from "../context/BoosterContext";
+import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
 
 // TaskScreen component displays user's tasks across categories with claim functionality
 const TaskScreen = () => {
@@ -37,7 +38,7 @@ const TaskScreen = () => {
       }
 
       // Fetch user profile for total taps
-      const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
+      const profileResponse = await fetch(`${BASE_URL}/user/profile`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -50,9 +51,9 @@ const TaskScreen = () => {
       const profileData = await profileResponse.json();
 
       // Determine the URL based on active tab
-      let url = `https://bt-coins.onrender.com/user/tasks/my_tasks?task_type=${taskType.toLowerCase()}`;
+      let url = `${BASE_URL}/user/tasks/my_tasks?task_type=${taskType.toLowerCase()}`;
       if (taskType === "Completed") {
-        url = `https://bt-coins.onrender.com/user/tasks/my_tasks/completed`;
+        url = `${BASE_URL}/user/tasks/my_tasks/completed`;
       }
 
       // Fetch tasks for the active tab
@@ -85,7 +86,7 @@ const TaskScreen = () => {
     try {
       const token = localStorage.getItem("accessToken");
       const response = await fetch(
-        `https://bt-coins.onrender.com/user/tasks/my_tasks/completed`,
+        `${BASE_URL}/user/tasks/my_tasks/completed`,
         {
           method: "POST",
           headers: {

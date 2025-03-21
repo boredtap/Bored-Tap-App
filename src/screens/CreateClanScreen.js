@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./CreateClanScreen.css";
+import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
 
 const CreateClanScreen = () => {
   const [clanName, setClanName] = useState("");
@@ -25,7 +26,7 @@ const CreateClanScreen = () => {
       }
 
       try {
-        const response = await fetch("https://bt-coins.onrender.com/user/clan/my_eligible_members", {
+        const response = await fetch(`${BASE_URL}/user/clan/my_eligible_members`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -95,7 +96,7 @@ const CreateClanScreen = () => {
     formData.append("image", clanImage);
     selectedMembers.forEach((id) => formData.append("members", id));
 
-    const url = `https://bt-coins.onrender.com/user/clan/create_clan?name=${encodeURIComponent(clanName)}`;
+    const url = `${BASE_URL}/user/clan/create_clan?name=${encodeURIComponent(clanName)}`;
     console.log("Creating clan with URL:", url, "and data:", { selectedMembers });
 
     setLoading(true);

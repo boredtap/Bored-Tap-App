@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Navigation from "../components/Navigation";
 import "./Leaderboard.css";
+import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
 
 /**
  * Leaderboard component displaying user rankings across different time periods (Daily, Weekly, Monthly, All Time).
@@ -36,7 +37,7 @@ const Leaderboard = () => {
         for (const period of periods) {
           const category = period.toLowerCase().replace(" ", "_");
           const response = await fetch(
-            `https://bt-coins.onrender.com/user/leaderboard?category=${category}`,
+            `${BASE_URL}/user/leaderboard?category=${category}`,
             {
               method: "GET",
               headers: {
@@ -57,7 +58,7 @@ const Leaderboard = () => {
         setLeaderboardData(fetchedData);
 
         // Fetch current user's profile
-        const userResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
+        const userResponse = await fetch(`${BASE_URL}/user/profile`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,

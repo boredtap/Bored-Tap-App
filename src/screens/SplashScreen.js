@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import "./SplashScreen.css";
 import { BoostContext } from "../context/BoosterContext";
+import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
 
 const SplashScreen = () => {
   const navigate = useNavigate();
@@ -62,7 +63,7 @@ const SplashScreen = () => {
           rawUserData: JSON.stringify(userData)
         });
 
-        const signInResponse = await fetch("https://bt-coins.onrender.com/signin", {
+        const signInResponse = await fetch(`${BASE_URL}/signin`, {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded", accept: "application/json" },
           body: new URLSearchParams({
@@ -91,7 +92,7 @@ const SplashScreen = () => {
           if (inviterId) {
             signUpBody.inviter_id = inviterId;
           }
-          const signUpResponse = await fetch("https://bt-coins.onrender.com/sign-up", {
+          const signUpResponse = await fetch(`${BASE_URL}/sign-up`, {
             method: "POST",
             headers: { "Content-Type": "application/json", accept: "application/json" },
             body: JSON.stringify(signUpBody),
@@ -100,7 +101,7 @@ const SplashScreen = () => {
           if (!signUpResponse.ok) {
             const errorText = await signUpResponse.text();
             if (signUpResponse.status === 400 && errorText.includes("User already exists")) {
-              const retrySignInResponse = await fetch("https://bt-coins.onrender.com/signin", {
+              const retrySignInResponse = await fetch(`${BASE_URL}/signin`, {
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded", accept: "application/json" },
                 body: new URLSearchParams({
@@ -123,7 +124,7 @@ const SplashScreen = () => {
           } else {
             console.log("Signup successful");
             isNewUser = true;
-            const signInAfterRegResponse = await fetch("https://bt-coins.onrender.com/signin", {
+            const signInAfterRegResponse = await fetch(`${BASE_URL}/signin`, {
               method: "POST",
               headers: { "Content-Type": "application/x-www-form-urlencoded", accept: "application/json" },
               body: new URLSearchParams({
@@ -158,7 +159,7 @@ const SplashScreen = () => {
 
             // First try with query parameter as in original code
             const imageUpdateResponse = await fetch(
-              `https://bt-coins.onrender.com/bored-tap/user_app?image_url=${encodeURIComponent(userData.photo_url)}`,
+              `${BASE_URL}/bored-tap/user_app?image_url=${encodeURIComponent(userData.photo_url)}`,
               {
                 method: "POST",
                 headers: {
@@ -181,7 +182,7 @@ const SplashScreen = () => {
               console.log("Trying alternative image update method with request body");
 
               const altImageUpdateResponse = await fetch(
-                "https://bt-coins.onrender.com/bored-tap/user_app",
+                `${BASE_URL}/bored-tap/user_app`,
                 {
                   method: "POST",
                   headers: {
@@ -215,7 +216,7 @@ const SplashScreen = () => {
           console.log("No photo_url available from Telegram WebApp");
         }
 
-        const response = await fetch("https://bt-coins.onrender.com/user/profile", {
+        const response = await fetch(`${BASE_URL}/user/profile`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${authData.access_token}`,
@@ -254,7 +255,7 @@ const SplashScreen = () => {
       localStorage.setItem("telegramUser", JSON.stringify(userInfo));
 
       const token = authData.access_token;
-      const extraBoostersResponse = await fetch("https://bt-coins.onrender.com/user/boost/extra_boosters", {
+      const extraBoostersResponse = await fetch(`${BASE_URL}/user/boost/extra_boosters`, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       });
@@ -349,6 +350,7 @@ export default SplashScreen;
 // import { useNavigate } from "react-router-dom";
 // import "./SplashScreen.css";
 // import { BoostContext } from "../context/BoosterContext";
+// import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
 
 // const SplashScreen = () => {
 //   const navigate = useNavigate();
@@ -390,11 +392,11 @@ export default SplashScreen;
 //             WebApp: {
 //               initDataUnsafe: {
 //                 user: {
-//                   id: "32141", // Mock Telegram user ID
-//                   username: "yuiop6", // Mock Telegram username
+//                   id: "111", // Mock Telegram user ID
+//                   username: "ore1", // Mock Telegram username
 //                   photo_url: "https://t.me/i/userpic/320/w1rd6s7RjypJpbHZRzETgLACa4GaM0uhz88rMnregJs.svg", // Mock Telegram image URL
 //                 },
-//                 start_param: "12345", // Mock inviter ID
+//                 start_param: "", // Mock inviter ID
 //               },
 //             },
 //           };
@@ -430,7 +432,7 @@ export default SplashScreen;
 //           rawUserData: JSON.stringify(userData)
 //         });
 
-//         const signInResponse = await fetch("https://bt-coins.onrender.com/signin", {
+//         const signInResponse = await fetch(`${BASE_URL}/signin`, {
 //           method: "POST",
 //           headers: { "Content-Type": "application/x-www-form-urlencoded", accept: "application/json" },
 //           body: new URLSearchParams({
@@ -459,7 +461,7 @@ export default SplashScreen;
 //           if (inviterId) {
 //             signUpBody.inviter_id = inviterId;
 //           }
-//           const signUpResponse = await fetch("https://bt-coins.onrender.com/sign-up", {
+//           const signUpResponse = await fetch(`${BASE_URL}/sign-up`, {
 //             method: "POST",
 //             headers: { "Content-Type": "application/json", accept: "application/json" },
 //             body: JSON.stringify(signUpBody),
@@ -468,7 +470,7 @@ export default SplashScreen;
 //           if (!signUpResponse.ok) {
 //             const errorText = await signUpResponse.text();
 //             if (signUpResponse.status === 400 && errorText.includes("User already exists")) {
-//               const retrySignInResponse = await fetch("https://bt-coins.onrender.com/signin", {
+//               const retrySignInResponse = await fetch(`${BASE_URL}/signin`, {
 //                 method: "POST",
 //                 headers: { "Content-Type": "application/x-www-form-urlencoded", accept: "application/json" },
 //                 body: new URLSearchParams({
@@ -491,7 +493,7 @@ export default SplashScreen;
 //           } else {
 //             console.log("Signup successful");
 //             isNewUser = true;
-//             const signInAfterRegResponse = await fetch("https://bt-coins.onrender.com/signin", {
+//             const signInAfterRegResponse = await fetch(`${BASE_URL}/signin`, {
 //               method: "POST",
 //               headers: { "Content-Type": "application/x-www-form-urlencoded", accept: "application/json" },
 //               body: new URLSearchParams({
@@ -526,7 +528,7 @@ export default SplashScreen;
 
 //             // First try with query parameter as in original code
 //             const imageUpdateResponse = await fetch(
-//               `https://bt-coins.onrender.com/bored-tap/user_app?image_url=${encodeURIComponent(userData.photo_url)}`,
+//               `${BASE_URL}/bored-tap/user_app?image_url=${encodeURIComponent(userData.photo_url)}`,
 //               {
 //                 method: "POST",
 //                 headers: {
@@ -549,7 +551,7 @@ export default SplashScreen;
 //               console.log("Trying alternative image update method with request body");
 
 //               const altImageUpdateResponse = await fetch(
-//                 "https://bt-coins.onrender.com/bored-tap/user_app",
+//                `${BASE_URL}/bored-tap/user_app`,
 //                 {
 //                   method: "POST",
 //                   headers: {
@@ -583,7 +585,7 @@ export default SplashScreen;
 //           console.log("No photo_url available from Telegram WebApp");
 //         }
 
-//         const response = await fetch("https://bt-coins.onrender.com/user/profile", {
+//         const response = await fetch(`${BASE_URL}/user/profile`, {
 //           method: "GET",
 //           headers: {
 //             Authorization: `Bearer ${authData.access_token}`,
@@ -623,7 +625,7 @@ export default SplashScreen;
 //       localStorage.setItem("telegramUser", JSON.stringify(userInfo));
 
 //       const token = authData.access_token;
-//       const extraBoostersResponse = await fetch("https://bt-coins.onrender.com/user/boost/extra_boosters", {
+//       const extraBoostersResponse = await fetch(`${BASE_URL}/user/boost/extra_boosters`, {
 //         method: "GET",
 //         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
 //       });

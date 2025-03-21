@@ -1,33 +1,24 @@
 import React, { useState, useEffect } from "react";
 import Navigation from "../components/Navigation";
 import "./ChallengeScreen.css";
+import { fetchImage } from "../utils/fetchImage"; // Use standard fetchImage
+import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
 
-// ChallengeScreen component displays open and completed challenges with user-friendly navigation
 const ChallengeScreen = () => {
-  // State for active tab (Open Challenges or Completed Challenges)
   const [activeTab, setActiveTab] = useState("Open Challenges");
-  // State for user's total taps (coins)
   const [totalTaps, setTotalTaps] = useState(0);
-  // State for challenges data, categorized by status
   const [challengesData, setChallengesData] = useState({
     "Open Challenges": [],
     "Completed Challenges": [],
   });
-  // State for challenge images, mapped by imageId
-  const [challengeImages, setChallengeImages] = useState({});
-  // State for loading status during data fetching
   const [loading, setLoading] = useState(true);
-  // State for error handling during data fetching
   const [error, setError] = useState(null);
-  // State for managing overlay visibility
   const [showOverlay, setShowOverlay] = useState(false);
-  // State for storing the selected challenge for the overlay
   const [selectedChallenge, setSelectedChallenge] = useState(null);
 
-  // Effect to fetch user profile, challenges, and images on component mount
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true); // Set loading to true at the start
+      setLoading(true);
       const token = localStorage.getItem("accessToken");
       if (!token) {
         setError("No access token found");
@@ -36,59 +27,40 @@ const ChallengeScreen = () => {
       }
 
       try {
-        // Fetch user profile for total taps
-        const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
+        const profileResponse = await fetch(`${BASE_URL}/user/profile`, { // Updated URL
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         });
-
-        if (!profileResponse.ok) {
-          throw new Error(`HTTP error! status: ${profileResponse.status}`);
-        }
-
+        if (!profileResponse.ok) throw new Error("Failed to fetch profile");
         const profileData = await profileResponse.json();
         setTotalTaps(profileData.total_coins || 0);
 
-        // Fetch ongoing challenges
-        const ongoingChallengesResponse = await fetch(
-          "https://bt-coins.onrender.com/earn/challenge/my-challenges?status=ongoing",
-          {
+        const [ongoingResponse, completedResponse] = await Promise.all([
+          fetch(`${BASE_URL}/earn/challenge/my-challenges?status=ongoing`, { // Updated URL
             method: "GET",
             headers: {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
-          }
-        );
-
-        if (!ongoingChallengesResponse.ok) {
-          throw new Error("Failed to fetch ongoing challenges");
-        }
-
-        const ongoingChallenges = await ongoingChallengesResponse.json();
-
-        // Fetch completed challenges
-        const completedChallengesResponse = await fetch(
-          "https://bt-coins.onrender.com/earn/challenge/my-challenges?status=completed",
-          {
+          }),
+          fetch(`${BASE_URL}/earn/challenge/my-challenges?status=completed`, { // Updated URL
             method: "GET",
             headers: {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
-          }
-        );
+          }),
+        ]);
 
-        if (!completedChallengesResponse.ok) {
-          throw new Error("Failed to fetch completed challenges");
-        }
+        if (!ongoingResponse.ok) throw new Error("Failed to fetch ongoing challenges");
+        if (!completedResponse.ok) throw new Error("Failed to fetch completed challenges");
 
-        const completedChallenges = await completedChallengesResponse.json();
+        const ongoingChallenges = await ongoingResponse.json();
+        const completedChallenges = await completedResponse.json();
 
-        // Combine and map challenges data
         const allChallenges = [
           ...ongoingChallenges.map((challenge) => ({
             title: challenge.name,
@@ -98,6 +70,7 @@ const ChallengeScreen = () => {
             status: "ongoing",
             id: challenge.challenge_id,
             imageId: challenge.image_id,
+            imageUrl: `${process.env.PUBLIC_URL}/logo.png`,
           })),
           ...completedChallenges.map((challenge) => ({
             title: challenge.name,
@@ -107,85 +80,68 @@ const ChallengeScreen = () => {
             status: "completed",
             id: challenge.challenge_id,
             imageId: challenge.image_id,
+            imageUrl: `${process.env.PUBLIC_URL}/logo.png`,
           })),
         ];
 
-        // Set challenges data by category
+        console.log("Challenge image IDs:", allChallenges.map((ch) => ch.imageId)); // Debug log
+
         setChallengesData({
           "Open Challenges": allChallenges.filter((ch) => ch.status === "ongoing"),
           "Completed Challenges": allChallenges.filter((ch) => ch.status === "completed"),
         });
+        setLoading(false);
 
-        // Fetch all challenge images
-        const imagePromises = allChallenges.map(async (challenge) => {
-          try {
-            const imageResponse = await fetch(
-              `https://bt-coins.onrender.com/earn/challenge/challenge_image/${challenge.imageId}`,
-              {
-                method: "GET",
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
-              }
-            );
+        const imagePromises = allChallenges.map((challenge) =>
+          challenge.imageId
+            ? fetchImage(
+                challenge.imageId,
+                token,
+                "challenge_image",
+                `${process.env.PUBLIC_URL}/default-challenge-icon.png`
+              )
+            : Promise.resolve(`${process.env.PUBLIC_URL}/default-challenge-icon.png`)
+        );
+        const imageUrls = await Promise.all(imagePromises);
 
-            if (!imageResponse.ok) {
-              throw new Error(`Failed to fetch image for challenge ${challenge.id}`);
-            }
-
-            const imageBlob = await imageResponse.blob();
-            const imageUrl = URL.createObjectURL(imageBlob);
-
-            setChallengeImages((prev) => ({
-              ...prev,
-              [challenge.imageId]: imageUrl,
-            }));
-          } catch (err) {
-            console.error(`Error fetching image for challenge ${challenge.id}:`, err);
-            setChallengeImages((prev) => ({
-              ...prev,
-              [challenge.imageId]: `${process.env.PUBLIC_URL}/logo.png`, // Fallback image
-            }));
-          }
-        });
-
-        await Promise.all(imagePromises);
+        setChallengesData((prev) => ({
+          "Open Challenges": prev["Open Challenges"].map((challenge, index) => ({
+            ...challenge,
+            imageUrl: imageUrls[index],
+          })),
+          "Completed Challenges": prev["Completed Challenges"].map((challenge, index) => ({
+            ...challenge,
+            imageUrl: imageUrls[index + prev["Open Challenges"].length],
+          })),
+        }));
       } catch (err) {
         setError(err.message);
+        console.error("Error fetching data:", err);
       } finally {
-        setLoading(false); // Set loading to false when done
+        setLoading(false);
       }
     };
 
     fetchData();
   }, []);
 
-  // Handler for switching tabs
-  const handleTabClick = (tab) => {
-    setActiveTab(tab);
-  };
+  const handleTabClick = (tab) => setActiveTab(tab);
 
-  // Handler for clicking the "Claim" button
   const handleClaimClick = (challenge) => {
     setSelectedChallenge(challenge);
     setShowOverlay(true);
   };
 
-  // Handler for closing the overlay
   const handleCloseOverlay = () => {
     setShowOverlay(false);
     setSelectedChallenge(null);
   };
 
-  // Get challenges for the active tab
   const challenges = challengesData[activeTab] || [];
 
   return (
     <div className="challenge-screen">
-      {/* Main content wrapper for alignment */}
       <div className="challenge-content">
-        {/* Total Taps Section */}
         <div className="total-taps">
           <p>Your Total Taps:</p>
           <div className="taps-display">
@@ -193,13 +149,13 @@ const ChallengeScreen = () => {
               src={`${process.env.PUBLIC_URL}/logo.png`}
               alt="Logo"
               className="taps-logo"
+              loading="lazy"
             />
-            <span className="taps-number">{totalTaps?.toLocaleString() ?? 0}</span>
+            <span className="taps-number">{totalTaps.toLocaleString()}</span>
           </div>
           <p className="tap-rewards">Earn BT-coin rewards by completing challenges.</p>
         </div>
 
-        {/* Pagination Tabs */}
         <div className="pagination">
           {Object.keys(challengesData).map((tab) => (
             <span
@@ -212,65 +168,59 @@ const ChallengeScreen = () => {
           ))}
         </div>
 
-        {/* Scrollable Challenge Cards Container */}
         <div className="challenge-cards-container">
-          <div className="challenge-cards">
-            {loading ? (
-              <p className="loading-message">Fetching Challenges...</p>
-            ) : error ? (
-              <p className="error-message">Error: {error}</p>
-            ) : challenges.length > 0 ? (
-              challenges.map((challenge) => {
-                // Determine if the challenge is claimable (e.g., completed)
-                const isClaimable = challenge.status === "completed"; // Adjust based on actual condition
-            
-                return (
-                  <div className="challenge-card" key={challenge.id}>
-                    <div className="challenge-left">
+          {loading ? (
+            <p className="loading-message">Fetching Challenges...</p>
+          ) : error ? (
+            <p className="error-message">Error: {error}</p>
+          ) : challenges.length > 0 ? (
+            challenges.map((challenge) => (
+              <div className="challenge-card" key={challenge.id}>
+                <div className="challenge-left">
+                  <img
+                    src={challenge.imageUrl}
+                    alt={challenge.title}
+                    className="challenge-icon"
+                    loading="lazy"
+                    onError={(e) => (e.target.src = `${process.env.PUBLIC_URL}/default-challenge-icon.png`)}
+                  />
+                  <div className="challenge-info">
+                    <p className="challenge-title">{challenge.title}</p>
+                    <p className="challenge-description">{challenge.description}</p>
+                    <div className="challenge-meta">
                       <img
-                        src={challengeImages[challenge.imageId] || `${process.env.PUBLIC_URL}/logo.png`}
-                        alt={challenge.title}
-                        className="challenge-icon"
+                        src={`${process.env.PUBLIC_URL}/logo.png`}
+                        alt="Coin Icon"
+                        className="small-icon"
+                        loading="lazy"
                       />
-                      <div className="challenge-info">
-                        <p className="challenge-title">{challenge.title}</p>
-                        <p className="challenge-description">{challenge.description}</p>
-                        <div className="challenge-meta">
-                          <img
-                            src={`${process.env.PUBLIC_URL}/logo.png`}
-                            alt="Coin Icon"
-                            className="small-icon"
-                          />
-                          <span>{challenge.reward}</span>
-                          <span className="divider">•</span>
-                          <span className="challenge-time">{challenge.time}</span>
-                        </div>
-                        <div className="progress-bar">
-                          <div
-                            className="progress-fill"
-                            style={{ width: challenge.status === "ongoing" ? "50%" : "100%" }}
-                          ></div>
-                        </div>
-                      </div>
+                      <span>{challenge.reward}</span>
+                      <span className="divider">•</span>
+                      <span className="challenge-time">{challenge.time}</span>
                     </div>
-                    <button
-                      className={`challenge-cta ${isClaimable ? "active" : "inactive"}`}
-                      onClick={() => handleClaimClick(challenge)}
-                      disabled={!isClaimable}
-                    >
-                      {isClaimable ? "Claim" : "Claim"}
-                    </button>
+                    <div className="progress-bar">
+                      <div
+                        className="progress-fill"
+                        style={{ width: challenge.status === "ongoing" ? "50%" : "100%" }}
+                      />
+                    </div>
                   </div>
-                );
-              })
-            ) : (
-              <p className="no-challenges">No challenges available yet.</p>
-            )}
-          </div>
+                </div>
+                <button
+                  className={`challenge-cta ${challenge.status === "completed" ? "active" : "inactive"}`}
+                  onClick={() => handleClaimClick(challenge)}
+                  disabled={challenge.status !== "completed"}
+                >
+                  Claim
+                </button>
+              </div>
+            ))
+          ) : (
+            <p className="no-challenges">No challenges available yet.</p>
+          )}
         </div>
       </div>
 
-      {/* Overlay for Claim Confirmation */}
       {showOverlay && selectedChallenge && (
         <div className="overlay-container">
           <div className={`challenge-overlay ${showOverlay ? "slide-in" : "slide-out"}`}>
@@ -283,14 +233,13 @@ const ChallengeScreen = () => {
                 onClick={handleCloseOverlay}
               />
             </div>
-            <div className="overlay-divider"></div>
+            <div className="overlay-divider" />
             <div className="overlay-content">
               <img
-                src={
-                  `${process.env.PUBLIC_URL}/claim.gif`
-                }
-                alt="Challenge Icon"
+                src={`${process.env.PUBLIC_URL}/claim.gif`}
+                alt="Claim Animation"
                 className="overlay2-challenge-icon"
+                loading="lazy"
               />
               <p className="overlay-text">Your reward of</p>
               <div className="overlay-reward-value">
@@ -298,6 +247,7 @@ const ChallengeScreen = () => {
                   src={`${process.env.PUBLIC_URL}/logo.png`}
                   alt="Coin Icon"
                   className="overlay-coin-icon"
+                  loading="lazy"
                 />
                 <span>{selectedChallenge.reward}</span>
               </div>
@@ -310,7 +260,6 @@ const ChallengeScreen = () => {
         </div>
       )}
 
-      {/* Navigation Component */}
       <Navigation />
     </div>
   );

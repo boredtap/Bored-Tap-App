@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./ClanPreviewScreen.css";
-import { fetchClanImage } from "../utils/fetchImage";
+import { fetchImage } from "../utils/fetchImage"; // Updated import
+import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
 
 const ClanPreviewScreen = () => {
   const navigate = useNavigate();
@@ -31,8 +32,7 @@ const ClanPreviewScreen = () => {
         let imageUrl;
 
         if (!passedClan) {
-          console.log("Fetching from /all_clans since no passed clan data");
-          const response = await fetch("https://bt-coins.onrender.com/user/clan/all_clans", {
+          const response = await fetch(`${BASE_URL}/user/clan/all_clans`, {
             method: "GET",
             headers: {
               Authorization: `Bearer ${token}`,
@@ -46,11 +46,7 @@ const ClanPreviewScreen = () => {
           const clan = clansData.find((c) => String(c.id) === String(clanId));
           if (!clan) throw new Error(`Clan with ID ${clanId} not found`);
 
-          console.log("Matched clan:", clan);
-          console.log("Clan members value:", clan.members);
-
-          imageUrl = await fetchClanImage(clan.image_id, token);
-          // console.log("Fetched image URL:", imageUrl);
+          imageUrl = await fetchImage(clan.image_id, token, "clan_image", `${process.env.PUBLIC_URL}/default-clan-icon.png`);
 
           const newClanData = {
             id: clan.id,
@@ -74,16 +70,12 @@ const ClanPreviewScreen = () => {
             seeAllIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
           };
 
-          console.log("Setting clanData (fetched):", newClanData);
-          setClanData(newClanData); // Set data before loading false
+          setClanData(newClanData);
         } else {
-          console.log("Using passed clan data:", passedClan);
-
           imageUrl =
             passedClan.cardIcon ||
             passedClan.icon ||
-            (await fetchClanImage(passedClan.image_id || null, token));
-          console.log("Passed image URL:", imageUrl);
+            (await fetchImage(passedClan.image_id || null, token, "clan_image", `${process.env.PUBLIC_URL}/default-clan-icon.png`));
 
           const newClanData = {
             id: passedClan.id,
@@ -99,14 +91,13 @@ const ClanPreviewScreen = () => {
             seeAllIcon: `${process.env.PUBLIC_URL}/front-arrow.png`,
           };
 
-          console.log("Setting clanData (passed):", newClanData);
-          setClanData(newClanData); // Set data before loading false
+          setClanData(newClanData);
         }
       } catch (err) {
         setError(err.message);
         console.error("Error fetching clan preview:", err.message);
       } finally {
-        setLoading(false); // Moved to finally to ensure it runs after setClanData
+        setLoading(false);
       }
     };
 
@@ -120,7 +111,7 @@ const ClanPreviewScreen = () => {
     try {
       const token = localStorage.getItem("accessToken");
       const response = await fetch(
-        `https://bt-coins.onrender.com/user/clan/join_clan?clan_id=${clanData.id}`,
+        `${BASE_URL}/user/clan/join_clan?clan_id=${clanData.id}`,
         {
           method: "POST",
           headers: {
@@ -152,7 +143,6 @@ const ClanPreviewScreen = () => {
     }
   };
 
-  // Only render loading state until clanData is fully set
   if (loading || !clanData) {
     return (
       <div className="clan-preview">
@@ -171,12 +161,16 @@ const ClanPreviewScreen = () => {
     );
   }
 
-  console.log("Rendering clanData:", clanData);
-
   return (
     <div className="clan-preview">
       <div className="clan-icon-section">
-        <img src={clanData.icon} alt="Clan Icon" className="clan-icon" />
+        <img
+          src={clanData.icon}
+          alt="Clan Icon"
+          className="clan-icon"
+          loading="lazy"
+          onError={(e) => (e.target.src = `${process.env.PUBLIC_URL}/default-clan-icon.png`)}
+        />
       </div>
       <p className="clan-name">{clanData.name}</p>
       <div className="clan-position">

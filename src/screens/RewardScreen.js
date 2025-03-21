@@ -1,157 +1,129 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import Navigation from "../components/Navigation";
 import "./RewardScreen.css";
 import { BoostContext } from "../context/BoosterContext";
+import { fetchImage } from "../utils/fetchImage";
+import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
+
+const fetchWithAuth = async (url, token) => {
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  if (!response.ok) throw new Error(`Failed to fetch ${url}`);
+  return response.json();
+};
 
 const RewardScreen = () => {
   const [activeTab, setActiveTab] = useState("on_going");
   const { totalTaps } = useContext(BoostContext);
   const [rewardsData, setRewardsData] = useState({ on_going: [], claimed: [] });
-  const [rewardImages, setRewardImages] = useState({});
   const [loading, setLoading] = useState(true);
   const [showOverlay, setShowOverlay] = useState(false);
   const [selectedReward, setSelectedReward] = useState(null);
-  // const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
-    const fetchUserProfileAndRewards = async () => {
+    const fetchRewardsData = async () => {
+      setLoading(true);
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        console.error("No access token found");
+        setLoading(false);
+        return;
+      }
+
       try {
-        const token = localStorage.getItem("accessToken");
-        if (!token) {
-          console.error("No access token found");
-          return;
-        }
-
-        const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!profileResponse.ok) {
-          throw new Error(`Profile fetch failed: ${profileResponse.status}`);
-        }
+        await fetchWithAuth(`${BASE_URL}/user/profile`, token); // Updated URL
 
         const rewardTypes = ["on_going", "claimed"];
-        const fetchedRewards = {};
+        const fetchedRewards = await Promise.all(
+          rewardTypes.map((type) =>
+            fetchWithAuth(`${BASE_URL}/earn/my-rewards?status=${type}`, token) // Updated URL
+          )
+        );
 
-        for (const type of rewardTypes) {
-          const response = await fetch(`https://bt-coins.onrender.com/earn/my-rewards?status=${type}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          });
+        const initialRewards = {
+          on_going: fetchedRewards[0].map((reward) => ({
+            ...reward,
+            imageUrl: `${process.env.PUBLIC_URL}/logo.png`,
+          })),
+          claimed: fetchedRewards[1].map((reward) => ({
+            ...reward,
+            imageUrl: `${process.env.PUBLIC_URL}/logo.png`,
+          })),
+        };
 
-          if (!response.ok) {
-            throw new Error(`Failed to fetch ${type} rewards`);
-          }
+        setRewardsData(initialRewards);
+        setLoading(false);
 
-          fetchedRewards[type] = await response.json();
-        }
+        const allRewards = [...fetchedRewards[0], ...fetchedRewards[1]];
+        const imagePromises = allRewards.map((reward) =>
+          reward.reward_image_id
+            ? fetchImage(reward.reward_image_id, token, "reward_image")
+            : Promise.resolve(`${process.env.PUBLIC_URL}/logo.png`)
+        );
+        const imageUrls = await Promise.all(imagePromises);
 
-        setRewardsData(fetchedRewards);
+        setRewardsData((prev) => ({
+          on_going: prev.on_going.map((reward, index) => ({
+            ...reward,
+            imageUrl: imageUrls[index],
+          })),
+          claimed: prev.claimed.map((reward, index) => ({
+            ...reward,
+            imageUrl: imageUrls[index + prev.on_going.length],
+          })),
+        }));
       } catch (err) {
-        console.error("Error fetching user profile or rewards:", err);
-      } finally {
+        console.error("Error fetching rewards data:", err);
+        setRewardsData({ on_going: [], claimed: [] });
         setLoading(false);
       }
     };
 
-    fetchUserProfileAndRewards();
+    fetchRewardsData();
   }, []);
 
-  useEffect(() => {
-    const fetchRewardImages = async () => {
+  const handleTabClick = useCallback((tab) => setActiveTab(tab), []);
+
+  const handleClaimReward = useCallback(
+    async (rewardId) => {
       const token = localStorage.getItem("accessToken");
-      if (!token) return;
-
-      const allRewards = [...rewardsData.on_going, ...rewardsData.claimed];
-      const missingImages = allRewards.filter(
-        (reward) => reward.reward_image_id && !rewardImages[reward.reward_image_id]
-      );
-
-      if (missingImages.length === 0) return;
-
-      const newImages = {};
-      for (const reward of missingImages) {
-        try {
-          const response = await fetch(`https://bt-coins.onrender.com/reward_image/${reward.reward_image_id}`, {
-            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-          });
-
-          if (!response.ok) throw new Error("Failed to fetch image");
-
-          const imageBlob = await response.blob();
-          newImages[reward.reward_image_id] = URL.createObjectURL(imageBlob);
-        } catch (error) {
-          console.error(`Error fetching image for ${reward.reward_image_id}:`, error);
-          newImages[reward.reward_image_id] = `${process.env.PUBLIC_URL}/default-reward-icon.png`;
-        }
-      }
-
-      setRewardImages((prevImages) => ({ ...prevImages, ...newImages }));
-    };
-
-    if (rewardsData.on_going.length > 0 || rewardsData.claimed.length > 0) {
-      fetchRewardImages();
-    }
-  }, [rewardsData, rewardImages]);
-
-  const handleTabClick = (tab) => {
-    setActiveTab(tab);
-  };
-
-  const handleClaimReward = async (rewardId) => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch(`https://bt-coins.onrender.com/earn/my-rewards/${rewardId}/claim`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      const result = await response.json();
-      if (response.ok) {
+      try {
+        const result = await fetchWithAuth(
+          `${BASE_URL}/earn/my-rewards/${rewardId}/claim`, // Updated URL
+          token
+        );
         const claimedReward = rewardsData.on_going.find((r) => r.reward_id === rewardId);
         setSelectedReward(claimedReward);
         setShowOverlay(true);
-        // setShowConfetti(true);
 
-        setRewardsData((prevData) => ({
-          ...prevData,
-          on_going: prevData.on_going.filter((reward) => reward.reward_id !== rewardId),
-          claimed: [...prevData.claimed, result],
+        setRewardsData((prev) => ({
+          ...prev,
+          on_going: prev.on_going.filter((r) => r.reward_id !== rewardId),
+          claimed: [...prev.claimed, { ...result, imageUrl: claimedReward.imageUrl }],
         }));
-
-        // setTimeout(() => setShowConfetti(false), 3000); // Hide confetti after 3 seconds
-      } else {
-        alert(`Failed to claim reward: ${result.message}`);
+      } catch (err) {
+        console.error("Error claiming reward:", err);
+        alert("Failed to claim reward");
       }
-    } catch (err) {
-      console.error("Error claiming reward:", err);
-    }
-  };
+    },
+    [rewardsData]
+  );
 
-  const handleCloseOverlay = () => {
+  const handleCloseOverlay = useCallback(() => {
     setShowOverlay(false);
     setSelectedReward(null);
-  };
+  }, []);
 
   const rewards = rewardsData[activeTab] || [];
   const tabLabels = { on_going: "On-going Reward", claimed: "Claimed Reward" };
 
   return (
     <div className="reward-screen">
-      {/* {showConfetti && (
-        <div className="confetti-container">
-          <img src={`${process.env.PUBLIC_URL}/confetti copy.gif`} alt="Confetti" className="confetti-gif" />
-        </div>
-      )} */}
       <div className="reward-body">
         <div className="total-taps">
           <p>Your Total Taps:</p>
@@ -182,9 +154,13 @@ const RewardScreen = () => {
                 <div className="reward-card" key={reward.reward_id}>
                   <div className="reward-left">
                     <img
-                      src={rewardImages[reward.reward_image_id] || `${process.env.PUBLIC_URL}/default-reward-icon.png`}
+                      src={reward.imageUrl}
                       alt={reward.reward_title}
                       className="reward-icon"
+                      loading="lazy"
+                      onError={(e) =>
+                        (e.target.src = `${process.env.PUBLIC_URL}/default-reward-icon.png`)
+                      }
                     />
                     <div className="reward-info">
                       <p className="reward-title">{reward.reward_title}</p>
@@ -226,36 +202,40 @@ const RewardScreen = () => {
 
       {showOverlay && selectedReward && (
         <div className="overlay-backdrop">
-        <div className="overlay-container5">
-          <div className={`reward-overlay5 ${showOverlay ? "slide-in" : "slide-out"}`}>
-            <div className="overlay-header5">
-              <h2 className="overlay-title5">Claim Reward</h2>
-              <img
-                src={`${process.env.PUBLIC_URL}/cancel.png`}
-                alt="Cancel"
-                className="overlay-cancel"
-                onClick={handleCloseOverlay}
-              />
-            </div>
-            <div className="overlay-divider"></div>
-            <div className="overlay-content5">
-              <img
-                src={`${process.env.PUBLIC_URL}/claim.gif`}
-                alt="Reward Icon"
-                className="overlay2-reward-icon"
-              />
-              <p className="overlay-text">Your reward of</p>
-              <div className="overlay-reward-value">
-                <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Coin Icon" className="overlay-coin-icon" />
-                <span>{selectedReward.reward}</span>
+          <div className="overlay-container5">
+            <div className={`reward-overlay5 ${showOverlay ? "slide-in" : "slide-out"}`}>
+              <div className="overlay-header5">
+                <h2 className="overlay-title5">Claim Reward</h2>
+                <img
+                  src={`${process.env.PUBLIC_URL}/cancel.png`}
+                  alt="Cancel"
+                  className="overlay-cancel"
+                  onClick={handleCloseOverlay}
+                />
               </div>
-              <p className="overlay-message">has been added to your coin balance</p>
-              <button className="overlay-cta" onClick={handleCloseOverlay}>
-                Ok
-              </button>
+              <div className="overlay-divider"></div>
+              <div className="overlay-content5">
+                <img
+                  src={`${process.env.PUBLIC_URL}/claim.gif`}
+                  alt="Reward Icon"
+                  className="overlay2-reward-icon"
+                />
+                <p className="overlay-text">Your reward of</p>
+                <div className="overlay-reward-value">
+                  <img
+                    src={`${process.env.PUBLIC_URL}/logo.png`}
+                    alt="Coin Icon"
+                    className="overlay-coin-icon"
+                  />
+                  <span>{selectedReward.reward}</span>
+                </div>
+                <p className="overlay-message">has been added to your coin balance</p>
+                <button className="overlay-cta" onClick={handleCloseOverlay}>
+                  Ok
+                </button>
+              </div>
             </div>
           </div>
-        </div>
         </div>
       )}
 

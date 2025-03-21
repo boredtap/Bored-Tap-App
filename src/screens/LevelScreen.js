@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Navigation from "../components/Navigation";
 import "./LevelScreen.css";
+import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
 
 /**
  * LevelScreen component for displaying user level progress and available levels.
@@ -34,7 +35,7 @@ const LevelScreen = () => {
       if (!token) return;
 
       try {
-        const response = await fetch("https://bt-coins.onrender.com/user/profile", {
+        const response = await fetch(`${BASE_URL}/user/profile`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
