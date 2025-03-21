@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import logging
 from typing import Annotated
 from fastapi import APIRouter, Depends
+from yarl import Query
 
 from .dependencies import broken_streak_reset, calculate_time_difference, increment_streak_and_coin, init_streak
 from earn.schemas import StreakData
@@ -172,7 +173,7 @@ async def get_my_rewards(telegram_user_id: Annotated[str, Depends(get_current_us
 
 
 # ------------------------------------- GET REWARD IMAGE ------------------------------------- #
-@earnApp.get("/reward_image/{image_id}", status_code=201)
+@earnApp.get("/reward_image/{image_id}", status_code=201, deprecated=True)
 async def get_reward_image(image_id: str):
 
     return get_reward_image_func(image_id)
@@ -200,7 +201,7 @@ async def get_my_challenges(telegram_user_id: Annotated[str, Depends(get_current
     return get_my_challenges_func(telegram_user_id, status)
 
 
-@earnApp.get("/earn/challenge/challenge_image/{image_id}", status_code=201)
+@earnApp.get("/earn/challenge/challenge_image/{image_id}", status_code=201, deprecated=True)
 async def get_challenge_image(image_id: str):
 
     return get_reward_image_func(image_id)
