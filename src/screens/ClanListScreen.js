@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./ClanListScreen.css";
 import { fetchImage } from "../utils/fetchImage"; // Updated import
+import { BASE_URL } from "../utils/BaseVariables";
 
 const ClanListScreen = () => {
   const navigate = useNavigate();
@@ -23,8 +24,8 @@ const ClanListScreen = () => {
         }
 
         let url = searchQuery.trim()
-          ? `https://bt-coins.onrender.com/user/clan/search?query=${encodeURIComponent(searchQuery)}`
-          : "https://bt-coins.onrender.com/user/clan/all_clans";
+          ? `${BASE_URL}/user/clan/search?query=${encodeURIComponent(searchQuery)}`
+          : `${BASE_URL}/user/clan/all_clans`;
 
         const response = await fetch(url, {
           method: "GET",

@@ -2,7 +2,8 @@ import React, { useState, useEffect, useContext, useCallback } from "react";
 import Navigation from "../components/Navigation";
 import "./RewardScreen.css";
 import { BoostContext } from "../context/BoosterContext";
-import { fetchImage } from "../utils/fetchImage"; // Adjust path if needed
+import { fetchImage } from "../utils/fetchImage";
+import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
 
 const fetchWithAuth = async (url, token) => {
   const response = await fetch(url, {
@@ -35,33 +36,29 @@ const RewardScreen = () => {
       }
 
       try {
-        // Fetch profile (optional, remove if not needed)
-        await fetchWithAuth("https://bt-coins.onrender.com/user/profile", token);
+        await fetchWithAuth(`${BASE_URL}/user/profile`, token); // Updated URL
 
-        // Fetch rewards
         const rewardTypes = ["on_going", "claimed"];
         const fetchedRewards = await Promise.all(
           rewardTypes.map((type) =>
-            fetchWithAuth(`https://bt-coins.onrender.com/earn/my-rewards?status=${type}`, token)
+            fetchWithAuth(`${BASE_URL}/earn/my-rewards?status=${type}`, token) // Updated URL
           )
         );
 
-        // Map rewards with placeholders initially
         const initialRewards = {
           on_going: fetchedRewards[0].map((reward) => ({
             ...reward,
-            imageUrl: `${process.env.PUBLIC_URL}/default-reward-icon.png`, // Placeholder
+            imageUrl: `${process.env.PUBLIC_URL}/default-reward-icon.png`,
           })),
           claimed: fetchedRewards[1].map((reward) => ({
             ...reward,
-            imageUrl: `${process.env.PUBLIC_URL}/default-reward-icon.png`, // Placeholder
+            imageUrl: `${process.env.PUBLIC_URL}/default-reward-icon.png`,
           })),
         };
 
         setRewardsData(initialRewards);
         setLoading(false);
 
-        // Fetch images in parallel after render
         const allRewards = [...fetchedRewards[0], ...fetchedRewards[1]];
         const imagePromises = allRewards.map((reward) =>
           reward.reward_image_id
@@ -70,7 +67,6 @@ const RewardScreen = () => {
         );
         const imageUrls = await Promise.all(imagePromises);
 
-        // Update rewards with fetched images in one go
         setRewardsData((prev) => ({
           on_going: prev.on_going.map((reward, index) => ({
             ...reward,
@@ -98,7 +94,7 @@ const RewardScreen = () => {
       const token = localStorage.getItem("accessToken");
       try {
         const result = await fetchWithAuth(
-          `https://bt-coins.onrender.com/earn/my-rewards/${rewardId}/claim`,
+          `${BASE_URL}/earn/my-rewards/${rewardId}/claim`, // Updated URL
           token
         );
         const claimedReward = rewardsData.on_going.find((r) => r.reward_id === rewardId);

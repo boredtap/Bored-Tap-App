@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./ClanDetailsScreen.css";
 import { fetchImage } from "../utils/fetchImage"; // Unified import
+import { BASE_URL } from "../utils/BaseVariables";
 
 const ClanDetailsScreen = () => {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ const ClanDetailsScreen = () => {
 
       try {
         // Fetch clan details
-        const response = await fetch("https://bt-coins.onrender.com/user/clan/my_clan", {
+        const response = await fetch(`${BASE_URL}/user/clan/my_clan`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -79,7 +80,7 @@ const ClanDetailsScreen = () => {
 
         // Fetch top earners
         const topEarnersResponse = await fetch(
-          `https://bt-coins.onrender.com/user/clan/clan/${data.id}/top_earners?page_number=1&page_size=10`,
+          `${BASE_URL}/user/clan/clan/${data.id}/top_earners?page_number=1&page_size=10`,
           {
             method: "GET",
             headers: {
@@ -97,7 +98,7 @@ const ClanDetailsScreen = () => {
         // Fetch leadership transfer candidates (only for creator)
         if (data.in_clan_rank === "creator") {
           const transferResponse = await fetch(
-            `https://bt-coins.onrender.com/user/clan/clan/${data.id}/leadership_transfer_candidate`,
+            `${BASE_URL}/user/clan/clan/${data.id}/leadership_transfer_candidate`,
             {
               method: "GET",
               headers: {
@@ -134,7 +135,7 @@ const ClanDetailsScreen = () => {
     const token = localStorage.getItem("accessToken");
     try {
       const response = await fetch(
-        "https://bt-coins.onrender.com/user/clan/exit_clan?creator_exit_action=transfer",
+        `${BASE_URL}/user/clan/exit_clan?creator_exit_action=transfer`,
         {
           method: "POST",
           headers: {
@@ -158,7 +159,7 @@ const ClanDetailsScreen = () => {
     const token = localStorage.getItem("accessToken");
     try {
       const response = await fetch(
-        "https://bt-coins.onrender.com/user/clan/exit_clan?creator_exit_action=close",
+        `${BASE_URL}/user/clan/exit_clan?creator_exit_action=close`,
         {
           method: "POST",
           headers: {
@@ -179,7 +180,7 @@ const ClanDetailsScreen = () => {
   const handleLeaveClan = async () => {
     const token = localStorage.getItem("accessToken");
     try {
-      const response = await fetch("https://bt-coins.onrender.com/user/clan/exit_clan", {
+      const response = await fetch(`${BASE_URL}/user/clan/exit_clan`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

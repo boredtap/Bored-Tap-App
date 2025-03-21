@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./ProfileScreen.css";
+import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
 
 const ProfileScreen = () => {
   const [profile, setProfile] = useState(null); // Holds user profile data
@@ -20,7 +21,7 @@ const ProfileScreen = () => {
 
       try {
         // Fetch user profile
-        const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
+        const profileResponse = await fetch(`${BASE_URL}/user/profile`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -39,7 +40,7 @@ const ProfileScreen = () => {
 
         // Fetch leaderboard to get rank
         const leaderboardResponse = await fetch(
-          "https://bt-coins.onrender.com/user/leaderboard?category=all_time",
+          `${BASE_URL}/user/leaderboard?category=all_time`,
           {
             method: "GET",
             headers: {

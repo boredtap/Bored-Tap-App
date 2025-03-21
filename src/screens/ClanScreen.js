@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./ClanScreen.css";
-import { fetchImage } from "../utils/fetchImage"; // Updated import
+import { fetchImage } from "../utils/fetchImage";
+import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
 
 const ClanScreen = () => {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ const ClanScreen = () => {
       }
 
       try {
-        const myClanResponse = await fetch("https://bt-coins.onrender.com/user/clan/my_clan", {
+        const myClanResponse = await fetch(`${BASE_URL}/user/clan/my_clan`, { // Updated URL
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -45,7 +46,7 @@ const ClanScreen = () => {
           setClanStatus(null);
         }
 
-        const topClansResponse = await fetch("https://bt-coins.onrender.com/user/clan/top_clans", {
+        const topClansResponse = await fetch(`${BASE_URL}/user/clan/top_clans`, { // Updated URL
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -71,7 +72,6 @@ const ClanScreen = () => {
         setTopClans(initialClans);
         setLoading(false);
 
-        // Fetch images in parallel
         const imagePromises = initialClans.map((clan) =>
           clan.image_id
             ? fetchImage(clan.image_id, token, "clan_image", `${process.env.PUBLIC_URL}/default-clan-icon.png`)

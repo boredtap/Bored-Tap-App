@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Navigation from "../components/Navigation";
 import "./ChallengeScreen.css";
-import { fetchImage } from "../utils/fetchImage"; // Standard import
+import { fetchImage } from "../utils/fetchImage"; // Use standard fetchImage
+import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
 
 const ChallengeScreen = () => {
   const [activeTab, setActiveTab] = useState("Open Challenges");
@@ -26,7 +27,7 @@ const ChallengeScreen = () => {
       }
 
       try {
-        const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
+        const profileResponse = await fetch(`${BASE_URL}/user/profile`, { // Updated URL
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -38,14 +39,14 @@ const ChallengeScreen = () => {
         setTotalTaps(profileData.total_coins || 0);
 
         const [ongoingResponse, completedResponse] = await Promise.all([
-          fetch("https://bt-coins.onrender.com/earn/challenge/my-challenges?status=ongoing", {
+          fetch(`${BASE_URL}/earn/challenge/my-challenges?status=ongoing`, { // Updated URL
             method: "GET",
             headers: {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
           }),
-          fetch("https://bt-coins.onrender.com/earn/challenge/my-challenges?status=completed", {
+          fetch(`${BASE_URL}/earn/challenge/my-challenges?status=completed`, { // Updated URL
             method: "GET",
             headers: {
               Authorization: `Bearer ${token}`,

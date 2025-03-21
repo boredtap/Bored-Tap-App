@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./ClanPreviewScreen.css";
 import { fetchImage } from "../utils/fetchImage"; // Updated import
+import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
 
 const ClanPreviewScreen = () => {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ const ClanPreviewScreen = () => {
         let imageUrl;
 
         if (!passedClan) {
-          const response = await fetch("https://bt-coins.onrender.com/user/clan/all_clans", {
+          const response = await fetch(`${BASE_URL}/user/clan/all_clans`, {
             method: "GET",
             headers: {
               Authorization: `Bearer ${token}`,
@@ -110,7 +111,7 @@ const ClanPreviewScreen = () => {
     try {
       const token = localStorage.getItem("accessToken");
       const response = await fetch(
-        `https://bt-coins.onrender.com/user/clan/join_clan?clan_id=${clanData.id}`,
+        `${BASE_URL}/user/clan/join_clan?clan_id=${clanData.id}`,
         {
           method: "POST",
           headers: {

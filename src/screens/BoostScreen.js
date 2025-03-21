@@ -3,6 +3,7 @@ import Navigation from "../components/Navigation";
 import "./BoostScreen.css";
 import { BoostContext } from "../context/BoosterContext";
 import BoosterTimer from "../components/BoosterTimer";
+import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
 
 const BOOST_DURATION = 20000; // 20 seconds for Tapper Boost
 const DAILY_RESET_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
@@ -59,7 +60,7 @@ const BoostScreen = () => {
       const token = localStorage.getItem("accessToken");
       if (!token) throw new Error("No access token found");
 
-      const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
+      const profileResponse = await fetch(`${BASE_URL}/user/profile`, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       });
@@ -73,7 +74,7 @@ const BoostScreen = () => {
       //   setTotalTaps(profileData.total_coins || 0);
       // }
 
-      const extraBoostersResponse = await fetch("https://bt-coins.onrender.com/user/boost/extra_boosters", {
+      const extraBoostersResponse = await fetch(`${BASE_URL}/user/boost/extra_boosters`, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       });
@@ -139,7 +140,7 @@ const BoostScreen = () => {
     try {
       const token = localStorage.getItem("accessToken");
       
-      const response = await fetch(`https://bt-coins.onrender.com/user/boost/upgrade/${boosterId}`, {
+      const response = await fetch(`${BASE_URL}/user/boost/upgrade/${boosterId}`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       });

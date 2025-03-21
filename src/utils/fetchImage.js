@@ -1,4 +1,5 @@
 // utils/fetchImage.js
+import { BASE_URL } from "./BaseVariables";
 const imageCache = new Map();
 
 export const fetchImage = async (
@@ -13,7 +14,7 @@ export const fetchImage = async (
   try {
     console.log(`Fetching ${type} image with ID: ${imageId}`); // Debug log
     const response = await fetch(
-      `https://bt-coins.onrender.com/bored-tap/user_app/image?image_id=${imageId}`,
+      `${BASE_URL}/bored-tap/user_app/image?image_id=${imageId}`,
       {
         method: "GET",
         headers: {
