@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import BaseModel, AnyHttpUrl, Field
 from earn.schemas import StreakData
 
@@ -51,7 +51,7 @@ class UserProfile(BaseModel):
     invite: list[InviteeData] | None = []
     is_admin: bool = False
     is_active: bool = True
-    created_at: datetime = datetime.now()
+    created_at: datetime = datetime.now(timezone.utc)
     clan: Clan = Field(default_factory=Clan)
     claimed_rewards: list[str] = []
     extra_boost: ExtraBoost = Field(default_factory=ExtraBoost)
