@@ -32,12 +32,13 @@ def get_clans(category: ClanCategories, skip: int, page_size: int):
         clans = clans_collection.find({"status": "disbanded"}).skip(skip).limit(page_size)
 
     for clan in clans:
+        creator = user_collection.find_one({"telegram_user_id": clan["creator"]})["username"]
         clan_data = ClanProfile(
             id=str(clan["_id"]),
             name=clan["name"],
             status=clan["status"],
             rank=f"#{clan['rank']}",
-            creator=clan["creator"],
+            creator=creator,
             coins_earned=clan["total_coins"],
             members=clan["members"],
             created_at=clan["created_at"],

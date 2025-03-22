@@ -165,7 +165,7 @@ def update_coin_stats(telegram_user_id: str, coins_tapped:int):
     # get current user coin stat
     user_query = {'telegram_user_id': telegram_user_id}
     user_stats = coin_stats.find_one(user_query)
-    print(user_stats)
+    # print(user_stats)
 
     if user_stats:
         # user_stats['date'][str(today)]

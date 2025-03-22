@@ -3,6 +3,7 @@ from bson import ObjectId
 from fastapi import HTTPException
 from database_connection import user_collection, fs, clans_collection, coin_stats,  invites_ref
 from clan.schemas import ClanTopEarners, CreateClan, ClanSearchResponse, MyClan, MyEligibleMembers
+from dependencies import update_coin_stats, update_coins_in_db
 from user_reg_and_prof_mngmnt.models import Clan as UserProfileClan
 from superuser.clan.models import Clan
 
@@ -580,8 +581,7 @@ def run_clan_earnings():
                         if date == previous_day.strftime("%Y-%m-%d"):
                             clan_earnings += int(coins * 0.001)
 
-                # add earnings to clan earnings, user coins and update clan's last earn date
-
+                # add earnings to clan earnings and update clan's last earn date
                 clan_update_operation = {
                     "$inc": {
                         "total_coins": clan_earnings
@@ -595,6 +595,7 @@ def run_clan_earnings():
                 if clan_update.modified_count > 0:
                     response["clan_earnings"] = f"+{clan_earnings}"
 
+                # add earnings to user coins
                 members_update_operation = {
                     "$inc": {
                         "total_coins": clan_earnings
@@ -604,6 +605,10 @@ def run_clan_earnings():
                 members_update = user_collection.update_many({"telegram_user_id": {"$in": members_telegram_ids}}, members_update_operation)
                 if members_update.modified_count > 0:
                     response["member_earnings (each)"] = f"+{clan_earnings}"
+                
+                # update each user's coin stats
+                for member_id in members_telegram_ids:
+                    update_coin_stats(member_id, clan_earnings)
 
                 print(response)
 
