@@ -55,7 +55,7 @@ async def perform_streak(telegram_user_id: Annotated[str, Depends(get_current_us
         tuple[int, int]: A tuple containing the updated current streak and the longest streak.
     """
     old_streak = get_current_streak(telegram_user_id)
-    logging.info(f"Old streak: {old_streak.model_dump()}")
+    # logging.info(f"Old streak: {old_streak.model_dump()}")
 
     current_date = datetime.today()
     one_day = timedelta(hours=24)
@@ -63,7 +63,7 @@ async def perform_streak(telegram_user_id: Annotated[str, Depends(get_current_us
 
     if not old_streak.last_action_date:
         # initialize user streaks if no streak record exists
-        logging.info('No streak record found: streak will be initialized')
+        # logging.info('No streak record found: streak will be initialized')
         init_streak_data = StreakData(
             current_streak=1,
             longest_streak=1,
