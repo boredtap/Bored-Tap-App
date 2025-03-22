@@ -90,16 +90,16 @@ async def perform_streak(telegram_user_id: Annotated[str, Depends(get_current_us
         )
 
         increment_streak_and_coin(telegram_user_id, daily_reward_amount, new_streak)
-        logging.info({
-            "Time difference (hrs)": time_difference.total_seconds() / 3600,
-            "New streak": new_streak.model_dump()
-        })
+        # logging.info({
+        #     "Time difference (hrs)": time_difference.total_seconds() / 3600,
+        #     "New streak": new_streak.model_dump()
+        # })
 
         return new_streak
 
     elif time_difference > timedelta(hours=48):
         # broken streak, restart user streak
-        logging.info('Broken streak, if: time difference is gt 25 hours')
+        # logging.info('Broken streak, if: time difference is gt 25 hours')
         reset_streak = StreakData(
             current_streak=1,
             longest_streak=old_streak.longest_streak,
@@ -107,10 +107,10 @@ async def perform_streak(telegram_user_id: Annotated[str, Depends(get_current_us
         )
 
         broken_streak_reset(telegram_user_id, reset_streak, daily_reward_amount)
-        logging.info({
-            "Time difference (hrs)": time_difference.total_seconds() / 3600,
-            "Reset streak": reset_streak.model_dump()
-        })
+        # logging.info({
+        #     "Time difference (hrs)": time_difference.total_seconds() / 3600,
+        #     "Reset streak": reset_streak.model_dump()
+        # })
 
         return reset_streak
     
