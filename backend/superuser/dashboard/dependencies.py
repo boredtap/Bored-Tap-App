@@ -1,5 +1,5 @@
 from database_connection import fs
-from datetime import datetime, tzinfo, timezone
+from datetime import datetime, timedelta, tzinfo, timezone
 from io import BytesIO
 from bson import ObjectId
 from fastapi.responses import StreamingResponse
@@ -11,44 +11,133 @@ from database_connection import user_collection, coin_stats
 
 # ------------------------------------- get total number of users ------------------------------------- 
 def get_total_users() -> dict[str, int]:
+    """
+    Gets the total number of users in the user collection.
+
+    The function counts the total number of documents in the user collection and
+    returns the result as a dictionary with the key "total_users".
+
+    :return: A dictionary with the total number of users in the user collection.
+    :rtype: dict[str, int]
+    """
     total_users = user_collection.count_documents({})
     return {"total_users": total_users}
+
+
+# ------------------------------------- get total number of users [signal] -------------------------------------
+overall_users_percentage_increase = 0.00
+last_new_user_created_at = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+def get_total_users_signal() -> dict[str, int | float | datetime]:
+    """
+    Gets the total number of new users in the last 24 hours and the percentage increase.
+
+    The function checks if there are any new users in the last 24 hours, and if there are, it calculates the percentage increase by dividing the number of new users by the total number of users, and then multiplying by 100.
+    If there are no new users in the last 24 hours, the percentage increase is set to 0.00.
+
+    The function returns a dictionary with the following keys:
+
+        - `total_new_users`: The total number of new users in the last 24 hours.
+        - `percentage_increase`: The percentage increase in the total number of users in the last 24 hours.
+        - `last_new_user_created_at`: The datetime of the last new user created in the last 24 hours.
+
+    :return: A dictionary with the total number of new users, the percentage increase, and the datetime of the last new user created in the last 24 hours.
+    :rtype: dict[str, int | float | datetime]
+    """
+    global overall_users_percentage_increase
+    global last_new_user_created_at
+    current_total_users = get_total_users()
+    current_total_users = current_total_users["total_users"]
+
+    previous_total_users = user_collection.count_documents({"created_at": {"$lt": last_new_user_created_at}})
+    new_users = user_collection.find({"created_at": {"$gte": last_new_user_created_at}}).sort("created_at", -1)
+    new_users = list(new_users)
+
+    if len(new_users) > 0:
+        new_users_creation_dates = [user["created_at"] for user in new_users]
+        last_new_user_created_at = new_users_creation_dates[0]
+    
+        overall_users_percentage_increase = ((current_total_users - previous_total_users) / previous_total_users) * 100
+        overall_users_percentage_increase = round(overall_users_percentage_increase, 2)
+        print(f"Percentage increase: {overall_users_percentage_increase}")
+        print(f"global last new created at: {last_new_user_created_at}")
+
+        return {
+            "total_users": current_total_users,
+            "total_new_users": current_total_users - previous_total_users,
+            "percentage_increase": overall_users_percentage_increase,
+            # "last_new_user_created_at": last_new_user_created_at,
+        }
+
+    # if there are no new users in the last 24 hours
+    if current_total_users - previous_total_users == 0 and last_new_user_created_at == datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0):
+        overall_users_percentage_increase = 0.00
+
+    return {
+        "total_users": current_total_users,
+        "total_new_users": 0,
+        "percentage_increase": f"{overall_users_percentage_increase}%",
+        # "last_new_user_created_at": last_new_user_created_at
+    }
 
 
 # ------------------------------------- get total number of new users -------------------------------------
 def get_total_new_users() -> dict[str, int]:
     # today begins at (00:00:00)
-    today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    yesterday = today_start - timedelta(days=1)
 
-    # aggregation to find users created today
-    pipeline = [
-        {
-            '$match': {
-                'created_at': {
-                    '$gte': today_start
-                    # '$lt': datetime(2025, 1, 27, 0, 0, 0, tzinfo=timezone.utc)
-                }
-            }
-        }, {
-            '$count': 'user_count'
-        }
-    ]
+    # find users that registered today
+    new_users_today = user_collection.count_documents({"created_at": {"$gte": today_start}})
 
-    # count db docs matching aggregation
-    total_users_today = user_collection.aggregate(pipeline)
-
-    # Extract total user from aggregate result
-    try:
-        total_users_today = total_users_today.next()
+    # calculate percentage increase
+    percentage_increase = 0.00
+    new_users_yesterday = 0
+    if new_users_today > 0:
+        # get users that registered yesterday
+        new_users_yesterday = user_collection.count_documents({"created_at": {"$gte": yesterday, "$lt": today_start}})
     
-        return {"total_new_users": total_users_today["user_count"]}
-    except StopIteration:
-        return {"total_new_users": 0}
+        # calculate percentage increase
+        if new_users_yesterday > 0:
+            percentage_increase = (new_users_today / new_users_yesterday) * 100
+            percentage_increase = round(percentage_increase, 2)
+    
+    return {
+        "total_new_users": new_users_today,
+        "users_yesterday": new_users_yesterday,
+        "percentage_increase": f"{percentage_increase}%"
+    }
 
 
 # ------------------------------------- get overall total coins -------------------------------------
 def get_overall_total_coins_earned() -> dict[str, int] | dict:
-    # Perform aggregation to calculate total coins
+    # get total coins earned today
+    today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    print(today_date)
+
+    # today coins pipeline for aggregation
+    today_coins_pipeline = [
+        {
+            "$group": {
+                "_id": None,  # Group all documents together
+                "total_coins": {
+                    "$sum": f"$date.{today_date}"
+                }
+            }
+        }
+    ]
+
+    # Execute the aggregation pipeline
+    today_coins_result = coin_stats.aggregate(today_coins_pipeline)
+
+    # Extract the total coins value from the aggregation result
+    try:
+        today_coins = today_coins_result.next()["total_coins"]
+        print(today_coins)
+    except StopIteration:
+        today_coins = 0
+
+
+    # Perform aggregation to get overall total coins
     pipeline = [
         {
             "$group": {
@@ -63,11 +152,21 @@ def get_overall_total_coins_earned() -> dict[str, int] | dict:
 
     # Extract the total coins value from the aggregation result
     try:
-        total_coins = total_coins_result.next()["total_coins"]
-
-        return {"overall_total_coins": total_coins}
+        overall_total_coins = total_coins_result.next()["total_coins"]
     except StopIteration:
-        return {"message": "No user profiles found in the collection."}
+        overall_total_coins = 0
+
+    # calculate percentage increase
+    percentage_increase = 0.00
+    if overall_total_coins > 0:
+        percentage_increase = (today_coins / overall_total_coins) * 100
+        percentage_increase = round(percentage_increase, 2)
+
+    # return overall total coins
+    return {
+        "overall_total_coins": overall_total_coins,
+        "percentage_increase": f"{percentage_increase}%"
+    }
 
 
 # ------------------------------------- get new users details -------------------------------------
