@@ -41,7 +41,17 @@ def get_redis_client():
 # --------------------------------------------- mongo connection ---------------------------------------------
 def get_db():
     """
+    Establishes a connection to the 'bored-tap' MongoDB database.
 
+    This function attempts to connect to the MongoDB server and retrieve
+    the 'bored-tap' database. It checks the server's connectivity by 
+    pinging it, and raises an exception if the connection fails.
+
+    Returns:
+        Database: The 'bored-tap' MongoDB database instance.
+
+    Raises:
+        Exception: If there is an error connecting to MongoDB.
     """
     try:
         # ping the server to check connectivity
@@ -54,7 +64,17 @@ def get_db():
 
 def get_img_db():
     """
+    Establishes a connection to the 'bored-tap-images' MongoDB database.
 
+    This function attempts to connect to the MongoDB server and retrieve
+    the 'bored-tap-images' database. It checks the server's connectivity by 
+    pinging it, and raises an exception if the connection fails.
+
+    Returns:
+        Database: The 'bored-tap-images' MongoDB database instance.
+
+    Raises:
+        Exception: If there is an error connecting to MongoDB.
     """
     try:
         # ping the server to check connectivity
