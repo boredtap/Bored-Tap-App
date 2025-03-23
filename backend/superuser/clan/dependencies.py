@@ -1,8 +1,8 @@
-from datetime import datetime
-from email.mime import image
+from io import BytesIO
 from bson import ObjectId
 from fastapi import HTTPException
-from database_connection import clans_collection, user_collection
+from fastapi.responses import StreamingResponse
+from database_connection import clans_collection, user_collection, fs
 from superuser.clan.schemas import AlterClanStatus, ClanCategories, ClanProfile
 
 
@@ -29,7 +29,7 @@ def get_clans(category: ClanCategories, skip: int, page_size: int):
         clans = clans_collection.find({"status": "pending"}).skip(skip).limit(page_size)
 
     if category == ClanCategories.DISBANDED:
-        clans = clans_collection.find({"status": "disbanded"}).skip(skip).limit(page_size)
+        clans = clans_collection.find({"status": "disband"}).skip(skip).limit(page_size)
 
     for clan in clans:
         creator = user_collection.find_one({"telegram_user_id": clan["creator"]})["username"]
@@ -46,6 +46,14 @@ def get_clans(category: ClanCategories, skip: int, page_size: int):
         )
 
         yield clan_data
+
+
+# ------------------------------- CLAN PROFILE IMAGE -------------------------------- #
+def get_clan_profile_image(image_id: str):
+    image = fs.get(ObjectId(image_id))
+    image_buffer = BytesIO(image.read())
+    image_buffer.seek(0)
+    return StreamingResponse(image_buffer, media_type="image/jpeg")
 
 
 # ------------------------------- CLAN PROFILE -------------------------------- #

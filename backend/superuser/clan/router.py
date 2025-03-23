@@ -3,7 +3,8 @@ from clan.dependencies import clan_top_earners as clan_top_earners_func
 from superuser.clan.dependencies import (
     get_clans as get_clans_func,
     get_clan_profile as get_clan_profile_func,
-    alter_clan_status as alter_clan_status_func
+    alter_clan_status as alter_clan_status_func,
+    get_clan_profile_image as get_clan_profile_image_func
 )
 from superuser.clan.schemas import AlterClanStatus, ClanCategories
 from superuser.dashboard.admin_auth import get_current_admin
@@ -39,6 +40,13 @@ async def get_clans(
     response = get_clans_func(category, skip, page_size)
 
     return list(response)
+
+
+# ----------------------------- CLAN PROFILE ------------------------------ #
+@clan_router.get("/get_clan/{clan_id}/image")
+async def get_clan_profile_image(image_id: str):
+
+    return get_clan_profile_image_func(image_id)
 
 
 # ----------------------------- CLAN PROFILE ------------------------------ #
