@@ -1,11 +1,173 @@
+from typing import Collection
 from database_connection import fs
 from datetime import datetime, timedelta, tzinfo, timezone
 from io import BytesIO
 from bson import ObjectId
 from fastapi.responses import StreamingResponse
+from superuser.challenge.models import ChallengeModelResponse
+from superuser.clan.schemas import ClanProfile
 from superuser.dashboard.admin_auth import verify_password
 from superuser.dashboard.schemas import AdminProfile as schemasAdminProfile, LeaderboardData, LevelDataInfo, NewUserData, RecentActivityData
-from database_connection import user_collection, coin_stats
+from database_connection import user_collection, coin_stats, task_collection, rewards_collection, challenges_collection, clans_collection, levels_collection
+from superuser.level.models import LevelModelResponse
+from superuser.reward.models import RewardsModelResponse
+from superuser.task.schemas import TaskSchemaResponse
+from superuser.user_mgt.schemas import UserMgtDashboard
+
+
+
+
+# ------------------------------------- search through app -------------------------------------
+def retrieve_search_results(collection_name: Collection, results: list):
+    collection_data = {}
+    count = 1
+    
+    # users
+    if collection_name == user_collection:
+        for result in results:
+            if result["is_active"] == True:
+                status = "active"
+            else:
+                status = "suspended"
+
+            user_result = UserMgtDashboard(
+                telegram_user_id=result["telegram_user_id"],
+                username=result["username"],
+                level=result["level"],
+                level_name=result["level_name"],
+                coins_earned=result["total_coins"],
+                invite_count=len(result["invite"]),
+                registration_date=result["created_at"],
+                status=status
+            )
+
+            collection_data[f"user_{count}"] = user_result
+            count += 1
+
+    # tasks
+    elif collection_name == task_collection:
+        for result in results:
+            task_result = TaskSchemaResponse(
+                id=str(result["_id"]),
+                task_name=result["task_name"],
+                task_type=result["task_type"],
+                task_description=result["task_description"],
+                task_status=result["task_status"],
+                task_participants=result["task_participants"],
+                task_reward=result["task_reward"],
+                task_image=result["task_image"],
+                task_deadline=result["task_deadline"]
+            )
+
+            collection_data[f"task_{count}"] = task_result
+            count += 1
+
+    # rewards
+    elif collection_name == rewards_collection:
+        for result in results:
+            reward_result = RewardsModelResponse(
+                id=str(result["_id"]),
+                reward_title=result["reward_title"],
+                reward=result["reward"],
+                beneficiary=result["beneficiary"],
+                expiry_date=result["expiry_date"],
+                status=result["status"],
+                claim_rate=result["claim_rate"],
+                claim_count=result["claim_count"],
+                reward_image_id=str(result["reward_image_id"])
+            )
+
+            collection_data[f"reward_{count}"] = reward_result
+            count += 1
+    
+    # challenges
+    elif collection_name == challenges_collection:
+        for result in results:
+            challenge_result = ChallengeModelResponse(
+                id=str(result["_id"]),
+                name=result["name"],
+                description=result["description"],
+                launch_date=result["launch_date"],
+                reward=result["reward"],
+                duration=result["duration"],
+                remaining_time=result["remaining_time"],
+                participants=result["participants"],
+                image_id=str(result["image_id"])
+            )
+
+            collection_data[f"challenge_{count}"] = challenge_result
+            count += 1
+        
+    # clans
+    elif collection_name == clans_collection:
+        for result in results:
+            clan_result = ClanProfile(
+                id=str(result["_id"]),
+                name=result["name"],
+                status=result["status"],
+                rank=f"#{result['rank']}",
+                creator=result["creator"],
+                coins_earned=result["total_coins"],
+                members=result["members"],
+                created_at=result["created_at"],
+                image_id=str(result["image_id"])
+            )
+
+            collection_data[f"clan_{count}"] = clan_result
+            count += 1
+
+    # levels
+    elif collection_name == levels_collection:
+        for result in results:
+            level_result = LevelModelResponse(
+                id=str(result["_id"]),
+                name=result["name"],
+                level=result["level"],
+                requirement=result["requirement"],
+                badge_id=str(result["badge_id"])
+            )
+
+            collection_data[f"level_{count}"] = level_result
+            count += 1
+
+    
+    return collection_data
+
+
+# ------------------------------------- search through app -------------------------------------
+def search_through_app(query: str):
+    # define database collections and their searchable fields
+    db_collections: dict[Collection, list[str]] = {
+        user_collection: ["username", "level", "level_name", "clan.name"],
+        clans_collection: ["name", "creator", "status"],
+        task_collection: ["task_name", "task_type", "task_description", "task_status", "task_reward"],
+        rewards_collection: ["reward_title", "reward", "status"],
+        challenges_collection: ["name", "reward"],
+        levels_collection: ["name", "level"],
+    }
+
+    search_results = []
+
+    for collection_name, fields in db_collections.items():
+        for field in fields:
+            # define query using regex for partial string matching (case-insensitive)
+            search_filter = {field: {"$regex": query, "$options": "i"}}
+
+            # find matching documents in the collection
+            results = collection_name.find(search_filter).limit(5)
+            results = list(results)
+
+            if len(results) == 0:
+                continue
+
+            # return schema response of matching documents in the collection
+            collection_data = retrieve_search_results(collection_name, results)
+            search_results.append(collection_data)
+
+            # break loop if any field has a match
+            break
+    
+    return search_results
 
 
 

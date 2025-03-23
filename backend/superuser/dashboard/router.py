@@ -11,9 +11,9 @@ from superuser.dashboard.dependencies import (
     get_users_level_data,
     recent_activity_data_for_coins,
     get_total_new_users,
-    get_total_users,
     recent_activity_data_for_users,
-    get_image as get_image_func
+    get_image as get_image_func,
+    search_through_app
 )
 from superuser.dashboard.admin_auth import authenticate_admin, get_current_admin, hash_password
 from superuser.dashboard.schemas import (
@@ -74,6 +74,13 @@ async def sign_in(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
         expires_delta=access_token_expires
     )
     return Token(access_token=access_token, token_type="bearer")
+
+
+# ------------------------------------- search through app -------------------------------------
+@adminDashboard.get("/search")
+async def search(query: str):
+    
+    return search_through_app(query)
 
 
 # ------------------------------------- get total number of users -------------------------------------
