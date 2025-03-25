@@ -21,6 +21,16 @@ def my_on_going_rewards(telegram_user_id: str):
                     "all_users" in reward.beneficiary or \
                     telegram_user_id in reward.beneficiary:
 
+                    # increment impression count
+                    update_reward = {
+                        "$inc": {
+                            "impression_count": 1
+                        }
+                    }
+
+                    # increament impression count if reward is viewed
+                    rewards_collection.update_one({"_id": ObjectId(reward.id)}, update_reward)
+
                     yield RewardSchema(
                         reward_id=reward.id,
                         reward_title=reward.reward_title,
