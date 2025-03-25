@@ -84,7 +84,15 @@ def create_reward(reward: CreateReward, reward_image: bytes, image_name: str):
 
     return RewardsModelResponse(
         id=str(new_reward_id),
-        **new_reward.model_dump()
+        reward_title=new_reward.reward_title,
+        reward=new_reward.reward,
+        beneficiary=new_reward.beneficiary,  
+        expiry_date=new_reward.expiry_date,
+        status=new_reward.status,
+        claim_count=new_reward.claim_count,
+        claim_rate=f"{new_reward.claim_rate}%",
+        reward_image_id=str(image_id)
+        # **new_reward.model_dump()
     )
 
 
@@ -135,7 +143,7 @@ def update_reward(reward: UpdateReward, reward_image: bytes, img_name: str, rewa
         beneficiary=reward.beneficiary,
         expiry_date=reward.expiry_date,
         status=reward_data["status"],
-        claim_rate=reward_data["claim_rate"],
+        claim_rate=f"{reward_data['claim_rate']}%",
         reward_image_id=str(new_img_id)
     )
 
@@ -188,6 +196,10 @@ def get_rewards():
         raise Exception("No rewards found.")
     
     for reward in rewards:
+        impression = reward["impression_count"]
+        claim_count = reward["claim_count"]
+        claim_rate = ((claim_count / impression) * 100) if impression > 0 else 0.00
+        rewards_collection.update_one({"_id": reward["_id"]}, {"$set": {"claim_rate": round(claim_rate, 2)}})
         yield RewardsModelResponse(
             id=str(reward["_id"]),
             reward_title=reward["reward_title"],
@@ -195,7 +207,7 @@ def get_rewards():
             beneficiary=reward["beneficiary"],  
             expiry_date=reward["expiry_date"],
             status=reward["status"],
-            claim_rate=reward["claim_rate"],
+            claim_rate=f"{reward['claim_rate']}%",
             claim_count=reward["claim_count"],
             reward_image_id=str(reward["reward_image_id"])
         )
@@ -219,7 +231,7 @@ def get_rewards_by_status(status: str):
                 beneficiary=reward["beneficiary"],
                 expiry_date=reward["expiry_date"],
                 status=reward["status"],
-                claim_rate=reward["claim_rate"],
+                claim_rate=f"{reward['claim_rate']}%",
                 reward_image_id=str(reward["reward_image_id"])
             )
 
@@ -242,6 +254,6 @@ def get_rewards_by_date(date: datetime):
                 beneficiary=reward["beneficiary"],
                 expiry_date=reward["expiry_date"],
                 status=reward["status"],
-                claim_rate=reward["claim_rate"],
+                claim_rate=f"{reward['claim_rate']}%",
                 reward_image_id=reward["reward_image_id"]
             )

@@ -12,8 +12,17 @@ class RewardsModel(BaseModel):
     expiry_date: datetime
     status: str
     claim_count: int = 0
-    claim_rate: int
+    impression_count: int = 0
+    claim_rate: int | float
     reward_image_id: str
 
-class RewardsModelResponse(Id, RewardsModel):
-    pass
+class RewardsModelResponse(Id):
+    reward_title: str
+    reward: int
+    beneficiary: list[str]
+    expiry_date: datetime
+    status: str
+    claim_count: int = 0
+    # impression_count: int = 0
+    claim_rate: str
+    reward_image_id: str
