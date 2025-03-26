@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from superuser.security.models import SuspendDetails
 from database_connection import user_collection
 
 
+# ---------------------------------- SUSPEND USER -------------------------------------- #
 def suspend_user(user_id: str, end_date: datetime, reason: str = None):
     """
     Suspend a user.
@@ -62,7 +63,52 @@ def suspend_user(user_id: str, end_date: datetime, reason: str = None):
             return {"message": f"User, {user_id} suspended successfully."}
 
 
+# ---------------------------------- RESUME USER -------------------------------------- #
+def resume_user(user_id: str):
+    """
+    Release a user from suspension.
+
+    Args:
+        user_id (str): The Telegram user ID of the user to release.
+
+    Raises:
+        HTTPException: If the user is not found or if the user suspension release fails.
+
+    Returns:
+        dict: A message indicating that the user suspension has been successfully released.
+    """
+    release_suspend = user_collection.update_one(
+        {"telegram_user_id": user_id, "is_active": False},
+        {
+            "$set": {"is_active": True},
+            "$unset": {"suspend_details": ""}
+        },
+    )
+
+    if release_suspend.modified_count == 0:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="User suspension release failed.")
+
+    return {
+        "message": "User suspension has been successfully raised by admin"
+    }
+
+
+# ---------------------------------- BAN USER -------------------------------------- #
 def ban_user(user_id: str):
+    """
+    Ban a user by their Telegram user ID.
+
+    Args:
+        user_id (str): The Telegram user ID of the user to ban.
+
+    Raises:
+        HTTPException: If the user is not found or if the user ban fails.
+
+    Returns:
+        dict: A message indicating that the user ban has been successfully applied.
+    """
+    
+    
     user = user_collection.find_one({"telegram_user_id": user_id})
 
     if not user:

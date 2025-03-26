@@ -8,6 +8,7 @@ class UserStatusCategory(str, Enum):
     # ACTIVE = "active"
     SUSPEND = "suspend"
     BAN = "ban"
+    RESUME = "resume"
 
     def __repr__(self):
         return self.value
