@@ -38,7 +38,7 @@ class LeaderBoard(BaseModel):
     level: int
     level_name: str
     coins_earned: int
-    clan: str
+    clan: str | None
     longest_streak: int
 
 class LeaderBoardUserProfile(BaseModel):
