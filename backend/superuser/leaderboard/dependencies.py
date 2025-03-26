@@ -16,7 +16,7 @@ def process_result_from_aggregation(result):
             level=data["level"],
             level_name=data["level_name"],
             coins_earned=data["total_coins"],
-            clan="clan",
+            clan=data["clan"],
             longest_streak=data["longest_streak"]
         )
 
@@ -47,7 +47,7 @@ def all_time_leaderboard():
                 'level': "$user_info.level",
                 'level_name': "$user_info.level_name",
                 'total_coins': 1,
-                # 'clan': "$user_info.clan",
+                'clan': "$user_info.clan.name",
                 'longest_streak': "$user_info.streak.longest_streak",
                 'image_url': 1,
                 'telegram_user_id': 1,
@@ -95,7 +95,7 @@ def daily_leaderboard():
                 'level': "$user_info.level",
                 'level_name': "$user_info.level_name",
                 'total_coins': 1,
-                # 'clan': "$user_info.clan",
+                'clan': "$user_info.clan.name",
                 'longest_streak': "$user_info.streak.longest_streak",
                 'image_url': "$user_info.image_url",
                 'telegram_user_id': 1,
@@ -184,7 +184,7 @@ def weekly_leaderboard():
                 'level': "$user_info.level",
                 'level_name': "$user_info.level_name",
                 'total_coins': 1,
-                # 'clan': "$user_info.clan",
+                'clan': "$user_info.clan.name",
                 'longest_streak': "$user_info.streak.longest_streak",
                 'image_url': "$user_info.image_url",
                 '_id': 0
@@ -266,7 +266,8 @@ def monthly_leaderboard():
                 'username': '$user_info.username', 
                 'level': '$user_info.level', 
                 'level_name': '$user_info.level_name', 
-                'total_coins': 1, 
+                'total_coins': 1,
+                'clan': "$user_info.clan.name",
                 'longest_streak': '$user_info.streak.longest_streak', 
                 'image_url': '$user_info.image_url', 
                 '_id': 0
