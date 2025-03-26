@@ -31,14 +31,17 @@ oauth2_scheme = OAuth2PasswordBearer(
 
 def authenticate_user(telegram_user_id: str) -> BasicProfile:
     """
-    Authenticate a user by checking if they exist in the database.
+    Authenticate a user by their Telegram user ID and check their suspension status.
 
     Args:
-        telegram_user_id (str): The Telegram user ID of the user to authenticate.
-        username (str): The username of the user to authenticate.
+        telegram_user_id (str): The Telegram user ID to authenticate.
 
     Returns:
-        BasicProfile: The basic profile of the user if authenticated, otherwise None.
+        BasicProfile: The user's basic profile if authentication is successful.
+
+    Raises:
+        HTTPException: If the user is suspended with remaining suspension time,
+                       or if releasing the suspension fails.
     """
     user = get_user_by_id(telegram_user_id)
 

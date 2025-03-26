@@ -1,4 +1,4 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from pydantic import AnyHttpUrl
 from user_reg_and_prof_mngmnt.schemas import BasicProfile, Invites, SuspendedUser
 from user_reg_and_prof_mngmnt.models import UserProfile as UserProfileModel
@@ -51,7 +51,7 @@ def get_user_by_id(telegram_user_id: str) -> BasicProfile | SuspendedUser | None
         # banned users have the {"banned": True} and {"is_active": False} fields in their profile
         # check if user has been banned
         if not user["is_active"] and user["banned"]:
-            raise HTTPException(status_code=400, detail="This user has been banned.")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User banned.")
     except KeyError:
             # suspended users only have the {"is_active": False} field in their profile
             # handle suspended users
