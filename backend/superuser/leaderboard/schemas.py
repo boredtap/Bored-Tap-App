@@ -28,7 +28,7 @@ class TodayAchievement(BaseModel):
 
 class Clan(BaseModel):
     clan_name: str | None
-    in_clan_rank: int | None
+    in_clan_rank: str | None
 
 class LeaderBoard(BaseModel):
     telegram_user_id: str

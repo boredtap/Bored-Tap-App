@@ -1,5 +1,7 @@
 from datetime import datetime
-from database_connection import user_collection, coin_stats
+
+from bson import ObjectId
+from database_connection import user_collection, coin_stats, clans_collection
 from superuser.leaderboard.schemas import Clan, LeaderBoard, LeaderBoardUserProfile, OverallAchievement, TodayAchievement
 
 
@@ -368,10 +370,18 @@ def leaderboard_profile(telegram_user_id: str):
         invitees = len(user.get("invite"))
     )
 
-    clan = Clan(
-        clan_name=None,
-        in_clan_rank=None,
-    )
+    clan_id = user["clan"]["id"]
+    if not clan_id:
+        clan = Clan(
+            clan_name=None,
+            in_clan_rank=None,
+        )
+    else:
+        clan_creator = clans_collection.find_one({"_id": ObjectId(clan_id)})["creator"]
+        clan = Clan(
+            clan_name=user["clan"]["name"],
+            in_clan_rank="member" if clan_creator != user["telegram_user_id"] else "creator",
+        )
 
     profile_response = LeaderBoardUserProfile(
         username = user.get("username"),
