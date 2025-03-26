@@ -12,7 +12,12 @@ def get_all_users():
         if user["is_active"] == True:
             status = "active"
         else:
-            status = "suspended"
+            # check if user is banned or suspended
+            try:
+                if user["banned"] == True:
+                    status = "banned"
+            except KeyError:
+                status = "suspended"
 
         user_data = UserMgtDashboard(
             telegram_user_id=str(user["telegram_user_id"]),
