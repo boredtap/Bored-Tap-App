@@ -37,7 +37,8 @@ def suspend_user(user_id: str, end_date: datetime, reason: str = None):
         
         if update.acknowledged:
             # create new field in user profile: suspend_details
-            end_date = end_date.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
+            today = datetime.now(timezone.utc)
+            end_date = end_date.replace(hour=today.hour, minute=today.minute, second=today.second, microsecond=today.microsecond, tzinfo=timezone.utc)
             suspend_details = SuspendDetails(
                 start_date=datetime.now(timezone.utc),
                 end_date=end_date,

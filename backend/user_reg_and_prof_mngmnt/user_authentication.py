@@ -62,7 +62,7 @@ def authenticate_user(telegram_user_id: str) -> BasicProfile:
 
         suspend_remaining_time = suspend_end_date - today
 
-        if suspend_remaining_time > timedelta(days=0, hours=0):
+        if suspend_remaining_time > timedelta(days=0, hours=0, minutes=0, microseconds=0):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"User has been suspended. Remaining time: {suspend_remaining_time}")
 
         # release user and remove suspend details from user profile
