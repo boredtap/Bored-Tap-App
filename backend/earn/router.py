@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 import logging
 from typing import Annotated
 from fastapi import APIRouter, Depends
-from yarl import Query
 
 from .dependencies import broken_streak_reset, calculate_time_difference, increment_streak_and_coin, init_streak
 from earn.schemas import StreakData
@@ -17,7 +16,7 @@ from superuser.leaderboard.dependencies import (
 )
 
 # ---------------------- imports for reward ---------------------- #
-from superuser.reward.dependencies import get_reward_image as get_reward_image_func
+from superuser.reward.dependencies import get_reward_image as get_reward_image_func, update_status_of_expired_rewards
 from reward.dependencies import (
     my_on_going_rewards,
     claim_reward as claim_reward_func,
@@ -35,7 +34,7 @@ from challenge.dependencies import get_my_challenges as get_my_challenges_func
 logging.basicConfig(level=logging.INFO)
 earnApp = APIRouter(
     tags=["Earn features"],
-    dependencies=[Depends(get_current_user)]
+    dependencies=[Depends(get_current_user), Depends(update_status_of_expired_rewards)]
 )
 
 ##############################################################################################################################

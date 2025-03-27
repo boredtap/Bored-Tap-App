@@ -6,6 +6,7 @@ from superuser.dashboard.admin_auth import get_current_admin
 from superuser.reward.dependencies import (
     create_reward as create_reward_func,
     set_datetime_to_utc,
+    update_status_of_expired_rewards,
     verify_beneficiaries,
     update_reward as update_reward_func,
     delete_reward as delete_reward_func,
@@ -24,7 +25,7 @@ rewardApp = APIRouter(
     prefix="/admin/reward",
     tags=["Admin Panel Reward"],
     # responses={404: {"description": "Not found"}},
-    dependencies=[Depends(get_current_admin)]
+    dependencies=[Depends(get_current_admin), Depends(update_status_of_expired_rewards)]
 )
 
 
