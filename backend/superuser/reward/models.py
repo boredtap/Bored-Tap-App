@@ -24,5 +24,5 @@ class RewardsModelResponse(Id):
     status: str | float
     claim_count: int = 0
     # impression_count: int = 0
-    claim_rate: str
+    claim_rate: str | float | int
     reward_image_id: str
