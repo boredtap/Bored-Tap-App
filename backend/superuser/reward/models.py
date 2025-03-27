@@ -21,7 +21,7 @@ class RewardsModelResponse(Id):
     reward: int
     beneficiary: list[str]
     expiry_date: datetime
-    status: str
+    status: str | float
     claim_count: int = 0
     # impression_count: int = 0
     claim_rate: str
