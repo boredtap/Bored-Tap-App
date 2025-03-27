@@ -191,8 +191,7 @@ def reward_remaining_time(reward: dict):
     """
     expiry_date: datetime = reward["expiry_date"]
     exp = set_datetime_to_utc(expiry_date)
-    now = datetime.now(timezone.utc)
-    today = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+    today = datetime.now(timezone.utc)
     
     remaining_time = exp - today
 
@@ -277,7 +276,7 @@ def update_status_of_expired_rewards():
     for reward in on_going_rewards:
         remaining_time = reward_remaining_time(reward)
         
-        if remaining_time > timedelta(days=0, hours=0, minutes=0, seconds=0, microseconds=0):
+        if remaining_time <= timedelta(days=0, hours=0, minutes=0, seconds=0, microseconds=0):
             exp_check_update = {
                 "$set": {
                     "status": "expired"
