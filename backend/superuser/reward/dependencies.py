@@ -61,11 +61,21 @@ def set_datetime_to_utc(date_time: datetime):
 def create_reward(reward: CreateReward, reward_image: bytes, image_name: str):
     image_id = fs.put(reward_image, filename="reward_" + image_name)
 
+    today = datetime.now(timezone.utc)
+    expiry_date = reward.expiry_date
+
+    if expiry_date.tzinfo:
+        expiry_date = expiry_date.astimezone(timezone.utc)
+    else:
+        expiry_date = expiry_date.replace(tzinfo=timezone.utc)
+
+    expiry_date = expiry_date.replace(hour=today.hour, minute=today.minute, second=today.second, microsecond=today.microsecond, tzinfo=timezone.utc)
+
     new_reward = RewardsModel(
         reward_title=reward.reward_title,
         reward=reward.reward,
         beneficiary=reward.beneficiary,
-        expiry_date=reward.expiry_date,
+        expiry_date=expiry_date,
         status=Status.ONGOING,
         claim_rate=0,
         reward_image_id=str(image_id)
@@ -257,3 +267,24 @@ def get_rewards_by_date(date: datetime):
                 claim_rate=f"{reward['claim_rate']}%",
                 reward_image_id=reward["reward_image_id"]
             )
+
+
+
+def update_status_of_expired_rewards():
+    on_going_rewards = rewards_collection.find({"status": "on_going"})
+
+    count = 0
+    for reward in on_going_rewards:
+        remaining_time = reward_remaining_time(reward)
+        
+        if remaining_time > timedelta(days=0, hours=0, minutes=0, seconds=0, microseconds=0):
+            exp_check_update = {
+                "$set": {
+                    "status": "expired"
+                }
+            }
+
+            update = rewards_collection.update_one({"_id": ObjectId(reward['_id'])}, exp_check_update)
+            if update.modified_count > 0:
+                count += 1
+    print(f"expired rewards: {count}")
