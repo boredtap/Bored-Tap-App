@@ -232,7 +232,7 @@ def get_rewards_by_status(status: str):
     for reward in rewards:
         remaining_time = reward_remaining_time(reward)
 
-        if remaining_time.days > timedelta(days=0, hours=0).days:
+        if remaining_time > timedelta(days=0, hours=0, minutes=0, seconds=0, microseconds=0):
             yield RewardsModelResponse(
                 id=str(reward["_id"]),
                 reward_title=reward["reward_title"],
