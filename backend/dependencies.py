@@ -212,7 +212,8 @@ def get_user_by_id(telegram_user_id: str) -> Update:
         user_data = Update(
             telegram_user_id=user.get("telegram_user_id", None),
             total_coins=user.get("total_coins", None),
-            level=user.get("level", None)
+            level=user.get("level", None),
+            level_name=user.get("level_name", None)
         )
         return user_data
     return None
@@ -224,7 +225,7 @@ def update_level_logic(telegram_user_id: str):
     current_coins = user.total_coins
 
     level_from_table = current_level
-    level_name: str = user["level_name"]
+    level_name = user.level_name
     for level, required_coins in sorted(user_levels.items()):
         if level != 10:
             next_level = level + 1
