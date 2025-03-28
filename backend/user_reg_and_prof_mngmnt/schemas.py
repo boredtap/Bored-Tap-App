@@ -51,6 +51,7 @@ class Update(BaseModel):
     telegram_user_id: str
     total_coins: int
     level: int
+    level_name: str | None = None
 
 class Invites(BaseModel):
     inviter_telegram_id: str
