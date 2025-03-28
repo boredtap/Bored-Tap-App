@@ -9,7 +9,7 @@ from user_reg_and_prof_mngmnt.schemas import InviteeData, Update, UserProfile
 
 
 user_levels: dict[int, list] = {
-    # level: coins
+    # level: [coins, level name]
     1: [0, "Novice"],
     2: [5000, "Explorer"],
     3: [25000, "Apprentice"],
@@ -224,6 +224,7 @@ def update_level_logic(telegram_user_id: str):
     current_coins = user.total_coins
 
     level_from_table = current_level
+    level_name: str = user["level_name"]
     for level, required_coins in sorted(user_levels.items()):
         if level != 10:
             next_level = level + 1
@@ -242,7 +243,7 @@ def update_level_logic(telegram_user_id: str):
     return {
         "level": new_level,
         "level_name": level_name,
-        "required Coins": required_coins,
+        "required Coins": user_levels[level_from_table][0],
         "current Coins": current_coins
     }
 
