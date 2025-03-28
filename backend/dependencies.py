@@ -223,6 +223,7 @@ def update_level_logic(telegram_user_id: str):
     current_level = user.level
     current_coins = user.total_coins
 
+    level_from_table = current_level
     for level, required_coins in sorted(user_levels.items()):
         if level != 10:
             next_level = level + 1
