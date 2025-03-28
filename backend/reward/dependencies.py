@@ -7,11 +7,11 @@ from dependencies import update_coins_in_db
 
 
 def my_on_going_rewards(telegram_user_id: str):
-    my_data = user_collection.find_one({"telegram_user_id": telegram_user_id})
+    my_data: dict = user_collection.find_one({"telegram_user_id": telegram_user_id})
 
     if my_data:
         my_level: str = my_data["level_name"].lower()
-        my_clan = my_data["clan"]
+        my_clan = my_data["clan"]["name"]
         my_claimed_rewards = my_data["claimed_rewards"]
 
         for reward in get_rewards():
