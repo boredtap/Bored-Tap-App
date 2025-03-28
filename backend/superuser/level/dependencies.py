@@ -64,7 +64,7 @@ def create_level(level: CreateLevel, badge: bytes, badge_name: str):
 
 # -------------------------------- GET ALL LEVELS ------------------------------ #
 def get_levels():
-    levels = levels_collection.find({})
+    levels = levels_collection.find({}).sort("level", 1)
 
     for level in levels:
         yield LevelModelResponse(
