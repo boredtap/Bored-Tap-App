@@ -1,6 +1,5 @@
 from bson import ObjectId
 from fastapi import HTTPException
-from httpx import delete
 from superuser.level.models import LevelModel, LevelModelResponse
 from superuser.level.schemas import CreateLevel
 from database_connection import levels_collection, fs
