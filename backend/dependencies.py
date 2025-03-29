@@ -244,7 +244,6 @@ def get_user_current_level(coins: int, current_level: int = 1, current_level_nam
     
     return current_level, current_level_name
 
-print(get_user_current_level(500000000000000, 4, 'Warrior'))
 
 def update_level_logic(telegram_user_id: str):
     """
