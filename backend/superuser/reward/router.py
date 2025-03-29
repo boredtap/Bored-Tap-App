@@ -45,6 +45,21 @@ async def create_reward(
         specific_users: list[str] | None = None,
         new_reward: CreateReward = Depends(CreateReward),
     ) -> RewardsModelResponse:
+    """
+    Creates a new reward in the system.
+
+    Args:
+        clan (list[str] | None, optional): List of clan IDs/names participating in the reward.
+        level (list[str] | None, optional): List of level name(s) participating in the reward.
+        specific_users (list[str] | None, optional): List of specific user IDs/usernames participating in the reward.
+        new_reward (CreateReward, optional): The reward data being created.
+
+    Raises:
+        HTTPException: If the reward image is not provided or if the image format is invalid.
+
+    Returns:
+        RewardsModelResponse: The response model containing the details of the created reward.
+    """
     if not new_reward.reward_image:
         raise HTTPException(status_code=400, detail="Please upload a reward image.")
 
