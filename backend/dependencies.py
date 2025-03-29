@@ -5,6 +5,7 @@ from bson import ObjectId
 from fastapi.responses import StreamingResponse
 from models import CoinStats
 from database_connection import user_collection, invites_ref, coin_stats
+from tasks.dependencies import get_user
 from user_reg_and_prof_mngmnt.schemas import InviteeData, Update, UserProfile
 
 
@@ -219,33 +220,54 @@ def get_user_by_id(telegram_user_id: str) -> Update:
     return None
 
 
-def update_level_logic(telegram_user_id: str):
-    user = get_user_by_id(telegram_user_id)
-    current_level = user.level
-    current_coins = user.total_coins
+# get user current level
+def get_user_current_level(coins: int, current_level: int = 1, current_level_name: str = 'Novice'):
+    """
+    Determines the level and level name based on the given coin value, ensuring level never drops.
 
-    level_from_table = current_level
-    level_name = user.level_name
-    for level, required_coins in sorted(user_levels.items()):
-        if level != 10:
-            next_level = level + 1
-            # get user level from their accumulated coins
-            if required_coins[0] <= current_coins < user_levels[next_level][0]:
-                level_from_table = level
-                level_name = required_coins[1]
-                break
+    Args:
+        coins: The coin value.
+        current_level: The user's current level (optional, defaults to 1).
+        current_level_name: The user's current level name (optional, defaults to "Novice").
+
+    Returns:
+        A tuple containing the level number and level name.
+    """
+    current_levels_threshold = user_levels.get(current_level)[0]
+    current_levels_name = user_levels.get(current_level)[1]
+
+    if coins >= current_levels_threshold:
+        for level, (threshold, level_name) in user_levels.items():
+            if coins >= threshold and current_level <= level:
+                current_level = level
+                current_level_name = level_name
     
-    # update level if current level is less than the level from the table
-    if current_level < level_from_table:
-        new_level = level_from_table
-    else:
-        new_level = current_level
+    return current_level, current_level_name
+
+print(get_user_current_level(500000000000000, 4, 'Warrior'))
+
+def update_level_logic(telegram_user_id: str):
+    """
+    Update and return the current level and level name of a user based on their total coins.
+
+    Args:
+        telegram_user_id (str): The Telegram user ID of the user whose level is to be updated.
+
+    Returns:
+        dict: A dictionary containing the updated level, level name, and the user's current coins.
+    """
+    user = get_user_by_id(telegram_user_id)
+    current_coins = user.total_coins
+    current_level = user.level
+    level_name = user.level_name
+
+    new_level, level_name = get_user_current_level(current_coins, current_level, level_name)
 
     return {
         "level": new_level,
         "level_name": level_name,
-        "required Coins": user_levels[level_from_table][0],
-        "current Coins": current_coins
+        # "required Coins": level_data[2],
+        "current coins": current_coins
     }
 
 
