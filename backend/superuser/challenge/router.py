@@ -47,9 +47,9 @@ async def create_challenge(
     Creates a new challenge in the system.
 
     Args:
-        clan (list[str] | None, optional): List of clan IDs participating in the challenge.
-        level (list[str] | None, optional): List of level IDs participating in the challenge.
-        specific_users (list[str] | None, optional): List of specific user IDs participating in the challenge.
+        clan (list[str] | None, optional): List of clan IDs/names participating in the challenge.
+        level (list[str] | None, optional): List of level name(s) participating in the challenge.
+        specific_users (list[str] | None, optional): List of specific user IDs/usernames participating in the challenge.
         challenge (CreateChallenge, optional): The challenge data being created.
 
     Raises:
