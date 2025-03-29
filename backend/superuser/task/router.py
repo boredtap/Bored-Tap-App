@@ -27,7 +27,27 @@ task_router = APIRouter(
 
 # --------------------------------- CREATE TASK ---------------------------------
 @task_router.post("/create_task", status_code=201, response_model=TaskSchemaResponse)
-async def create_task(task = Depends(CreateTask)):
+async def create_task(task: CreateTask = Depends(CreateTask)):
+    """
+    Endpoint to create a new task in the system.
+
+    This endpoint checks if a task with the given name already exists.
+    If it does, it raises an HTTP exception. Otherwise, it validates
+    the task image if provided and creates a new task with the specified
+    details.
+
+    Args:
+        task (CreateTask): Task data, including name, type, description,
+                           status, participants, reward, image, and deadline.
+                           Participants are either all users, a level or list of levels
+
+    Returns:
+        TaskSchemaResponse: The created task data with an assigned ID.
+
+    Raises:
+        HTTPException: If a task with the specified name already exists.
+    """
+
     # check if task already exists
     task_already_exists = task_exists_in_db(task.task_name)
 

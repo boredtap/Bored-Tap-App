@@ -10,17 +10,22 @@ def my_on_going_rewards(telegram_user_id: str):
     my_data: dict = user_collection.find_one({"telegram_user_id": telegram_user_id})
 
     if my_data:
-        my_level: str = my_data["level_name"].lower()
-        my_clan = my_data["clan"]["name"]
+        my_username: str = my_data["username"]
+        my_level: str = my_data["level"]
+        my_level_name: str = my_data["level_name"].lower()
+        my_clan_id = my_data["clan"]["id"]
+        my_clan_name = my_data["clan"]["name"]
         my_claimed_rewards = my_data["claimed_rewards"]
+
+        conditions = [
+            "all_users", my_username, telegram_user_id, 
+            my_level, my_level_name, 
+            my_clan_name, my_clan_id
+        ]
 
         for reward in get_rewards():
             if reward.status == "on_going" and reward.id not in my_claimed_rewards:
-                if my_level in reward.beneficiary or \
-                    my_clan in reward.beneficiary or \
-                    "all_users" in reward.beneficiary or \
-                    telegram_user_id in reward.beneficiary:
-
+                if any(condition in reward.beneficiary for condition in conditions):
                     # update to increment impression count
                     update_reward = {
                         "$inc": {

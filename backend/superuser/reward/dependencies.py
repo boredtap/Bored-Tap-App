@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from superuser.reward.models import RewardsModel, RewardsModelResponse
 from superuser.reward.schemas import CreateReward, UpdateReward, Status
-from database_connection import rewards_collection, fs, user_collection
+from database_connection import rewards_collection, fs, user_collection, clans_collection
 from dependencies import user_levels
 
 
@@ -17,6 +17,21 @@ def verify_beneficiaries(
         level: list[str] | None = None,
         specific_users: list[str] | None = None
     ):
+    """
+    Verifies and assigns the beneficiaries for a reward based on the specified criteria.
+
+    Args:
+        new_reward (CreateReward): The reward data to verify beneficiaries for.
+        clan (list[str] | None, optional): The clan ids/names to verify. Defaults to None.
+        level (list[str] | None, optional): The level names to verify. Defaults to None.
+        specific_users (list[str] | None, optional): The user ids/usernames to verify. Defaults to None.
+
+    Raises:
+        HTTPException: If any of the beneficiaries (level, clan, or specific users) are invalid.
+
+    Returns:
+        None
+    """
     # all users
     if new_reward.beneficiary == "all_users":
         new_reward.beneficiary = ["all_users"]
@@ -33,14 +48,27 @@ def verify_beneficiaries(
 
     # verify clan
     if new_reward.beneficiary == "clan" and len(clan) > 0:
-        new_reward.beneficiary = clan[0].split(",")
+        clans = clan[0].split(",")
+
+        for clan_id in clans:
+            clan_by_id = clans_collection.find_one({"_id": ObjectId(clan_id)})
+            clan_by_name = clans_collection.find_one({"name": clan_id})
+
+            clan = clan_by_id or clan_by_name
+            if not clan:
+                raise HTTPException(status_code=400, detail="Invalid clan entered.")
+
+        new_reward.beneficiary = clans
 
     # verify specific users
     if new_reward.beneficiary == "specific_users" and len(specific_users) > 0:
         users = specific_users[0].split(",")
 
         for user_id in users:
-            user = user_collection.find_one({"telegram_user_id": user_id})
+            user_by_id = user_collection.find_one({"telegram_user_id": user_id})
+            user_by_username = user_collection.find_one({"username": user_id})
+
+            user = user_by_id or user_by_username
             if not user:
                 raise HTTPException(status_code=400, detail="Invalid user entered.")
 

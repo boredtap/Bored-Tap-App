@@ -7,7 +7,7 @@ from fastapi.responses import StreamingResponse
 from superuser.challenge.models import ChallengeModel, ChallengeModelResponse
 from superuser.challenge.schemas import CreateChallenge
 from dependencies import user_levels
-from database_connection import user_collection, fs, challenges_collection
+from database_connection import user_collection, fs, challenges_collection, clans_collection
 
 
 def verify_image(format: str):
@@ -41,9 +41,9 @@ def verify_participants(
 
     Args:
         new_challenge (CreateChallenge): The challenge data to verify.
-        clan (list[str] | None, optional): The clan ids to verify. Defaults to None.
-        level (list[str] | None, optional): The level ids to verify. Defaults to None.
-        specific_users (list[str] | None, optional): The user ids to verify. Defaults to None.
+        clan (list[str] | None, optional): The clan ids/names to verify. Defaults to None.
+        level (list[str] | None, optional): The level names to verify. Defaults to None.
+        specific_users (list[str] | None, optional): The user ids/usernames to verify. Defaults to None.
 
     Raises:
         HTTPException: If the challenge participants are invalid.
@@ -68,14 +68,27 @@ def verify_participants(
 
     # verify clan
     if new_challenge.participants == "clan" and len(clan) > 0:
-        new_challenge.participants = clan[0].split(",")
+        clans = clan[0].split(",")
+
+        for clan_id in clans:
+            clan_by_id = clans_collection.find_one({"_id": ObjectId(clan_id)})
+            clan_by_name = clans_collection.find_one({"name": clan_id})
+
+            clan = clan_by_id or clan_by_name
+            if not clan:
+                raise HTTPException(status_code=400, detail="Invalid clan entered.")
+
+        new_challenge.participants = clans
 
     # verify specific users
     if new_challenge.participants == "specific_users" and len(specific_users) > 0:
         users = specific_users[0].split(",")
 
         for user_id in users:
-            user = user_collection.find_one({"telegram_user_id": ObjectId(user_id)})
+            user_by_id = user_collection.find_one({"telegram_user_id": user_id})
+            user_by_username = user_collection.find_one({"username": user_id})
+
+            user = user_by_id or user_by_username
             if not user:
                 raise HTTPException(status_code=400, detail="Invalid user entered.")
 
