@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 import stat
-from bson import BSON, ObjectId
+from bson import ObjectId
 from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from superuser.reward.models import RewardsModel, RewardsModelResponse
@@ -51,13 +51,9 @@ def verify_beneficiaries(
         clans = clan[0].split(",")
 
         for clan_id in clans:
-            try:
-                clan_by_id = clans_collection.find_one({"_id": ObjectId(clan_id)})
-            except BSON.errors.InvalidId:
-                pass
             clan_by_name = clans_collection.find_one({"name": clan_id})
 
-            clan = clan_by_id or clan_by_name
+            clan = clan_by_name
             if not clan:
                 raise HTTPException(status_code=400, detail="Invalid clan entered.")
 
