@@ -51,10 +51,9 @@ def verify_beneficiaries(
         clans = clan[0].split(",")
 
         for clan_id in clans:
-            clan_by_id = clans_collection.find_one({"_id": ObjectId(clan_id)})
             clan_by_name = clans_collection.find_one({"name": clan_id})
 
-            clan = clan_by_id or clan_by_name
+            clan = clan_by_name
             if not clan:
                 raise HTTPException(status_code=400, detail="Invalid clan entered.")
 

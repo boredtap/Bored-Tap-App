@@ -128,7 +128,7 @@ def delete_one_user(telegram_user_id: str):
         else:
             exit_clan(clan_id)
     
-    # delete user coin referencesd
+    # delete user coin references
     deleted_coins = coin_stats.delete_one({"telegram_user_id": telegram_user_id})
 
     # invite handler:
