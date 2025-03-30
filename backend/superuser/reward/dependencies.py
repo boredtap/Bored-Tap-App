@@ -83,7 +83,6 @@ def set_datetime_to_utc(date_time: datetime):
     return date_time
 
 
-
 # ------------------------------- CREATE REWARD ------------------------------ #
 def create_reward(reward: CreateReward, reward_image: bytes, image_name: str):
     image_id = fs.put(reward_image, filename="reward_" + image_name)
@@ -138,6 +137,7 @@ def get_reward_image(image_id: str):
     image_buffer = BytesIO(reward_image.read())
     image_buffer.seek(0)
     return StreamingResponse(image_buffer, media_type="image/jpeg")
+
 
 def update_reward(reward: UpdateReward, reward_image: bytes, img_name: str, reward_id: str):
 
@@ -234,8 +234,8 @@ def get_rewards():
     for reward in rewards:
         impression = reward["impression_count"]
         claim_count = reward["claim_count"]
-        claim_rate = ((claim_count / impression) * 100) if impression > 0 else 0.00
-        rewards_collection.update_one({"_id": reward["_id"]}, {"$set": {"claim_rate": round(claim_rate, 2)}})
+        claim_rate = ((claim_count / impression) * 100) if impression > 0 else 0.0
+        rewards_collection.update_one({"_id": reward["_id"]}, {"$set": {"claim_rate": round(claim_rate, 1)}})
         yield RewardsModelResponse(
             id=str(reward["_id"]),
             reward_title=reward["reward_title"],
@@ -293,7 +293,6 @@ def get_rewards_by_date(date: datetime):
                 claim_rate=f"{reward['claim_rate']}%",
                 reward_image_id=reward["reward_image_id"]
             )
-
 
 
 def update_status_of_expired_rewards():

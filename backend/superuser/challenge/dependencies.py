@@ -257,6 +257,16 @@ def get_challenges(status: str):
         challenge_launch_date: datetime = challenge["launch_date"]
 
         remaining_time = calculate_remaining_time(challenge_duration, challenge_launch_date)
+        
+        if remaining_time == "00:00:00:00":
+            # update remaining time in db
+            update_operation = {
+                "$set": {
+                    "remaining_time": remaining_time
+                }
+            }
+            challenges_collection.update_one({"_id": ObjectId(challenge['_id'])}, update_operation)
+
         # ongoing challenges
         if status == "ongoing" and remaining_time != "00:00:00:00":
             challenge["remaining_time"] = remaining_time
@@ -284,8 +294,14 @@ def get_challenge_by_id(challenge_id: str):
 
     if not challenge:
         raise HTTPException(status_code=404, detail="Challenge not found/Invalid challenge id.")
+    
+    challenge_duration: str = challenge["duration"]
+    challenge_launch_date: datetime = challenge["launch_date"]
 
+    remaining_time = calculate_remaining_time(challenge_duration, challenge_launch_date)
+    challenge["remaining_time"] = remaining_time
     challenge["image_id"] = str(challenge["image_id"])
+
 
     return ChallengeModelResponse(
         id=str(challenge["_id"]),
