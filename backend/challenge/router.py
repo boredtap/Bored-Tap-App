@@ -1,0 +1,1 @@
+# routed in earnApp router

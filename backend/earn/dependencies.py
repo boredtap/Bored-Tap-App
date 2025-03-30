@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from dependencies import update_coin_stats
 from earn.schemas import StreakData, Update
 from database_connection import user_collection
 from user_reg_and_prof_mngmnt.schemas import UserProfile
@@ -37,6 +38,7 @@ def init_streak(telegram_user_id: str, init_streak: StreakData, daily_reward_amo
         '$inc': {'total_coins': daily_reward_amount}
         }
     user_collection.update_one(query, update_operation)
+    update_coin_stats(telegram_user_id, daily_reward_amount)
     return
 
 
@@ -63,6 +65,7 @@ def increment_streak_and_coin(telegram_user_id: str, daily_reward_amount: int,
         '$inc': {'total_coins': daily_reward_amount},
     }
     user_collection.update_one(query_filter, update_operation)
+    update_coin_stats(telegram_user_id, daily_reward_amount)
     return
 
 def broken_streak_reset(telegram_user_id: str, reset_streak: StreakData, daily_reward_amount: int):
@@ -72,5 +75,6 @@ def broken_streak_reset(telegram_user_id: str, reset_streak: StreakData, daily_r
         '$inc': {'total_coins': daily_reward_amount},
     }
     user_collection.update_one(query_filter, update_operation)
+    update_coin_stats(telegram_user_id, daily_reward_amount)
     return
 

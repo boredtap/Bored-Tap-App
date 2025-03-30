@@ -28,5 +28,13 @@ class TaskSchema(BaseModel):
     task_image: str | None
     task_deadline: datetime
 
-class TaskSchemaResponse(TaskSchema):
-     id: str
+class TaskSchemaResponse(BaseModel):
+    id: str
+    task_name: str
+    task_type: str
+    task_description: str
+    task_status: str
+    task_participants: str | list[str]
+    task_reward: int
+    task_image: str | None
+    task_deadline: datetime
