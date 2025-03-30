@@ -1,0 +1,215 @@
+.clan-preview {
+  background-color: #000;
+  color: #fff;
+  min-height: 100vh;
+  padding: 16px;
+  font-family: "Roboto", sans-serif;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.clan-icon-section {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.clan-icon {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+}
+
+.clan-name {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 500;
+  margin-top: 10px;
+}
+
+.clan-position {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 5px;
+}
+
+.position-text {
+  font-size: 18px;
+  margin-right: 5px;
+}
+
+.top-icon {
+  width: 24px;
+  height: 24px;
+}
+
+/* Clicking effect for all clickables */
+.clickable:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease-in-out;
+}
+
+.join-btn-frame {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  background-color: #414141;
+  border-radius: 4px; /* Updated */
+  padding: 10px 20px;
+  cursor: pointer;
+  pointer-events: auto;
+  width: 40%; /* Added */
+  max-width: 200px; /* Added, adjust as needed */
+  margin-left: auto; /* Added for centering */
+  margin-right: auto; /* Added for centering */
+}
+
+.join-btn-frame.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.join-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+}
+
+.join-btn-text {
+  font-size: 16px;
+  color: #fff;
+}
+
+.clan-actions {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.cta-button {
+  display: flex;
+  align-items: center;
+  background-color: #414141;
+  border-radius: 8px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+.cta-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+}
+
+.your-clan-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 30px;
+}
+
+.your-clan-text {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.see-all-section {
+  display: flex;
+  align-items: center;
+}
+
+.see-all-text {
+  font-size: 14px;
+  color: #fff;
+  margin-right: 5px;
+}
+
+.see-all-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.join-clan-message {
+  text-align: center;
+  font-size: 16px;
+  color: #ccc;
+  margin-top: 20px;
+}
+
+.data-card {
+  background-color: #414141;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 6px;
+}
+
+.data-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.data-title {
+  font-size: 14px;
+  color: #ccc;
+}
+
+.data-value {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #fff;
+}
+
+.coin-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 5px;
+}
+
+.top-earners-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.top-earners-text {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.clan-preview-info {
+  text-align: center;
+  font-size: 14px;
+  color: #ccc;
+  margin-top: 24px;
+}
+
+.loading-message,
+.error-message {
+  text-align: center;
+  color: #c2bfbf;
+  font-size: 16px;
+  margin-top: 20px;
+}
+
+@media (max-width: 600px) {
+  .detailed-clan-screen { padding: 12px; }
+  .clan-icon { width: 80px; height: 80px; }
+  .clan-name { font-size: 20px; }
+  .position-text { font-size: 16px; }
+  .join-btn-frame, .cta-button { padding: 8px 16px; }
+}
+
+@media (min-width: 768px) {
+  .detailed-clan-screen { padding: 24px; }
+  .clan-actions { gap: 30px; }
+}

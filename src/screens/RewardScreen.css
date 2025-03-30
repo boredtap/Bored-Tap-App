@@ -128,6 +128,33 @@
   height: 16px;
 }
 
+/* Confetti container */
+/* .confetti-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1002;
+  pointer-events: none;
+}
+
+.confetti-gif {
+  width: 40%;
+  height: 40%;
+  object-fit: cover;
+  pointer-events: none;
+} */
+
+/* Clicking effect for the Claim button */
+.reward-cta:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease-in-out;
+}
+
 /* Call-to-Action Button (Claim) */
 .reward-cta {
   padding: 8px 16px;
@@ -153,26 +180,29 @@
 }
 
 /* Overlay Container */
-.overlay-container {
+.overlay-container5 {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 400px;
+  height: auto;
   z-index: 1001;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
-  align-items: flex-end;
+  align-items: center;
+  border-radius: 15px;
+  padding: 10px; /* Add padding to ensure content doesn't touch the edges */
+  box-sizing: border-box;
 }
 
 /* Overlay for Claim Confirmation */
-.reward-overlay {
-  position: fixed;
-  bottom: 0;
-  left: 0;
+.reward-overlay5 {
+  position: relative;
   width: 100%;
-  height: 60%;
+  height: auto;
   background-color: #1d1d1d;
   color: #fff;
   display: flex;
@@ -180,9 +210,8 @@
   padding: 20px;
   box-sizing: border-box;
   z-index: 1000;
-  animation: slideIn 0.3s ease-out forwards;
-  border-top-left-radius: 25px;
-  border-top-right-radius: 25px;
+  animation: fadeIn 0.3s ease-out forwards;
+  border-radius: 15px;
 }
 
 .reward-overlay.slide-out {
@@ -210,7 +239,7 @@
 }
 
 /* Overlay Header */
-.overlay-header {
+.overlay-header5 {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -240,19 +269,21 @@
 }
 
 /* Overlay Content */
-.overlay-content {
+.overlay-content5 {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
   flex: 1;
   justify-content: center;
+  width: 100%;
+  height: 100%;
 }
 
-.overlay-reward-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
+.overlay2-reward-icon {
+  width: 130px;
+  height: 130px;
+  /* border-radius: 50%; */
 }
 
 .overlay-text {

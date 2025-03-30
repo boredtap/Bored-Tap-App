@@ -2,23 +2,26 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./ProfileScreen.css";
+import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
 
 const ProfileScreen = () => {
-  const [profile, setProfile] = useState(null); // Holds user profile data from backend
+  const [profile, setProfile] = useState(null); // Holds user profile data
+  const [rank, setRank] = useState("N/A"); // Holds user's rank from leaderboard
   const [error, setError] = useState(null); // Tracks fetch errors
-  const navigate = useNavigate(); // Enables programmatically navigating between screens
+  const navigate = useNavigate();
 
-  // Fetch user profile data when component mounts
+  // Fetch profile and leaderboard data when component mounts
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchUserData = async () => {
       const token = localStorage.getItem("accessToken");
       if (!token) {
-        navigate("/splash"); // Redirect to splash screen if no auth token exists
+        navigate("/splash");
         return;
       }
 
       try {
-        const response = await fetch("https://bt-coins.onrender.com/user/profile", {
+        // Fetch user profile
+        const profileResponse = await fetch(`${BASE_URL}/user/profile`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -26,23 +29,49 @@ const ProfileScreen = () => {
           },
         });
 
-        if (!response.ok) {
-          if (response.status === 401) throw new Error("Unauthorized. Please log in again.");
+        if (!profileResponse.ok) {
+          if (profileResponse.status === 401) throw new Error("Unauthorized. Please log in again.");
           throw new Error("Failed to fetch profile data.");
         }
 
-        const data = await response.json();
-        setProfile(data); // Store fetched profile data in state
+        const profileData = await profileResponse.json();
+        setProfile(profileData);
+        console.log("Profile data:", profileData);
+
+        // Fetch leaderboard to get rank
+        const leaderboardResponse = await fetch(
+          `${BASE_URL}/user/leaderboard?category=all_time`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!leaderboardResponse.ok) {
+          throw new Error("Failed to fetch leaderboard data.");
+        }
+
+        const leaderboardData = await leaderboardResponse.json();
+        console.log("Leaderboard data:", leaderboardData);
+
+        // Find user's rank by matching telegram_user_id
+        const userRank = leaderboardData.find(
+          (entry) => entry.telegram_user_id === profileData.telegram_user_id
+        );
+        setRank(userRank ? userRank.rank : "N/A");
       } catch (err) {
-        setError(err.message); // Set error state for display
-        console.error("Error fetching profile:", err);
+        setError(err.message);
+        console.error("Error fetching data:", err);
       }
     };
 
-    fetchProfile();
+    fetchUserData();
   }, [navigate]);
 
-  // Render error state with retry navigation
+  // Render error state
   if (error) {
     return (
       <div className="error">
@@ -52,47 +81,68 @@ const ProfileScreen = () => {
     );
   }
 
-  // Define profile data for cards with consistent structure
+  // Render loading state while fetching data
+  if (!profile) {
+    return (
+      <div className="profile-screen">
+        <div className="profile-body">
+          <p>Loading...</p>
+        </div>
+        <Navigation />
+      </div>
+    );
+  }
+
+  // Derive invited friends count from invite array length
+  const invitedFriendsCount = profile.invite ? profile.invite.length : 0;
+
+  // Profile data for cards, mapped to backend response
   const profileData = [
-    { icon: `${process.env.PUBLIC_URL}/logo.png`, label: "Total Coin", value: profile?.total_coins || "0" },
-    { icon: `${process.env.PUBLIC_URL}/task.png`, label: "Completed Task", value: profile?.completed_tasks || "0" },
-    { icon: `${process.env.PUBLIC_URL}/leaderboard12-icon.png`, label: "Rank", value: profile?.rank || "N/A" },
-    { icon: `${process.env.PUBLIC_URL}/invite.png`, label: "Invited Friends", value: profile?.invited_friends || "0" },
+    { icon: `${process.env.PUBLIC_URL}/logo.png`, label: "Total Coin", value: profile.total_coins.toLocaleString() || "0" },
+    {
+      icon: `${process.env.PUBLIC_URL}/task.png`,
+      label: "Completed Tasks",
+      value: profile.completed_tasks || "0", // Assuming backend might add this later; default to 0
+      onClick: () => navigate("/task-screen"),},
+    { icon: `${process.env.PUBLIC_URL}/leaderboard12-icon.png`, label: "Rank", value: rank,
+    onClick: () => navigate("/leaderboard-screen"), },
+    { icon: `${process.env.PUBLIC_URL}/invite.png`, label: "Invited Friends", value: invitedFriendsCount, 
+    onClick: () => navigate("/invite-screen"),},
     {
       icon: `${process.env.PUBLIC_URL}/level.png`,
       label: "Level",
-      value: `Lv. ${profile?.level || "1"} ${profile?.level_name || ""}`,
-      onClick: () => navigate("/level-screen"), // Navigate to level screen on click
+      value: `Lv. ${profile.level || "1"} ${profile.level_name || ""}`,
+      onClick: () => navigate("/level-screen"),
     },
     {
       icon: `${process.env.PUBLIC_URL}/wallet.png`,
       label: "Connect Wallet",
       value: <img src={`${process.env.PUBLIC_URL}/plus-icon.png`} alt="Add Wallet" className="wallet-icon" />,
+      onClick: () => navigate("/wallet-screen"),
     },
   ];
 
   return (
     <div className="profile-screen">
-      {/* Main content area */}
       <div className="profile-body">
-        {/* User profile picture */}
+        {/* Profile picture */}
         <div className="profile-picture">
           <img
-            src={profile?.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`}
+            src={profile.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`}
             alt="Profile"
             className="profile-image"
           />
         </div>
-        {/* Username display */}
-        <div className="profile-username">{profile?.username || "User"}</div>
+        {/* Username */}
+        <div className="profile-username">{profile.username || "User"}</div>
 
-        {/* Profile data cards container */}
-        <div className="profile-data-cards">
+        {/* Profile data cards */}
+        <div className="profile-data-cards clickable">
           {profileData.map((item, index) => (
             <div
               key={index}
               className="profile-data-card"
-              onClick={item.onClick || null} // Apply click handler if defined
+              onClick={item.onClick || null}
             >
               <div className="profile-data-left">
                 <div className="profile-icon">
@@ -112,7 +162,6 @@ const ProfileScreen = () => {
         </div>
       </div>
 
-      {/* Bottom navigation bar */}
       <Navigation />
     </div>
   );

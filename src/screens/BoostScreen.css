@@ -18,6 +18,12 @@
   flex: 1;
 }
 
+/* Clicking effect for all clickables */
+.clickable:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease-in-out;
+}
+
 /* Total Taps Section */
 .total-taps-section {
   text-align: center;
@@ -151,26 +157,29 @@
 }
 
 /* Overlay Container */
-.overlay-container {
+.overlay-container2 {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 400px;
+  height: auto;
   z-index: 1001;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
-  align-items: flex-end;
+  align-items: center;
+  border-radius: 15px;
+  padding: 10px; /* Add padding to ensure content doesn't touch the edges */
+  box-sizing: border-box;
 }
 
 /* Boost Overlay */
-.boost-overlay {
-  position: fixed;
-  bottom: 0;
-  left: 0;
+.boost-overlay2 {
+  position: relative;
   width: 100%;
-  height: 60%;
+  height: auto;
   background-color: #1d1d1d;
   color: #fff;
   display: flex;
@@ -178,37 +187,36 @@
   padding: 20px;
   box-sizing: border-box;
   z-index: 1000;
-  animation: slideIn 0.3s ease-out forwards;
-  border-top-left-radius: 25px;
-  border-top-right-radius: 25px;
+  animation: fadeIn 0.3s ease-out forwards;
+  border-radius: 15px;
 }
 
 .boost-overlay.slide-out {
   animation: slideOut 0.3s ease-out forwards;
 }
 
-/* Slide-in Animation */
-@keyframes slideIn {
+/* Fade-in Animation */
+@keyframes fadeIn {
   from {
-    transform: translateY(100%);
+    opacity: 0;
   }
   to {
-    transform: translateY(0);
+    opacity: 1;
   }
 }
 
-/* Slide-out Animation */
-@keyframes slideOut {
+/* Fade-out Animation */
+@keyframes fadeOut {
   from {
-    transform: translateY(0);
+    opacity: 1;
   }
   to {
-    transform: translateY(100%);
+    opacity: 0;
   }
 }
 
 /* Overlay Header */
-.overlay-header {
+.overlay-header2 {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -216,8 +224,9 @@
   margin-bottom: 10px;
 }
 
-.overlay-title {
+.overlay-title2 {
   font-size: 18px;
+ 
 }
 
 .overlay-cancel {
@@ -229,10 +238,10 @@
 }
 
 /* Overlay Divider */
-.overlay-divider {
+.overlay-divider2 {
   width: 100%;
   height: 1px;
-  background-color: #777777;
+  background-color: #ffffff;
   margin: 20px 0;
 }
 
@@ -249,12 +258,14 @@
 .overlay-boost-icon {
   width: 60px;
   height: 60px;
+  margin-bottom: 48px;
 }
 
 .overlay-description {
   font-size: 14px;
   color: #e0e0e0;
   text-align: center;
+  margin-bottom: 48px;
 }
 
 .overlay-value-container {
@@ -275,7 +286,8 @@
 
 .overlay-level {
   font-size: 14px;
-  color: orange;
+  color: #666;
+  
 }
 
 .overlay-cta {
@@ -288,6 +300,7 @@
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
+  margin-top: 16px;
 }
 
 .overlay-cta:disabled {

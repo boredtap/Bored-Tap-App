@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Navigation from "../components/Navigation";
 import "./TaskScreen.css";
+import { BoostContext } from "../context/BoosterContext";
+import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
 
 // TaskScreen component displays user's tasks across categories with claim functionality
 const TaskScreen = () => {
+  const { totalTaps } = useContext(BoostContext)
   const [activeTab, setActiveTab] = useState("In-Game"); // Default active tab
   const [tasksData, setTasksData] = useState([]); // Holds tasks data for the active tab
-  const [totalTaps, setTotalTaps] = useState(0); // User's total taps from profile
+
   const [loading, setLoading] = useState(true); // Loading state for data fetching
   const [showOverlay, setShowOverlay] = useState(false); // Controls overlay visibility
   const [selectedTask, setSelectedTask] = useState(null); // Tracks the task being claimed
@@ -35,7 +38,7 @@ const TaskScreen = () => {
       }
 
       // Fetch user profile for total taps
-      const profileResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
+      const profileResponse = await fetch(`${BASE_URL}/user/profile`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -44,14 +47,13 @@ const TaskScreen = () => {
       });
 
       if (!profileResponse.ok) throw new Error(`Profile fetch failed: ${profileResponse.status}`);
-      
+
       const profileData = await profileResponse.json();
-      setTotalTaps(profileData.total_coins || 0);
 
       // Determine the URL based on active tab
-      let url = `https://bt-coins.onrender.com/user/tasks/my_tasks?task_type=${taskType.toLowerCase()}`;
+      let url = `${BASE_URL}/user/tasks/my_tasks?task_type=${taskType.toLowerCase()}`;
       if (taskType === "Completed") {
-        url = `https://bt-coins.onrender.com/user/tasks/my_tasks/completed`;
+        url = `${BASE_URL}/user/tasks/my_tasks/completed`;
       }
 
       // Fetch tasks for the active tab
@@ -84,7 +86,7 @@ const TaskScreen = () => {
     try {
       const token = localStorage.getItem("accessToken");
       const response = await fetch(
-        `https://bt-coins.onrender.com/user/tasks/my_tasks/completed`,
+        `${BASE_URL}/user/tasks/my_tasks/completed`,
         {
           method: "POST",
           headers: {
@@ -126,7 +128,7 @@ const TaskScreen = () => {
           <p>Your Total Taps:</p>
           <div className="taps-display">
             <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Logo" className="taps-logo" />
-            <span className="taps-number">{totalTaps.toLocaleString()}</span>
+            <span className="taps-number">{totalTaps?.toLocaleString() ?? 0}</span>
           </div>
           <p className="tap-info">Earn BT-coin rewards by completing simple tasks</p>
         </div>
@@ -174,7 +176,7 @@ const TaskScreen = () => {
                       </div>
                     </div>
                     <button
-                      className={`task-action ${isClaimable ? "active" : "inactive"}`}
+                      className={`task-action ${isClaimable ? "active clickable" : "inactive"}`}
                       onClick={() => handleClaimClick(task.id)}
                       disabled={!isClaimable}
                     >
@@ -192,10 +194,10 @@ const TaskScreen = () => {
 
       {/* Overlay for Claim Confirmation */}
       {showOverlay && selectedTask && (
-        <div className="overlay-container">
-          <div className={`task-overlay ${showOverlay ? "slide-in" : "slide-out"}`}>
-            <div className="overlay-header">
-              <h2 className="overlay-title">Claim Reward</h2>
+        <div className="overlay-container7">
+          <div className={`task-overlay7 ${showOverlay ? "slide-in" : "slide-out"}`}>
+            <div className="overlay-header7">
+              <h2 className="overlay-title7">Claim Reward</h2>
               <img
                 src={`${process.env.PUBLIC_URL}/cancel.png`}
                 alt="Cancel"
@@ -204,7 +206,7 @@ const TaskScreen = () => {
               />
             </div>
             <div className="overlay-divider"></div>
-            <div className="overlay-content">
+            <div className="overlay-content7">
               <img
                 src={`data:image/png;base64,${selectedTask.task_image}`}
                 alt="Task Icon"
@@ -216,7 +218,7 @@ const TaskScreen = () => {
                 <span>{selectedTask.task_reward}</span>
               </div>
               <p className="overlay-message">has been added to your coin balance</p>
-              <button className="overlay-cta" onClick={handleCloseOverlay}>
+              <button className="overlay-cta clickable" onClick={handleCloseOverlay}>
                 Ok
               </button>
             </div>

@@ -1,3 +1,69 @@
+/* Temporary: AutoBot information output styles */
+.autobot-result {
+  opacity: 1;
+  z-index: 100;
+  background: transparent;
+  display: grid;
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+}
+
+.autobot-modal-bg {
+  width: 100vw;
+  height: 100vh;
+  background: gray;
+  opacity: 0.7;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 100;
+}
+
+.autobot-modal {
+  width: 80%;
+  height: fit-content;
+  border-radius: 15px;
+  margin: auto;
+  place-content: center;
+  background: #414141;
+  z-index: 101;
+  text-align: center;
+  display: grid;
+  gap: 5px;
+  padding: 1rem;
+  place-content: center;
+}
+
+.autobot-modal > h3 {
+  color: white;
+}
+
+.autobot-modal > p {
+  color: orange;
+  font-size: larger;
+  font-weight: 600;
+}
+
+.autobot-modal > span {
+  display: flex;
+  gap: 1rem;
+}
+
+.autobot-modal > span > button {
+  width: 100%;
+  border-radius: 5px;
+  margin: auto;
+  background: white;
+  color: #414141;
+  padding-inline: 4px;
+  font-weight: 600;
+  margin-top: 1rem;
+}
+/* Temporary: AutoBot information output styles */
+
 /* Dashboard Container */
 .dashboard-container {
   background-color: #000;
@@ -140,6 +206,7 @@
 .total-taps-text {
   font-size: 16px;
   font-weight: 400;
+  margin-bottom: 8px;
 }
 
 .total-taps-count {
@@ -169,14 +236,24 @@
 }
 
 .big-tap-icon.tap-animation img {
-  animation: slight-bounce 0.2s ease-in-out; /* Very slight animation */
+  animation: slight-bounce 0.2s ease-in-out;
+  /* Very slight animation */
 }
 
 /* Slight Bounce Animation */
 @keyframes slight-bounce {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.02); } /* 2% increase, very subtle */
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.02);
+  }
+
+  /* 2% increase, very subtle */
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Electric Boost Section */
@@ -201,6 +278,17 @@
   object-fit: contain;
 }
 
+.overlay2-title {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+/* Clicking effect for all clickables */
+.clickable:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease-in-out;
+}
+
 .boost-btn {
   display: flex;
   align-items: center;
@@ -209,8 +297,10 @@
   color: white;
   border: none;
   border-radius: 4px;
-  padding: 12px 16px; /* Increased padding for larger size */
-  font-size: 18px; /* Larger font size */
+  padding: 12px 16px;
+  /* Increased padding for larger size */
+  font-size: 18px;
+  /* Larger font size */
   cursor: pointer;
   gap: 8px;
   transition: background-color 0.3s ease;
@@ -243,6 +333,7 @@
     transform: translateY(0);
     opacity: 1;
   }
+
   100% {
     transform: translateY(-50px);
     opacity: 0;
@@ -251,14 +342,24 @@
 
 /* Tap Animation for Big Tap Icon */
 .big-tap-icon.tap-animation img {
-  animation: slight-bounce 0.2s ease-in-out; /* Very slight animation */
+  animation: slight-bounce 0.2s ease-in-out;
+  /* Very slight animation */
 }
 
 /* Slight Bounce Animation */
 @keyframes slight-bounce {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.02); } /* 2% increase, very subtle */
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.02);
+  }
+
+  /* 2% increase, very subtle */
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Media Queries for Responsiveness */
@@ -278,25 +379,68 @@
   }
 
   .big-tap-icon img {
-    width: 280px;
-    height: 280px;
+    width: 260px;
+    height: 260px;
   }
 
   .total-taps-count {
-    font-size: 28px;
+    font-size: 24px;
+    margin-bottom: 16px;
   }
 
   .tap-effect {
-    font-size: 16px;
+    font-size: 14px;
   }
 
   .boost-btn {
-    padding: 10px 14px; /* Slightly smaller but still larger than original */
+    padding: 10px 14px;
+    /* Slightly smaller but still larger than original */
     font-size: 16px;
   }
 
   .boost-icon {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
   }
 }
+
+/* Media Queries for Responsiveness */
+/* @media (max-width: 480px) {
+  .profile1-username {
+    font-size: 12px;
+    font-weight: bold;
+  }
+
+  .streak-text {
+    font-size: 12px;
+  }
+
+  .profile1-level,
+  .streak-days {
+    font-size: 10px;
+  }
+
+  .big-tap-icon img {
+    width: 220px;
+    height: 220px;
+  }
+
+  .total-taps-count {
+    font-size: 22px;
+  }
+
+  .tap-effect {
+    font-size: 14px;
+  }
+
+  .boost-btn {
+    padding: 10px 14px;
+    
+    font-size: 14px;
+  }
+
+  .boost-icon {
+    width: 16px;
+    height: 16px;
+  }
+} */

@@ -1,0 +1,421 @@
+.clan-details-screen {
+  background-color: #000;
+  color: #fff;
+  min-height: 100vh;
+  padding: 80px 16px;
+  padding-top: 0px;
+  font-family: "Roboto", sans-serif;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.clan-icon-section {
+  display: flex;
+  justify-content: center;
+}
+
+.clan-icon {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+}
+
+.clan-name {
+  font-size: 24px;
+  font-weight: 500;
+  text-align: center;
+  margin: 10px 0;
+}
+
+.clan-position {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 10px 0;
+}
+
+.position-text {
+  font-size: 18px;
+  margin-right: 5px;
+}
+
+.top-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.clickable:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease-in-out;
+}
+
+.clan-actions1 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  background-color: #414141;
+  border-radius: 4px; /* Updated */
+  /* padding: 10px 10px; */
+  cursor: pointer;
+  pointer-events: auto;
+  width: 40%; /* Added */
+  max-width: 200px; /* Added, adjust as needed */
+  margin-left: auto; /* Added for centering */
+  margin-right: auto; /* Added for centering */
+}
+
+.exit-button {
+  display: flex;
+  align-items: center;
+  background-color: #414141;
+  border-radius: 8px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+.cta-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+}
+
+.your-clan-section1 {
+  margin-top: 8px; /* Matches clan-actions margin-bottom */
+}
+
+.your-clan-text {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.data-card {
+  background-color: #414141;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.data-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.data-title {
+  color: #aaa;
+}
+
+.data-value {
+  color: #fff;
+  display: flex;
+  align-items: center;
+}
+
+.coin-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 5px;
+}
+
+.loading-text {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  font-size: 14px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+.error-text {
+  color: #ff4444;
+  text-align: center;
+  margin: 10px 0;
+}
+
+.overlay-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay */
+  backdrop-filter: blur(8px); /* Blur the background */
+  -webkit-backdrop-filter: blur(8px); /* Safari support */
+  z-index: 1000; /* Below overlay content */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.overlay-container6 {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 400px;
+  z-index: 1001;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 15px;
+  padding: 10px;
+}
+
+/* .streak-overlay6 {
+  width: 100%;
+  background-color: #1d1d1d;
+  color: #fff;
+  padding: 20px;
+  border-radius: 15px;
+  animation: slideIn 0.3s ease-out forwards;
+} */
+
+.overlay-container8 {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 400px;
+  z-index: 1001;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 15px;
+  padding: 10px;
+}
+
+/* .streak-overlay8 {
+  width: 100%;
+  background-color: #1d1d1d;
+  color: #fff;
+  padding: 20px;
+  border-radius: 15px;
+  animation: slideIn 0.3s ease-out forwards;
+} */
+
+@keyframes slideIn {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.overlay-header6,
+.overlay-header8 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.overlay-title6,
+.overlay-title8 {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.overlay-cancel {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  position: absolute;
+  right: 0;
+}
+
+.overlay-divider {
+  width: 100%;
+  height: 1px;
+  background-color: #777777;
+  margin: 20px 0;
+}
+
+.overlay-content6,
+.overlay-content8 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.overlay-streak-icon1 {
+  width: 80px;
+  height: 80px;
+}
+
+.overlay-streak-icon2 {
+  width: 80px;
+  height: 80x;
+}
+
+.overlay-streak-icon3 {
+  width: 80px;
+  height: 80x;
+}
+.overlay-streak-icon4 {
+  width: 80px;
+  height: 80x;
+}
+
+
+.overlay-text {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.overlay-subtext {
+  font-size: 14px;
+  color: #c2bfbf;
+  text-align: center;
+}
+
+.overlay-cta-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.overlay-cta-button {
+  width: 100%;
+  padding: 12px;
+  background-color: #fff;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.overlay-cta-button.inactive {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.overlay-cta-button.active {
+  background-color: #fff; /* Or your active color */
+  color:#000;
+  cursor: pointer;
+}
+
+.overlay-cta-button {
+  background-color: #fff;
+  color: #000;
+}
+
+/* Top Earners Section */
+.top-earners-section2 {
+  margin-top: 32px; /* Matches your-clan-section margin-top */
+}
+
+.top-earners-header1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.top-earners-text {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.see-all-section {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.see-all-text {
+  font-size: 14px;
+  color: #fff;
+}
+
+.see-all-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.top-earners-container {
+  max-height: 200px; /* Adjust as needed */
+  overflow-y: auto;
+  padding-right: 8px; /* For scrollbar spacing */
+}
+
+.top-earner-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #414141;
+  margin-bottom: 10px;
+}
+
+.top-earner-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.top-earner-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.top-earner-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.top-earner-username {
+  font-size: 14px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.top-earner-username .level {
+  color: orange;
+}
+
+.top-earner-coins {
+  font-size: 12px;
+  color: #d9d9d9;
+}
+
+.top-earner-right {
+  display: flex;
+  align-items: center;
+}
+
+.top-earner-right-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.position-number {
+  font-size: 14px;
+  color: #fff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .top-earner-card {
+    padding: 12px;
+  }
+
+  .top-earner-icon {
+    width: 36px;
+    height: 36px;
+  }
+}

@@ -61,7 +61,13 @@
   left: 0;
 }
 
-/* Leaderboard cards container */
+/* Leaderboard cards container with scroll */
+.leaderboard-cards-container {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-bottom: 30px;
+}
+
 .leaderboard-cards {
   display: flex;
   flex-direction: column;

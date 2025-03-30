@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Navigation from "../components/Navigation";
 import "./Leaderboard.css";
+import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
 
 /**
  * Leaderboard component displaying user rankings across different time periods (Daily, Weekly, Monthly, All Time).
@@ -36,7 +37,7 @@ const Leaderboard = () => {
         for (const period of periods) {
           const category = period.toLowerCase().replace(" ", "_");
           const response = await fetch(
-            `https://bt-coins.onrender.com/user/leaderboard?category=${category}`,
+            `${BASE_URL}/user/leaderboard?category=${category}`,
             {
               method: "GET",
               headers: {
@@ -57,7 +58,7 @@ const Leaderboard = () => {
         setLeaderboardData(fetchedData);
 
         // Fetch current user's profile
-        const userResponse = await fetch("https://bt-coins.onrender.com/user/profile", {
+        const userResponse = await fetch(`${BASE_URL}/user/profile`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -123,50 +124,52 @@ const Leaderboard = () => {
         {currentLeaderboard.length === 0 ? (
           <p className="no-leaderboard">No leaderboard entries available yet.</p>
         ) : (
-          <div className="leaderboard-cards">
-            {currentLeaderboard.map((entry, index) => (
-              <div
-                className={`leaderboard-card ${index > 2 ? "transparent-card" : ""}`}
-                key={entry.telegram_user_id || index}
-              >
-                <div className="leaderboard-left">
-                  <img
-                    src={entry.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`}
-                    alt={`${entry.username}'s Profile`}
-                    className="leaderboard-logo round-frame"
-                  />
-                  <div className="leaderboard-info">
-                    <p className="leaderboard-title">
-                      {entry.username} <span className="level">.Lvl {entry.level || 1}</span>
-                    </p>
-                    <p className="leaderboard-value">{entry.coins_earned || 0} BT Coin</p>
+          <div className="leaderboard-cards-container">
+            <div className="leaderboard-cards">
+              {currentLeaderboard.map((entry, index) => (
+                <div
+                  className={`leaderboard-card ${index > 2 ? "transparent-card" : ""}`}
+                  key={entry.telegram_user_id || index}
+                >
+                  <div className="leaderboard-left">
+                    <img
+                      src={entry.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`}
+                      alt={`${entry.username}'s Profile`}
+                      className="leaderboard-logo round-frame"
+                    />
+                    <div className="leaderboard-info">
+                      <p className="leaderboard-title">
+                        {entry.username} <span className="level">.Lvl {entry.level || 1}</span>
+                      </p>
+                      <p className="leaderboard-value">{entry.coins_earned || 0} BT Coin</p>
+                    </div>
+                  </div>
+                  <div className="leaderboard-right">
+                    {index === 0 ? (
+                      <img
+                        src={`${process.env.PUBLIC_URL}/first-icon.png`}
+                        alt="1st Place"
+                        className="leaderboard-right-icon"
+                      />
+                    ) : index === 1 ? (
+                      <img
+                        src={`${process.env.PUBLIC_URL}/second-icon.png`}
+                        alt="2nd Place"
+                        className="leaderboard-right-icon"
+                      />
+                    ) : index === 2 ? (
+                      <img
+                        src={`${process.env.PUBLIC_URL}/third-icon.png`}
+                        alt="3rd Place"
+                        className="leaderboard-right-icon"
+                      />
+                    ) : (
+                      <span className="position-number">#{index + 1}</span>
+                    )}
                   </div>
                 </div>
-                <div className="leaderboard-right">
-                  {index === 0 ? (
-                    <img
-                      src={`${process.env.PUBLIC_URL}/first-icon.png`}
-                      alt="1st Place"
-                      className="leaderboard-right-icon"
-                    />
-                  ) : index === 1 ? (
-                    <img
-                      src={`${process.env.PUBLIC_URL}/second-icon.png`}
-                      alt="2nd Place"
-                      className="leaderboard-right-icon"
-                    />
-                  ) : index === 2 ? (
-                    <img
-                      src={`${process.env.PUBLIC_URL}/third-icon.png`}
-                      alt="3rd Place"
-                      className="leaderboard-right-icon"
-                    />
-                  ) : (
-                    <span className="position-number">#{index + 1}</span>
-                  )}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>
