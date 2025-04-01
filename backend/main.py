@@ -69,7 +69,7 @@ origins = [
     "http://127.0.0.1:3000",
     "http://127.0.0.1:3001",
     "http://boredtap.com"
-    "https://boredtap.com"
+    "https://www.boredtap.com"
     "https://boredtap.netlify.app",
     "https://boredtapadmin.netlify.app",
     "https://boredtapadminproject.netlify.app",
@@ -77,8 +77,8 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    # allow_origins=origins,
+    # allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
