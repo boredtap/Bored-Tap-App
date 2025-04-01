@@ -3,7 +3,7 @@ import Navigation from "../components/Navigation";
 import "./RewardScreen.css";
 import { BoostContext } from "../context/BoosterContext";
 import { fetchImage } from "../utils/fetchImage";
-import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
+import { BASE_URL } from "../utils/BaseVariables";
 
 const fetchWithAuth = async (url, token) => {
   const response = await fetch(url, {
@@ -24,6 +24,9 @@ const RewardScreen = () => {
   const [loading, setLoading] = useState(true);
   const [showOverlay, setShowOverlay] = useState(false);
   const [selectedReward, setSelectedReward] = useState(null);
+  const [showShareOverlay, setShowShareOverlay] = useState(false);
+  const [shareReward, setShareReward] = useState(null);
+  const [showCopyPopup, setShowCopyPopup] = useState(false);
 
   useEffect(() => {
     const fetchRewardsData = async () => {
@@ -36,12 +39,11 @@ const RewardScreen = () => {
       }
 
       try {
-        await fetchWithAuth(`${BASE_URL}/user/profile`, token); // Updated URL
-
+        await fetchWithAuth(`${BASE_URL}/user/profile`, token);
         const rewardTypes = ["on_going", "claimed"];
         const fetchedRewards = await Promise.all(
           rewardTypes.map((type) =>
-            fetchWithAuth(`${BASE_URL}/earn/my-rewards?status=${type}`, token) // Updated URL
+            fetchWithAuth(`${BASE_URL}/earn/my-rewards?status=${type}`, token)
           )
         );
 
@@ -94,7 +96,7 @@ const RewardScreen = () => {
       const token = localStorage.getItem("accessToken");
       try {
         const result = await fetchWithAuth(
-          `${BASE_URL}/earn/my-rewards/${rewardId}/claim`, // Updated URL
+          `${BASE_URL}/earn/my-rewards/${rewardId}/claim`,
           token
         );
         const claimedReward = rewardsData.on_going.find((r) => r.reward_id === rewardId);
@@ -118,6 +120,35 @@ const RewardScreen = () => {
     setShowOverlay(false);
     setSelectedReward(null);
   }, []);
+
+  const handleShareReward = useCallback((reward) => {
+    setShareReward(reward);
+    setShowShareOverlay(true);
+  }, []);
+
+  const handleCloseShareOverlay = useCallback(() => {
+    setShowShareOverlay(false);
+    setShareReward(null);
+  }, []);
+
+  const shareLink = `https://t.me/Bored_Tap_Bot?start=reward_${shareReward?.reward_id || ""}`;
+  const shareMessage = `I just claimed "${shareReward?.reward_title}" worth ${shareReward?.reward} BT Coins on Bored Tap! Join me and claim yours!`;
+
+  const handleTelegramShare = () => {
+    const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(shareLink)}&text=${encodeURIComponent(shareMessage)}`;
+    window.open(telegramUrl, "_blank");
+  };
+
+  const handleWhatsAppShare = () => {
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage + " " + shareLink)}`;
+    window.open(whatsappUrl, "_blank");
+  };
+
+  const handleCopyShare = () => {
+    navigator.clipboard.writeText(shareLink);
+    setShowCopyPopup(true);
+    setTimeout(() => setShowCopyPopup(false), 2000);
+  };
 
   const rewards = rewardsData[activeTab] || [];
   const tabLabels = { on_going: "On-going Reward", claimed: "Claimed Reward" };
@@ -157,10 +188,7 @@ const RewardScreen = () => {
                       src={reward.imageUrl}
                       alt={reward.reward_title}
                       className="reward-icon"
-                      loading="lazy"
-                      onError={(e) =>
-                        (e.target.src = `${process.env.PUBLIC_URL}/default-reward-icon.png`)
-                      }
+                      onError={(e) => (e.target.src = `${process.env.PUBLIC_URL}/default-reward-icon.png`)}
                     />
                     <div className="reward-info">
                       <p className="reward-title">{reward.reward_title}</p>
@@ -183,7 +211,11 @@ const RewardScreen = () => {
                       Claim
                     </button>
                   ) : (
-                    <div className="reward-share-icon" style={{ backgroundColor: "#000" }}>
+                    <div
+                      className="reward-share-icon clickable"
+                      style={{ backgroundColor: "#000" }}
+                      onClick={() => handleShareReward(reward)}
+                    >
                       <img
                         src={`${process.env.PUBLIC_URL}/share-icon.png`}
                         alt="Share Icon"
@@ -236,6 +268,50 @@ const RewardScreen = () => {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {showShareOverlay && shareReward && (
+        <div className="overlay-backdrop">
+          <div className="overlay-container4">
+            <div className={`invite-overlay4 ${showShareOverlay ? "slide-in" : "slide-out"}`}>
+              <div className="overlay-header4">
+                <h2 className="overlay-title4">Share Reward</h2>
+                <img
+                  src={`${process.env.PUBLIC_URL}/cancel.png`}
+                  alt="Close"
+                  className="overlay-cancel"
+                  onClick={handleCloseShareOverlay}
+                />
+              </div>
+              <div className="overlay-divider"></div>
+              <div className="overlay-content4">
+                <p className="overlay-text">Share via:</p>
+                <div className="share-options">
+                  <button className="overlay-cta-button clickable" onClick={handleTelegramShare}>
+                    Telegram
+                  </button>
+                  <button className="overlay-cta-button clickable" onClick={handleWhatsAppShare}>
+                    WhatsApp
+                  </button>
+                  <button className="overlay-cta-button clickable" onClick={handleCopyShare}>
+                    Copy Link
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCopyPopup && (
+        <div className="copy-popup">
+          <img
+            src={`${process.env.PUBLIC_URL}/tick-icon.png`}
+            alt="Tick Icon"
+            className="copy-popup-icon"
+          />
+          <span className="copy-popup-text">Reward link copied</span>
         </div>
       )}
 
