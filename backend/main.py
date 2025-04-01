@@ -68,7 +68,8 @@ app = FastAPI(
 origins = [
     "http://127.0.0.1:3000",
     "http://127.0.0.1:3001",
-    "https://www.boredtap.com",
+    "https://boredtap.com",    # boredtap for users
+    "https://admin.boredtap.com",    # boredtap admin
     "https://boredtap.netlify.app",
     "https://boredtapadmin.netlify.app",
     "https://boredtapadminproject.netlify.app",
