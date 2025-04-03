@@ -13,7 +13,7 @@ class CreateTask(BaseModel):
     task_participants: Union[TaskParticipants, List[TaskParticipants]]
     task_reward: Annotated[int, Form(...)]
     task_deadline: Annotated[datetime, Form(...)]
-    task_image: Annotated[UploadFile, Form(description="Upload task image", media_type="multipart/form-data")]
+    task_image: Annotated[UploadFile | str | None, Form(description="Upload task image", media_type="multipart/form-data")] = None
 
 
 class UpdateTask(BaseModel):
@@ -35,7 +35,7 @@ class TaskSchema(BaseModel):
     task_status: TaskStatus
     task_participants: TaskParticipants | list[TaskParticipants]
     task_reward: int
-    task_image_id: str | None
+    task_image_id: str | None = None
     task_deadline: datetime
 
 class TaskSchemaResponse(BaseModel):
@@ -47,5 +47,5 @@ class TaskSchemaResponse(BaseModel):
     task_status: str
     task_participants: str | list[str]
     task_reward: int
-    task_image_id: str | None
+    task_image_id: str | None = None
     task_deadline: datetime
