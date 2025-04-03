@@ -26,5 +26,6 @@ class MyTasks(BaseModel):
     task_reward: int
     task_image_id: str
     task_description: str
+    task_participants: list[str]
     task_url: str | None = None
     task_deadline: datetime

@@ -27,6 +27,7 @@ def my_tasks_by_type(telegram_user_id: str, task_type: str, skip: int = 0, limit
                 task_image_id=task.get("task_image_id", None),
                 task_description=task.get("task_description", None),
                 task_url=task.get("task_url", None),
+                task_participants=task.get("task_participants", None),
                 task_deadline=task.get("task_deadline", None)
             )
         )
