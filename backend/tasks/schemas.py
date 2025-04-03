@@ -24,7 +24,7 @@ class MyTasks(BaseModel):
     task_id: str
     task_name: str
     task_reward: int
-    task_image_id: str
+    task_image_id: str | None = None
     task_description: str
     task_participants: list[str]
     task_url: str | None = None
