@@ -74,6 +74,33 @@ def validate_task_deadline(deadline: datetime):
     return deadline
 
 
+def validate_task_update_deadline(deadline: datetime):
+    """
+    Converts the given deadline datetime to UTC timezone and ensures it's a future date from the current date.
+
+    Args:
+        deadline (datetime): The task deadline to validate.
+
+    Returns:
+        datetime: The validated deadline datetime in UTC timezone.
+
+    Raises:
+        HTTPException: If the deadline is not a future date from the current date.
+    """
+    # convert deadline timezone to utc and ensure it's greater than current time
+    today = datetime.now(timezone.utc)
+    if deadline.tzinfo:
+        deadline = deadline.astimezone(timezone.utc)
+    else:
+        deadline = deadline.replace(tzinfo=timezone.utc)
+
+    deadline = deadline.replace(hour=today.hour, minute=today.minute, second=today.second, microsecond=today.microsecond, tzinfo=timezone.utc)
+    if deadline < today:
+        raise HTTPException(status_code=400, detail="task deadline date has to be a future date/time.")
+
+    return deadline
+
+
 def extract_url_from_description(description: str):
     """
     Extracts the first URL from a given description string.

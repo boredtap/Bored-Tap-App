@@ -17,7 +17,8 @@ from superuser.task.dependencies import (
         get_tasks_by_status as get_tasks_by_status_func,
         delete_task as delete_task_func,
         # export_tasks as export_tasks_func,
-        validate_task_deadline
+        validate_task_deadline,
+        validate_task_update_deadline
     )
 
 
@@ -119,7 +120,7 @@ async def update_task(task_id: str, task: UpdateTask = Depends(UpdateTask)):
     if not task_exists:
         raise HTTPException(status_code=404, detail="Task not found.")
 
-    deadline = validate_task_deadline(task.task_deadline)
+    deadline = validate_task_update_deadline(task.task_deadline)
     task_url = extract_url_from_description(task.task_description)
 
     # validate image if modified

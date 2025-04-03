@@ -63,7 +63,7 @@ class TaskModelResponse(BaseModel):
     task_status: TaskStatus
     task_participants: TaskParticipants | list[TaskParticipants]
     task_reward: int
-    task_image_id: bytes | None
+    task_image_id: str | None = None
     created_at: datetime = datetime.now(timezone.utc)
     last_updated: datetime | None = None
     task_deadline: datetime
@@ -76,7 +76,7 @@ class UpdateTask(BaseModel):
     task_status: TaskStatus
     task_participants: TaskParticipants | list[TaskParticipants]
     task_reward: int
-    task_image_id: str | None
+    task_image_id: str | None = None
     # created_at: datetime = datetime.now()
     last_updated: datetime = None
     task_deadline: datetime
