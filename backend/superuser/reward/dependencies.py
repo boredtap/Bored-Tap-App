@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
-import stat
 from bson import ObjectId
 from fastapi import HTTPException
 from fastapi.responses import StreamingResponse

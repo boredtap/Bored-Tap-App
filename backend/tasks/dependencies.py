@@ -10,37 +10,23 @@ def get_user(telegram_user_id: str):
 
 
 # ------------------------------------------ GET MY TASKS BY TASK TYPE ------------------------------------------
-def my_tasks_by_type(telegram_user_id: str, task_type: str) -> list[MyTasks]:
+def my_tasks_by_type(telegram_user_id: str, task_type: str, skip: int = 0, limit: int = 10) -> list[MyTasks]:
     user: dict = get_user(telegram_user_id=telegram_user_id)
     current_level: str = user.get("level_name").lower()
 
-    # get by task_type all tasks meant for current_level users and all_users
-    pipeline = [
-        {
-            '$match': {
-                'task_type': task_type, 
-                'task_participants': {
-                    '$in': [
-                        'all_users',
-                        current_level
-                    ]
-                }
-            }
-        }
-    ]
-
-
-    tasks = task_collection.aggregate(pipeline)
+    tasks = task_collection.find({"task_type": task_type, "task_participants": {"$in": ["all_users", current_level]}}).sort('task_deadline', -1).skip(skip).limit(limit)
 
     my_tasks: list[MyTasks] = []
 
     for task in tasks:
         my_tasks.append(
             MyTasks(
+                task_id=str(task.get("_id", None)),
                 task_name=task.get("task_name", None),
                 task_reward=task.get("task_reward", None),
-                task_image=task.get("task_image", None),
+                task_image_id=task.get("task_image_id", None),
                 task_description=task.get("task_description", None),
+                task_url=task.get("task_url", None),
                 task_deadline=task.get("task_deadline", None)
             )
         )
@@ -80,8 +66,9 @@ def my_completed_tasks(telegram_user_id: str) -> list[MyTasks]:
     for task in tasks:
         my_tasks.append(
             MyTasks(
-                task_name=task.get("task_name", None),
-                task_reward=task.get("task_reward", None),
+                task_id=task["_id"],
+                task_name=task["task_name"],
+                task_reward=task["task_reward"],
                 task_image=task.get("task_image", None),
                 task_description=task.get("task_description", None),
                 task_deadline=task.get("task_deadline", None)
