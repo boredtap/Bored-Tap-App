@@ -63,10 +63,10 @@ async def create_task(task: CreateTask = Depends(CreateTask)):
     task_url = extract_url_from_description(task.task_description)
 
     # ensure an image is attached to task
-    if not task.task_image:
-        raise HTTPException(status_code=400, detail="Please upload a task image.")
+    image_id = None
+    if task.task_image:
+        image_id = await validate_image(task.task_image)
 
-    image_id = await validate_image(task.task_image)
     
     # create task
     task = TaskSchema(
