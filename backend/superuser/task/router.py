@@ -7,6 +7,7 @@ from superuser.task.models import ExportFormat, TaskParticipants, TaskStatus, Ta
 from superuser.task.schemas import CreateTask, TaskSchema, TaskSchemaResponse, UpdateTask
 from superuser.task.dependencies import (
         extract_url_from_description,
+        update_status_of_expired_tasks,
         validate_image,
         create_task as create_task_func, 
         check_task_by_id, task_exists_in_db,
@@ -26,7 +27,7 @@ task_router = APIRouter(
     prefix="/admin/task",
     tags=["Admin Panel Task"],
     # responses={404: {"description": "Not found"}},
-    dependencies=[Depends(get_current_admin)]
+    dependencies=[Depends(get_current_admin), Depends(update_status_of_expired_tasks)]
 )
 
 # --------------------------------- CREATE TASK ---------------------------------

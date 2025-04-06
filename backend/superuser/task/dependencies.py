@@ -337,95 +337,6 @@ def get_tasks_by_status(task_status: TaskStatus, skip: int = 0, limit: int = 10)
     return all_tasks
 
 
-# ------------------------------------- EXPORT TASKS -------------------------------------
-# export to csv
-# def export_to_csv(tasks: list[TaskModelResponse]):
-#     output = BytesIO()
-#     fieldnames = TaskModelResponse.model_fields()  # Get the field names from the model fields
-#     writer = csv.DictWriter(output, fieldnames=fieldnames)
-
-#     writer.writeheader()
-#     for task in tasks:
-#         task_dict = task.model_dump()
-
-#         # Handle Enum values:
-#         for key, value in task_dict.items():
-#             if isinstance(value, Enum):  # Convert Enum to value
-#                 task_dict[key] = value.value
-#             if isinstance(value, list): # Convert List of Enum to value
-#                 task_dict[key] = [item.value if isinstance(item, Enum) else item for item in value]
-
-#         writer.writerow(task_dict)
-    
-#     output.seek(0)
-#     return output
-
-
-# # export to excel
-# def export_to_excel(tasks: list[TaskModelResponse]):
-#     output = BytesIO()
-#     workbook = openpyxl.Workbook()
-#     sheet = workbook.active
-
-#     # header row
-#     fieldnames = [key for key in TaskModelResponse.model_fields.keys()]  # Get the field names from the model fields
-#     sheet.append(fieldnames)
-
-#     for task in tasks:
-#         task_dict = task.model_dump()
-
-#         # Handle Enum values:
-#         for key, value in task_dict.items():
-#             if isinstance(value, Enum):  # Convert Enum to value
-#                 task_dict[key] = value.value
-#             if isinstance(value, list): # Convert List of Enum to value
-#                 task_dict[key] = [item.value if isinstance(item, Enum) else item for item in value]
-
-#         sheet.append(list(task_dict.values()))  # append data as a row
-
-#     workbook.save(output)
-#     output.seek(0)
-
-#     return output
-
-# def export_tasks(format: str = "xlsx") -> BytesIO:
-#     tasks = task_collection.find()
-
-#     all_tasks: list[TaskModelResponse] = []
-
-#     for task in tasks:
-#         item = TaskModelResponse(
-#             _id=str(task["_id"]),
-#             task_name=task["task_name"],
-#             task_type=task["task_type"],
-#             task_description=task["task_description"],
-#             task_status=task["task_status"],
-#             task_participants=task["task_participants"],
-#             task_reward=task["task_reward"],
-#             task_image=task["task_image"],
-#             created_at=task["created_at"],
-#             last_updated=task["last_updated"],
-#             task_deadline=task["task_deadline"]
-#         )
-
-#         all_tasks.append(item)
-    
-#     if format == "csv":
-#         output: BytesIO = export_to_csv(all_tasks)
-
-#         return output
-
-#     if format == "xlsx":
-#         output: BytesIO = export_to_excel(all_tasks)
-
-#         return output
-
-#     # default to return xlsx
-#     output: BytesIO = export_to_excel(all_tasks)
-
-#     return output
-
-
 # --------------------------------- DELETE TASK ---------------------------------
 def delete_task(task_id: str) -> bool:
     task = task_collection.find_one({"_id": ObjectId(task_id)})
@@ -435,7 +346,8 @@ def delete_task(task_id: str) -> bool:
     
     # delete image
     task_img_id = task["task_image_id"]
-    fs.delete(ObjectId(task_img_id))
+    if task_img_id != None:
+        fs.delete(ObjectId(task_img_id))
 
     # delete task
     result = task_collection.delete_one({"_id": ObjectId(task_id)})
@@ -444,3 +356,16 @@ def delete_task(task_id: str) -> bool:
         return True
 
     return False 
+
+
+# --------------------------------- UPDATE EXPIRED TASK STATUS ---------------------------------
+def update_status_of_expired_tasks():
+    tasks = task_collection.find({"task_deadline": {"$lt": datetime.now(timezone.utc)}})
+
+    for task in tasks:
+        task_collection.update_one(
+            {"_id": ObjectId(task["_id"])}, 
+            {
+                "$set": {"task_status": "inactive"}
+            }
+        )
