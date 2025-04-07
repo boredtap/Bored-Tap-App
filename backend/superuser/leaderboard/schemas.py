@@ -28,16 +28,17 @@ class TodayAchievement(BaseModel):
 
 class Clan(BaseModel):
     clan_name: str | None
-    in_clan_rank: int | None
+    in_clan_rank: str | None
 
 class LeaderBoard(BaseModel):
     telegram_user_id: str
     rank: str
     username: str
+    image_url: str
     level: int
     level_name: str
     coins_earned: int
-    clan: str
+    clan: str | None
     longest_streak: int
 
 class LeaderBoardUserProfile(BaseModel):

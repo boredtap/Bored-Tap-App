@@ -36,12 +36,17 @@ def get_user_by_id(telegram_user_id: str) -> BasicProfile:
 
     if user:
         user_data: dict = BasicProfile(
+            id=str(user.get("_id")),
             telegram_user_id=user.get("telegram_user_id", None),
             username=user.get("username", None),
             firstname=user.get("firstname", None),
             image_url=user.get("image_url", None),
-            level=user.get("level", None),
             total_coins=user.get("total_coins", None),
+            power_limit=user.get("power_limit", None),
+            last_active_time=user.get("last_active_time", None),
+            auto_bot_active=user.get("auto_bot_active", None),
+            level=user.get("level", None),
+            level_name=user.get("level_name", None),
             referral_url=user.get("referral_url", None),
             is_active=user.get("is_active", None)
         )
@@ -67,16 +72,14 @@ def get_user_invitees(telegram_user_id: str) -> list[Invitee] | list:
 
         for id in invitees_ref:
             invitee: dict = user_collection.find_one({"telegram_user_id": id})
-            invitee_data = Invitee(
-                username=invitee.get("username"),
-                level=invitee.get("level"),
-                image_url=invitee.get("image_url", None),
-                total_coins=invitee.get("total_coins")
-            )
-            invitees.append(invitee_data)
+            if invitee:
+                invitee_data = Invitee(
+                    telegram_user_id=id,
+                    username=invitee.get("username"),
+                    level=invitee.get("level"),
+                    image_url=invitee.get("image_url", None),
+                    total_coins=invitee.get("total_coins"),
+                    invites=len(invitee["invite"]),
+                )
+                invitees.append(invitee_data)
     return invitees
-
-    """
-    level_name
-    
-    """
