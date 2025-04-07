@@ -2,12 +2,15 @@ import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import "./SplashScreen.css";
 import { BoostContext } from "../context/BoosterContext";
-import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
+import { BASE_URL } from "../utils/BaseVariables";
+import BanSuspensionOverlay from "../components/BanSuspensionOverlay";
 
 const SplashScreen = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userStatus, setUserStatus] = useState(null); // "banned" or "suspended"
+  const [remainingTime, setRemainingTime] = useState(null);
   const { resetAll, setLastActiveTime, setExtraBoosters, setAutoTapActive, setTotalTaps, setElectricBoost } =
     useContext(BoostContext);
 
@@ -16,7 +19,6 @@ const SplashScreen = () => {
     "boost": "Boost",
     "recharging speed": "Recharge Speed",
     "auto-bot tapping": "Auto-Bot Tapping",
-    // Add more mappings as needed
   };
 
   const handleResetIfNewUser = (userID) => {
@@ -47,21 +49,8 @@ const SplashScreen = () => {
 
         const username = userData.username || `User${userData.id}`;
         const telegramUserId = String(userData.id);
-
-        // Explicitly log if photo_url exists or not
-        console.log("User photo_url status:", userData.photo_url ? "Available" : "Not available", 
-                    userData.photo_url ? userData.photo_url : "");
-
         const imageUrl = userData.photo_url || "https://example.com/";
         const inviterId = webApp.initDataUnsafe?.start_param || "";
-
-        console.log("Telegram User Data:", { 
-          username, 
-          telegramUserId, 
-          imageUrl, 
-          inviterId,
-          rawUserData: JSON.stringify(userData)
-        });
 
         const signInResponse = await fetch(`${BASE_URL}/signin`, {
           method: "POST",
@@ -81,9 +70,29 @@ const SplashScreen = () => {
 
         if (signInResponse.ok) {
           authData = await signInResponse.json();
-          console.log("Signin Success:", { token: authData.access_token });
         } else {
-          console.log("Signin failed:", signInResponse.status, await signInResponse.text());
+          const errorData = await signInResponse.json();
+          if (signInResponse.status === 401) {
+            if (errorData.detail === "User banned.") {
+              setUserStatus("banned");
+              setLoading(false);
+              return;
+            } else if (errorData.detail.startsWith("User has been suspended")) {
+              setUserStatus("suspended");
+              const timeMatch = errorData.detail.match(/Remaining time: (.*)$/);
+              if (timeMatch) {
+                const timeStr = timeMatch[1]; // e.g., "2 days, 19:17:21.026000"
+                const [daysPart, timePart] = timeStr.split(", ");
+                const days = parseInt(daysPart.split(" ")[0], 10);
+                const [hours, minutes, seconds] = timePart.split(":").map(Number);
+                const totalMs = (days * 24 * 60 * 60 + hours * 60 * 60 + minutes * 60 + seconds) * 1000;
+                setRemainingTime(totalMs);
+              }
+              setLoading(false);
+              return;
+            }
+          }
+
           const signUpBody = {
             telegram_user_id: telegramUserId,
             username,
@@ -117,12 +126,10 @@ const SplashScreen = () => {
                 throw new Error(`Retry signin failed: ${await retrySignInResponse.text()}`);
               }
               authData = await retrySignInResponse.json();
-              console.log("Retry Signin Success:", { token: authData.access_token });
             } else {
               throw new Error(`Registration failed: ${errorText}`);
             }
           } else {
-            console.log("Signup successful");
             isNewUser = true;
             const signInAfterRegResponse = await fetch(`${BASE_URL}/signin`, {
               method: "POST",
@@ -141,23 +148,11 @@ const SplashScreen = () => {
               throw new Error("Failed to sign in after registration");
             }
             authData = await signInAfterRegResponse.json();
-            console.log("Signin after signup successful:", { token: authData.access_token });
           }
         }
 
-        // Always attempt to update the image if photo_url is available, for both new and existing users
         if (userData.photo_url) {
-          console.log("Attempting image update for user:", { 
-            isNewUser, 
-            hasInviterId: !!inviterId, 
-            imageUrl: userData.photo_url 
-          });
-
           try {
-            // Create a structured body to ensure the image_url is properly sent
-            const imageUpdateBody = { image_url: userData.photo_url };
-
-            // First try with query parameter as in original code
             const imageUpdateResponse = await fetch(
               `${BASE_URL}/bored-tap/user_app?image_url=${encodeURIComponent(userData.photo_url)}`,
               {
@@ -170,17 +165,7 @@ const SplashScreen = () => {
               }
             );
 
-            const responseText = await imageUpdateResponse.text();
-            console.log("Image update response (query param):", {
-              status: imageUpdateResponse.status,
-              ok: imageUpdateResponse.ok,
-              body: responseText,
-            });
-
-            // If first attempt failed, try with request body instead
             if (!imageUpdateResponse.ok) {
-              console.log("Trying alternative image update method with request body");
-
               const altImageUpdateResponse = await fetch(
                 `${BASE_URL}/bored-tap/user_app`,
                 {
@@ -190,30 +175,16 @@ const SplashScreen = () => {
                     "Content-Type": "application/json",
                     Accept: "application/json",
                   },
-                  body: JSON.stringify(imageUpdateBody),
+                  body: JSON.stringify({ image_url: userData.photo_url }),
                 }
               );
-
-              const altResponseText = await altImageUpdateResponse.text();
-              console.log("Alternative image update response (request body):", {
-                status: altImageUpdateResponse.status,
-                ok: altImageUpdateResponse.ok,
-                body: altResponseText,
-              });
-
               if (!altImageUpdateResponse.ok) {
                 console.error("Both image update methods failed");
-              } else {
-                console.log("Alternative image update method successful");
               }
-            } else {
-              console.log("Image update successful");
             }
           } catch (updateError) {
-            console.error("Image update request error:", updateError.message, updateError.stack);
+            console.error("Image update request error:", updateError.message);
           }
-        } else {
-          console.log("No photo_url available from Telegram WebApp");
         }
 
         const response = await fetch(`${BASE_URL}/user/profile`, {
@@ -225,10 +196,6 @@ const SplashScreen = () => {
         });
         if (!response.ok) throw new Error("Failed to fetch profile");
         const data = await response.json();
-        console.log("Profile response:", data);
-
-        // Verify if the image was actually updated on the server
-        console.log("Current image_url in profile:", data.image_url);
 
         handleResetIfNewUser(data.id);
 
@@ -245,7 +212,7 @@ const SplashScreen = () => {
         console.error("Authentication error:", err);
         setError(err.message);
       } finally {
-        setLoading(false);
+        if (!userStatus) setLoading(false); // Only stop loading if no ban/suspension
       }
     };
 
@@ -312,6 +279,7 @@ const SplashScreen = () => {
   const handleRetry = () => {
     setError(null);
     setLoading(true);
+    setUserStatus(null);
     window.location.reload();
   };
 
@@ -339,6 +307,9 @@ const SplashScreen = () => {
           </div>
         )}
       </div>
+      {userStatus && (
+        <BanSuspensionOverlay status={userStatus} remainingTime={remainingTime} />
+      )}
     </div>
   );
 };
@@ -350,21 +321,30 @@ export default SplashScreen;
 // import { useNavigate } from "react-router-dom";
 // import "./SplashScreen.css";
 // import { BoostContext } from "../context/BoosterContext";
-// import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
+// import { BASE_URL } from "../utils/BaseVariables";
+// import BanSuspensionOverlay from "../components/BanSuspensionOverlay";
 
 // const SplashScreen = () => {
 //   const navigate = useNavigate();
 //   const [loading, setLoading] = useState(true);
 //   const [error, setError] = useState(null);
-//   const { resetAll, setLastActiveTime, setExtraBoosters, setAutoTapActive, setTotalTaps, setElectricBoost, adjustElectricBoosts } =
-//     useContext(BoostContext);
+//   const [userStatus, setUserStatus] = useState(null); // "banned" or "suspended"
+//   const [remainingTime, setRemainingTime] = useState(null);
+//   const {
+//     resetAll,
+//     setLastActiveTime,
+//     setExtraBoosters,
+//     setAutoTapActive,
+//     setTotalTaps,
+//     setElectricBoost,
+//     adjustElectricBoosts,
+//   } = useContext(BoostContext);
 
 //   const nameMapping = {
-//     "multiplier": "Multiplier Boost",
-//     "boost": "Boost",
+//     multiplier: "Multiplier Boost",
+//     boost: "Boost",
 //     "recharging speed": "Recharge Speed",
 //     "auto-bot tapping": "Auto-Bot Tapping",
-//     // Add more mappings as needed
 //   };
 
 //   const handleResetIfNewUser = (userID) => {
@@ -383,20 +363,17 @@ export default SplashScreen;
 //     const initializeAuth = async () => {
 //       try {
 //         if (!window.Telegram?.WebApp) {
-//           throw new Error("Telegram WebApp not initialized");
-//         }
-
-//         if (!window.Telegram?.WebApp) {
 //           console.warn("Running in mock mode (Telegram not detected)");
 //           window.Telegram = {
 //             WebApp: {
 //               initDataUnsafe: {
 //                 user: {
-//                   id: "111", // Mock Telegram user ID
-//                   username: "ore1", // Mock Telegram username
-//                   photo_url: "https://t.me/i/userpic/320/w1rd6s7RjypJpbHZRzETgLACa4GaM0uhz88rMnregJs.svg", // Mock Telegram image URL
+//                   id: "116",
+//                   username: "ore2",
+//                   photo_url:
+//                     "https://t.me/i/userpic/320/w1rd6s7RjypJpbHZRzETgLACa4GaM0uhz88rMnregJs.svg",
 //                 },
-//                 start_param: "", // Mock inviter ID
+//                 start_param: "",
 //               },
 //             },
 //           };
@@ -405,9 +382,10 @@ export default SplashScreen;
 //         const webApp = window.Telegram.WebApp;
 //         const userData =
 //           webApp.initDataUnsafe?.user || {
-//             id: "111",
-//             username: "ore1",
-//             photo_url: "https://t.me/i/userpic/320/w1rd6s7RjypJpbHZRzETgLACa4GaM0uhz88rMnregJs.svg",
+//             id: "116",
+//             username: "ore2",
+//             photo_url:
+//               "https://t.me/i/userpic/320/w1rd6s7RjypJpbHZRzETgLACa4GaM0uhz88rMnregJs.svg",
 //           };
 
 //         if (!userData || !userData.id) {
@@ -417,7 +395,6 @@ export default SplashScreen;
 //         const username = userData.username || `User${userData.id}`;
 //         const telegramUserId = String(userData.id);
 
-//         // Explicitly log if photo_url exists or not
 //         console.log("User photo_url status:", userData.photo_url ? "Available" : "Not available",
 //           userData.photo_url ? userData.photo_url : "");
 
@@ -429,7 +406,7 @@ export default SplashScreen;
 //           telegramUserId,
 //           imageUrl,
 //           inviterId,
-//           rawUserData: JSON.stringify(userData)
+//           rawUserData: JSON.stringify(userData),
 //         });
 
 //         const signInResponse = await fetch(`${BASE_URL}/signin`, {
@@ -452,7 +429,29 @@ export default SplashScreen;
 //           authData = await signInResponse.json();
 //           console.log("Signin Success:", { token: authData.access_token });
 //         } else {
-//           console.log("Signin failed:", signInResponse.status, await signInResponse.text());
+//           const errorData = await signInResponse.json();
+//           console.log("Signin failed:", signInResponse.status, errorData);
+//           if (signInResponse.status === 401) {
+//             if (errorData.detail === "User banned.") {
+//               setUserStatus("banned");
+//               setLoading(false);
+//               return;
+//             } else if (errorData.detail.startsWith("User has been suspended")) {
+//               setUserStatus("suspended");
+//               const timeMatch = errorData.detail.match(/Remaining time: (.*)$/);
+//               if (timeMatch) {
+//                 const timeStr = timeMatch[1]; // e.g., "2 days, 19:17:21.026000"
+//                 const [daysPart, timePart] = timeStr.split(", ");
+//                 const days = parseInt(daysPart.split(" ")[0], 10);
+//                 const [hours, minutes, seconds] = timePart.split(":").map(Number);
+//                 const totalMs = (days * 24 * 60 * 60 + hours * 60 * 60 + minutes * 60 + seconds) * 1000;
+//                 setRemainingTime(totalMs);
+//               }
+//               setLoading(false);
+//               return;
+//             }
+//           }
+
 //           const signUpBody = {
 //             telegram_user_id: telegramUserId,
 //             username,
@@ -514,19 +513,15 @@ export default SplashScreen;
 //           }
 //         }
 
-//         // Always attempt to update the image if photo_url is available, for both new and existing users
 //         if (userData.photo_url) {
 //           console.log("Attempting image update for user:", {
 //             isNewUser,
 //             hasInviterId: !!inviterId,
-//             imageUrl: userData.photo_url
+//             imageUrl: userData.photo_url,
 //           });
 
 //           try {
-//             // Create a structured body to ensure the image_url is properly sent
 //             const imageUpdateBody = { image_url: userData.photo_url };
-
-//             // First try with query parameter as in original code
 //             const imageUpdateResponse = await fetch(
 //               `${BASE_URL}/bored-tap/user_app?image_url=${encodeURIComponent(userData.photo_url)}`,
 //               {
@@ -546,22 +541,17 @@ export default SplashScreen;
 //               body: responseText,
 //             });
 
-//             // If first attempt failed, try with request body instead
 //             if (!imageUpdateResponse.ok) {
 //               console.log("Trying alternative image update method with request body");
-
-//               const altImageUpdateResponse = await fetch(
-//                `${BASE_URL}/bored-tap/user_app`,
-//                 {
-//                   method: "POST",
-//                   headers: {
-//                     Authorization: `Bearer ${authData.access_token}`,
-//                     "Content-Type": "application/json",
-//                     Accept: "application/json",
-//                   },
-//                   body: JSON.stringify(imageUpdateBody),
-//                 }
-//               );
+//               const altImageUpdateResponse = await fetch(`${BASE_URL}/bored-tap/user_app`, {
+//                 method: "POST",
+//                 headers: {
+//                   Authorization: `Bearer ${authData.access_token}`,
+//                   "Content-Type": "application/json",
+//                   Accept: "application/json",
+//                 },
+//                 body: JSON.stringify(imageUpdateBody),
+//               });
 
 //               const altResponseText = await altImageUpdateResponse.text();
 //               console.log("Alternative image update response (request body):", {
@@ -596,7 +586,6 @@ export default SplashScreen;
 //         const data = await response.json();
 //         console.log("Profile response:", data);
 
-//         // Verify if the image was actually updated on the server
 //         console.log("Current image_url in profile:", data.image_url);
 
 //         handleResetIfNewUser(data.id);
@@ -606,16 +595,21 @@ export default SplashScreen;
 //         const correctedTime = new Date(date.getTime() - offset);
 
 //         setLastActiveTime(correctedTime);
-//         console.log("Setting Electric Boost from profile information")
+//         console.log("Setting Electric Boost from profile information");
 //         setElectricBoost(data.power_limit);
 //         setTotalTaps(data.total_coins);
 
-//         handleSuccessfulAuth(authData, { telegramUserId, username, imageUrl: userData.photo_url || "", uniqueId: data.id });
+//         handleSuccessfulAuth(authData, {
+//           telegramUserId,
+//           username,
+//           imageUrl: userData.photo_url || "",
+//           uniqueId: data.id,
+//         });
 //       } catch (err) {
 //         console.error("Authentication error:", err);
 //         setError(err.message);
 //       } finally {
-//         setLoading(false);
+//         if (!userStatus) setLoading(false); // Only stop loading if no ban/suspension
 //       }
 //     };
 
@@ -666,7 +660,9 @@ export default SplashScreen;
 //         };
 //       });
 
-//       const autoTapBooster = mappedExtraBoosters.filter((booster) => booster.title === "Auto-Bot Tapping");
+//       const autoTapBooster = mappedExtraBoosters.filter(
+//         (booster) => booster.title === "Auto-Bot Tapping"
+//       );
 
 //       setExtraBoosters(mappedExtraBoosters);
 //       setAutoTapActive(autoTapBooster[0].status === 1);
@@ -677,11 +673,21 @@ export default SplashScreen;
 //     };
 
 //     initializeAuth();
-//   }, []);
+//   }, [
+//     navigate,
+//     resetAll,
+//     setLastActiveTime,
+//     setExtraBoosters,
+//     setAutoTapActive,
+//     setTotalTaps,
+//     setElectricBoost,
+//     adjustElectricBoosts,
+//   ]);
 
 //   const handleRetry = () => {
 //     setError(null);
 //     setLoading(true);
+//     setUserStatus(null); // Reset userStatus on retry
 //     window.location.reload();
 //   };
 
@@ -709,6 +715,9 @@ export default SplashScreen;
 //           </div>
 //         )}
 //       </div>
+//       {userStatus && (
+//         <BanSuspensionOverlay status={userStatus} remainingTime={remainingTime} />
+//       )}
 //     </div>
 //   );
 // };

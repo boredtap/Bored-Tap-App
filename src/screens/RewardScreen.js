@@ -4,6 +4,7 @@ import "./RewardScreen.css";
 import { BoostContext } from "../context/BoosterContext";
 import { fetchImage } from "../utils/fetchImage";
 import { BASE_URL } from "../utils/BaseVariables";
+import BanSuspensionOverlay from "../components/BanSuspensionOverlay";
 
 const fetchWithAuth = async (url, token) => {
   const response = await fetch(url, {
@@ -13,7 +14,24 @@ const fetchWithAuth = async (url, token) => {
       "Content-Type": "application/json",
     },
   });
-  if (!response.ok) throw new Error(`Failed to fetch ${url}`);
+  if (!response.ok) {
+    const errorData = await response.json();
+    if (response.status === 401 && errorData.detail === "User banned.") {
+      throw new Error("banned");
+    } else if (response.status === 401 && errorData.detail.startsWith("User has been suspended")) {
+      const timeMatch = errorData.detail.match(/Remaining time: (.*)$/);
+      let remainingTime = 0;
+      if (timeMatch) {
+        const timeStr = timeMatch[1];
+        const [daysPart, timePart] = timeStr.split(", ");
+        const days = parseInt(daysPart.split(" ")[0], 10);
+        const [hours, minutes, seconds] = timePart.split(":").map(Number);
+        remainingTime = (days * 24 * 60 * 60 + hours * 60 * 60 + minutes * 60 + seconds) * 1000;
+      }
+      throw new Error("suspended", { cause: remainingTime });
+    }
+    throw new Error(`Failed to fetch ${url}`);
+  }
   return response.json();
 };
 
@@ -27,6 +45,8 @@ const RewardScreen = () => {
   const [showShareOverlay, setShowShareOverlay] = useState(false);
   const [shareReward, setShareReward] = useState(null);
   const [showCopyPopup, setShowCopyPopup] = useState(false);
+  const [userStatus, setUserStatus] = useState(null); // "banned" or "suspended"
+  const [remainingTime, setRemainingTime] = useState(null);
 
   useEffect(() => {
     const fetchRewardsData = async () => {
@@ -80,8 +100,15 @@ const RewardScreen = () => {
           })),
         }));
       } catch (err) {
-        console.error("Error fetching rewards data:", err);
-        setRewardsData({ on_going: [], claimed: [] });
+        if (err.message === "banned") {
+          setUserStatus("banned");
+        } else if (err.message === "suspended") {
+          setUserStatus("suspended");
+          setRemainingTime(err.cause);
+        } else {
+          console.error("Error fetching rewards data:", err);
+          setRewardsData({ on_going: [], claimed: [] });
+        }
         setLoading(false);
       }
     };
@@ -109,8 +136,15 @@ const RewardScreen = () => {
           claimed: [...prev.claimed, { ...result, imageUrl: claimedReward.imageUrl }],
         }));
       } catch (err) {
-        console.error("Error claiming reward:", err);
-        alert("Failed to claim reward");
+        if (err.message === "banned") {
+          setUserStatus("banned");
+        } else if (err.message === "suspended") {
+          setUserStatus("suspended");
+          setRemainingTime(err.cause);
+        } else {
+          console.error("Error claiming reward:", err);
+          alert("Failed to claim reward");
+        }
       }
     },
     [rewardsData]
@@ -313,6 +347,10 @@ const RewardScreen = () => {
           />
           <span className="copy-popup-text">Reward link copied</span>
         </div>
+      )}
+
+      {userStatus && (
+        <BanSuspensionOverlay status={userStatus} remainingTime={remainingTime} />
       )}
 
       <Navigation />

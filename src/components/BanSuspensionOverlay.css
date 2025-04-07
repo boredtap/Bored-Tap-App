@@ -1,0 +1,100 @@
+/* Backdrop to blur the background, similar to overlay-backdrop in RewardScreen */
+.ban-overlay-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* background: rgba(0, 0, 0, 0.5); Semi-transparent black for visibility */
+    backdrop-filter: blur(5px); /* Blur effect */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000; /* High z-index to stay above content */
+  }
+  
+  /* Container to center the overlay, similar to overlay-container5 */
+  .ban-overlay-container {
+    position: relative;
+    width: 90%;
+    max-width: 400px;
+    /* background-color: #1d1d1d; Dark background like reward-overlay5 */
+    border-radius: 15px;
+    padding: 20px;
+    box-sizing: border-box;
+    z-index: 2001; /* Above backdrop */
+    animation: fadeIn 0.3s ease-out forwards; /* Smooth fade-in */
+  }
+  
+  /* Content styling */
+  .ban-overlay-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    color: #fff;
+  }
+  
+  /* Icon styling */
+  .ban-status-icon {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 16px;
+  }
+  
+  /* Text styling */
+  .ban-text {
+    font-size: 18px;
+    font-weight: 400;
+    margin: 0;
+  }
+  
+  /* Status styling */
+  .ban-status {
+    font-size: 48px;
+    font-weight: bold;
+    margin: 8px 0;
+    color: #F9B54C; /* Red for emphasis */
+  }
+  
+  /* Countdown styling */
+  .ban-countdown {
+    font-size: 24px;
+    margin-top: 16px;
+    color: #ffffff; /* Lighter gray for contrast */
+  }
+  
+  /* Fade-in animation */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 600px) {
+    .ban-overlay-container {
+      width: 85%;
+      padding: 15px;
+    }
+  
+    .ban-status-icon {
+      width: 60px;
+      height: 60px;
+    }
+  
+    .ban-text {
+      font-size: 20px;
+    }
+  
+    .ban-status {
+      font-size: 42px;
+    }
+  
+    .ban-countdown {
+      font-size: 20px;
+    }
+  }

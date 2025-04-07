@@ -307,6 +307,318 @@
     font-weight: 500;
     cursor: pointer;
    }
+
+   /* Overlay Backdrop (reused from RewardScreen) */
+.overlay-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+/* Overlay Container for Not Qualified (styled like overlay-container5 from RewardScreen) */
+.overlay-container-not-qualified {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 400px;
+  height: auto;
+  z-index: 2001;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 15px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+/* Not Qualified Overlay (styled like reward-overlay5) */
+.not-qualified-overlay {
+  position: relative;
+  width: 100%;
+  height: auto;
+  background-color: #1d1d1d;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  box-sizing: border-box;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease-out forwards;
+  border-radius: 15px;
+}
+
+/* Overlay Header for Not Qualified */
+.overlay-header-not-qualified {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.overlay-title-not-qualified {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.overlay-cancel {
+  position: absolute;
+  right: 0;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+/* Overlay Divider (reused) */
+.overlay-divider {
+  width: 100%;
+  height: 1px;
+  background-color: #777777;
+  margin: 20px 0;
+}
+
+/* Overlay Content for Not Qualified */
+.overlay-content-not-qualified {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  justify-content: center;
+  width: 100%;
+}
+
+.overlay-icon-not-qualified {
+  width: 60px;
+  height: 60px;
+}
+
+.overlay-text-not-qualified {
+  font-size: 16px;
+  font-weight: 400;
+  margin: 0;
+}
+
+.overlay-subtext-not-qualified {
+  font-size: 14px;
+  color: #c2bfbf;
+  margin: 0;
+}
+
+.overlay-cta-not-qualified {
+  width: 100%;
+  padding: 12px;
+  background-color: #fff;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.overlay-cta-not-qualified:hover {
+  background-color: #e6e6e6;
+}
+
+/* Overlay Container for Invite Options (styled like overlay-container4 from InviteScreen) */
+.overlay-container-invite {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 400px;
+  height: auto;
+  z-index: 2001;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 15px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+/* Invite Overlay (styled like invite-overlay4) */
+.invite-overlay {
+  position: relative;
+  width: 100%;
+  height: auto;
+  background-color: #1d1d1d;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  box-sizing: border-box;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease-out forwards;
+  border-radius: 15px;
+}
+
+/* Overlay Header for Invite */
+.overlay-header-invite {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.overlay-title-invite {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+/* Overlay Content for Invite */
+.overlay-content-invite {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.overlay-text-invite {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.share-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.overlay-cta-button {
+  width: 100%;
+  padding: 12px;
+  background-color: #fff;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.overlay-cta-button:hover {
+  background-color: #e6e6e6;
+}
+
+/* Copy Popup (reused from InviteScreen) */
+.copy-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #1d1d1d;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 2002;
+  font-size: 14px;
+  max-height: 32px;
+  animation: fadeInOut 2s ease-in-out;
+}
+
+.copy-popup-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.copy-popup-text {
+  font-weight: 500;
+}
+
+/* Fade in and out animation for popup */
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Slide animations (reused from RewardScreen) */
+@keyframes slideIn {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes slideOut {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Responsive Adjustments (updated for new overlays) */
+@media (max-width: 600px) {
+  .overlay-container-not-qualified,
+  .overlay-container-invite {
+    width: 85%;
+    padding: 8px;
+  }
+
+  .overlay-title-not-qualified,
+  .overlay-title-invite {
+    font-size: 16px;
+  }
+
+  .overlay-cancel {
+    width: 20px;
+    height: 20px;
+  }
+
+  .overlay-icon-not-qualified {
+    width: 50px;
+    height: 50px;
+  }
+
+  .overlay-text-not-qualified {
+    font-size: 14px;
+  }
+
+  .overlay-subtext-not-qualified {
+    font-size: 12px;
+  }
+
+  .overlay-cta-not-qualified,
+  .overlay-cta-button {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .copy-popup {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .copy-popup-icon {
+    width: 14px;
+    height: 14px;
+  }
+}
    
    /* Responsive Adjustments */
    @media (max-width: 600px) {

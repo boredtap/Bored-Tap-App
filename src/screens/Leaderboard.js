@@ -100,7 +100,7 @@ const Leaderboard = () => {
       {/* Header section with leaderboard icon */}
       <div className="leaderboard-header">
         <img
-          src={`${process.env.PUBLIC_URL}/leaderboard12-icon.png`}
+          src={`${process.env.PUBLIC_URL}/leader.png`}
           alt="Leaderboard Icon"
           className="leaderboard-icon"
         />

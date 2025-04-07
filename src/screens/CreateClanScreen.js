@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./CreateClanScreen.css";
-import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
+import { BASE_URL } from "../utils/BaseVariables";
 
 const CreateClanScreen = () => {
   const [clanName, setClanName] = useState("");
@@ -12,7 +12,10 @@ const CreateClanScreen = () => {
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showOverlay, setShowOverlay] = useState(false);
+  const [showOverlay, setShowOverlay] = useState(false); // Awaiting verification overlay
+  const [showNotQualifiedOverlay, setShowNotQualifiedOverlay] = useState(false); // Not Qualified overlay
+  const [showInviteOverlay, setShowInviteOverlay] = useState(false); // Invite options overlay
+  const [showCopyPopup, setShowCopyPopup] = useState(false); // Copy link popup
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -37,6 +40,11 @@ const CreateClanScreen = () => {
         if (!response.ok) {
           const errorText = await response.text();
           console.log("Fetch eligible members failed with status:", response.status, "Response:", errorText);
+          if (response.status === 403) {
+            setShowNotQualifiedOverlay(true); // Show "Not Qualified" overlay on 403
+            setLoading(false);
+            return;
+          }
           throw new Error(`Failed to fetch eligible members: ${response.status} - ${errorText}`);
         }
         const membersData = await response.json();
@@ -46,12 +54,12 @@ const CreateClanScreen = () => {
         setError(err.message);
         console.error("Error fetching eligible members:", err);
       } finally {
-        setLoading(false);
+        if (!showNotQualifiedOverlay) setLoading(false); // Only stop loading if no overlay
       }
     };
 
     fetchEligibleMembers();
-  }, []);
+  }, [showNotQualifiedOverlay]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -134,6 +142,35 @@ const CreateClanScreen = () => {
     navigate("/clan-screen");
   };
 
+  const handleNotQualifiedClose = () => {
+    setShowNotQualifiedOverlay(false);
+  };
+
+  const handleInviteOverlayClose = () => {
+    setShowInviteOverlay(false);
+  };
+
+  const user = JSON.parse(localStorage.getItem("telegramUser")) || { telegramUserId: "" };
+  const inviteLink = `https://t.me/Bored_Tap_Bot?start=${user.telegramUserId}`;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(inviteLink);
+    setShowCopyPopup(true);
+    setTimeout(() => setShowCopyPopup(false), 2000);
+  };
+
+  const handleTelegramShare = () => {
+    const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent(
+      "Join me on Bored Tap and earn BT Coins!"
+    )}`;
+    window.open(telegramUrl, "_blank");
+  };
+
+  const handleWhatsAppShare = () => {
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent("Join me on Bored Tap! " + inviteLink)}`;
+    window.open(whatsappUrl, "_blank");
+  };
+
   const isCtaActive = clanName && clanImage && selectedMembers.length > 0;
 
   return (
@@ -195,7 +232,7 @@ const CreateClanScreen = () => {
 
             <div className="friends-list-container">
               <div className="friends-list">
-                {eligibleMembers.length === 0 ? (
+                {eligibleMembers.length === 0 && !showNotQualifiedOverlay ? (
                   <p className="no-friends">No eligible members available.</p>
                 ) : (
                   eligibleMembers.map((member) => (
@@ -252,6 +289,7 @@ const CreateClanScreen = () => {
         </>
       )}
 
+      {/* Awaiting Verification Overlay */}
       {showOverlay && (
         <div className="overlay-backdrop">
           <div className="overlay-container3">
@@ -275,6 +313,84 @@ const CreateClanScreen = () => {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Not Qualified Overlay */}
+      {showNotQualifiedOverlay && (
+        <div className="overlay-backdrop">
+          <div className="overlay-container-not-qualified">
+            <div className={`not-qualified-overlay ${showNotQualifiedOverlay ? "slide-in" : "slide-out"}`}>
+              <div className="overlay-header-not-qualified">
+                <h2 className="overlay-title-not-qualified">Not Qualified</h2>
+                <img
+                  src={`${process.env.PUBLIC_URL}/cancel.png`}
+                  alt="Cancel"
+                  className="overlay-cancel"
+                  onClick={handleNotQualifiedClose}
+                />
+              </div>
+              <div className="overlay-divider"></div>
+              <div className="overlay-content-not-qualified">
+                <img
+                  src={`${process.env.PUBLIC_URL}/invite.png`}
+                  alt="Invite Icon"
+                  className="overlay-icon-not-qualified"
+                />
+                <p className="overlay-text-not-qualified">Invite Friends!</p>
+                <p className="overlay-subtext-not-qualified">Invite 50 friends to create a clan</p>
+                <button className="overlay-cta-not-qualified" onClick={() => setShowInviteOverlay(true)}>
+                  Invite a Friend
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invite Options Overlay */}
+      {showInviteOverlay && (
+        <div className="overlay-backdrop">
+          <div className="overlay-container-invite">
+            <div className={`invite-overlay ${showInviteOverlay ? "slide-in" : "slide-out"}`}>
+              <div className="overlay-header-invite">
+                <h2 className="overlay-title-invite">Invite a Friend</h2>
+                <img
+                  src={`${process.env.PUBLIC_URL}/cancel.png`}
+                  alt="Close"
+                  className="overlay-cancel"
+                  onClick={handleInviteOverlayClose}
+                />
+              </div>
+              <div className="overlay-divider"></div>
+              <div className="overlay-content-invite">
+                <p className="overlay-text-invite">Share via:</p>
+                <div className="share-options">
+                  <button className="overlay-cta-button clickable" onClick={handleTelegramShare}>
+                    Telegram
+                  </button>
+                  <button className="overlay-cta-button clickable" onClick={handleWhatsAppShare}>
+                    WhatsApp
+                  </button>
+                  <button className="overlay-cta-button clickable" onClick={handleCopy}>
+                    Copy Link
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Copy Popup */}
+      {showCopyPopup && (
+        <div className="copy-popup">
+          <img
+            src={`${process.env.PUBLIC_URL}/tick-icon.png`}
+            alt="Tick Icon"
+            className="copy-popup-icon"
+          />
+          <span className="copy-popup-text">Invite link copied</span>
         </div>
       )}
 

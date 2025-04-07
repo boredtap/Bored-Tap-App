@@ -243,11 +243,17 @@ const ChallengeScreen = () => {
                       </p>
                     </div>
                   </div>
-                  {challenge.status === "completed" ? (
+                  {challenge.status === "ongoing" ? (
                     <button
                       className="challenge-cta"
-                      style={{ backgroundColor: "#f9b54c", color: "black" }}
-                      onClick={() => handleClaimClick(challenge)}
+                      style={{
+                        backgroundColor: "#f9b54c",
+                        color: "black",
+                        opacity: challenge.time > 0 ? 0.5 : 1, // Disable visually if time > 0
+                        cursor: challenge.time > 0 ? "not-allowed" : "pointer",
+                      }}
+                      disabled={challenge.time > 0} // Disable button if time > 0
+                      onClick={() => challenge.time <= 0 && handleClaimClick(challenge)}
                     >
                       Claim
                     </button>
