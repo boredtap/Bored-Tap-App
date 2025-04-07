@@ -27,8 +27,8 @@ const BanSuspensionOverlay = ({ status, remainingTime }) => {
   };
 
   const iconSrc = status === "banned" 
-    ? `${process.env.PUBLIC_URL}/ban.png` 
-    : `${process.env.PUBLIC_URL}/suspend.png`;
+    ? `${process.env.PUBLIC_URL}/banned.gif` 
+    : `${process.env.PUBLIC_URL}/suspension.gif`;
 
   return (
     <div className="ban-overlay-backdrop">
