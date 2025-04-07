@@ -1,6 +1,5 @@
 from enum import Enum
-from datetime import datetime
-from unittest.mock import Base
+from datetime import datetime, timezone
 from pydantic import BaseModel
 
 
@@ -9,10 +8,16 @@ class TaskType(str, Enum):
     SPECIAL = "special"
     SOCIAL = "social"
 
+    def __repr__(self) -> str:
+        return self.value
+
 class TaskStatus(str, Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
     PAUSED = "paused"
+
+    def __repr__(self) -> str:
+        return self.value
 
 class TaskParticipants(str, Enum):
     ALL = "all_users"
@@ -27,6 +32,9 @@ class TaskParticipants(str, Enum):
     CONQUEROR = "conqueror"
     LEGEND = "legend"
 
+    def __repr__(self) -> str:
+        return self.value
+
 class ExportFormat(str, Enum):
     CSV = "csv"
     XLSX = "xlsx"
@@ -34,14 +42,15 @@ class ExportFormat(str, Enum):
 
 class Task(BaseModel):
     task_name: str
-    task_type: TaskType
+    task_type: str
     task_description: str
+    task_url: str | None = None
     task_status: TaskStatus
     task_participants: TaskParticipants | list[TaskParticipants]
     task_reward: int
-    task_image: bytes | None
+    task_image_id: str | None
     completed_users: list[str] = []
-    created_at: datetime = datetime.now()
+    created_at: datetime = datetime.now(timezone.utc)
     last_updated: datetime | None = None
     task_deadline: datetime
 
@@ -54,8 +63,8 @@ class TaskModelResponse(BaseModel):
     task_status: TaskStatus
     task_participants: TaskParticipants | list[TaskParticipants]
     task_reward: int
-    task_image: bytes | None
-    created_at: datetime = datetime.now()
+    task_image_id: str | None = None
+    created_at: datetime = datetime.now(timezone.utc)
     last_updated: datetime | None = None
     task_deadline: datetime
 
@@ -63,10 +72,11 @@ class UpdateTask(BaseModel):
     task_name: str
     task_type: TaskType
     task_description: str
+    task_url: str | None = None
     task_status: TaskStatus
     task_participants: TaskParticipants | list[TaskParticipants]
     task_reward: int
-    task_image: str | None
+    task_image_id: str | None = None
     # created_at: datetime = datetime.now()
     last_updated: datetime = None
     task_deadline: datetime

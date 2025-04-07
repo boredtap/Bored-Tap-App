@@ -1,7 +1,7 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
-import telegram
-from database_connection import user_collection, coin_stats
+from bson import ObjectId
+from database_connection import user_collection, coin_stats, clans_collection
 from superuser.leaderboard.schemas import Clan, LeaderBoard, LeaderBoardUserProfile, OverallAchievement, TodayAchievement
 
 
@@ -12,10 +12,11 @@ def process_result_from_aggregation(result):
             telegram_user_id=data["telegram_user_id"],
             rank= f"#{rank+1}",
             username=data["username"],
+            image_url=data["image_url"],
             level=data["level"],
             level_name=data["level_name"],
             coins_earned=data["total_coins"],
-            clan="clan",
+            clan=data["clan"],
             longest_streak=data["longest_streak"]
         )
 
@@ -46,7 +47,7 @@ def all_time_leaderboard():
                 'level': "$user_info.level",
                 'level_name': "$user_info.level_name",
                 'total_coins': 1,
-                # 'clan': "$user_info.clan",
+                'clan': "$user_info.clan.name",
                 'longest_streak': "$user_info.streak.longest_streak",
                 'image_url': 1,
                 'telegram_user_id': 1,
@@ -94,7 +95,7 @@ def daily_leaderboard():
                 'level': "$user_info.level",
                 'level_name': "$user_info.level_name",
                 'total_coins': 1,
-                # 'clan': "$user_info.clan",
+                'clan': "$user_info.clan.name",
                 'longest_streak': "$user_info.streak.longest_streak",
                 'image_url': "$user_info.image_url",
                 'telegram_user_id': 1,
@@ -183,7 +184,7 @@ def weekly_leaderboard():
                 'level': "$user_info.level",
                 'level_name': "$user_info.level_name",
                 'total_coins': 1,
-                # 'clan': "$user_info.clan",
+                'clan': "$user_info.clan.name",
                 'longest_streak': "$user_info.streak.longest_streak",
                 'image_url': "$user_info.image_url",
                 '_id': 0
@@ -265,7 +266,8 @@ def monthly_leaderboard():
                 'username': '$user_info.username', 
                 'level': '$user_info.level', 
                 'level_name': '$user_info.level_name', 
-                'total_coins': 1, 
+                'total_coins': 1,
+                'clan': "$user_info.clan.name",
                 'longest_streak': '$user_info.streak.longest_streak', 
                 'image_url': '$user_info.image_url', 
                 '_id': 0
@@ -369,10 +371,18 @@ def leaderboard_profile(telegram_user_id: str):
         invitees = len(user.get("invite"))
     )
 
-    clan = Clan(
-        clan_name=None,
-        in_clan_rank=None,
-    )
+    clan_id = user["clan"]["id"]
+    if not clan_id:
+        clan = Clan(
+            clan_name=None,
+            in_clan_rank=None,
+        )
+    else:
+        clan_creator = clans_collection.find_one({"_id": ObjectId(clan_id)})["creator"]
+        clan = Clan(
+            clan_name=user["clan"]["name"],
+            in_clan_rank="member" if clan_creator != user["telegram_user_id"] else "creator",
+        )
 
     profile_response = LeaderBoardUserProfile(
         username = user.get("username"),
