@@ -143,20 +143,141 @@
   border-radius: 25px;
   border: none;
   font-size: 14px;
-  cursor: pointer;
   font-weight: 500;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.task-action.active {
-  background-color: #f9b54c;
-  color: black;
-}
-
-.task-action.inactive {
-  background-color: black;
+/* Inactive State */
+.task-action:disabled {
+  background-color: #000;
   color: #f9b54c;
   cursor: not-allowed;
+  opacity: 0.8;
+}
+
+/* Active State */
+.task-action:not(:disabled) {
+  background-color: #f9b54c;
+  color: #000;
+  cursor: pointer;
+}
+
+.task-action:active:not(:disabled) {
+  transform: scale(0.95);
+  transition: transform 0.1s ease-in-out;
+}
+
+/* Share Icon for Completed Tasks */
+.task-share-icon {
+  padding: 8px;
+  border-radius: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #000;
+}
+
+.share-icon {
+  width: 24px;
+  height: 24px;
+}
+
+/* Overlay Backdrop (if not already present) */
+.overlay-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+/* Ensure overlay-container7 and task-overlay7 match RewardScreen styling */
+.overlay-container7 {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 400px;
+  height: auto;
+  z-index: 1001;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 15px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.task-overlay7 {
+  position: relative;
+  width: 100%;
+  height: auto;
+  background-color: #1d1d1d;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  box-sizing: border-box;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out forwards;
+  border-radius: 15px;
+}
+
+.task-overlay7.slide-out {
+  animation: slideOut 0.3s ease-out forwards;
+}
+
+/* Add share overlay styles (overlay-container4, invite-overlay4, etc.) if not present, copied from RewardScreen */
+.overlay-container4 {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 400px;
+  height: auto;
+  z-index: 1001;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 15px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.invite-overlay4 {
+  position: relative;
+  width: 100%;
+  height: auto;
+  background-color: #1d1d1d;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  box-sizing: border-box;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out forwards;
+  border-radius: 15px;
+}
+
+.invite-overlay4.slide-out {
+  animation: slideOut 0.3s ease-out forwards;
+}
+
+/* Animation keyframes */
+@keyframes slideIn {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes slideOut {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
 }
 
 /* Loading Message */

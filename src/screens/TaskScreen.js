@@ -1,17 +1,21 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useCallback, useContext } from "react";
 import Navigation from "../components/Navigation";
 import "./TaskScreen.css";
 import { BoostContext } from "../context/BoosterContext";
 import { BASE_URL } from "../utils/BaseVariables";
 
-// TaskScreen component
 const TaskScreen = () => {
   const { totalTaps } = useContext(BoostContext);
   const [activeTab, setActiveTab] = useState("In-Game");
   const [tasksData, setTasksData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showOverlay, setShowOverlay] = useState(false);
+  const [showPerformOverlay, setShowPerformOverlay] = useState(false); // New overlay for first claim
+  const [performResult, setPerformResult] = useState(null); // Result of first claim
+  const [showRewardOverlay, setShowRewardOverlay] = useState(false); // Renamed for clarity
   const [selectedTask, setSelectedTask] = useState(null);
+  const [showShareOverlay, setShowShareOverlay] = useState(false);
+  const [shareTask, setShareTask] = useState(null);
+  const [showCopyPopup, setShowCopyPopup] = useState(false);
 
   const taskTabs = {
     "In-Game": "In-Game",
@@ -30,15 +34,6 @@ const TaskScreen = () => {
       const token = localStorage.getItem("accessToken");
       if (!token) throw new Error("No access token found");
 
-      const profileResponse = await fetch(`${BASE_URL}/user/profile`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      if (!profileResponse.ok) throw new Error(`Profile fetch failed: ${profileResponse.status}`);
-
       const url =
         taskType === "Completed"
           ? `${BASE_URL}/user/tasks/my_tasks/completed_tasks`
@@ -56,73 +51,115 @@ const TaskScreen = () => {
       const tasks = await tasksResponse.json();
       setTasksData(tasks);
     } catch (err) {
-      console.error("Error fetching tasks or taps:", err);
+      console.error("Error fetching tasks:", err);
+      setTasksData([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleTabClick = (tab) => {
-    setActiveTab(tab);
-  };
-
-  const handleClaimClick = async (task) => {
+  const handlePerformTask = useCallback(async (task) => {
     const token = localStorage.getItem("accessToken");
-    const taskUrl = task.task_url; // Use task_url directly
+    try {
+      const response = await fetch(`${BASE_URL}/user/tasks/my_tasks/${task.task_id}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
-    if (taskUrl && !task.completed) {
-      // Perform task (redirect to external URL)
-      try {
-        const response = await fetch(`${BASE_URL}/user/tasks/my_tasks/${task.id}`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+      const result = await response.json();
+      setPerformResult({
+        message: result.message || (response.ok ? "Task performed successfully" : "Task failed"),
+        success: response.ok,
+        redirectUrl: result.redirect_url || task.task_url, // Handle potential redirect from backend
+      });
+      setSelectedTask(task);
+      setShowPerformOverlay(true);
 
-        if (response.ok) {
-          window.open(taskUrl, "_blank"); // Open URL in new tab
-          // Optimistically update task status
-          setTasksData((prev) =>
-            prev.map((t) =>
-              t.id === task.id ? { ...t, completed: true } : t
-            )
-          );
-        } else {
-          console.error("Error performing task:", await response.json());
+      if (response.ok) {
+        // Mark task as completed if successful
+        setTasksData((prev) =>
+          prev.map((t) => (t.task_id === task.task_id ? { ...t, completed: true } : t))
+        );
+        if (result.redirect_url || task.task_url) {
+          window.open(result.redirect_url || task.task_url, "_blank");
         }
-      } catch (err) {
-        console.error("Error performing task:", err);
       }
-    } else if (task.completed) {
-      // Claim reward
-      try {
-        const response = await fetch(`${BASE_URL}/user/tasks/my_tasks/${task.id}/claim_reward`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          setSelectedTask({ ...task, rewardMessage: result.message });
-          setShowOverlay(true);
-          fetchTasksAndTaps(activeTab); // Refresh tasks
-        } else {
-          console.error("Error claiming reward:", await response.json());
-        }
-      } catch (err) {
-        console.error("Error claiming reward:", err);
-      }
+    } catch (err) {
+      console.error("Error performing task:", err);
+      setPerformResult({ message: "Error performing task", success: false });
+      setSelectedTask(task);
+      setShowPerformOverlay(true);
     }
+  }, []);
+
+  const handleClaimReward = useCallback(async (task) => {
+    const token = localStorage.getItem("accessToken");
+    try {
+      const response = await fetch(`${BASE_URL}/user/tasks/my_tasks/${task.task_id}/claim_reward`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) throw new Error("Failed to claim reward");
+
+      const result = await response.json();
+      setSelectedTask({ ...task, rewardMessage: result.message });
+      setShowRewardOverlay(true);
+
+      // Refetch tasks to move to Completed tab
+      fetchTasksAndTaps(activeTab);
+    } catch (err) {
+      console.error("Error claiming reward:", err);
+      alert("Failed to claim reward");
+    }
+  }, [activeTab]);
+
+  const handleTabClick = useCallback((tab) => setActiveTab(tab), []);
+
+  const handleClosePerformOverlay = useCallback(() => {
+    setShowPerformOverlay(false);
+    setPerformResult(null);
+    setSelectedTask(null);
+  }, []);
+
+  const handleCloseRewardOverlay = useCallback(() => {
+    setShowRewardOverlay(false);
+    setSelectedTask(null);
+  }, []);
+
+  const handleShareTask = useCallback((task) => {
+    setShareTask(task);
+    setShowShareOverlay(true);
+  }, []);
+
+  const handleCloseShareOverlay = useCallback(() => {
+    setShowShareOverlay(false);
+    setShareTask(null);
+  }, []);
+
+  const shareLink = `https://t.me/Bored_Tap_Bot?start=task_${shareTask?.task_id || ""}`;
+  const shareMessage = `I just completed "${shareTask?.task_name}" and earned ${shareTask?.task_reward} BT Coins on Bored Tap! Join me!`;
+
+  const handleTelegramShare = () => {
+    const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(shareLink)}&text=${encodeURIComponent(shareMessage)}`;
+    window.open(telegramUrl, "_blank");
   };
 
-  const handleCloseOverlay = () => {
-    setShowOverlay(false);
-    setSelectedTask(null);
+  const handleWhatsAppShare = () => {
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage + " " + shareLink)}`;
+    window.open(whatsappUrl, "_blank");
+  };
+
+  const handleCopyShare = () => {
+    navigator.clipboard.writeText(shareLink);
+    setShowCopyPopup(true);
+    setTimeout(() => setShowCopyPopup(false), 2000);
   };
 
   return (
@@ -131,7 +168,7 @@ const TaskScreen = () => {
         <div className="total-taps">
           <p>Your Total Taps:</p>
           <div className="taps-display">
-            <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Logo" className="taps-logo" />
+            <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="BT Coin Logo" className="taps-logo" />
             <span className="taps-number">{totalTaps?.toLocaleString() ?? 0}</span>
           </div>
           <p className="tap-info">Earn BT-coin rewards by completing simple tasks</p>
@@ -155,14 +192,13 @@ const TaskScreen = () => {
               <p className="loading-message">Fetching Tasks...</p>
             ) : tasksData.length > 0 ? (
               tasksData.map((task) => {
-                const isClaimable = task.completed || activeTab === "Completed";
-                const taskImage = task.task_image
-                  ? `data:image/png;base64,${task.task_image}`
+                const taskImage = task.task_image_id
+                  ? `${BASE_URL}/images/${task.task_image_id}`
                   : `${process.env.PUBLIC_URL}/logo.png`;
-                const hasTaskUrl = !!task.task_url; // Check if task_url exists
+                const isCompleted = task.completed;
 
                 return (
-                  <div className="task-item" key={task.id}>
+                  <div className="task-item" key={task.task_id}>
                     <div className="task-details">
                       <img
                         src={taskImage}
@@ -182,13 +218,28 @@ const TaskScreen = () => {
                         </div>
                       </div>
                     </div>
-                    <button
-                      className={`task-action ${isClaimable ? "active clickable" : "inactive"}`}
-                      onClick={() => handleClaimClick(task)}
-                      disabled={!hasTaskUrl && !task.completed} // Disable if no task_url and not completed
-                    >
-                      Claim
-                    </button>
+                    {activeTab === "Completed" ? (
+                      <div
+                        className="task-share-icon clickable"
+                        onClick={() => handleShareTask(task)}
+                      >
+                        <img
+                          src={`${process.env.PUBLIC_URL}/share-icon.png`}
+                          alt="Share Icon"
+                          className="share-icon"
+                        />
+                      </div>
+                    ) : (
+                      <button
+                        className={`task-action ${isCompleted ? "active" : "inactive"}`}
+                        disabled={!isCompleted && activeTab !== "In-Game" && activeTab !== "Special" && activeTab !== "Social"}
+                        onClick={() =>
+                          isCompleted ? handleClaimReward(task) : handlePerformTask(task)
+                        }
+                      >
+                        {isCompleted ? "Claim Reward" : "Claim"}
+                      </button>
+                    )}
                   </div>
                 );
               })
@@ -199,43 +250,127 @@ const TaskScreen = () => {
         </div>
       </div>
 
-      {showOverlay && selectedTask && (
-        <div className="overlay-container7">
-          <div className={`task-overlay7 ${showOverlay ? "slide-in" : "slide-out"}`}>
-            <div className="overlay-header7">
-              <h2 className="overlay-title7">Claim Reward</h2>
-              <img
-                src={`${process.env.PUBLIC_URL}/cancel.png`}
-                alt="Cancel"
-                className="overlay-cancel"
-                onClick={handleCloseOverlay}
-              />
-            </div>
-            <div className="overlay-divider"></div>
-            <div className="overlay-content7">
-              <img
-                src={
-                  selectedTask.task_image
-                    ? `data:image/png;base64,${selectedTask.task_image}`
-                    : `${process.env.PUBLIC_URL}/logo.png`
-                }
-                alt="Task Icon"
-                className="overlay-task-icon"
-                onError={(e) => (e.target.src = `${process.env.PUBLIC_URL}/logo.png`)}
-              />
-              <p className="overlay-text">Your reward of</p>
-              <div className="overlay-reward-value">
-                <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Coin Icon" className="overlay-coin-icon" />
-                <span>{selectedTask.task_reward}</span>
+      {showPerformOverlay && performResult && (
+        <div className="overlay-backdrop">
+          <div className="overlay-container7">
+            <div className={`task-overlay7 ${showPerformOverlay ? "slide-in" : "slide-out"}`}>
+              <div className="overlay-header7">
+                <h2 className="overlay-title7">Task Status</h2>
+                <img
+                  src={`${process.env.PUBLIC_URL}/cancel.png`}
+                  alt="Cancel"
+                  className="overlay-cancel"
+                  onClick={handleClosePerformOverlay}
+                />
               </div>
-              <p className="overlay-message">
-                {selectedTask.rewardMessage || "has been added to your coin balance"}
-              </p>
-              <button className="overlay-cta clickable" onClick={handleCloseOverlay}>
-                Ok
-              </button>
+              <div className="overlay-divider"></div>
+              <div className="overlay-content7">
+                <img
+                  src={
+                    performResult.success
+                      ? `${process.env.PUBLIC_URL}/claim.gif`
+                      : `${process.env.PUBLIC_URL}/logo.png`
+                  }
+                  alt="Task Icon"
+                  className="overlay-task-icon"
+                />
+                <p className="overlay-text">{performResult.message}</p>
+                <button className="overlay-cta clickable" onClick={handleClosePerformOverlay}>
+                  Ok
+                </button>
+              </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {showRewardOverlay && selectedTask && (
+        <div className="overlay-backdrop">
+          <div className="overlay-container7">
+            <div className={`task-overlay7 ${showRewardOverlay ? "slide-in" : "slide-out"}`}>
+              <div className="overlay-header7">
+                <h2 className="overlay-title7">Claim Reward</h2>
+                <img
+                  src={`${process.env.PUBLIC_URL}/cancel.png`}
+                  alt="Cancel"
+                  className="overlay-cancel"
+                  onClick={handleCloseRewardOverlay}
+                />
+              </div>
+              <div className="overlay-divider"></div>
+              <div className="overlay-content7">
+                <img
+                  src={
+                    selectedTask.task_image_id
+                      ? `${BASE_URL}/images/${selectedTask.task_image_id}`
+                      : `${process.env.PUBLIC_URL}/logo.png`
+                  }
+                  alt="Task Icon"
+                  className="overlay-task-icon"
+                  onError={(e) => (e.target.src = `${process.env.PUBLIC_URL}/logo.png`)}
+                />
+                <p className="overlay-text">Your reward of</p>
+                <div className="overlay-reward-value">
+                  <img
+                    src={`${process.env.PUBLIC_URL}/logo.png`}
+                    alt="Coin Icon"
+                    className="overlay-coin-icon"
+                  />
+                  <span>{selectedTask.task_reward}</span>
+                </div>
+                <p className="overlay-message">
+                  {selectedTask.rewardMessage || "has been added to your coin balance"}
+                </p>
+                <button className="overlay-cta clickable" onClick={handleCloseRewardOverlay}>
+                  Ok
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showShareOverlay && shareTask && (
+        <div className="overlay-backdrop">
+          <div className="overlay-container4">
+            <div className={`invite-overlay4 ${showShareOverlay ? "slide-in" : "slide-out"}`}>
+              <div className="overlay-header4">
+                <h2 className="overlay-title4">Share Task</h2>
+                <img
+                  src={`${process.env.PUBLIC_URL}/cancel.png`}
+                  alt="Close"
+                  className="overlay-cancel"
+                  onClick={handleCloseShareOverlay}
+                />
+              </div>
+              <div className="overlay-divider"></div>
+              <div className="overlay-content4">
+                <p className="overlay-text">Share via:</p>
+                <div className="share-options">
+                  <button className="overlay-cta-button clickable" onClick={handleTelegramShare}>
+                    Telegram
+                  </button>
+                  <button className="overlay-cta-button clickable" onClick={handleWhatsAppShare}>
+                    WhatsApp
+                  </button>
+                  <button className="overlay-cta-button clickable" onClick={handleCopyShare}>
+                    Copy Link
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCopyPopup && (
+        <div className="copy-popup">
+          <img
+            src={`${process.env.PUBLIC_URL}/tick-icon.png`}
+            alt="Tick Icon"
+            className="copy-popup-icon"
+          />
+          <span className="copy-popup-text">Task link copied</span>
         </div>
       )}
 
