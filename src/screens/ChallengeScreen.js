@@ -4,9 +4,16 @@ import "./ChallengeScreen.css";
 import { fetchImage } from "../utils/fetchImage";
 import { BASE_URL } from "../utils/BaseVariables";
 
+// Parse "DD:HH:MM:SS" string into total seconds
+const parseRemainingTime = (timeString) => {
+  if (!timeString || typeof timeString !== "string") return 0;
+  const [days, hours, minutes, seconds] = timeString.split(":").map(Number);
+  return (days * 24 * 60 * 60) + (hours * 60 * 60) + (minutes * 60) + seconds;
+};
+
 const ChallengeScreen = () => {
   const [activeTab, setActiveTab] = useState("Open Challenges");
-  const [totalTaps, setTotalTaps] = useState(0);
+  const [totalTaps, setTotalTaps] = useState(0); // Used in UI
   const [challengesData, setChallengesData] = useState({
     "Open Challenges": [],
     "Completed Challenges": [],
@@ -56,8 +63,8 @@ const ChallengeScreen = () => {
             title: challenge.name || "Unnamed Challenge",
             description: challenge.description || "No description",
             reward: challenge.reward || 0,
-            time: Number(challenge.remaining_time) || 0,
-            totalTime: Number(challenge.total_time || challenge.remaining_time) || 0,
+            time: parseRemainingTime(challenge.remaining_time),
+            totalTime: parseRemainingTime(challenge.remaining_time),
             status: "ongoing",
             id: challenge.challenge_id,
             imageId: challenge.image_id,
@@ -68,7 +75,7 @@ const ChallengeScreen = () => {
             description: challenge.description || "No description",
             reward: challenge.reward || 0,
             time: 0,
-            totalTime: Number(challenge.total_time) || 0,
+            totalTime: parseRemainingTime(challenge.remaining_time) || 0,
             status: "completed",
             id: challenge.challenge_id,
             imageId: challenge.image_id,
@@ -148,7 +155,7 @@ const ChallengeScreen = () => {
   }, []);
 
   const formatTime = (seconds) => {
-    if (!Number.isFinite(seconds) || seconds < 0) return "0d 0h 0m 0s";
+    if (!Number.isFinite(seconds) || seconds <= 0) return "0d 0h 0m 0s";
     const days = Math.floor(seconds / (3600 * 24));
     const hrs = Math.floor((seconds % (3600 * 24)) / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
@@ -190,7 +197,7 @@ const ChallengeScreen = () => {
           <p>Your Total Taps:</p>
           <div className="taps-display">
             <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Logo" className="taps-logo" />
-            <span className="taps-number">{totalTaps.toLocaleString()}</span>
+            <span className="taps-number">{totalTaps.toLocaleString()}</span> {/* Using totalTaps */}
           </div>
         </div>
 
@@ -199,7 +206,7 @@ const ChallengeScreen = () => {
             <span
               key={tab}
               className={`pagination-tab ${activeTab === tab ? "active" : ""}`}
-              onClick={() => handleTabClick(tab)}
+              onClick={() => handleTabClick(tab)} // Using handleTabClick
             >
               {tab}
             </span>
@@ -246,13 +253,7 @@ const ChallengeScreen = () => {
                   {challenge.status === "ongoing" ? (
                     <button
                       className="challenge-cta"
-                      style={{
-                        backgroundColor: "#f9b54c",
-                        color: "black",
-                        opacity: challenge.time > 0 ? 0.5 : 1, // Disable visually if time > 0
-                        cursor: challenge.time > 0 ? "not-allowed" : "pointer",
-                      }}
-                      disabled={challenge.time > 0} // Disable button if time > 0
+                      disabled={challenge.time > 0}
                       onClick={() => challenge.time <= 0 && handleClaimClick(challenge)}
                     >
                       Claim

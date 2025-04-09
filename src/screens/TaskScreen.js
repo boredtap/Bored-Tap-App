@@ -2,19 +2,17 @@ import React, { useState, useEffect, useContext } from "react";
 import Navigation from "../components/Navigation";
 import "./TaskScreen.css";
 import { BoostContext } from "../context/BoosterContext";
-import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
+import { BASE_URL } from "../utils/BaseVariables";
 
-// TaskScreen component displays user's tasks across categories with claim functionality
+// TaskScreen component
 const TaskScreen = () => {
-  const { totalTaps } = useContext(BoostContext)
-  const [activeTab, setActiveTab] = useState("In-Game"); // Default active tab
-  const [tasksData, setTasksData] = useState([]); // Holds tasks data for the active tab
+  const { totalTaps } = useContext(BoostContext);
+  const [activeTab, setActiveTab] = useState("In-Game");
+  const [tasksData, setTasksData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
 
-  const [loading, setLoading] = useState(true); // Loading state for data fetching
-  const [showOverlay, setShowOverlay] = useState(false); // Controls overlay visibility
-  const [selectedTask, setSelectedTask] = useState(null); // Tracks the task being claimed
-
-  // Define custom tab labels matching RewardScreen style
   const taskTabs = {
     "In-Game": "In-Game",
     "Special": "Special",
@@ -22,22 +20,16 @@ const TaskScreen = () => {
     "Completed": "Completed",
   };
 
-  // Fetch tasks and total taps when active tab changes
   useEffect(() => {
     fetchTasksAndTaps(activeTab);
   }, [activeTab]);
 
-  // Fetch tasks and user profile data based on the active tab
   const fetchTasksAndTaps = async (taskType) => {
-    setLoading(true); // Start loading state
+    setLoading(true);
     try {
       const token = localStorage.getItem("accessToken");
-      if (!token) {
-        console.error("No access token found");
-        return;
-      }
+      if (!token) throw new Error("No access token found");
 
-      // Fetch user profile for total taps
       const profileResponse = await fetch(`${BASE_URL}/user/profile`, {
         method: "GET",
         headers: {
@@ -45,18 +37,13 @@ const TaskScreen = () => {
           "Content-Type": "application/json",
         },
       });
-
       if (!profileResponse.ok) throw new Error(`Profile fetch failed: ${profileResponse.status}`);
 
-      const profileData = await profileResponse.json();
+      const url =
+        taskType === "Completed"
+          ? `${BASE_URL}/user/tasks/my_tasks/completed_tasks`
+          : `${BASE_URL}/user/tasks/my_tasks?task_type=${taskType.toLowerCase()}`;
 
-      // Determine the URL based on active tab
-      let url = `${BASE_URL}/user/tasks/my_tasks?task_type=${taskType.toLowerCase()}`;
-      if (taskType === "Completed") {
-        url = `${BASE_URL}/user/tasks/my_tasks/completed`;
-      }
-
-      // Fetch tasks for the active tab
       const tasksResponse = await fetch(url, {
         method: "GET",
         headers: {
@@ -64,7 +51,6 @@ const TaskScreen = () => {
           "Content-Type": "application/json",
         },
       });
-
       if (!tasksResponse.ok) throw new Error(`Task fetch failed: ${tasksResponse.status}`);
 
       const tasks = await tasksResponse.json();
@@ -72,49 +58,68 @@ const TaskScreen = () => {
     } catch (err) {
       console.error("Error fetching tasks or taps:", err);
     } finally {
-      setLoading(false); // End loading state
+      setLoading(false);
     }
   };
 
-  // Handle tab switching
   const handleTabClick = (tab) => {
     setActiveTab(tab);
   };
 
-  // Handle claiming a task and show overlay
-  const handleClaimClick = async (taskId) => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch(
-        `${BASE_URL}/user/tasks/my_tasks/completed`,
-        {
+  const handleClaimClick = async (task) => {
+    const token = localStorage.getItem("accessToken");
+    const taskUrl = task.task_url; // Use task_url directly
+
+    if (taskUrl && !task.completed) {
+      // Perform task (redirect to external URL)
+      try {
+        const response = await fetch(`${BASE_URL}/user/tasks/my_tasks/${task.id}`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ task_id: taskId }),
+        });
+
+        if (response.ok) {
+          window.open(taskUrl, "_blank"); // Open URL in new tab
+          // Optimistically update task status
+          setTasksData((prev) =>
+            prev.map((t) =>
+              t.id === task.id ? { ...t, completed: true } : t
+            )
+          );
+        } else {
+          console.error("Error performing task:", await response.json());
         }
-      );
-
-      const result = await response.json();
-      if (response.ok) {
-        // Show overlay with task details
-        const claimedTask = tasksData.find((t) => t.id === taskId);
-        setSelectedTask(claimedTask);
-        setShowOverlay(true);
-
-        // Refresh completed tasks
-        fetchTasksAndTaps("Completed");
-      } else {
-        console.error("Error claiming task:", result.message);
+      } catch (err) {
+        console.error("Error performing task:", err);
       }
-    } catch (err) {
-      console.error("Error claiming task:", err);
+    } else if (task.completed) {
+      // Claim reward
+      try {
+        const response = await fetch(`${BASE_URL}/user/tasks/my_tasks/${task.id}/claim_reward`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          setSelectedTask({ ...task, rewardMessage: result.message });
+          setShowOverlay(true);
+          fetchTasksAndTaps(activeTab); // Refresh tasks
+        } else {
+          console.error("Error claiming reward:", await response.json());
+        }
+      } catch (err) {
+        console.error("Error claiming reward:", err);
+      }
     }
   };
 
-  // Close overlay and reset selected task
   const handleCloseOverlay = () => {
     setShowOverlay(false);
     setSelectedTask(null);
@@ -123,7 +128,6 @@ const TaskScreen = () => {
   return (
     <div className="task-screen">
       <div className="task-body">
-        {/* Total Taps Summary */}
         <div className="total-taps">
           <p>Your Total Taps:</p>
           <div className="taps-display">
@@ -133,7 +137,6 @@ const TaskScreen = () => {
           <p className="tap-info">Earn BT-coin rewards by completing simple tasks</p>
         </div>
 
-        {/* Pagination Tabs */}
         <div className="pagination">
           {Object.keys(taskTabs).map((tab) => (
             <span
@@ -146,22 +149,26 @@ const TaskScreen = () => {
           ))}
         </div>
 
-        {/* Scrollable Task List Container */}
         <div className="task-list-container">
           <div className="task-list">
             {loading ? (
               <p className="loading-message">Fetching Tasks...</p>
             ) : tasksData.length > 0 ? (
               tasksData.map((task) => {
-                // Assume task.completed indicates if the task is claimable (adjust based on API)
                 const isClaimable = task.completed || activeTab === "Completed";
+                const taskImage = task.task_image
+                  ? `data:image/png;base64,${task.task_image}`
+                  : `${process.env.PUBLIC_URL}/logo.png`;
+                const hasTaskUrl = !!task.task_url; // Check if task_url exists
+
                 return (
                   <div className="task-item" key={task.id}>
                     <div className="task-details">
                       <img
-                        src={`data:image/png;base64,${task.task_image}`}
+                        src={taskImage}
                         alt={task.task_name}
                         className="task-thumbnail"
+                        onError={(e) => (e.target.src = `${process.env.PUBLIC_URL}/logo.png`)}
                       />
                       <div className="task-meta">
                         <p className="task-name">{task.task_name}</p>
@@ -177,8 +184,8 @@ const TaskScreen = () => {
                     </div>
                     <button
                       className={`task-action ${isClaimable ? "active clickable" : "inactive"}`}
-                      onClick={() => handleClaimClick(task.id)}
-                      disabled={!isClaimable}
+                      onClick={() => handleClaimClick(task)}
+                      disabled={!hasTaskUrl && !task.completed} // Disable if no task_url and not completed
                     >
                       Claim
                     </button>
@@ -192,7 +199,6 @@ const TaskScreen = () => {
         </div>
       </div>
 
-      {/* Overlay for Claim Confirmation */}
       {showOverlay && selectedTask && (
         <div className="overlay-container7">
           <div className={`task-overlay7 ${showOverlay ? "slide-in" : "slide-out"}`}>
@@ -208,16 +214,23 @@ const TaskScreen = () => {
             <div className="overlay-divider"></div>
             <div className="overlay-content7">
               <img
-                src={`data:image/png;base64,${selectedTask.task_image}`}
+                src={
+                  selectedTask.task_image
+                    ? `data:image/png;base64,${selectedTask.task_image}`
+                    : `${process.env.PUBLIC_URL}/logo.png`
+                }
                 alt="Task Icon"
                 className="overlay-task-icon"
+                onError={(e) => (e.target.src = `${process.env.PUBLIC_URL}/logo.png`)}
               />
               <p className="overlay-text">Your reward of</p>
               <div className="overlay-reward-value">
                 <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Coin Icon" className="overlay-coin-icon" />
                 <span>{selectedTask.task_reward}</span>
               </div>
-              <p className="overlay-message">has been added to your coin balance</p>
+              <p className="overlay-message">
+                {selectedTask.rewardMessage || "has been added to your coin balance"}
+              </p>
               <button className="overlay-cta clickable" onClick={handleCloseOverlay}>
                 Ok
               </button>
@@ -226,7 +239,6 @@ const TaskScreen = () => {
         </div>
       )}
 
-      {/* Bottom Navigation */}
       <Navigation />
     </div>
   );
