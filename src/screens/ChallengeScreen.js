@@ -214,24 +214,25 @@ const ChallengeScreen = () => {
         </div>
 
         <div className="challenge-cards-container">
-          <div className="challenge-cards">
-            {loading ? (
-              <p className="loading-message">Fetching Challenges...</p>
-            ) : error ? (
-              <p className="error-message">Error: {error}</p>
-            ) : challenges.length > 0 ? (
-              challenges.map((challenge) => (
-                <div className="challenge-card" key={challenge.id}>
-                  <div className="challenge-left">
-                    <img
-                      src={challenge.imageUrl}
-                      alt={challenge.title}
-                      className="challenge-icon"
-                      onError={(e) => (e.target.src = `${process.env.PUBLIC_URL}/logo.png`)}
-                    />
-                    <div className="challenge-info">
-                      <p className="challenge-title">{challenge.title}</p>
-                      <div className="challenge-meta">
+        <div className="challenge-cards">
+          {loading ? (
+            <p className="loading-message">Fetching Challenges...</p>
+          ) : error ? (
+            <p className="error-message">Error: {error}</p>
+          ) : challenges.length > 0 ? (
+            challenges.map((challenge) => (
+              <div className="challenge-card" key={challenge.id}>
+                <div className="challenge-left">
+                  <img
+                    src={challenge.imageUrl}
+                    alt={challenge.title}
+                    className="challenge-icon"
+                    onError={(e) => (e.target.src = `${process.env.PUBLIC_URL}/logo.png`)}
+                  />
+                  <div className="challenge-info">
+                    <p className="challenge-title">{challenge.title}</p>
+                    <div className="challenge-meta">
+                      <div className="reward-section">
                         <img
                           src={`${process.env.PUBLIC_URL}/logo.png`}
                           alt="Coin Icon"
@@ -239,44 +240,46 @@ const ChallengeScreen = () => {
                         />
                         <span>Reward: {challenge.reward}</span>
                       </div>
-                      <div className="progress-bar">
-                        <div
-                          className="progress-fill"
-                          style={{ width: `${getProgressPercentage(challenge)}%` }}
-                        />
-                      </div>
-                      <p className="challenge-time">
+                      <span className="challenge-time">
                         {challenge.status === "ongoing" ? formatTime(challenge.time) : "Completed"}
-                      </p>
+                      </span>
                     </div>
-                  </div>
-                  {challenge.status === "ongoing" ? (
-                    <button
-                      className="challenge-cta"
-                      disabled={challenge.time > 0}
-                      onClick={() => challenge.time <= 0 && handleClaimClick(challenge)}
-                    >
-                      Claim
-                    </button>
-                  ) : (
-                    <div
-                      className="challenge-share-icon clickable"
-                      style={{ backgroundColor: "#000" }}
-                      onClick={() => handleShareChallenge(challenge)}
-                    >
-                      <img
-                        src={`${process.env.PUBLIC_URL}/share-icon.png`}
-                        alt="Share Icon"
-                        className="share-icon"
+                    <div className="progress-bar">
+                      <div
+                        className="progress-fill"
+                        style={{ width: `${getProgressPercentage(challenge)}%` }}
                       />
                     </div>
-                  )}
+                  </div>
                 </div>
-              ))
-            ) : (
-              <p>No challenges available for this category.</p>
-            )}
-          </div>
+                {challenge.status === "ongoing" ? (
+                  <button
+                    className="challenge-cta"
+                    disabled={challenge.time > 0}
+                    onClick={() => challenge.time <= 0 && handleClaimClick(challenge)}
+                  >
+                    Claim
+                  </button>
+                ) : (
+                  <div
+                    className="challenge-share-icon clickable"
+                    style={{ backgroundColor: "#000" }}
+                    onClick={() => handleShareChallenge(challenge)}
+                  >
+                    <img
+                      src={`${process.env.PUBLIC_URL}/share-icon.png`}
+                      alt="Share Icon"
+                      className="share-icon"
+                    />
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <p>No challenges available for this category.</p>
+          )}
+        </div>
+
         </div>
       </div>
 

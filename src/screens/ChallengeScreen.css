@@ -100,8 +100,8 @@
 
 /* Challenge Icon */
 .challenge-icon {
-  width: 32px;
-  height: 32px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
 }
 
@@ -109,7 +109,8 @@
 .challenge-info {
   display: flex;
   flex-direction: column;
-}
+  width: auto; /* Let it shrink to content size instead of full width */
+  }
 
 .challenge-title {
   font-size: 14px;
@@ -119,10 +120,18 @@
 .challenge-meta {
   display: flex;
   align-items: center;
-  gap: 4px;
   font-size: 12px;
   margin-top: 4px;
+  gap: 16px; /* Controls the gap between reward and time (adjustable) */
+  width: auto; /* Let it shrink to content size instead of full width */
 }
+
+.reward-section {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 
 .small-icon {
   width: 16px;
@@ -150,7 +159,7 @@
 .challenge-time {
   font-size: 12px;
   color: orange;
-  margin-top: 4px;
+  /* margin-top: 4px; */
 }
 
 /* Challenge CTA Button */
@@ -518,8 +527,8 @@
   }
 
   .challenge-icon {
-    width: 28px;
-    height: 28px;
+    width: 42px;
+    height: 42px;
   }
 
   .challenge-title {
@@ -527,6 +536,10 @@
   }
 
   .challenge-meta {
+    font-size: 11px;
+  }
+
+  .challenge-time {
     font-size: 11px;
   }
 

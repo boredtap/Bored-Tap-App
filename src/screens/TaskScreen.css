@@ -98,6 +98,7 @@
   padding: 16px;
   border-radius: 8px;
   background-color: #414141;
+  cursor: pointer; /* Make entire card clickable */
 }
 
 /* Task Details */
@@ -147,7 +148,8 @@
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Inactive State */
+/* Inactive State (matches ChallengeScreen) */
+.task-action.inactive,
 .task-action:disabled {
   background-color: #000;
   color: #f9b54c;
@@ -155,14 +157,14 @@
   opacity: 0.8;
 }
 
-/* Active State */
-.task-action:not(:disabled) {
+/* Active State (matches ChallengeScreen) */
+.task-action.active:not(:disabled) {
   background-color: #f9b54c;
   color: #000;
   cursor: pointer;
 }
 
-.task-action:active:not(:disabled) {
+.task-action.active:not(:disabled):active {
   transform: scale(0.95);
   transition: transform 0.1s ease-in-out;
 }
