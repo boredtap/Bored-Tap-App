@@ -16,14 +16,16 @@ const TaskScreen = () => {
   const [showShareOverlay, setShowShareOverlay] = useState(false);
   const [shareTask, setShareTask] = useState(null);
   const [showCopyPopup, setShowCopyPopup] = useState(false);
+  const [imageCache, setImageCache] = useState({}); // Cache for image URLs
 
   const taskTabs = {
     "In-Game": "In-Game",
-    "Special": "Special",
-    "Social": "Social",
-    "Completed": "Completed",
+    Special: "Special",
+    Social: "Social",
+    Completed: "Completed",
   };
 
+  // Fetch tasks
   useEffect(() => {
     fetchTasksAndTaps(activeTab);
   }, [activeTab]);
@@ -50,6 +52,13 @@ const TaskScreen = () => {
 
       const tasks = await tasksResponse.json();
       setTasksData(tasks);
+
+      // Pre-fetch images for tasks
+      tasks.forEach((task) => {
+        if (task.task_image_id && !imageCache[task.task_image_id]) {
+          fetchImage(task.task_image_id, token);
+        }
+      });
     } catch (err) {
       console.error("Error fetching tasks:", err);
       setTasksData([]);
@@ -58,31 +67,93 @@ const TaskScreen = () => {
     }
   };
 
-  const handlePerformTask = useCallback(async (task) => {
-    const token = localStorage.getItem("accessToken");
+  // Fetch image by ID
+  const fetchImage = async (imageId, token) => {
+    try {
+      const response = await fetch(`${BASE_URL}/bored-tap/user_app/image?image_id=${imageId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          accept: "application/json",
+        },
+      });
 
-    if (activeTab === "Social" || activeTab === "Special") {
-      if (task.task_url) {
-        window.open(task.task_url, "_blank");
-        setPerformResult({ message: "Task opened in new tab. Return to claim your reward.", success: true });
-        setSelectedTask(task);
-        setShowPerformOverlay(true);
+      if (!response.ok) throw new Error(`Image fetch failed: ${response.status}`);
 
-        // Mark as eligible locally after redirect (no backend perform route)
-        setTimeout(() => {
-          setTasksData((prev) =>
-            prev.map((t) => (t.task_id === task.task_id ? { ...t, eligible: true } : t))
-          );
-        }, 1000); // Short delay to simulate redirect and return
+      const blob = await response.blob();
+      const imageUrl = URL.createObjectURL(blob);
+      setImageCache((prev) => ({ ...prev, [imageId]: imageUrl }));
+    } catch (err) {
+      console.error(`Error fetching image ${imageId}:`, err);
+      setImageCache((prev) => ({ ...prev, [imageId]: `${process.env.PUBLIC_URL}/logo.png` }));
+    }
+  };
+
+  const handlePerformTask = useCallback(
+    async (task) => {
+      const token = localStorage.getItem("accessToken");
+
+      if (activeTab === "Social" || activeTab === "Special") {
+        if (task.task_url) {
+          window.open(task.task_url, "_blank");
+          setPerformResult({
+            message: "Task opened in new tab. Return to claim your reward.",
+            success: true,
+          });
+          setSelectedTask(task);
+          setShowPerformOverlay(true);
+
+          setTimeout(() => {
+            setTasksData((prev) =>
+              prev.map((t) => (t.task_id === task.task_id ? { ...t, eligible: true } : t))
+            );
+          }, 1000);
+        } else {
+          setPerformResult({ message: "No task URL provided", success: false });
+          setSelectedTask(task);
+          setShowPerformOverlay(true);
+        }
       } else {
-        setPerformResult({ message: "No task URL provided", success: false });
-        setSelectedTask(task);
-        setShowPerformOverlay(true);
+        try {
+          const response = await fetch(`${BASE_URL}/user/tasks/my_tasks/${task.task_id}`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
+
+          const result = await response.json();
+          const isEligible = response.ok && !result.message.includes("not completed");
+
+          setPerformResult({
+            message: result.message || (isEligible ? "Task performed successfully" : "Task not completed"),
+            success: isEligible,
+          });
+          setSelectedTask(task);
+          setShowPerformOverlay(true);
+
+          if (isEligible) {
+            setTasksData((prev) =>
+              prev.map((t) => (t.task_id === task.task_id ? { ...t, eligible: true } : t))
+            );
+          }
+        } catch (err) {
+          console.error("Error performing In-Game task:", err);
+          setPerformResult({ message: "Error performing task", success: false });
+          setSelectedTask(task);
+          setShowPerformOverlay(true);
+        }
       }
-    } else {
-      // For In-Game
+    },
+    [activeTab]
+  );
+
+  const handleClaimReward = useCallback(
+    async (task) => {
+      const token = localStorage.getItem("accessToken");
       try {
-        const response = await fetch(`${BASE_URL}/user/tasks/my_tasks/${task.task_id}`, {
+        const response = await fetch(`${BASE_URL}/user/tasks/my_tasks/${task.task_id}/claim_reward`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -90,57 +161,23 @@ const TaskScreen = () => {
           },
         });
 
-        const result = await response.json();
-        const isEligible = response.ok && !result.message.includes("not completed");
-
-        setPerformResult({
-          message: result.message || (isEligible ? "Task performed successfully" : "Task not completed"),
-          success: isEligible,
-        });
-        setSelectedTask(task);
-        setShowPerformOverlay(true);
-
-        if (isEligible) {
-          setTasksData((prev) =>
-            prev.map((t) => (t.task_id === task.task_id ? { ...t, eligible: true } : t))
-          );
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to claim reward: ${response.status} - ${errorText}`);
         }
+
+        const result = await response.json();
+        setSelectedTask({ ...task, rewardMessage: result.message });
+        setShowRewardOverlay(true);
+
+        fetchTasksAndTaps(activeTab);
       } catch (err) {
-        console.error("Error performing In-Game task:", err);
-        setPerformResult({ message: "Error performing task", success: false });
-        setSelectedTask(task);
-        setShowPerformOverlay(true);
+        console.error("Error claiming reward:", err);
+        alert(`Failed to claim reward: ${err.message}`);
       }
-    }
-  }, [activeTab]);
-
-  const handleClaimReward = useCallback(async (task) => {
-    const token = localStorage.getItem("accessToken");
-    try {
-      const response = await fetch(`${BASE_URL}/user/tasks/my_tasks/${task.task_id}/claim_reward`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to claim reward: ${response.status} - ${errorText}`);
-      }
-
-      const result = await response.json();
-      setSelectedTask({ ...task, rewardMessage: result.message });
-      setShowRewardOverlay(true);
-
-      // Refetch tasks to move to Completed tab
-      fetchTasksAndTaps(activeTab);
-    } catch (err) {
-      console.error("Error claiming reward:", err);
-      alert(`Failed to claim reward: ${err.message}`);
-    }
-  }, [activeTab]);
+    },
+    [activeTab]
+  );
 
   const handleTabClick = useCallback((tab) => setActiveTab(tab), []);
 
@@ -169,7 +206,9 @@ const TaskScreen = () => {
   const shareMessage = `I just completed "${shareTask?.task_name}" and earned ${shareTask?.task_reward} BT Coins on Bored Tap! Join me!`;
 
   const handleTelegramShare = () => {
-    const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(shareLink)}&text=${encodeURIComponent(shareMessage)}`;
+    const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(shareLink)}&text=${encodeURIComponent(
+      shareMessage
+    )}`;
     window.open(telegramUrl, "_blank");
   };
 
@@ -214,18 +253,17 @@ const TaskScreen = () => {
               <p className="loading-message">Fetching Tasks...</p>
             ) : tasksData.length > 0 ? (
               tasksData.map((task) => {
-                const taskImage = task.task_image_id
-                  ? `${BASE_URL}/images/${task.task_image_id}`
-                  : `${process.env.PUBLIC_URL}/logo.png`;
+                const taskImage =
+                  task.task_image_id && imageCache[task.task_image_id]
+                    ? imageCache[task.task_image_id]
+                    : `${process.env.PUBLIC_URL}/logo.png`;
                 const isEligible = task.eligible || task.completed;
 
                 return (
                   <div
                     className="task-item clickable"
                     key={task.task_id}
-                    onClick={() =>
-                      activeTab !== "Completed" && !isEligible ? handlePerformTask(task) : null
-                    }
+                    onClick={() => (activeTab !== "Completed" && !isEligible ? handlePerformTask(task) : null)}
                   >
                     <div className="task-details">
                       <img
@@ -237,13 +275,13 @@ const TaskScreen = () => {
                       <div className="task-meta">
                         <p className="task-name">{task.task_name}</p>
                         <div className="task-reward">
-                          <img
-                            src={`${process.env.PUBLIC_URL}/logo.png`}
-                            alt="Coin Icon"
-                            className="coin-icon"
-                          />
-                          <span>{task.task_reward}</span>
-                        </div>
+                        <img
+                          src={`${process.env.PUBLIC_URL}/logo.png`}
+                          alt="Coin Icon"
+                          className="coin-icon"
+                        />
+                        <span>{task.task_reward.toLocaleString()}</span>
+                      </div>
                       </div>
                     </div>
                     {activeTab === "Completed" ? (
@@ -333,8 +371,8 @@ const TaskScreen = () => {
               <div className="overlay-content7">
                 <img
                   src={
-                    selectedTask.task_image_id
-                      ? `${BASE_URL}/images/${selectedTask.task_image_id}`
+                    selectedTask.task_image_id && imageCache[selectedTask.task_image_id]
+                      ? imageCache[selectedTask.task_image_id]
                       : `${process.env.PUBLIC_URL}/logo.png`
                   }
                   alt="Task Icon"
@@ -348,7 +386,7 @@ const TaskScreen = () => {
                     alt="Coin Icon"
                     className="overlay-coin-icon"
                   />
-                  <span>{selectedTask.task_reward}</span>
+                  <span>{selectedTask.task_reward.toLocaleString()}</span>
                 </div>
                 <p className="overlay-message">
                   {selectedTask.rewardMessage || "has been added to your coin balance"}

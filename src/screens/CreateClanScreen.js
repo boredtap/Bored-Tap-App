@@ -144,6 +144,7 @@ const CreateClanScreen = () => {
 
   const handleNotQualifiedClose = () => {
     setShowNotQualifiedOverlay(false);
+    navigate("/clan-screen");
   };
 
   const handleInviteOverlayClose = () => {

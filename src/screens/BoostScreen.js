@@ -59,28 +59,24 @@ const BoostScreen = () => {
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) throw new Error("No access token found");
-
+  
       const profileResponse = await fetch(`${BASE_URL}/user/profile`, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       });
       if (!profileResponse.ok) throw new Error("Profile fetch failed");
       const profileData = await profileResponse.json();
-
-      // Detect account deletion by checking if stats are reset to initial state
-      // if (profileData.total_coins === 0 && profileData.level === 1) {
-      //   resetAllLocalData(); // Wipe all local storage and reset state
-      // } else {
-      //   setTotalTaps(profileData.total_coins || 0);
-      // }
-
+  
       const extraBoostersResponse = await fetch(`${BASE_URL}/user/boost/extra_boosters`, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       });
       if (!extraBoostersResponse.ok) throw new Error("Extra boosters fetch failed");
       const extraBoostersData = await extraBoostersResponse.json();
-
+  
+      // Define the desired order
+      const desiredOrder = ["boost", "multiplier", "recharging speed", "auto-bot tapping"];
+  
       // Map static icons to boosters based on their name
       const mappedExtraBoosters = extraBoostersData.map((booster) => {
         let icon;
@@ -100,7 +96,7 @@ const BoostScreen = () => {
           default:
             icon = `${process.env.PUBLIC_URL}/extra-booster-icon.png`; // Fallback icon
         }
-
+  
         return {
           id: booster.booster_id,
           title: nameMapping[booster.name.toLowerCase()] || booster.name,
@@ -113,12 +109,20 @@ const BoostScreen = () => {
           icon, // Use the static icon assigned above
           rawLevel: booster.level === "-" ? 0 : parseInt(booster.level, 10),
           effect: booster.effect,
-          status: booster.status && booster.status === "owned" ? 1 : 0
+          status: booster.status && booster.status === "owned" ? 1 : 0,
+          name: booster.name.toLowerCase(), // Store name for sorting
         };
       });
-
-      setExtraBoosters(mappedExtraBoosters)
-
+  
+      // Sort boosters based on desired order
+      const sortedBoosters = mappedExtraBoosters.sort((a, b) => {
+        const indexA = desiredOrder.indexOf(a.name);
+        const indexB = desiredOrder.indexOf(b.name);
+        return indexA - indexB;
+      });
+  
+      setExtraBoosters(sortedBoosters);
+  
     } catch (err) {
       setError(err.message);
     } finally {

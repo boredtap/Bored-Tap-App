@@ -13,14 +13,16 @@ const parseRemainingTime = (timeString) => {
 
 const ChallengeScreen = () => {
   const [activeTab, setActiveTab] = useState("Open Challenges");
-  const [totalTaps, setTotalTaps] = useState(0); // Used in UI
+  const [totalTaps, setTotalTaps] = useState(0);
   const [challengesData, setChallengesData] = useState({
     "Open Challenges": [],
     "Completed Challenges": [],
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showOverlay, setShowOverlay] = useState(false);
+  const [showPerformOverlay, setShowPerformOverlay] = useState(false);
+  const [performResult, setPerformResult] = useState(null);
+  const [showRewardOverlay, setShowRewardOverlay] = useState(false);
   const [selectedChallenge, setSelectedChallenge] = useState(null);
   const [showShareOverlay, setShowShareOverlay] = useState(false);
   const [shareChallenge, setShareChallenge] = useState(null);
@@ -69,6 +71,8 @@ const ChallengeScreen = () => {
             id: challenge.challenge_id,
             imageId: challenge.image_id,
             imageUrl: `${process.env.PUBLIC_URL}/logo.png`,
+            url: challenge.url || null, // Assuming challenge has a url field
+            eligible: false, // Track eligibility for claiming
           })),
           ...completedChallenges.map((challenge) => ({
             title: challenge.name || "Unnamed Challenge",
@@ -80,6 +84,8 @@ const ChallengeScreen = () => {
             id: challenge.challenge_id,
             imageId: challenge.image_id,
             imageUrl: `${process.env.PUBLIC_URL}/logo.png`,
+            url: null,
+            eligible: true, // Completed challenges are already claimed
           })),
         ];
 
@@ -132,15 +138,109 @@ const ChallengeScreen = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleTabClick = useCallback((tab) => setActiveTab(tab), []);
+  const handlePerformChallenge = useCallback(async (challenge) => {
+    const token = localStorage.getItem("accessToken");
+    if (challenge.url) {
+      // Handle challenges with URL (similar to Social/Special tasks)
+      window.open(challenge.url, "_blank");
+      setPerformResult({
+        message: "Challenge opened in new tab. Return to claim your reward.",
+        success: true,
+      });
+      setSelectedChallenge(challenge);
+      setShowPerformOverlay(true);
 
-  const handleClaimClick = useCallback((challenge) => {
-    setSelectedChallenge(challenge);
-    setShowOverlay(true);
+      // Mark as eligible locally after redirect
+      setTimeout(() => {
+        setChallengesData((prev) => ({
+          ...prev,
+          "Open Challenges": prev["Open Challenges"].map((ch) =>
+            ch.id === challenge.id ? { ...ch, eligible: true } : ch
+          ),
+        }));
+      }, 1000); // Short delay to simulate redirect and return
+    } else {
+      // Handle challenges without URL (similar to In-Game tasks)
+      try {
+        const response = await fetch(`${BASE_URL}/perform_challenge/${challenge.id}`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        const result = await response.json();
+        const isEligible = response.ok && !result.message.includes("not completed");
+
+        setPerformResult({
+          message: result.message || (isEligible ? "Challenge performed successfully" : "Challenge not completed"),
+          success: isEligible,
+        });
+        setSelectedChallenge(challenge);
+        setShowPerformOverlay(true);
+
+        if (isEligible) {
+          setChallengesData((prev) => ({
+            ...prev,
+            "Open Challenges": prev["Open Challenges"].map((ch) =>
+              ch.id === challenge.id ? { ...ch, eligible: true } : ch
+            ),
+          }));
+        }
+      } catch (err) {
+        console.error("Error performing challenge:", err);
+        setPerformResult({ message: "Error performing challenge", success: false });
+        setSelectedChallenge(challenge);
+        setShowPerformOverlay(true);
+      }
+    }
   }, []);
 
-  const handleCloseOverlay = useCallback(() => {
-    setShowOverlay(false);
+  const handleClaimReward = useCallback(async (challenge) => {
+    const token = localStorage.getItem("accessToken");
+    try {
+      const response = await fetch(`${BASE_URL}/earn/challenge/my-challenges/${challenge.id}/claim`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to claim reward: ${response.status} - ${errorText}`);
+      }
+
+      const result = await response.json();
+      setSelectedChallenge({ ...challenge, rewardMessage: result.message });
+      setShowRewardOverlay(true);
+
+      // Move challenge to Completed Challenges
+      setChallengesData((prev) => ({
+        "Open Challenges": prev["Open Challenges"].filter((ch) => ch.id !== challenge.id),
+        "Completed Challenges": [
+          ...prev["Completed Challenges"],
+          { ...challenge, status: "completed", time: 0, eligible: true },
+        ],
+      }));
+    } catch (err) {
+      console.error("Error claiming reward:", err);
+      alert(`Failed to claim reward: ${err.message}`);
+    }
+  }, []);
+
+  const handleTabClick = useCallback((tab) => setActiveTab(tab), []);
+
+  const handleClosePerformOverlay = useCallback(() => {
+    setShowPerformOverlay(false);
+    setPerformResult(null);
+    setSelectedChallenge(null);
+  }, []);
+
+  const handleCloseRewardOverlay = useCallback(() => {
+    setShowRewardOverlay(false);
     setSelectedChallenge(null);
   }, []);
 
@@ -197,7 +297,7 @@ const ChallengeScreen = () => {
           <p>Your Total Taps:</p>
           <div className="taps-display">
             <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Logo" className="taps-logo" />
-            <span className="taps-number">{totalTaps.toLocaleString()}</span> {/* Using totalTaps */}
+            <span className="taps-number">{totalTaps.toLocaleString()}</span>
           </div>
         </div>
 
@@ -206,7 +306,7 @@ const ChallengeScreen = () => {
             <span
               key={tab}
               className={`pagination-tab ${activeTab === tab ? "active" : ""}`}
-              onClick={() => handleTabClick(tab)} // Using handleTabClick
+              onClick={() => handleTabClick(tab)}
             >
               {tab}
             </span>
@@ -214,94 +314,146 @@ const ChallengeScreen = () => {
         </div>
 
         <div className="challenge-cards-container">
-        <div className="challenge-cards">
-          {loading ? (
-            <p className="loading-message">Fetching Challenges...</p>
-          ) : error ? (
-            <p className="error-message">Error: {error}</p>
-          ) : challenges.length > 0 ? (
-            challenges.map((challenge) => (
-              <div className="challenge-card" key={challenge.id}>
-                <div className="challenge-left">
-                  <img
-                    src={challenge.imageUrl}
-                    alt={challenge.title}
-                    className="challenge-icon"
-                    onError={(e) => (e.target.src = `${process.env.PUBLIC_URL}/logo.png`)}
-                  />
-                  <div className="challenge-info">
-                    <p className="challenge-title">{challenge.title}</p>
-                    <div className="challenge-meta">
-                      <div className="reward-section">
-                        <img
-                          src={`${process.env.PUBLIC_URL}/logo.png`}
-                          alt="Coin Icon"
-                          className="small-icon"
-                        />
-                        <span>Reward: {challenge.reward}</span>
-                      </div>
-                      <span className="challenge-time">
-                        {challenge.status === "ongoing" ? formatTime(challenge.time) : "Completed"}
-                      </span>
-                    </div>
-                    <div className="progress-bar">
-                      <div
-                        className="progress-fill"
-                        style={{ width: `${getProgressPercentage(challenge)}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-                {challenge.status === "ongoing" ? (
-                  <button
-                    className="challenge-cta"
-                    disabled={challenge.time > 0}
-                    onClick={() => challenge.time <= 0 && handleClaimClick(challenge)}
-                  >
-                    Claim
-                  </button>
-                ) : (
+          <div className="challenge-cards">
+            {loading ? (
+              <p className="loading-message">Fetching Challenges...</p>
+            ) : error ? (
+              <p className="error-message">Error: {error}</p>
+            ) : challenges.length > 0 ? (
+              challenges.map((challenge) => {
+                const isEligible = challenge.eligible && challenge.time <= 0;
+                return (
                   <div
-                    className="challenge-share-icon clickable"
-                    style={{ backgroundColor: "#000" }}
-                    onClick={() => handleShareChallenge(challenge)}
+                    className="challenge-card clickable"
+                    key={challenge.id}
+                    onClick={() =>
+                      activeTab !== "Completed Challenges" && !isEligible
+                        ? handlePerformChallenge(challenge)
+                        : null
+                    }
                   >
-                    <img
-                      src={`${process.env.PUBLIC_URL}/share-icon.png`}
-                      alt="Share Icon"
-                      className="share-icon"
-                    />
+                    <div className="challenge-left">
+                      <img
+                        src={challenge.imageUrl}
+                        alt={challenge.title}
+                        className="challenge-icon"
+                        onError={(e) => (e.target.src = `${process.env.PUBLIC_URL}/logo.png`)}
+                      />
+                      <div className="challenge-info">
+                        <p className="challenge-title">{challenge.title}</p>
+                        <div className="challenge-meta">
+                          <div className="reward-section">
+                            <img
+                              src={`${process.env.PUBLIC_URL}/logo.png`}
+                              alt="Coin Icon"
+                              className="small-icon"
+                            />
+                            <span>Reward: {challenge.reward}</span>
+                          </div>
+                          <span className="challenge-time">
+                            {challenge.status === "ongoing" ? formatTime(challenge.time) : "Completed"}
+                          </span>
+                        </div>
+                        <div className="progress-bar">
+                          <div
+                            className="progress-fill"
+                            style={{ width: `${getProgressPercentage(challenge)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    {challenge.status === "ongoing" ? (
+                      <button
+                        className={`challenge-cta ${isEligible ? "active" : "inactive"}`}
+                        disabled={!isEligible}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          isEligible && handleClaimReward(challenge);
+                        }}
+                      >
+                        Claim
+                      </button>
+                    ) : (
+                      <div
+                        className="challenge-share-icon clickable"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShareChallenge(challenge);
+                        }}
+                      >
+                        <img
+                          src={`${process.env.PUBLIC_URL}/share-icon.png`}
+                          alt="Share Icon"
+                          className="share-icon"
+                        />
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            ))
-          ) : (
-            <p>No challenges available for this category.</p>
-          )}
-        </div>
-
+                );
+              })
+            ) : (
+              <p className="no-challenge-message">No challenges available for this category.</p>
+            )}
+          </div>
         </div>
       </div>
 
-      {showOverlay && selectedChallenge && (
+      {showPerformOverlay && performResult && (
         <div className="overlay-backdrop">
-          <div className="overlay-container5">
-            <div className={`challenge-overlay5 ${showOverlay ? "slide-in" : "slide-out"}`}>
-              <div className="overlay-header5">
-                <h2 className="overlay-title5">Claim Reward</h2>
+          <div className="overlay-container7">
+            <div className={`task-overlay7 ${showPerformOverlay ? "slide-in" : "slide-out"}`}>
+              <div className="overlay-header7">
+                <h2 className="overlay-title7">Challenge Status</h2>
                 <img
                   src={`${process.env.PUBLIC_URL}/cancel.png`}
                   alt="Cancel"
                   className="overlay-cancel"
-                  onClick={handleCloseOverlay}
+                  onClick={handleClosePerformOverlay}
                 />
               </div>
               <div className="overlay-divider"></div>
-              <div className="overlay-content5">
+              <div className="overlay-content7">
                 <img
-                  src={`${process.env.PUBLIC_URL}/claim.gif`}
-                  alt="Reward Icon"
-                  className="overlay2-challenge-icon"
+                  src={
+                    performResult.success
+                      ? `${process.env.PUBLIC_URL}/claim.gif`
+                      : `${process.env.PUBLIC_URL}/logo.png`
+                  }
+                  alt="Challenge Icon"
+                  className="overlay-task-icon"
+                />
+                <p className="overlay-text">{performResult.message}</p>
+                <button className="overlay-cta clickable" onClick={handleClosePerformOverlay}>
+                  Ok
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showRewardOverlay && selectedChallenge && (
+        <div className="overlay-backdrop">
+          <div className="overlay-container7">
+            <div className={`task-overlay7 ${showRewardOverlay ? "slide-in" : "slide-out"}`}>
+              <div className="overlay-header7">
+                <h2 className="overlay-title7">Claim Reward</h2>
+                <img
+                  src={`${process.env.PUBLIC_URL}/cancel.png`}
+                  alt="Cancel"
+                  className="overlay-cancel"
+                  onClick={handleCloseRewardOverlay}
+                />
+              </div>
+              <div className="overlay-divider"></div>
+              <div className="overlay-content7">
+                <img
+                  src={
+                    selectedChallenge.imageUrl || `${process.env.PUBLIC_URL}/logo.png`
+                  }
+                  alt="Challenge Icon"
+                  className="overlay-task-icon"
+                  onError={(e) => (e.target.src = `${process.env.PUBLIC_URL}/logo.png`)}
                 />
                 <p className="overlay-text">Your reward of</p>
                 <div className="overlay-reward-value">
@@ -312,8 +464,10 @@ const ChallengeScreen = () => {
                   />
                   <span>{selectedChallenge.reward}</span>
                 </div>
-                <p className="overlay-message">has been added to your coin balance</p>
-                <button className="overlay-cta" onClick={handleCloseOverlay}>
+                <p className="overlay-message">
+                  {selectedChallenge.rewardMessage || "has been added to your coin balance"}
+                </p>
+                <button className="overlay-cta clickable" onClick={handleCloseRewardOverlay}>
                   Ok
                 </button>
               </div>
