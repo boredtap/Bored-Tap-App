@@ -12,7 +12,108 @@
   box-sizing: border-box;
 }
 
-/* Header with centered invite content */
+/* Ensure the friends section takes available space */
+.your-friends-section {
+  margin-top: 30px;
+  flex: 1; /* Allow it to grow and fill available space */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Friends list container with scrollable content */
+.friends-list-container {
+  flex-grow: 1; /* Grow to fill available space */
+  max-height: calc(100vh - 350px); /* Dynamic height: account for header, CTA, and padding */
+  overflow-y: auto; /* Enable vertical scrolling */
+  padding-bottom: 20px; /* Reduced padding to avoid excessive space */
+  margin-bottom: 80px; /* Space for fixed CTA button */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+/* Friends section title */
+.friends-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+/* Friends list styling */
+.friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Floating CTA container */
+.cta-container {
+  position: fixed;
+  bottom: 80px; /* Above navigation */
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: center;
+  z-index: 10;
+}
+
+/* Friend card styling */
+.friend-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background-color: #414141;
+  border-radius: 8px;
+}
+
+/* Navigation bar at the bottom */
+.invite-screen > nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+}
+
+/* Ensure no overlap with scrollable content */
+.no-friends {
+  text-align: center;
+  color: #c2bfbf;
+  font-size: 16px;
+  padding: 20px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .invite-screen {
+    padding: 12px;
+  }
+
+  .friends-list-container {
+    max-height: calc(100vh - 300px); /* Adjust for smaller screens */
+    margin-bottom: 70px;
+  }
+
+  .cta-container {
+    bottom: 70px;
+  }
+}
+
+@media (min-width: 768px) {
+  .invite-screen {
+    padding: 24px;
+  }
+
+  .friends-list-container {
+    max-height: calc(100vh - 400px); /* Adjust for larger screens */
+    margin-bottom: 90px;
+  }
+
+  .cta-container {
+    bottom: 90px;
+  }
+}
+
+/* Rest of the existing CSS remains unchanged */
 .invite-header {
   text-align: center;
   margin-top: 20px;
@@ -36,7 +137,6 @@
   color: #c2bfbf;
 }
 
-/* Invite link card */
 .invite-link-card {
   display: flex;
   justify-content: space-between;
@@ -71,47 +171,6 @@
 
 .reward-cta:hover {
   background-color: #e6e6e6;
-}
-
-/* Friends section */
-
-.your-friends-section {
-  margin-top: 30px;
-  flex: 1;
-}
-
-.friends-title {
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 15px;
-}
-
-.friends-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* Friends list container with scrollable content */
-.friends-list-container {
-  max-height: 40vh; /* Adjust the height as needed */
-  overflow-y: auto;
-  padding-bottom: 80px;
-}
-
-/* Clicking effect for all clickables */
-.clickable:active {
-  transform: scale(0.95);
-  transition: transform 0.1s ease-in-out;
-}
-
-.friend-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  background-color: #414141;
-  border-radius: 8px;
 }
 
 .friend-profile-img {
@@ -156,23 +215,6 @@
   font-size: 14px;
 }
 
-.no-friends {
-  text-align: center;
-  color: #c2bfbf;
-  font-size: 16px;
-}
-
-/* Floating CTA container */
-.cta-container {
-  position: fixed;
-  bottom: 80px;
-  left: 16px;
-  right: 16px;
-  display: flex;
-  justify-content: center;
-  z-index: 10;
-}
-
 .invite-cta-button {
   background-color: #fff;
   color: #000;
@@ -195,7 +237,6 @@
   background-color: #e6e6e6;
 }
 
-/* Overlay for sharing options */
 .overlay-container4 {
   position: fixed;
   top: 50%;
@@ -210,7 +251,7 @@
   justify-content: center;
   align-items: center;
   border-radius: 15px;
-  padding: 10px; /* Add padding to ensure content doesn't touch the edges */
+  padding: 10px;
   box-sizing: border-box;
 }
 
@@ -227,21 +268,6 @@
   z-index: 1000;
   animation: fadeIn 0.3s ease-out forwards;
   border-radius: 15px;
-}
-
-.invite-overlay.slide-out {
-  animation: slideOut 0.3s ease-out forwards;
-}
-
-/* Slide animations */
-@keyframes slideIn {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-
-@keyframes slideOut {
-  from { transform: translateY(0); }
-  to { transform: translateY(100%); }
 }
 
 .overlay-header4 {
@@ -268,13 +294,6 @@
   height: 1px;
   background-color: #777777;
   margin: 20px 0;
-}
-
-.overlay-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
 }
 
 .qr-code {
@@ -312,22 +331,21 @@
   background-color: #e6e6e6;
 }
 
-/* Copy confirmation popup */
 .copy-popup {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: #1d1d1d; /* Same as overlay */
+  background-color: #1d1d1d;
   color: #fff;
-  padding: 6px 12px; /* Reduced padding for 32px height */
+  padding: 6px 12px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   gap: 8px;
   z-index: 1002;
   font-size: 14px;
-  max-height: 32px; /* Max height constraint */
+  max-height: 32px;
   animation: fadeInOut 2s ease-in-out;
 }
 
@@ -341,7 +359,6 @@
   color: #fff;
 }
 
-/* Fade in and out animation for popup */
 @keyframes fadeInOut {
   0% { opacity: 0; }
   10% { opacity: 1; }
@@ -349,12 +366,7 @@
   100% { opacity: 0; }
 }
 
-/* Responsive adjustments */
 @media (max-width: 600px) {
-  .invite-screen {
-    padding: 12px;
-  }
-
   .invite-header {
     margin-top: 15px;
     margin-bottom: 20px;
@@ -420,20 +432,12 @@
 }
 
 @media (min-width: 768px) {
-  .invite-screen {
-    padding: 24px;
-  }
-
   .invite-link-card {
     padding: 20px;
   }
 
   .friend-card {
     padding: 16px;
-  }
-
-  .cta-container {
-    bottom: 90px;
   }
 
   .share-options {
