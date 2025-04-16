@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Navigation from "../components/Navigation";
 import "./ChallengeScreen.css";
 import { fetchImage } from "../utils/fetchImage";
@@ -8,7 +8,7 @@ import { BASE_URL } from "../utils/BaseVariables";
 const parseRemainingTime = (timeString) => {
   if (!timeString || typeof timeString !== "string") return 0;
   const [days, hours, minutes, seconds] = timeString.split(":").map(Number);
-  return (days * 24 * 60 * 60) + (hours * 60 * 60) + (minutes * 60) + seconds;
+  return days * 24 * 60 * 60 + hours * 60 * 60 + minutes * 60 + seconds;
 };
 
 const ChallengeScreen = () => {
@@ -18,7 +18,7 @@ const ChallengeScreen = () => {
     "Open Challenges": [],
     "Completed Challenges": [],
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showPerformOverlay, setShowPerformOverlay] = useState(false);
   const [performResult, setPerformResult] = useState(null);
@@ -27,9 +27,17 @@ const ChallengeScreen = () => {
   const [showShareOverlay, setShowShareOverlay] = useState(false);
   const [shareChallenge, setShareChallenge] = useState(null);
   const [showCopyPopup, setShowCopyPopup] = useState(false);
+  const [pagination, setPagination] = useState({
+    pageSize: 10,
+    pageNumber: 1,
+    hasMore: true,
+  });
+  const observer = useRef(null);
+  const loadMoreRef = useRef(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
+  // Fetch challenges
+  const fetchChallenges = useCallback(
+    async (status, pageNumber, append = false) => {
       setLoading(true);
       const token = localStorage.getItem("accessToken");
       if (!token) {
@@ -39,6 +47,89 @@ const ChallengeScreen = () => {
       }
 
       try {
+        const response = await fetch(
+          `${BASE_URL}/earn/challenge/my-challenges?status=${status}&page_size=${pagination.pageSize}&page_number=${pageNumber}`,
+          {
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          }
+        );
+        if (!response.ok) throw new Error(`Failed to fetch ${status} challenges`);
+
+        const data = await response.json();
+        const challenges = data.challenges || data;
+        const totalCount = data.total_count || data.length;
+
+        const newChallenges = challenges.map((challenge) => ({
+          title: challenge.name || "Unnamed Challenge",
+          description: challenge.description || "No description",
+          reward: challenge.reward || 0,
+          time: parseRemainingTime(challenge.remaining_time),
+          totalTime: parseRemainingTime(challenge.remaining_time),
+          status: status,
+          id: challenge.challenge_id,
+          imageId: challenge.image_id,
+          imageUrl: `${process.env.PUBLIC_URL}/logo.png`,
+          url: challenge.challenge_url || null,
+          eligible: challenge.is_eligible || false,
+          completed: status === "completed",
+        }));
+
+        setChallengesData((prev) => ({
+          ...prev,
+          [status === "ongoing" ? "Open Challenges" : "Completed Challenges"]: append
+            ? [...prev[status === "ongoing" ? "Open Challenges" : "Completed Challenges"], ...newChallenges]
+            : newChallenges,
+        }));
+
+        // Fetch images
+        const imagePromises = newChallenges.map((challenge) =>
+          challenge.imageId && challenge.imageId !== "None"
+            ? fetchImage(challenge.imageId, token, "challenge_image")
+            : Promise.resolve(`${process.env.PUBLIC_URL}/logo.png`)
+        );
+        const imageUrls = await Promise.all(imagePromises);
+
+        setChallengesData((prev) => ({
+          ...prev,
+          [status === "ongoing" ? "Open Challenges" : "Completed Challenges"]: (
+            append
+              ? prev[status === "ongoing" ? "Open Challenges" : "Completed Challenges"]
+              : []
+          ).concat(
+            newChallenges.map((challenge, index) => ({
+              ...challenge,
+              imageUrl: imageUrls[index],
+            }))
+          ),
+        }));
+
+        setPagination((prev) => ({
+          ...prev,
+          hasMore: challenges.length === prev.pageSize && totalCount > pageNumber * prev.pageSize,
+        }));
+      } catch (err) {
+        setError(err.message);
+        console.error(`Error fetching ${status} challenges:`, err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [pagination.pageSize]
+  );
+
+  // Initial data fetch
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      setLoading(true);
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        setError("No access token found");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Fetch profile
         const profileResponse = await fetch(`${BASE_URL}/user/profile`, {
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         });
@@ -46,147 +137,114 @@ const ChallengeScreen = () => {
         const profileData = await profileResponse.json();
         setTotalTaps(profileData.total_coins || 0);
 
-        const [ongoingResponse, completedResponse] = await Promise.all([
-          fetch(`${BASE_URL}/earn/challenge/my-challenges?status=ongoing`, {
-            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-          }),
-          fetch(`${BASE_URL}/earn/challenge/my-challenges?status=completed`, {
-            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-          }),
+        // Fetch initial challenges
+        await Promise.all([
+          fetchChallenges("ongoing", 1),
+          fetchChallenges("completed", 1),
         ]);
-
-        if (!ongoingResponse.ok || !completedResponse.ok) throw new Error("Failed to fetch challenges");
-
-        const ongoingChallenges = await ongoingResponse.json();
-        const completedChallenges = await completedResponse.json();
-
-        const allChallenges = [
-          ...ongoingChallenges.map((challenge) => ({
-            title: challenge.name || "Unnamed Challenge",
-            description: challenge.description || "No description",
-            reward: challenge.reward || 0,
-            time: parseRemainingTime(challenge.remaining_time),
-            totalTime: parseRemainingTime(challenge.remaining_time),
-            status: "ongoing",
-            id: challenge.challenge_id,
-            imageId: challenge.image_id,
-            imageUrl: `${process.env.PUBLIC_URL}/logo.png`,
-            url: challenge.url || null, // Assuming challenge has a url field
-            eligible: false, // Track eligibility for claiming
-          })),
-          ...completedChallenges.map((challenge) => ({
-            title: challenge.name || "Unnamed Challenge",
-            description: challenge.description || "No description",
-            reward: challenge.reward || 0,
-            time: 0,
-            totalTime: parseRemainingTime(challenge.remaining_time) || 0,
-            status: "completed",
-            id: challenge.challenge_id,
-            imageId: challenge.image_id,
-            imageUrl: `${process.env.PUBLIC_URL}/logo.png`,
-            url: null,
-            eligible: true, // Completed challenges are already claimed
-          })),
-        ];
-
-        setChallengesData({
-          "Open Challenges": allChallenges.filter((ch) => ch.status === "ongoing"),
-          "Completed Challenges": allChallenges.filter((ch) => ch.status === "completed"),
-        });
-
-        const imagePromises = allChallenges.map((challenge) =>
-          challenge.imageId
-            ? fetchImage(challenge.imageId, token, "challenge_image")
-            : Promise.resolve(`${process.env.PUBLIC_URL}/logo.png`)
-        );
-        const imageUrls = await Promise.all(imagePromises);
-
-        setChallengesData((prev) => ({
-          "Open Challenges": prev["Open Challenges"].map((challenge, index) => ({
-            ...challenge,
-            imageUrl: imageUrls[index],
-          })),
-          "Completed Challenges": prev["Completed Challenges"].map((challenge, index) => ({
-            ...challenge,
-            imageUrl: imageUrls[index + prev["Open Challenges"].length],
-          })),
-        }));
       } catch (err) {
         setError(err.message);
-        console.error("Error fetching data:", err);
-      } finally {
-        setLoading(false);
+        console.error("Error fetching initial data:", err);
       }
     };
 
-    fetchData();
+    fetchInitialData();
   }, []);
 
+  // Infinite scrolling
+  useEffect(() => {
+    if (!pagination.hasMore || loading) return;
+
+    const currentObserver = observer.current;
+    const handleIntersection = (entries) => {
+      if (entries[0].isIntersecting) {
+        setPagination((prev) => {
+          const nextPage = prev.pageNumber + 1;
+          fetchChallenges(activeTab === "Open Challenges" ? "ongoing" : "completed", nextPage, true);
+          return { ...prev, pageNumber: nextPage };
+        });
+      }
+    };
+
+    observer.current = new IntersectionObserver(handleIntersection, { threshold: 0.1 });
+    if (loadMoreRef.current) observer.current.observe(loadMoreRef.current);
+
+    return () => {
+      if (currentObserver) currentObserver.disconnect();
+    };
+  }, [activeTab, pagination.hasMore, loading, fetchChallenges]);
+
+  // Timer for display (optional, since not tied to eligibility)
   useEffect(() => {
     const interval = setInterval(() => {
       setChallengesData((prev) => ({
         ...prev,
-        "Open Challenges": prev["Open Challenges"].map((challenge) => {
-          if (challenge.status === "ongoing" && challenge.time > 0) {
-            return { ...challenge, time: challenge.time - 1 };
-          }
-          return challenge;
-        }),
+        "Open Challenges": prev["Open Challenges"].map((challenge) => ({
+          ...challenge,
+          time: challenge.time > 0 ? challenge.time - 1 : 0,
+        })),
       }));
     }, 1000);
 
     return () => clearInterval(interval);
   }, []);
 
-  const handlePerformChallenge = useCallback(async (challenge) => {
-    const token = localStorage.getItem("accessToken");
-    if (challenge.url) {
-      // Handle challenges with URL (similar to Social/Special tasks)
-      window.open(challenge.url, "_blank");
-      setPerformResult({
-        message: "Challenge opened in new tab. Return to claim your reward.",
-        success: true,
-      });
-      setSelectedChallenge(challenge);
-      setShowPerformOverlay(true);
+  const handlePerformChallenge = useCallback(
+    async (challenge) => {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        setError("No access token found");
+        return;
+      }
 
-      // Mark as eligible locally after redirect
-      setTimeout(() => {
-        setChallengesData((prev) => ({
-          ...prev,
-          "Open Challenges": prev["Open Challenges"].map((ch) =>
-            ch.id === challenge.id ? { ...ch, eligible: true } : ch
-          ),
-        }));
-      }, 1000); // Short delay to simulate redirect and return
-    } else {
-      // Handle challenges without URL (similar to In-Game tasks)
       try {
-        const response = await fetch(`${BASE_URL}/perform_challenge/${challenge.id}`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+        if (challenge.url) {
+          // URL-based challenges (like Social/Special)
+          window.open(challenge.url, "_blank");
+          setPerformResult({
+            message: "Challenge opened in new tab. Return to claim your reward.",
+            success: true,
+          });
+          setSelectedChallenge(challenge);
+          setShowPerformOverlay(true);
 
-        const result = await response.json();
-        const isEligible = response.ok && !result.message.includes("not completed");
+          // Mark as eligible after delay
+          setTimeout(() => {
+            setChallengesData((prev) => ({
+              ...prev,
+              "Open Challenges": prev["Open Challenges"].map((ch) =>
+                ch.id === challenge.id ? { ...ch, eligible: true } : ch
+              ),
+            }));
+          }, 2000); // Matches TaskScreen's delay
+        } else {
+          // Non-URL challenges
+          const response = await fetch(`${BASE_URL}/perform_challenge/${challenge.id}`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
 
-        setPerformResult({
-          message: result.message || (isEligible ? "Challenge performed successfully" : "Challenge not completed"),
-          success: isEligible,
-        });
-        setSelectedChallenge(challenge);
-        setShowPerformOverlay(true);
+          const result = await response.json();
+          const isEligible = response.ok && !result.message.includes("not completed");
 
-        if (isEligible) {
-          setChallengesData((prev) => ({
-            ...prev,
-            "Open Challenges": prev["Open Challenges"].map((ch) =>
-              ch.id === challenge.id ? { ...ch, eligible: true } : ch
-            ),
-          }));
+          setPerformResult({
+            message: result.message || (isEligible ? "Challenge performed successfully" : "Challenge not completed"),
+            success: isEligible,
+          });
+          setSelectedChallenge(challenge);
+          setShowPerformOverlay(true);
+
+          if (isEligible) {
+            setChallengesData((prev) => ({
+              ...prev,
+              "Open Challenges": prev["Open Challenges"].map((ch) =>
+                ch.id === challenge.id ? { ...ch, eligible: true } : ch
+              ),
+            }));
+          }
         }
       } catch (err) {
         console.error("Error performing challenge:", err);
@@ -194,44 +252,57 @@ const ChallengeScreen = () => {
         setSelectedChallenge(challenge);
         setShowPerformOverlay(true);
       }
-    }
-  }, []);
+    },
+    []
+  );
 
-  const handleClaimReward = useCallback(async (challenge) => {
-    const token = localStorage.getItem("accessToken");
-    try {
-      const response = await fetch(`${BASE_URL}/earn/challenge/my-challenges/${challenge.id}/claim`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to claim reward: ${response.status} - ${errorText}`);
+  const handleClaimReward = useCallback(
+    async (challenge) => {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        setError("No access token found");
+        return;
       }
 
-      const result = await response.json();
-      setSelectedChallenge({ ...challenge, rewardMessage: result.message });
-      setShowRewardOverlay(true);
+      try {
+        const response = await fetch(`${BASE_URL}/earn/challenge/my-challenges/${challenge.id}/claim`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
 
-      // Move challenge to Completed Challenges
-      setChallengesData((prev) => ({
-        "Open Challenges": prev["Open Challenges"].filter((ch) => ch.id !== challenge.id),
-        "Completed Challenges": [
-          ...prev["Completed Challenges"],
-          { ...challenge, status: "completed", time: 0, eligible: true },
-        ],
-      }));
-    } catch (err) {
-      console.error("Error claiming reward:", err);
-      alert(`Failed to claim reward: ${err.message}`);
-    }
-  }, []);
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to claim reward: ${errorText}`);
+        }
 
-  const handleTabClick = useCallback((tab) => setActiveTab(tab), []);
+        const result = await response.json();
+        setSelectedChallenge({ ...challenge, rewardMessage: result.message });
+        setShowRewardOverlay(true);
+
+        // Move to Completed Challenges
+        setChallengesData((prev) => ({
+          "Open Challenges": prev["Open Challenges"].filter((ch) => ch.id !== challenge.id),
+          "Completed Challenges": [
+            ...prev["Completed Challenges"],
+            { ...challenge, status: "completed", time: 0, eligible: true, completed: true },
+          ],
+        }));
+      } catch (err) {
+        console.error("Error claiming reward:", err);
+        alert(`Failed to claim reward: ${err.message}`);
+      }
+    },
+    []
+  );
+
+  const handleTabClick = useCallback((tab) => {
+    setActiveTab(tab);
+    setPagination((prev) => ({ ...prev, pageNumber: 1, hasMore: true }));
+    fetchChallenges(tab === "Open Challenges" ? "ongoing" : "completed", 1);
+  }, [fetchChallenges]);
 
   const handleClosePerformOverlay = useCallback(() => {
     setShowPerformOverlay(false);
@@ -264,9 +335,7 @@ const ChallengeScreen = () => {
   };
 
   const getProgressPercentage = (challenge) => {
-    if (challenge.status === "completed") return 100;
-    if (!challenge.totalTime || !Number.isFinite(challenge.time)) return 0;
-    return Math.max(0, Math.min(100, ((challenge.totalTime - challenge.time) / challenge.totalTime) * 100));
+    return challenge.eligible || challenge.completed ? 100 : 0;
   };
 
   const shareLink = `https://t.me/Bored_Tap_Bot?start=challenge_${shareChallenge?.id || ""}`;
@@ -315,85 +384,81 @@ const ChallengeScreen = () => {
 
         <div className="challenge-cards-container">
           <div className="challenge-cards">
-            {loading ? (
-              <p className="loading-message">Fetching Challenges...</p>
-            ) : error ? (
-              <p className="error-message">Error: {error}</p>
-            ) : challenges.length > 0 ? (
-              challenges.map((challenge) => {
-                const isEligible = challenge.eligible && challenge.time <= 0;
-                return (
-                  <div
-                    className="challenge-card clickable"
-                    key={challenge.id}
-                    onClick={() =>
-                      activeTab !== "Completed Challenges" && !isEligible
-                        ? handlePerformChallenge(challenge)
-                        : null
-                    }
-                  >
-                    <div className="challenge-left">
-                      <img
-                        src={challenge.imageUrl}
-                        alt={challenge.title}
-                        className="challenge-icon"
-                        onError={(e) => (e.target.src = `${process.env.PUBLIC_URL}/logo.png`)}
-                      />
-                      <div className="challenge-info">
-                        <p className="challenge-title">{challenge.title}</p>
-                        <div className="challenge-meta">
-                          <div className="reward-section">
-                            <img
-                              src={`${process.env.PUBLIC_URL}/logo.png`}
-                              alt="Coin Icon"
-                              className="small-icon"
-                            />
-                            <span>Reward: {challenge.reward}</span>
-                          </div>
-                          <span className="challenge-time">
-                            {challenge.status === "ongoing" ? formatTime(challenge.time) : "Completed"}
-                          </span>
-                        </div>
-                        <div className="progress-bar">
-                          <div
-                            className="progress-fill"
-                            style={{ width: `${getProgressPercentage(challenge)}%` }}
+            {error && <p className="error-message">Error: {error}</p>}
+            {challenges.length > 0 ? (
+              challenges.map((challenge) => (
+                <div
+                  className="challenge-card clickable"
+                  key={challenge.id}
+                  onClick={() =>
+                    activeTab !== "Completed Challenges" && !challenge.eligible && !challenge.completed
+                      ? handlePerformChallenge(challenge)
+                      : null
+                  }
+                >
+                  <div className="challenge-left">
+                    <img
+                      src={challenge.imageUrl}
+                      alt={challenge.title}
+                      className="challenge-icon"
+                      onError={(e) => (e.target.src = `${process.env.PUBLIC_URL}/logo.png`)}
+                    />
+                    <div className="challenge-info">
+                      <p className="challenge-title">{challenge.title}</p>
+                      <div className="challenge-meta">
+                        <div className="reward-section">
+                          <img
+                            src={`${process.env.PUBLIC_URL}/logo.png`}
+                            alt="Coin Icon"
+                            className="small-icon"
                           />
+                          <span>Reward: {challenge.reward}</span>
                         </div>
+                        <span className="challenge-time">
+                          {challenge.status === "ongoing" ? formatTime(challenge.time) : "Completed"}
+                        </span>
                       </div>
-                    </div>
-                    {challenge.status === "ongoing" ? (
-                      <button
-                        className={`challenge-cta ${isEligible ? "active" : "inactive"}`}
-                        disabled={!isEligible}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          isEligible && handleClaimReward(challenge);
-                        }}
-                      >
-                        Claim
-                      </button>
-                    ) : (
-                      <div
-                        className="challenge-share-icon clickable"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleShareChallenge(challenge);
-                        }}
-                      >
-                        <img
-                          src={`${process.env.PUBLIC_URL}/share-icon.png`}
-                          alt="Share Icon"
-                          className="share-icon"
+                      <div className="progress-bar">
+                        <div
+                          className="progress-fill"
+                          style={{ width: `${getProgressPercentage(challenge)}%` }}
                         />
                       </div>
-                    )}
+                    </div>
                   </div>
-                );
-              })
+                  {challenge.status === "ongoing" ? (
+                    <button
+                      className={`challenge-cta ${challenge.eligible ? "active" : "inactive"}`}
+                      disabled={!challenge.eligible}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (challenge.eligible) handleClaimReward(challenge);
+                      }}
+                    >
+                      Claim
+                    </button>
+                  ) : (
+                    <div
+                      className="challenge-share-icon clickable"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleShareChallenge(challenge);
+                      }}
+                    >
+                      <img
+                        src={`${process.env.PUBLIC_URL}/share-icon.png`}
+                        alt="Share Icon"
+                        className="share-icon"
+                      />
+                    </div>
+                  )}
+                </div>
+              ))
             ) : (
               <p className="no-challenge-message">No challenges available for this category.</p>
             )}
+            {loading && <p className="loading-message">Loading more...</p>}
+            <div ref={loadMoreRef} style={{ height: "20px" }} />
           </div>
         </div>
       </div>
@@ -448,9 +513,7 @@ const ChallengeScreen = () => {
               <div className="overlay-divider"></div>
               <div className="overlay-content7">
                 <img
-                  src={
-                    selectedChallenge.imageUrl || `${process.env.PUBLIC_URL}/logo.png`
-                  }
+                  src={selectedChallenge.imageUrl || `${process.env.PUBLIC_URL}/logo.png`}
                   alt="Challenge Icon"
                   className="overlay-task-icon"
                   onError={(e) => (e.target.src = `${process.env.PUBLIC_URL}/logo.png`)}
