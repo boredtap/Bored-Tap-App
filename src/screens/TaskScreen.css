@@ -502,6 +502,25 @@
     font-size: 18px;
   }
 
+  .loading-message {
+    text-align: center;
+    color: #fff;
+    font-size: 16px;
+    margin: 20px 0;
+  }
+  .error-message {
+    text-align: center;
+    color: #ff4444;
+    font-size: 16px;
+    margin: 20px 0;
+  }
+  .no-task-message {
+    text-align: center;
+    color: #fff;
+    font-size: 16px;
+    margin: 20px 0;
+  }
+
   .overlay-coin-icon {
     width: 20px;
     height: 20px;

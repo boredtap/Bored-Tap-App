@@ -3,14 +3,13 @@ import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./Dashboard.css";
 import { BoostContext } from "../context/BoosterContext";
-import { throttle } from "lodash"; // Install lodash if not available
-import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
+import { throttle } from "lodash";
+import { BASE_URL } from "../utils/BaseVariables";
 
 // Updated Recharge times per spec (in ms) - now including all 5 levels
 const RECHARGE_TIMES = [5000, 4500, 3500, 2500, 1500, 500]; // Level 0 through 5
 
 const Dashboard = () => {
-  //console.log("Dashboard rendering");
   const navigate = useNavigate();
   const [clanPath, setClanPath] = useState("/clan-screen");
 
@@ -18,7 +17,7 @@ const Dashboard = () => {
     const checkClanStatus = async () => {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
-  
+
       try {
         const response = await fetch(`${BASE_URL}/user/clan/my_clan`, {
           method: "GET",
@@ -34,14 +33,14 @@ const Dashboard = () => {
               setClanPath("/clan-details-screen");
               localStorage.removeItem("pendingClanId");
             } else if (data.status === "pending") {
-              setClanPath("/clan-screen"); // Pending state, will show "Join" and "Awaiting verification"
-              localStorage.setItem("pendingClanId", data.id); // Store pending clan ID if needed
+              setClanPath("/clan-screen");
+              localStorage.setItem("pendingClanId", data.id);
             }
           } else {
-            setClanPath("/clan-screen"); // No clan, show both CTAs
+            setClanPath("/clan-screen");
           }
         } else {
-          setClanPath("/clan-screen"); // Default to clan screen on error
+          setClanPath("/clan-screen");
         }
       } catch (err) {
         console.error("Error checking clan status:", err);
@@ -75,28 +74,18 @@ const Dashboard = () => {
     electricBoost,
   } = useContext(BoostContext);
 
-  // State for Telegram user data
   const [telegramData, setTelegramData] = useState({
     telegram_user_id: "",
     username: "User",
     image_url: `${process.env.PUBLIC_URL}/profile-picture.png`,
   });
-  //console.log("telegramData in Dashboard:", telegramData);
 
-  // State for user profile data
   const [profile, setProfile] = useState({ level: 1, level_name: "Beginner" });
-
-  // State for streak and boost data
   const [currentStreak, setCurrentStreak] = useState(0);
-
-  // State for total taps and tap effects
   const [tapEffects, setTapEffects] = useState([]);
-
-  // State for AutoBot overlay
   const [showAutoBotOverlay, setShowAutoBotOverlay] = useState(false);
   const [autoBotTaps, setAutoBotTaps] = useState(0);
 
-  // Refs for tap and recharge management
   const tapCountSinceLastUpdate = useRef(0);
   const lastTapTime = useRef(Date.now());
   const rechargeInterval = useRef(null);
@@ -108,7 +97,6 @@ const Dashboard = () => {
     electricBoostRef.current = electricBoost;
   }, [electricBoost]);
 
-  // Reset function
   const resetBoosters = () => {
     const resetState = {
       tapperBoost: { usesLeft: 3, isActive: false, endTime: null, resetTime: null },
@@ -135,9 +123,6 @@ const Dashboard = () => {
     });
   };
 
-
-
-  // Fetch profile on mount
   useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem("accessToken");
@@ -155,7 +140,6 @@ const Dashboard = () => {
         });
         if (!response.ok) throw new Error("Failed to fetch profile");
         const data = await response.json();
-        //console.log("Data from /user/profile:", data);
         if (data.total_coins === 0 && data.level === 1) {
           resetBoosters();
         } else {
@@ -168,13 +152,11 @@ const Dashboard = () => {
           if (savedTapTime) {
             lastTapTime.current = parseInt(savedTapTime, 10);
           }
-          // Update telegramData with backend profile data
           setTelegramData({
             telegram_user_id: data.telegram_user_id || "",
             username: data.username || "User",
             image_url: data.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
           });
-          //console.log("telegramData after update:", telegramData);
         }
       } catch (err) {
         console.error("Error fetching profile:", err);
@@ -194,7 +176,8 @@ const Dashboard = () => {
     const isoString = new Date(Date.now()).toISOString();
 
     const token = localStorage.getItem("accessToken");
-    const url = `${BASE_URL}/update-coins?coins=${tapsToSync}&current_power_limit=${electricBoostRef.current}&last_active_time=${isoString}&auto_bot_active=true`;
+    // Add source parameter to track coin origin
+    const url = `${BASE_URL}/update-coins?coins=${tapsToSync}&current_power_limit=${electricBoostRef.current}&last_active_time=${isoString}&auto_bot_active=true&source=${tapsToSync > 0 ? "tap" : "auto_bot"}`;
 
     fetch(url, {
       method: "POST",
@@ -227,7 +210,6 @@ const Dashboard = () => {
     };
   }, [throttledUpdateBackend]);
 
-  // Electric boost recharge logic
   useEffect(() => {
     const checkRecharge = () => {
       const now = Date.now();
@@ -236,7 +218,7 @@ const Dashboard = () => {
       if (timeSinceLastTap >= rechargeTime && electricBoost < maxElectricBoost) {
         if (!rechargeInterval.current) {
           rechargeInterval.current = setInterval(() => {
-            console.log("Setting Electric Boost from interval update")
+            console.log("Setting Electric Boost from interval update");
             setElectricBoost((prev) => {
               const newBoost = Math.min(prev + 1, maxElectricBoost);
               if (newBoost === maxElectricBoost) {
@@ -263,7 +245,6 @@ const Dashboard = () => {
     };
   }, [electricBoost, maxElectricBoost, rechargeTime]);
 
-  // Full Energy claim event listener
   useEffect(() => {
     const handleFullEnergyClaimed = () => {
       setElectricBoost(maxElectricBoost);
@@ -273,7 +254,6 @@ const Dashboard = () => {
     return () => window.removeEventListener("fullEnergyClaimed", handleFullEnergyClaimed);
   }, [maxElectricBoost]);
 
-  // Extra boosters event listeners
   useEffect(() => {
     const handleBoostUpgraded = (event) => {
       const newLevel = event.detail?.level || 1;

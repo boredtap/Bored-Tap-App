@@ -4,10 +4,10 @@ import "./ChallengeScreen.css";
 import { fetchImage } from "../utils/fetchImage";
 import { BASE_URL } from "../utils/BaseVariables";
 
-// Parse "DD:HH:MM:SS" string into total seconds
 const parseRemainingTime = (timeString) => {
   if (!timeString || typeof timeString !== "string") return 0;
   const [days, hours, minutes, seconds] = timeString.split(":").map(Number);
+
   return days * 24 * 60 * 60 + hours * 60 * 60 + minutes * 60 + seconds;
 };
 
@@ -35,7 +35,6 @@ const ChallengeScreen = () => {
   const observer = useRef(null);
   const loadMoreRef = useRef(null);
 
-  // Fetch challenges
   const fetchChallenges = useCallback(
     async (status, pageNumber, append = false) => {
       setLoading(true);
@@ -81,7 +80,6 @@ const ChallengeScreen = () => {
             : newChallenges,
         }));
 
-        // Fetch images
         const imagePromises = newChallenges.map((challenge) =>
           challenge.imageId && challenge.imageId !== "None"
             ? fetchImage(challenge.imageId, token, "challenge_image")
@@ -117,7 +115,6 @@ const ChallengeScreen = () => {
     [pagination.pageSize]
   );
 
-  // Initial data fetch
   useEffect(() => {
     const fetchInitialData = async () => {
       setLoading(true);
@@ -129,7 +126,6 @@ const ChallengeScreen = () => {
       }
 
       try {
-        // Fetch profile
         const profileResponse = await fetch(`${BASE_URL}/user/profile`, {
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         });
@@ -137,7 +133,6 @@ const ChallengeScreen = () => {
         const profileData = await profileResponse.json();
         setTotalTaps(profileData.total_coins || 0);
 
-        // Fetch initial challenges
         await Promise.all([
           fetchChallenges("ongoing", 1),
           fetchChallenges("completed", 1),
@@ -151,7 +146,6 @@ const ChallengeScreen = () => {
     fetchInitialData();
   }, []);
 
-  // Infinite scrolling
   useEffect(() => {
     if (!pagination.hasMore || loading) return;
 
@@ -174,7 +168,6 @@ const ChallengeScreen = () => {
     };
   }, [activeTab, pagination.hasMore, loading, fetchChallenges]);
 
-  // Timer for display (optional, since not tied to eligibility)
   useEffect(() => {
     const interval = setInterval(() => {
       setChallengesData((prev) => ({
@@ -199,7 +192,6 @@ const ChallengeScreen = () => {
 
       try {
         if (challenge.url) {
-          // URL-based challenges (like Social/Special)
           window.open(challenge.url, "_blank");
           setPerformResult({
             message: "Challenge opened in new tab. Return to claim your reward.",
@@ -208,7 +200,6 @@ const ChallengeScreen = () => {
           setSelectedChallenge(challenge);
           setShowPerformOverlay(true);
 
-          // Mark as eligible after delay
           setTimeout(() => {
             setChallengesData((prev) => ({
               ...prev,
@@ -216,9 +207,8 @@ const ChallengeScreen = () => {
                 ch.id === challenge.id ? { ...ch, eligible: true } : ch
               ),
             }));
-          }, 2000); // Matches TaskScreen's delay
+          }, 2000);
         } else {
-          // Non-URL challenges
           const response = await fetch(`${BASE_URL}/perform_challenge/${challenge.id}`, {
             method: "POST",
             headers: {
@@ -282,7 +272,6 @@ const ChallengeScreen = () => {
         setSelectedChallenge({ ...challenge, rewardMessage: result.message });
         setShowRewardOverlay(true);
 
-        // Move to Completed Challenges
         setChallengesData((prev) => ({
           "Open Challenges": prev["Open Challenges"].filter((ch) => ch.id !== challenge.id),
           "Completed Challenges": [
@@ -339,7 +328,7 @@ const ChallengeScreen = () => {
   };
 
   const shareLink = `https://t.me/Bored_Tap_Bot?start=challenge_${shareChallenge?.id || ""}`;
-  const shareMessage = `I just completed "${shareChallenge?.title}" and earned ${shareChallenge?.reward} BT Coins on Bored Tap! Join me!`;
+  const shareMessage = `I just completed "${shareChallenge?.title}" and earned ${shareChallenge?.reward.toLocaleString()} BT Coins on Bored Tap! Join me!`;
 
   const handleTelegramShare = () => {
     const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(shareLink)}&text=${encodeURIComponent(shareMessage)}`;
@@ -412,7 +401,7 @@ const ChallengeScreen = () => {
                             alt="Coin Icon"
                             className="small-icon"
                           />
-                          <span>Reward: {challenge.reward}</span>
+                          <span>Reward: {challenge.reward.toLocaleString()}</span>
                         </div>
                         <span className="challenge-time">
                           {challenge.status === "ongoing" ? formatTime(challenge.time) : "Completed"}
@@ -525,7 +514,7 @@ const ChallengeScreen = () => {
                     alt="Coin Icon"
                     className="overlay-coin-icon"
                   />
-                  <span>{selectedChallenge.reward}</span>
+                  <span>{selectedChallenge.reward.toLocaleString()}</span>
                 </div>
                 <p className="overlay-message">
                   {selectedChallenge.rewardMessage || "has been added to your coin balance"}

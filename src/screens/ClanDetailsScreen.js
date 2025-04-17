@@ -2,17 +2,29 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import "./ClanDetailsScreen.css";
-import { fetchImage } from "../utils/fetchImage"; // Unified import
+import { fetchImage } from "../utils/fetchImage";
 import { BASE_URL } from "../utils/BaseVariables";
 
 const ClanDetailsScreen = () => {
   const navigate = useNavigate();
   const [clanData, setClanData] = useState(() => {
-    const storedData = localStorage.getItem("clanData");
-    return storedData ? JSON.parse(storedData) : null;
+    try {
+      const storedData = localStorage.getItem("clanData");
+      const parsedData = storedData ? JSON.parse(storedData) : null;
+      // Validate parsed data to ensure it's an object with required fields
+      if (parsedData && typeof parsedData === "object" && parsedData.id) {
+        return parsedData;
+      }
+      localStorage.removeItem("clanData"); // Clear invalid data
+      return null;
+    } catch (err) {
+      console.error("Error parsing clanData from localStorage:", err);
+      localStorage.removeItem("clanData");
+      return null;
+    }
   });
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Set to true initially
   const [topEarners, setTopEarners] = useState([]);
   const [overlayState, setOverlayState] = useState(null);
   const [isCreator, setIsCreator] = useState(false);
@@ -22,9 +34,12 @@ const ClanDetailsScreen = () => {
   useEffect(() => {
     const fetchClanDetails = async () => {
       setLoading(true);
+      setError(null);
       const token = localStorage.getItem("accessToken");
       if (!token) {
+        setError("No access token found");
         navigate("/splash");
+        setLoading(false);
         return;
       }
 
@@ -42,7 +57,12 @@ const ClanDetailsScreen = () => {
         }
         const data = await response.json();
 
-        // Fetch clan image using unified fetchImage
+        // Validate response data
+        if (!data || !data.id) {
+          throw new Error("Invalid clan data received");
+        }
+
+        // Fetch clan image
         const imageUrl = await fetchImage(
           data.image_id,
           token,
@@ -53,7 +73,7 @@ const ClanDetailsScreen = () => {
         const updatedClanData = {
           id: data.id,
           icon: imageUrl,
-          name: data.name,
+          name: data.name || "Unnamed Clan",
           position: data.rank || "#?",
           topIcon: `${process.env.PUBLIC_URL}/${
             data.rank === "#1"
@@ -72,6 +92,7 @@ const ClanDetailsScreen = () => {
           inClanRank: data.in_clan_rank
             ? data.in_clan_rank.charAt(0).toUpperCase() + data.in_clan_rank.slice(1)
             : "Member",
+          status: data.status || "unknown", // Ensure status is set
         };
 
         setClanData(updatedClanData);
@@ -93,7 +114,7 @@ const ClanDetailsScreen = () => {
           throw new Error(`Failed to fetch top earners: ${topEarnersResponse.status}`);
         }
         const topEarnersData = await topEarnersResponse.json();
-        setTopEarners(topEarnersData);
+        setTopEarners(Array.isArray(topEarnersData) ? topEarnersData : []);
 
         // Fetch leadership transfer candidates (only for creator)
         if (data.in_clan_rank === "creator") {
@@ -109,18 +130,23 @@ const ClanDetailsScreen = () => {
           );
           if (transferResponse.ok) {
             const transferData = await transferResponse.json();
-            if (transferData.status === "success" && transferData.username) {
+            if (transferData?.status === "success" && transferData.username) {
               setHasTransferCandidates(true);
               setNextLeader(transferData.username);
             } else {
               setHasTransferCandidates(false);
               setNextLeader(null);
             }
+          } else {
+            setHasTransferCandidates(false);
+            setNextLeader(null);
           }
         }
       } catch (err) {
-        setError(err.message);
-        console.error("Error in fetchClanDetails:", err.message);
+        setError(err.message || "Failed to fetch clan details");
+        console.error("Error in fetchClanDetails:", err);
+        setClanData(null); // Clear clanData on error
+        localStorage.removeItem("clanData");
       } finally {
         setLoading(false);
       }
@@ -133,6 +159,10 @@ const ClanDetailsScreen = () => {
 
   const handleTransferLeadership = async () => {
     const token = localStorage.getItem("accessToken");
+    if (!token) {
+      setError("No access token found");
+      return;
+    }
     try {
       const response = await fetch(
         `${BASE_URL}/user/clan/exit_clan?creator_exit_action=transfer`,
@@ -150,13 +180,17 @@ const ClanDetailsScreen = () => {
       }
       setOverlayState("transferComplete");
     } catch (err) {
-      setError(err.message);
-      console.error("Error transferring leadership:", err.message);
+      setError(err.message || "Failed to transfer leadership");
+      console.error("Error transferring leadership:", err);
     }
   };
 
   const handleCloseClan = async () => {
     const token = localStorage.getItem("accessToken");
+    if (!token) {
+      setError("No access token found");
+      return;
+    }
     try {
       const response = await fetch(
         `${BASE_URL}/user/clan/exit_clan?creator_exit_action=close`,
@@ -169,16 +203,22 @@ const ClanDetailsScreen = () => {
           },
         }
       );
-      if (!response.ok) throw new Error("Failed to close clan");
+      if (!response.ok) {
+        throw new Error("Failed to close clan");
+      }
       setOverlayState("closeComplete");
     } catch (err) {
-      setError(err.message);
-      console.error("Error closing clan:", err.message);
+      setError(err.message || "Failed to close clan");
+      console.error("Error closing clan:", err);
     }
   };
 
   const handleLeaveClan = async () => {
     const token = localStorage.getItem("accessToken");
+    if (!token) {
+      setError("No access token found");
+      return;
+    }
     try {
       const response = await fetch(`${BASE_URL}/user/clan/exit_clan`, {
         method: "POST",
@@ -188,11 +228,13 @@ const ClanDetailsScreen = () => {
           Accept: "application/json",
         },
       });
-      if (!response.ok) throw new Error("Failed to leave clan");
+      if (!response.ok) {
+        throw new Error("Failed to leave clan");
+      }
       setOverlayState("leaveComplete");
     } catch (err) {
-      setError(err.message);
-      console.error("Error leaving clan:", err.message);
+      setError(err.message || "Failed to leave clan");
+      console.error("Error leaving clan:", err);
     }
   };
 
@@ -204,7 +246,11 @@ const ClanDetailsScreen = () => {
     }
   };
 
-  const handleSeeAll = () => navigate("/clan-top-earners", { state: { clanData, topEarners } });
+  const handleSeeAll = () => {
+    if (clanData) {
+      navigate("/clan-top-earners", { state: { clanData, topEarners } });
+    }
+  };
 
   const renderOverlay = () => {
     if (!overlayState) return null;
@@ -370,7 +416,7 @@ const ClanDetailsScreen = () => {
   if (loading) {
     return (
       <div className="clan-details-screen">
-        <p className="loading-text">Loading clan details...</p>
+        <p className="loading-message">Loading clan details...</p>
         <Navigation />
       </div>
     );
@@ -379,7 +425,7 @@ const ClanDetailsScreen = () => {
   if (error) {
     return (
       <div className="clan-details-screen">
-        <p className="error-text">Error: {error}</p>
+        <p className="error-message">Error: {error}</p>
         <Navigation />
       </div>
     );
@@ -388,7 +434,7 @@ const ClanDetailsScreen = () => {
   if (!clanData) {
     return (
       <div className="clan-details-screen">
-        <p>No clan data available.</p>
+        <p className="no-data-message">No clan data available. Please join or create a clan.</p>
         <Navigation />
       </div>
     );
@@ -455,10 +501,10 @@ const ClanDetailsScreen = () => {
         <div className="top-earners-container">
           {topEarners.length > 0 ? (
             topEarners.map((earner, index) => (
-              <div className="top-earner-card" key={index}>
+              <div className="top-earner-card" key={earner.telegram_user_id || index}>
                 <div className="top-earner-left">
                   <img
-                    src={earner.image_url}
+                    src={earner.image_url || `${process.env.PUBLIC_URL}/default-profile-icon.png`}
                     alt={`${earner.username}'s Profile`}
                     className="top-earner-icon round-frame"
                     loading="lazy"
@@ -466,9 +512,9 @@ const ClanDetailsScreen = () => {
                   />
                   <div className="top-earner-info">
                     <p className="top-earner-username">
-                      {earner.username} <span className="level">.Lvl {earner.level}</span>
+                      {earner.username || "Unknown"} <span className="level">.Lvl {earner.level || 1}</span>
                     </p>
-                    <p className="top-earner-coins">{earner.total_coins.toLocaleString()} BT Coin</p>
+                    <p className="top-earner-coins">{(earner.total_coins || 0).toLocaleString()} BT Coin</p>
                   </div>
                 </div>
                 <div className="top-earner-right">
@@ -497,7 +543,7 @@ const ClanDetailsScreen = () => {
               </div>
             ))
           ) : (
-            <p>No top earners available yet.</p>
+            <p className="no-data-message">No top earners available yet.</p>
           )}
         </div>
       </div>

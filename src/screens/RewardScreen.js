@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useCallback } from "react";
+import React, { useState, useEffect, useContext, useCallback, useRef } from "react";
 import Navigation from "../components/Navigation";
 import "./RewardScreen.css";
 import { BoostContext } from "../context/BoosterContext";
@@ -39,50 +39,53 @@ const RewardScreen = () => {
   const [activeTab, setActiveTab] = useState("on_going");
   const { totalTaps } = useContext(BoostContext);
   const [rewardsData, setRewardsData] = useState({ on_going: [], claimed: [] });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [showOverlay, setShowOverlay] = useState(false);
   const [selectedReward, setSelectedReward] = useState(null);
   const [showShareOverlay, setShowShareOverlay] = useState(false);
   const [shareReward, setShareReward] = useState(null);
   const [showCopyPopup, setShowCopyPopup] = useState(false);
-  const [userStatus, setUserStatus] = useState(null); // "banned" or "suspended"
+  const [userStatus, setUserStatus] = useState(null);
   const [remainingTime, setRemainingTime] = useState(null);
+  const [pagination, setPagination] = useState({
+    pageSize: 10,
+    pageNumber: 1,
+    hasMore: true,
+  });
+  const observer = useRef(null);
+  const loadMoreRef = useRef(null);
 
-  useEffect(() => {
-    const fetchRewardsData = async () => {
+  const fetchRewardsData = useCallback(
+    async (status, pageNumber, append = false) => {
       setLoading(true);
+      setError(null);
       const token = localStorage.getItem("accessToken");
       if (!token) {
-        console.error("No access token found");
+        setError("No access token found");
         setLoading(false);
         return;
       }
 
       try {
-        await fetchWithAuth(`${BASE_URL}/user/profile`, token);
-        const rewardTypes = ["on_going", "claimed"];
-        const fetchedRewards = await Promise.all(
-          rewardTypes.map((type) =>
-            fetchWithAuth(`${BASE_URL}/earn/my-rewards?status=${type}`, token)
-          )
+        const data = await fetchWithAuth(
+          `${BASE_URL}/earn/my-rewards?status=${status}&page_size=${pagination.pageSize}&page_number=${pageNumber}`,
+          token
         );
+        const rewards = data.rewards || data;
+        const totalCount = data.total_count || rewards.length;
 
-        const initialRewards = {
-          on_going: fetchedRewards[0].map((reward) => ({
-            ...reward,
-            imageUrl: `${process.env.PUBLIC_URL}/logo.png`,
-          })),
-          claimed: fetchedRewards[1].map((reward) => ({
-            ...reward,
-            imageUrl: `${process.env.PUBLIC_URL}/logo.png`,
-          })),
-        };
+        const newRewards = rewards.map((reward) => ({
+          ...reward,
+          imageUrl: `${process.env.PUBLIC_URL}/logo.png`,
+        }));
 
-        setRewardsData(initialRewards);
-        setLoading(false);
+        setRewardsData((prev) => ({
+          ...prev,
+          [status]: append ? [...prev[status], ...newRewards] : newRewards,
+        }));
 
-        const allRewards = [...fetchedRewards[0], ...fetchedRewards[1]];
-        const imagePromises = allRewards.map((reward) =>
+        const imagePromises = newRewards.map((reward) =>
           reward.reward_image_id
             ? fetchImage(reward.reward_image_id, token, "reward_image")
             : Promise.resolve(`${process.env.PUBLIC_URL}/logo.png`)
@@ -90,14 +93,18 @@ const RewardScreen = () => {
         const imageUrls = await Promise.all(imagePromises);
 
         setRewardsData((prev) => ({
-          on_going: prev.on_going.map((reward, index) => ({
-            ...reward,
-            imageUrl: imageUrls[index],
-          })),
-          claimed: prev.claimed.map((reward, index) => ({
-            ...reward,
-            imageUrl: imageUrls[index + prev.on_going.length],
-          })),
+          ...prev,
+          [status]: (append ? prev[status] : []).concat(
+            newRewards.map((reward, index) => ({
+              ...reward,
+              imageUrl: imageUrls[index],
+            }))
+          ),
+        }));
+
+        setPagination((prev) => ({
+          ...prev,
+          hasMore: rewards.length === prev.pageSize && totalCount > pageNumber * prev.pageSize,
         }));
       } catch (err) {
         if (err.message === "banned") {
@@ -106,17 +113,78 @@ const RewardScreen = () => {
           setUserStatus("suspended");
           setRemainingTime(err.cause);
         } else {
-          console.error("Error fetching rewards data:", err);
-          setRewardsData({ on_going: [], claimed: [] });
+          setError(`Error fetching ${status} rewards`);
+          console.error(`Error fetching ${status} rewards:`, err);
         }
+      } finally {
+        setLoading(false);
+      }
+    },
+    [pagination.pageSize]
+  );
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      setLoading(true);
+      setError(null);
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        setError("No access token found");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        await fetchWithAuth(`${BASE_URL}/user/profile`, token);
+        await Promise.all([
+          fetchRewardsData("on_going", 1),
+          fetchRewardsData("claimed", 1),
+        ]);
+      } catch (err) {
+        if (err.message === "banned") {
+          setUserStatus("banned");
+        } else if (err.message === "suspended") {
+          setUserStatus("suspended");
+          setRemainingTime(err.cause);
+        } else {
+          setError("Error fetching initial data");
+          console.error("Error fetching initial data:", err);
+        }
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchRewardsData();
-  }, []);
+    fetchInitialData();
+  }, [fetchRewardsData]);
 
-  const handleTabClick = useCallback((tab) => setActiveTab(tab), []);
+  useEffect(() => {
+    if (!pagination.hasMore || loading) return;
+
+    const currentObserver = observer.current;
+    const handleIntersection = (entries) => {
+      if (entries[0].isIntersecting) {
+        setPagination((prev) => {
+          const nextPage = prev.pageNumber + 1;
+          fetchRewardsData(activeTab, nextPage, true);
+          return { ...prev, pageNumber: nextPage };
+        });
+      }
+    };
+
+    observer.current = new IntersectionObserver(handleIntersection, { threshold: 0.1 });
+    if (loadMoreRef.current) observer.current.observe(loadMoreRef.current);
+
+    return () => {
+      if (currentObserver) currentObserver.disconnect();
+    };
+  }, [activeTab, pagination.hasMore, loading, fetchRewardsData]);
+
+  const handleTabClick = useCallback((tab) => {
+    setActiveTab(tab);
+    setPagination((prev) => ({ ...prev, pageNumber: 1, hasMore: true }));
+    fetchRewardsData(tab, 1);
+  }, [fetchRewardsData]);
 
   const handleClaimReward = useCallback(
     async (rewardId) => {
@@ -166,7 +234,7 @@ const RewardScreen = () => {
   }, []);
 
   const shareLink = `https://t.me/Bored_Tap_Bot?start=reward_${shareReward?.reward_id || ""}`;
-  const shareMessage = `I just claimed "${shareReward?.reward_title}" worth ${shareReward?.reward} BT Coins on Bored Tap! Join me and claim yours!`;
+  const shareMessage = `I just claimed "${shareReward?.reward_title}" worth ${shareReward?.reward.toLocaleString()} BT Coins on Bored Tap! Join me and claim yours!`;
 
   const handleTelegramShare = () => {
     const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(shareLink)}&text=${encodeURIComponent(shareMessage)}`;
@@ -212,9 +280,9 @@ const RewardScreen = () => {
 
         <div className="reward-cards-container">
           <div className="reward-cards">
-            {loading ? (
-              <p className="loading-message">Fetching Rewards...</p>
-            ) : rewards.length > 0 ? (
+            {error && <p className="error-message">Error: {error}</p>}
+            {loading && <p className="loading-message">Loading rewards...</p>}
+            {rewards.length > 0 ? (
               rewards.map((reward) => (
                 <div className="reward-card" key={reward.reward_id}>
                   <div className="reward-left">
@@ -232,7 +300,7 @@ const RewardScreen = () => {
                           alt="Coin Icon"
                           className="small-icon"
                         />
-                        <span>Reward: {reward.reward}</span>
+                        <span>Reward: {reward.reward.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
@@ -260,7 +328,10 @@ const RewardScreen = () => {
                 </div>
               ))
             ) : (
-              <p>No rewards available for this category.</p>
+              <p className="no-rewards-message">No rewards available for this category.</p>
+            )}
+            {pagination.hasMore && !loading && (
+              <div ref={loadMoreRef} style={{ height: "20px" }} />
             )}
           </div>
         </div>
@@ -293,7 +364,7 @@ const RewardScreen = () => {
                     alt="Coin Icon"
                     className="overlay-coin-icon"
                   />
-                  <span>{selectedReward.reward}</span>
+                  <span>{selectedReward.reward.toLocaleString()}</span>
                 </div>
                 <p className="overlay-message">has been added to your coin balance</p>
                 <button className="overlay-cta" onClick={handleCloseOverlay}>

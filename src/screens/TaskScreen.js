@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useContext } from "react";
+import React, { useState, useEffect, useCallback, useContext, useRef } from "react";
 import Navigation from "../components/Navigation";
 import "./TaskScreen.css";
 import { BoostContext } from "../context/BoosterContext";
@@ -8,7 +8,8 @@ const TaskScreen = () => {
   const { totalTaps } = useContext(BoostContext);
   const [activeTab, setActiveTab] = useState("In-Game");
   const [tasksData, setTasksData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [showPerformOverlay, setShowPerformOverlay] = useState(false);
   const [performResult, setPerformResult] = useState(null);
   const [showRewardOverlay, setShowRewardOverlay] = useState(false);
@@ -16,55 +17,20 @@ const TaskScreen = () => {
   const [showShareOverlay, setShowShareOverlay] = useState(false);
   const [shareTask, setShareTask] = useState(null);
   const [showCopyPopup, setShowCopyPopup] = useState(false);
-  const [imageCache, setImageCache] = useState({}); // Cache for image URLs
+  const [imageCache, setImageCache] = useState({});
+  const [pagination, setPagination] = useState({
+    pageSize: 10,
+    pageNumber: 1,
+    hasMore: true,
+  });
+  const observer = useRef(null);
+  const loadMoreRef = useRef(null);
 
   const taskTabs = {
     "In-Game": "In-Game",
     Special: "Special",
     Social: "Social",
     Completed: "Completed",
-  };
-
-  // Fetch tasks
-  useEffect(() => {
-    fetchTasksAndTaps(activeTab);
-  }, [activeTab]);
-
-  const fetchTasksAndTaps = async (taskType) => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) throw new Error("No access token found");
-
-      const url =
-        taskType === "Completed"
-          ? `${BASE_URL}/user/tasks/my_tasks/completed_tasks`
-          : `${BASE_URL}/user/tasks/my_tasks?task_type=${taskType.toLowerCase()}`;
-
-      const tasksResponse = await fetch(url, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      if (!tasksResponse.ok) throw new Error(`Task fetch failed: ${tasksResponse.status}`);
-
-      const tasks = await tasksResponse.json();
-      setTasksData(tasks);
-
-      // Pre-fetch images for tasks
-      tasks.forEach((task) => {
-        if (task.task_image_id && !imageCache[task.task_image_id]) {
-          fetchImage(task.task_image_id, token);
-        }
-      });
-    } catch (err) {
-      console.error("Error fetching tasks:", err);
-      setTasksData([]);
-    } finally {
-      setLoading(false);
-    }
   };
 
   // Fetch image by ID
@@ -88,6 +54,84 @@ const TaskScreen = () => {
       setImageCache((prev) => ({ ...prev, [imageId]: `${process.env.PUBLIC_URL}/logo.png` }));
     }
   };
+
+  // Fetch tasks
+  const fetchTasksAndTaps = useCallback(
+    async (taskType, pageNumber, append = false) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) throw new Error("No access token found");
+
+        const url =
+          taskType === "Completed"
+            ? `${BASE_URL}/user/tasks/my_tasks/completed_tasks?page_size=${pagination.pageSize}&page_number=${pageNumber}`
+            : `${BASE_URL}/user/tasks/my_tasks?task_type=${taskType.toLowerCase()}&page_size=${pagination.pageSize}&page_number=${pageNumber}`;
+
+        const tasksResponse = await fetch(url, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (!tasksResponse.ok) throw new Error(`Task fetch failed: ${tasksResponse.status}`);
+
+        const tasks = await tasksResponse.json();
+        const taskList = Array.isArray(tasks) ? tasks : tasks.tasks || [];
+
+        setTasksData((prev) => (append ? [...prev, ...taskList] : taskList));
+
+        // Pre-fetch images for tasks
+        taskList.forEach((task) => {
+          if (task.task_image_id && !imageCache[task.task_image_id]) {
+            fetchImage(task.task_image_id, token);
+          }
+        });
+
+        setPagination((prev) => ({
+          ...prev,
+          hasMore: taskList.length === prev.pageSize,
+        }));
+      } catch (err) {
+        console.error("Error fetching tasks:", err);
+        setError(err.message);
+        if (!append) setTasksData([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [pagination.pageSize, imageCache]
+  );
+
+  useEffect(() => {
+    setTasksData([]);
+    setPagination((prev) => ({ ...prev, pageNumber: 1, hasMore: true }));
+    fetchTasksAndTaps(activeTab, 1);
+  }, [activeTab, fetchTasksAndTaps]);
+
+  useEffect(() => {
+    if (!pagination.hasMore || loading) return;
+
+    const currentObserver = observer.current;
+    const handleIntersection = (entries) => {
+      if (entries[0].isIntersecting) {
+        setPagination((prev) => {
+          const nextPage = prev.pageNumber + 1;
+          fetchTasksAndTaps(activeTab, nextPage, true);
+          return { ...prev, pageNumber: nextPage };
+        });
+      }
+    };
+
+    observer.current = new IntersectionObserver(handleIntersection, { threshold: 0.1 });
+    if (loadMoreRef.current) observer.current.observe(loadMoreRef.current);
+
+    return () => {
+      if (currentObserver) currentObserver.disconnect();
+    };
+  }, [activeTab, pagination.hasMore, loading, fetchTasksAndTaps]);
 
   const handlePerformTask = useCallback(
     async (task) => {
@@ -170,13 +214,16 @@ const TaskScreen = () => {
         setSelectedTask({ ...task, rewardMessage: result.message });
         setShowRewardOverlay(true);
 
-        fetchTasksAndTaps(activeTab);
+        // Refresh tasks for the current tab
+        setTasksData([]);
+        setPagination((prev) => ({ ...prev, pageNumber: 1, hasMore: true }));
+        fetchTasksAndTaps(activeTab, 1);
       } catch (err) {
         console.error("Error claiming reward:", err);
         alert(`Failed to claim reward: ${err.message}`);
       }
     },
-    [activeTab]
+    [activeTab, fetchTasksAndTaps]
   );
 
   const handleTabClick = useCallback((tab) => setActiveTab(tab), []);
@@ -249,9 +296,9 @@ const TaskScreen = () => {
 
         <div className="task-list-container">
           <div className="task-list">
-            {loading ? (
-              <p className="loading-message">Fetching Tasks...</p>
-            ) : tasksData.length > 0 ? (
+            {error && <p className="error-message">Error: {error}</p>}
+            {loading && <p className="loading-message">Fetching Tasks...</p>}
+            {tasksData.length > 0 ? (
               tasksData.map((task) => {
                 const taskImage =
                   task.task_image_id && imageCache[task.task_image_id]
@@ -275,13 +322,13 @@ const TaskScreen = () => {
                       <div className="task-meta">
                         <p className="task-name">{task.task_name}</p>
                         <div className="task-reward">
-                        <img
-                          src={`${process.env.PUBLIC_URL}/logo.png`}
-                          alt="Coin Icon"
-                          className="coin-icon"
-                        />
-                        <span>{task.task_reward.toLocaleString()}</span>
-                      </div>
+                          <img
+                            src={`${process.env.PUBLIC_URL}/logo.png`}
+                            alt="Coin Icon"
+                            className="coin-icon"
+                          />
+                          <span>{task.task_reward.toLocaleString()}</span>
+                        </div>
                       </div>
                     </div>
                     {activeTab === "Completed" ? (
@@ -314,7 +361,10 @@ const TaskScreen = () => {
                 );
               })
             ) : (
-              <p className="no-task-message">No tasks available in this category.</p>
+              !loading && <p className="no-task-message">No tasks available in this category.</p>
+            )}
+            {pagination.hasMore && !loading && (
+              <div ref={loadMoreRef} style={{ height: "20px" }} />
             )}
           </div>
         </div>

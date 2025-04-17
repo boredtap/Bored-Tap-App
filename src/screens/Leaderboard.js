@@ -1,39 +1,30 @@
 import React, { useState, useEffect } from "react";
 import Navigation from "../components/Navigation";
 import "./Leaderboard.css";
-import { BASE_URL } from "../utils/BaseVariables"; // Import BASE_URL
+import { BASE_URL } from "../utils/BaseVariables";
 
-/**
- * Leaderboard component displaying user rankings across different time periods (Daily, Weekly, Monthly, All Time).
- * Fetches leaderboard data and the current user's position, with tabbed navigation and a floating card for the user's rank.
- */
 const Leaderboard = () => {
-  // State for managing the active leaderboard period (e.g., Daily, Weekly)
   const [activeTab, setActiveTab] = useState("Daily");
-  // State for storing leaderboard data, organized by period
   const [leaderboardData, setLeaderboardData] = useState({});
-  // State for the current user's profile and rank
   const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(false); // Added loading state
+  const [error, setError] = useState(null); // Added error state
 
-  // Fetch leaderboard data and user profile when the component mounts
   useEffect(() => {
-    /**
-     * Asynchronously fetches leaderboard data for all periods and the current user's profile.
-     * Updates state with fetched data or logs errors if requests fail.
-     */
     const fetchLeaderboardData = async () => {
+      setLoading(true);
+      setError(null);
       const token = localStorage.getItem("accessToken");
       if (!token) {
-        console.error("No access token found");
+        setError("No access token found");
+        setLoading(false);
         return;
       }
 
       try {
-        // Define periods for leaderboard data
         const periods = ["Daily", "Weekly", "Monthly", "All Time"];
         const fetchedData = {};
 
-        // Fetch leaderboard data for each period
         for (const period of periods) {
           const category = period.toLowerCase().replace(" ", "_");
           const response = await fetch(
@@ -57,7 +48,6 @@ const Leaderboard = () => {
 
         setLeaderboardData(fetchedData);
 
-        // Fetch current user's profile
         const userResponse = await fetch(`${BASE_URL}/user/profile`, {
           method: "GET",
           headers: {
@@ -80,24 +70,24 @@ const Leaderboard = () => {
           telegram_user_id: userData.telegram_user_id || "",
         });
       } catch (err) {
+        setError("Error fetching leaderboard data");
         console.error("Error fetching leaderboard data:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchLeaderboardData();
   }, []);
 
-  // Handle tab switching for different leaderboard periods
   const handleTabClick = (tab) => {
     setActiveTab(tab);
   };
 
-  // Get the current leaderboard data based on the selected tab
   const currentLeaderboard = leaderboardData[activeTab] || [];
 
   return (
     <div className="leaderboard-screen">
-      {/* Header section with leaderboard icon */}
       <div className="leaderboard-header">
         <img
           src={`${process.env.PUBLIC_URL}/leader.png`}
@@ -106,7 +96,6 @@ const Leaderboard = () => {
         />
       </div>
 
-      {/* Pagination tabs for switching between periods */}
       <div className="pagination">
         {Object.keys(leaderboardData).map((tab) => (
           <span
@@ -119,9 +108,11 @@ const Leaderboard = () => {
         ))}
       </div>
 
-      {/* Leaderboard entries or loading/error message */}
       <div className="leaderboard-body">
-        {currentLeaderboard.length === 0 ? (
+        {error && <p className="error-message">Error: {error}</p>}
+        {loading ? (
+          <p className="loading-message">Loading leaderboard...</p>
+        ) : currentLeaderboard.length === 0 ? (
           <p className="no-leaderboard">No leaderboard entries available yet.</p>
         ) : (
           <div className="leaderboard-cards-container">
@@ -141,7 +132,7 @@ const Leaderboard = () => {
                       <p className="leaderboard-title">
                         {entry.username} <span className="level">.Lvl {entry.level || 1}</span>
                       </p>
-                      <p className="leaderboard-value">{entry.coins_earned || 0} BT Coin</p>
+                      <p className="leaderboard-value">{(entry.coins_earned || 0).toLocaleString()} BT Coin</p>
                     </div>
                   </div>
                   <div className="leaderboard-right">
@@ -174,7 +165,6 @@ const Leaderboard = () => {
         )}
       </div>
 
-      {/* Floating card for current user's rank */}
       {currentUser && (
         <div className="floating-card">
           <div className="leaderboard-left">
@@ -187,7 +177,7 @@ const Leaderboard = () => {
               <p className="leaderboard-title black-text">
                 {currentUser.username} <span className="level black-text">.Lvl {currentUser.level}</span>
               </p>
-              <p className="leaderboard-value black-text">{currentUser.value} BT Coin</p>
+              <p className="leaderboard-value black-text">{currentUser.value.toLocaleString()} BT Coin</p>
             </div>
           </div>
           <div className="leaderboard-right">
