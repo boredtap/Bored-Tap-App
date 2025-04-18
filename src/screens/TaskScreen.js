@@ -7,7 +7,12 @@ import { BASE_URL } from "../utils/BaseVariables";
 const TaskScreen = () => {
   const { totalTaps } = useContext(BoostContext);
   const [activeTab, setActiveTab] = useState("In-Game");
-  const [tasksData, setTasksData] = useState([]);
+  const [tasksData, setTasksData] = useState({
+    "In-Game": [],
+    Special: [],
+    Social: [],
+    Completed: [],
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showPerformOverlay, setShowPerformOverlay] = useState(false);
@@ -25,6 +30,7 @@ const TaskScreen = () => {
   });
   const observer = useRef(null);
   const loadMoreRef = useRef(null);
+  const isFetching = useRef(false);
 
   const taskTabs = {
     "In-Game": "In-Game",
@@ -32,6 +38,80 @@ const TaskScreen = () => {
     Social: "Social",
     Completed: "Completed",
   };
+
+  // [MODIFIED] Function to clear task eligibility entries from localStorage
+  const clearTaskEligibility = () => {
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith("task_") && key.endsWith("_eligible")) {
+        localStorage.removeItem(key);
+        console.log(`Cleared localStorage key: ${key}`);
+      }
+    });
+  };
+
+  // [MODIFIED] Check session and user state on mount
+  useEffect(() => {
+    const checkSessionAndUser = async () => {
+      const telegramUser = JSON.parse(localStorage.getItem("telegramUser"));
+      const storedSessionId = localStorage.getItem("sessionId");
+      const currentSessionId = Date.now().toString(); // Unique per session
+      const token = localStorage.getItem("accessToken");
+
+      // [MODIFIED] Clear eligibility if session ID is missing or different
+      if (!storedSessionId || storedSessionId !== currentSessionId) {
+        console.log("New session detected, clearing task eligibility");
+        clearTaskEligibility();
+        localStorage.setItem("sessionId", currentSessionId);
+      }
+
+      // [MODIFIED] Check if user is starting afresh
+      if (telegramUser && token) {
+        try {
+          const response = await fetch(`${BASE_URL}/user/profile`, {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
+          if (response.ok) {
+            const data = await response.json();
+            const storedTelegramId = localStorage.getItem("lastTelegramId");
+            const isFreshAccount = data.total_coins === 0 && data.level === 1;
+
+            // [MODIFIED] Clear eligibility if new user or fresh account
+            if (
+              !storedTelegramId ||
+              storedTelegramId !== telegramUser.id ||
+              isFreshAccount
+            ) {
+              console.log(
+                `New user or fresh account detected (telegramId: ${telegramUser.id}, isFresh: ${isFreshAccount}), clearing task eligibility`
+              );
+              clearTaskEligibility();
+              localStorage.setItem("lastTelegramId", telegramUser.id);
+            }
+          }
+        } catch (err) {
+          console.error("Error checking user profile:", err);
+        }
+      }
+    };
+
+    checkSessionAndUser();
+
+    // [MODIFIED] Clear eligibility on browser/tab close
+    const handleBeforeUnload = () => {
+      console.log("App closing, clearing task eligibility");
+      clearTaskEligibility();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
 
   // Fetch image by ID
   const fetchImage = async (imageId, token) => {
@@ -58,6 +138,8 @@ const TaskScreen = () => {
   // Fetch tasks
   const fetchTasksAndTaps = useCallback(
     async (taskType, pageNumber, append = false) => {
+      if (isFetching.current) return;
+      isFetching.current = true;
       setLoading(true);
       setError(null);
       try {
@@ -81,7 +163,20 @@ const TaskScreen = () => {
         const tasks = await tasksResponse.json();
         const taskList = Array.isArray(tasks) ? tasks : tasks.tasks || [];
 
-        setTasksData((prev) => (append ? [...prev, ...taskList] : taskList));
+        // [MODIFIED] Check localStorage for Social/Special task eligibility
+        const updatedTaskList = taskList.map((task) => {
+          if (taskType === "Social" || taskType === "Special") {
+            const isEligibleInStorage = localStorage.getItem(`task_${task.task_id}_eligible`) === "true";
+            console.log(`Task ${task.task_id} eligibility: backend=${task.eligible}, localStorage=${isEligibleInStorage}`);
+            return { ...task, eligible: task.eligible || isEligibleInStorage };
+          }
+          return task;
+        });
+
+        setTasksData((prev) => ({
+          ...prev,
+          [taskType]: append ? [...prev[taskType], ...updatedTaskList] : updatedTaskList,
+        }));
 
         // Pre-fetch images for tasks
         taskList.forEach((task) => {
@@ -92,31 +187,38 @@ const TaskScreen = () => {
 
         setPagination((prev) => ({
           ...prev,
+          pageNumber,
           hasMore: taskList.length === prev.pageSize,
         }));
       } catch (err) {
         console.error("Error fetching tasks:", err);
         setError(err.message);
-        if (!append) setTasksData([]);
+        if (!append) {
+          setTasksData((prev) => ({ ...prev, [taskType]: [] }));
+        }
       } finally {
         setLoading(false);
+        isFetching.current = false;
       }
     },
     [pagination.pageSize, imageCache]
   );
 
+  // Load tasks for the active tab on mount or tab change
   useEffect(() => {
-    setTasksData([]);
+    // Only fetch if tasks for the active tab are empty or pagination is reset
+    if (tasksData[activeTab].length === 0 || pagination.pageNumber === 1) {
+      fetchTasksAndTaps(activeTab, 1);
+    }
     setPagination((prev) => ({ ...prev, pageNumber: 1, hasMore: true }));
-    fetchTasksAndTaps(activeTab, 1);
   }, [activeTab, fetchTasksAndTaps]);
 
+  // IntersectionObserver for infinite scroll
   useEffect(() => {
-    if (!pagination.hasMore || loading) return;
+    if (!pagination.hasMore || loading || isFetching.current) return;
 
-    const currentObserver = observer.current;
     const handleIntersection = (entries) => {
-      if (entries[0].isIntersecting) {
+      if (entries[0].isIntersecting && !isFetching.current) {
         setPagination((prev) => {
           const nextPage = prev.pageNumber + 1;
           fetchTasksAndTaps(activeTab, nextPage, true);
@@ -126,10 +228,11 @@ const TaskScreen = () => {
     };
 
     observer.current = new IntersectionObserver(handleIntersection, { threshold: 0.1 });
-    if (loadMoreRef.current) observer.current.observe(loadMoreRef.current);
+    const currentLoadMoreRef = loadMoreRef.current;
+    if (currentLoadMoreRef) observer.current.observe(currentLoadMoreRef);
 
     return () => {
-      if (currentObserver) currentObserver.disconnect();
+      if (observer.current) observer.current.disconnect();
     };
   }, [activeTab, pagination.hasMore, loading, fetchTasksAndTaps]);
 
@@ -139,19 +242,29 @@ const TaskScreen = () => {
 
       if (activeTab === "Social" || activeTab === "Special") {
         if (task.task_url) {
+          // [MODIFIED] Open task URL and mark as eligible in localStorage
+          console.log(`Navigating to task ${task.task_id} URL: ${task.task_url}`);
           window.open(task.task_url, "_blank");
+
+          // [MODIFIED] Store eligibility in localStorage
+          localStorage.setItem(`task_${task.task_id}_eligible`, "true");
+          console.log(`Marked task ${task.task_id} as eligible in localStorage`);
+
+          // [MODIFIED] Update tasksData to reflect eligibility immediately
+          setTasksData((prev) => ({
+            ...prev,
+            [activeTab]: prev[activeTab].map((t) =>
+              t.task_id === task.task_id ? { ...t, eligible: true } : t
+            ),
+          }));
+
+          // [MODIFIED] Show overlay to confirm task navigation
           setPerformResult({
-            message: "Task opened in new tab. Return to claim your reward.",
+            message: "Task opened in new tab. You can now claim your reward.",
             success: true,
           });
           setSelectedTask(task);
           setShowPerformOverlay(true);
-
-          setTimeout(() => {
-            setTasksData((prev) =>
-              prev.map((t) => (t.task_id === task.task_id ? { ...t, eligible: true } : t))
-            );
-          }, 1000);
         } else {
           setPerformResult({ message: "No task URL provided", success: false });
           setSelectedTask(task);
@@ -178,9 +291,12 @@ const TaskScreen = () => {
           setShowPerformOverlay(true);
 
           if (isEligible) {
-            setTasksData((prev) =>
-              prev.map((t) => (t.task_id === task.task_id ? { ...t, eligible: true } : t))
-            );
+            setTasksData((prev) => ({
+              ...prev,
+              [activeTab]: prev[activeTab].map((t) =>
+                t.task_id === task.task_id ? { ...t, eligible: true } : t
+              ),
+            }));
           }
         } catch (err) {
           console.error("Error performing In-Game task:", err);
@@ -214,8 +330,12 @@ const TaskScreen = () => {
         setSelectedTask({ ...task, rewardMessage: result.message });
         setShowRewardOverlay(true);
 
-        // Refresh tasks for the current tab
-        setTasksData([]);
+        // [MODIFIED] Clear localStorage eligibility after claiming reward
+        localStorage.removeItem(`task_${task.task_id}_eligible`);
+        console.log(`Cleared eligibility for task ${task.task_id} from localStorage`);
+
+        // Reset tasks for the current tab to reflect updated status
+        setTasksData((prev) => ({ ...prev, [activeTab]: [] }));
         setPagination((prev) => ({ ...prev, pageNumber: 1, hasMore: true }));
         fetchTasksAndTaps(activeTab, 1);
       } catch (err) {
@@ -297,9 +417,11 @@ const TaskScreen = () => {
         <div className="task-list-container">
           <div className="task-list">
             {error && <p className="error-message">Error: {error}</p>}
-            {loading && <p className="loading-message">Fetching Tasks...</p>}
-            {tasksData.length > 0 ? (
-              tasksData.map((task) => {
+            {loading && tasksData[activeTab].length === 0 && (
+              <p className="loading-message">Fetching Tasks...</p>
+            )}
+            {tasksData[activeTab].length > 0 ? (
+              tasksData[activeTab].map((task) => {
                 const taskImage =
                   task.task_image_id && imageCache[task.task_image_id]
                     ? imageCache[task.task_image_id]
@@ -365,6 +487,9 @@ const TaskScreen = () => {
             )}
             {pagination.hasMore && !loading && (
               <div ref={loadMoreRef} style={{ height: "20px" }} />
+            )}
+            {loading && tasksData[activeTab].length > 0 && (
+              <p className="loading-message">Loading more tasks...</p>
             )}
           </div>
         </div>
