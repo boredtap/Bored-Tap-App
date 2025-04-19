@@ -39,32 +39,23 @@ const TaskScreen = () => {
     Completed: "Completed",
   };
 
-  // [MODIFIED] Function to clear task eligibility entries from localStorage
   const clearTaskEligibility = () => {
-    Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith("task_") && key.endsWith("_eligible")) {
-        localStorage.removeItem(key);
-        console.log(`Cleared localStorage key: ${key}`);
-      }
-    });
+    console.log("Skipping clearTaskEligibility to preserve unclaimed task eligibility");
   };
 
-  // [MODIFIED] Check session and user state on mount
   useEffect(() => {
     const checkSessionAndUser = async () => {
       const telegramUser = JSON.parse(localStorage.getItem("telegramUser"));
       const storedSessionId = localStorage.getItem("sessionId");
-      const currentSessionId = Date.now().toString(); // Unique per session
+      const currentSessionId = Date.now().toString();
       const token = localStorage.getItem("accessToken");
 
-      // [MODIFIED] Clear eligibility if session ID is missing or different
       if (!storedSessionId || storedSessionId !== currentSessionId) {
         console.log("New session detected, clearing task eligibility");
         clearTaskEligibility();
         localStorage.setItem("sessionId", currentSessionId);
       }
 
-      // [MODIFIED] Check if user is starting afresh
       if (telegramUser && token) {
         try {
           const response = await fetch(`${BASE_URL}/user/profile`, {
@@ -79,7 +70,6 @@ const TaskScreen = () => {
             const storedTelegramId = localStorage.getItem("lastTelegramId");
             const isFreshAccount = data.total_coins === 0 && data.level === 1;
 
-            // [MODIFIED] Clear eligibility if new user or fresh account
             if (
               !storedTelegramId ||
               storedTelegramId !== telegramUser.id ||
@@ -100,7 +90,6 @@ const TaskScreen = () => {
 
     checkSessionAndUser();
 
-    // [MODIFIED] Clear eligibility on browser/tab close
     const handleBeforeUnload = () => {
       console.log("App closing, clearing task eligibility");
       clearTaskEligibility();
@@ -113,7 +102,6 @@ const TaskScreen = () => {
     };
   }, []);
 
-  // Fetch image by ID
   const fetchImage = async (imageId, token) => {
     try {
       const response = await fetch(`${BASE_URL}/bored-tap/user_app/image?image_id=${imageId}`, {
@@ -135,7 +123,6 @@ const TaskScreen = () => {
     }
   };
 
-  // Fetch tasks
   const fetchTasksAndTaps = useCallback(
     async (taskType, pageNumber, append = false) => {
       if (isFetching.current) return;
@@ -146,10 +133,11 @@ const TaskScreen = () => {
         const token = localStorage.getItem("accessToken");
         if (!token) throw new Error("No access token found");
 
+        const normalizedTaskType = taskType === "In-Game" ? "in-game" : taskType.toLowerCase();
         const url =
           taskType === "Completed"
             ? `${BASE_URL}/user/tasks/my_tasks/completed_tasks?page_size=${pagination.pageSize}&page_number=${pageNumber}`
-            : `${BASE_URL}/user/tasks/my_tasks?task_type=${taskType.toLowerCase()}&page_size=${pagination.pageSize}&page_number=${pageNumber}`;
+            : `${BASE_URL}/user/tasks/my_tasks?task_type=${normalizedTaskType}&page_size=${pagination.pageSize}&page_number=${pageNumber}`;
 
         const tasksResponse = await fetch(url, {
           method: "GET",
@@ -163,14 +151,10 @@ const TaskScreen = () => {
         const tasks = await tasksResponse.json();
         const taskList = Array.isArray(tasks) ? tasks : tasks.tasks || [];
 
-        // [MODIFIED] Check localStorage for Social/Special task eligibility
         const updatedTaskList = taskList.map((task) => {
-          if (taskType === "Social" || taskType === "Special") {
-            const isEligibleInStorage = localStorage.getItem(`task_${task.task_id}_eligible`) === "true";
-            console.log(`Task ${task.task_id} eligibility: backend=${task.eligible}, localStorage=${isEligibleInStorage}`);
-            return { ...task, eligible: task.eligible || isEligibleInStorage };
-          }
-          return task;
+          const isEligibleInStorage = localStorage.getItem(`task_${task.task_id}_eligible`) === "true";
+          console.log(`Task ${task.task_id} eligibility: backend=${task.eligible}, localStorage=${isEligibleInStorage}`);
+          return { ...task, eligible: isEligibleInStorage || task.eligible };
         });
 
         setTasksData((prev) => ({
@@ -178,7 +162,6 @@ const TaskScreen = () => {
           [taskType]: append ? [...prev[taskType], ...updatedTaskList] : updatedTaskList,
         }));
 
-        // Pre-fetch images for tasks
         taskList.forEach((task) => {
           if (task.task_image_id && !imageCache[task.task_image_id]) {
             fetchImage(task.task_image_id, token);
@@ -204,16 +187,13 @@ const TaskScreen = () => {
     [pagination.pageSize, imageCache]
   );
 
-  // Load tasks for the active tab on mount or tab change
   useEffect(() => {
-    // Only fetch if tasks for the active tab are empty or pagination is reset
     if (tasksData[activeTab].length === 0 || pagination.pageNumber === 1) {
       fetchTasksAndTaps(activeTab, 1);
     }
     setPagination((prev) => ({ ...prev, pageNumber: 1, hasMore: true }));
   }, [activeTab, fetchTasksAndTaps]);
 
-  // IntersectionObserver for infinite scroll
   useEffect(() => {
     if (!pagination.hasMore || loading || isFetching.current) return;
 
@@ -242,15 +222,12 @@ const TaskScreen = () => {
 
       if (activeTab === "Social" || activeTab === "Special") {
         if (task.task_url) {
-          // [MODIFIED] Open task URL and mark as eligible in localStorage
           console.log(`Navigating to task ${task.task_id} URL: ${task.task_url}`);
           window.open(task.task_url, "_blank");
 
-          // [MODIFIED] Store eligibility in localStorage
           localStorage.setItem(`task_${task.task_id}_eligible`, "true");
           console.log(`Marked task ${task.task_id} as eligible in localStorage`);
 
-          // [MODIFIED] Update tasksData to reflect eligibility immediately
           setTasksData((prev) => ({
             ...prev,
             [activeTab]: prev[activeTab].map((t) =>
@@ -258,7 +235,6 @@ const TaskScreen = () => {
             ),
           }));
 
-          // [MODIFIED] Show overlay to confirm task navigation
           setPerformResult({
             message: "Task opened in new tab. You can now claim your reward.",
             success: true,
@@ -270,7 +246,7 @@ const TaskScreen = () => {
           setSelectedTask(task);
           setShowPerformOverlay(true);
         }
-      } else {
+      } else if (activeTab === "In-Game") {
         try {
           const response = await fetch(`${BASE_URL}/user/tasks/my_tasks/${task.task_id}`, {
             method: "POST",
@@ -280,8 +256,13 @@ const TaskScreen = () => {
             },
           });
 
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to perform task: ${response.status} - ${errorText}`);
+          }
+
           const result = await response.json();
-          const isEligible = response.ok && !result.message.includes("not completed");
+          const isEligible = result.message.includes("completed successfully");
 
           setPerformResult({
             message: result.message || (isEligible ? "Task performed successfully" : "Task not completed"),
@@ -291,6 +272,9 @@ const TaskScreen = () => {
           setShowPerformOverlay(true);
 
           if (isEligible) {
+            localStorage.setItem(`task_${task.task_id}_eligible`, "true");
+            console.log(`Marked task ${task.task_id} as eligible in localStorage`);
+
             setTasksData((prev) => ({
               ...prev,
               [activeTab]: prev[activeTab].map((t) =>
@@ -300,7 +284,7 @@ const TaskScreen = () => {
           }
         } catch (err) {
           console.error("Error performing In-Game task:", err);
-          setPerformResult({ message: "Error performing task", success: false });
+          setPerformResult({ message: `Error performing task: ${err.message}`, success: false });
           setSelectedTask(task);
           setShowPerformOverlay(true);
         }
@@ -330,11 +314,9 @@ const TaskScreen = () => {
         setSelectedTask({ ...task, rewardMessage: result.message });
         setShowRewardOverlay(true);
 
-        // [MODIFIED] Clear localStorage eligibility after claiming reward
         localStorage.removeItem(`task_${task.task_id}_eligible`);
         console.log(`Cleared eligibility for task ${task.task_id} from localStorage`);
 
-        // Reset tasks for the current tab to reflect updated status
         setTasksData((prev) => ({ ...prev, [activeTab]: [] }));
         setPagination((prev) => ({ ...prev, pageNumber: 1, hasMore: true }));
         fetchTasksAndTaps(activeTab, 1);
@@ -426,7 +408,7 @@ const TaskScreen = () => {
                   task.task_image_id && imageCache[task.task_image_id]
                     ? imageCache[task.task_image_id]
                     : `${process.env.PUBLIC_URL}/logo.png`;
-                const isEligible = task.eligible || task.completed;
+                const isEligible = task.eligible;
 
                 return (
                   <div

@@ -7,7 +7,6 @@ import { BASE_URL } from "../utils/BaseVariables";
 const parseRemainingTime = (timeString) => {
   if (!timeString || typeof timeString !== "string") return 0;
   const [days, hours, minutes, seconds] = timeString.split(":").map(Number);
-
   return days * 24 * 60 * 60 + hours * 60 * 60 + minutes * 60 + seconds;
 };
 
@@ -35,32 +34,23 @@ const ChallengeScreen = () => {
   const observer = useRef(null);
   const loadMoreRef = useRef(null);
 
-  // [MODIFIED] Function to clear challenge eligibility entries from localStorage
   const clearChallengeEligibility = () => {
-    Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith("challenge_") && key.endsWith("_eligible")) {
-        localStorage.removeItem(key);
-        console.log(`Cleared localStorage key: ${key}`);
-      }
-    });
+    console.log("Skipping clearChallengeEligibility to preserve unclaimed challenge eligibility");
   };
 
-  // [MODIFIED] Check session and user state on mount
   useEffect(() => {
     const checkSessionAndUser = async () => {
       const telegramUser = JSON.parse(localStorage.getItem("telegramUser"));
       const storedSessionId = localStorage.getItem("sessionId");
-      const currentSessionId = Date.now().toString(); // Unique per session
+      const currentSessionId = Date.now().toString();
       const token = localStorage.getItem("accessToken");
 
-      // [MODIFIED] Clear eligibility if session ID is missing or different
       if (!storedSessionId || storedSessionId !== currentSessionId) {
-        console.log("New session detected, clearing challenge eligibility");
+        console.log("New session detected, skipping eligibility clear");
         clearChallengeEligibility();
         localStorage.setItem("sessionId", currentSessionId);
       }
 
-      // [MODIFIED] Check if user is starting afresh
       if (telegramUser && token) {
         try {
           const response = await fetch(`${BASE_URL}/user/profile`, {
@@ -75,14 +65,13 @@ const ChallengeScreen = () => {
             const storedTelegramId = localStorage.getItem("lastTelegramId");
             const isFreshAccount = data.total_coins === 0 && data.level === 1;
 
-            // [MODIFIED] Clear eligibility if new user or fresh account
             if (
               !storedTelegramId ||
               storedTelegramId !== telegramUser.id ||
               isFreshAccount
             ) {
               console.log(
-                `New user or fresh account detected (telegramId: ${telegramUser.id}, isFresh: ${isFreshAccount}), clearing challenge eligibility`
+                `New user or fresh account detected (telegramId: ${telegramUser.id}, isFresh: ${isFreshAccount}), skipping eligibility clear`
               );
               clearChallengeEligibility();
               localStorage.setItem("lastTelegramId", telegramUser.id);
@@ -96,9 +85,8 @@ const ChallengeScreen = () => {
 
     checkSessionAndUser();
 
-    // [MODIFIED] Clear eligibility on browser/tab close
     const handleBeforeUnload = () => {
-      console.log("App closing, clearing challenge eligibility");
+      console.log("App closing, skipping eligibility clear");
       clearChallengeEligibility();
     };
 
@@ -133,7 +121,6 @@ const ChallengeScreen = () => {
         const totalCount = data.total_count || data.length;
 
         const newChallenges = challenges.map((challenge) => {
-          // [MODIFIED] Check localStorage for challenge eligibility
           const isEligibleInStorage =
             status === "ongoing" &&
             localStorage.getItem(`challenge_${challenge.challenge_id}_eligible`) === "true";
@@ -152,7 +139,7 @@ const ChallengeScreen = () => {
             imageId: challenge.image_id,
             imageUrl: `${process.env.PUBLIC_URL}/logo.png`,
             url: challenge.challenge_url || null,
-            eligible: status === "ongoing" ? challenge.is_eligible || isEligibleInStorage : false,
+            eligible: status === "ongoing" ? isEligibleInStorage || challenge.is_eligible : false,
             completed: status === "completed",
           };
         });
@@ -276,15 +263,12 @@ const ChallengeScreen = () => {
 
       try {
         if (challenge.url) {
-          // [MODIFIED] Open challenge URL and mark as eligible in localStorage
           console.log(`Navigating to challenge ${challenge.id} URL: ${challenge.url}`);
           window.open(challenge.url, "_blank");
 
-          // [MODIFIED] Store eligibility in localStorage
           localStorage.setItem(`challenge_${challenge.id}_eligible`, "true");
           console.log(`Marked challenge ${challenge.id} as eligible in localStorage`);
 
-          // [MODIFIED] Update challengesData to reflect eligibility immediately
           setChallengesData((prev) => ({
             ...prev,
             "Open Challenges": prev["Open Challenges"].map((ch) =>
@@ -292,7 +276,6 @@ const ChallengeScreen = () => {
             ),
           }));
 
-          // [MODIFIED] Show overlay to confirm challenge navigation
           setPerformResult({
             message: "Challenge opened in new tab. You can now claim your reward.",
             success: true,
@@ -308,8 +291,13 @@ const ChallengeScreen = () => {
             },
           });
 
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to perform challenge: ${response.status} - ${errorText}`);
+          }
+
           const result = await response.json();
-          const isEligible = response.ok && !result.message.includes("not completed");
+          const isEligible = result.message && !result.message.includes("not completed");
 
           setPerformResult({
             message: result.message || (isEligible ? "Challenge performed successfully" : "Challenge not completed"),
@@ -319,6 +307,9 @@ const ChallengeScreen = () => {
           setShowPerformOverlay(true);
 
           if (isEligible) {
+            localStorage.setItem(`challenge_${challenge.id}_eligible`, "true");
+            console.log(`Marked challenge ${challenge.id} as eligible in localStorage`);
+
             setChallengesData((prev) => ({
               ...prev,
               "Open Challenges": prev["Open Challenges"].map((ch) =>
@@ -329,7 +320,7 @@ const ChallengeScreen = () => {
         }
       } catch (err) {
         console.error("Error performing challenge:", err);
-        setPerformResult({ message: "Error performing challenge", success: false });
+        setPerformResult({ message: `Error performing challenge: ${err.message}`, success: false });
         setSelectedChallenge(challenge);
         setShowPerformOverlay(true);
       }
@@ -363,7 +354,6 @@ const ChallengeScreen = () => {
         setSelectedChallenge({ ...challenge, rewardMessage: result.message });
         setShowRewardOverlay(true);
 
-        // [MODIFIED] Clear localStorage eligibility after claiming reward
         localStorage.removeItem(`challenge_${challenge.id}_eligible`);
         console.log(`Cleared eligibility for challenge ${challenge.id} from localStorage`);
 
@@ -371,7 +361,7 @@ const ChallengeScreen = () => {
           "Open Challenges": prev["Open Challenges"].filter((ch) => ch.id !== challenge.id),
           "Completed Challenges": [
             ...prev["Completed Challenges"],
-            { ...challenge, status: "completed", time: 0, eligible: true, completed: true },
+            { ...challenge, status: "completed", time: 0, eligible: false, completed: true },
           ],
         }));
       } catch (err) {

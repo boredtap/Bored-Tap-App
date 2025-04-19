@@ -7,9 +7,10 @@ const Leaderboard = () => {
   const [activeTab, setActiveTab] = useState("Daily");
   const [leaderboardData, setLeaderboardData] = useState({});
   const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(false); // Added loading state
-  const [error, setError] = useState(null); // Added error state
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
+  // Fetch leaderboard and user profile data
   useEffect(() => {
     const fetchLeaderboardData = async () => {
       setLoading(true);
@@ -65,7 +66,7 @@ const Leaderboard = () => {
           username: userData.username || "Unknown",
           level: userData.level || 1,
           position: userData.rank || null,
-          value: userData.total_coins || 0,
+          value: userData.total_coins || 0, // Initial value, will be updated per tab
           image_url: userData.image_url || `${process.env.PUBLIC_URL}/profile-picture.png`,
           telegram_user_id: userData.telegram_user_id || "",
         });
@@ -79,6 +80,23 @@ const Leaderboard = () => {
 
     fetchLeaderboardData();
   }, []);
+
+  // Update current user's coin value based on active tab
+  useEffect(() => {
+    if (!currentUser || !leaderboardData[activeTab]) return;
+
+    const currentLeaderboard = leaderboardData[activeTab];
+    const userEntry = currentLeaderboard.find(
+      (entry) => entry.telegram_user_id === currentUser.telegram_user_id
+    );
+
+    const updatedValue = userEntry ? userEntry.coins_earned || 0 : 0;
+
+    setCurrentUser((prev) => ({
+      ...prev,
+      value: updatedValue,
+    }));
+  }, [activeTab, leaderboardData, currentUser]);
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
