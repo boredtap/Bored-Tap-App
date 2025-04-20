@@ -543,7 +543,7 @@ import { BoostContext } from "../context/BoosterContext";
 import { throttle } from "lodash";
 import { BASE_URL } from "../utils/BaseVariables";
 
-// Updated Recharge times per spec (in ms) - now including all 5 levels
+// Recharge times (in ms) for different levels
 const RECHARGE_TIMES = [5000, 4500, 3500, 2500, 1500, 500]; // Level 0 through 5
 
 const Dashboard = () => {
@@ -557,6 +557,7 @@ const Dashboard = () => {
     last_action_date: null,
   });
   const [countdownDisplay, setCountdownDisplay] = useState(null);
+  const [claimMessage, setClaimMessage] = useState(null);
 
   useEffect(() => {
     const checkClanStatus = async () => {
@@ -668,6 +669,39 @@ const Dashboard = () => {
     });
   };
 
+  const fetchStreakStatus = useCallback(async (token) => {
+    try {
+      const streakResponse = await fetch(`${BASE_URL}/streak/status`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (!streakResponse.ok) throw new Error("Failed to fetch streak status");
+      const streakDataResponse = await streakResponse.json();
+
+      // Determine claim eligibility based on last_action_date and current time
+      const lastActionDate = streakDataResponse.last_action_date
+        ? new Date(streakDataResponse.last_action_date)
+        : null;
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const canClaim = !lastActionDate || lastActionDate < today;
+
+      setStreakData({
+        current_streak: streakDataResponse.current_streak || 0,
+        can_claim: canClaim,
+        countdown_time: streakDataResponse.next_streak_time || null,
+        last_action_date: streakDataResponse.last_action_date || null,
+      });
+      setCountdownDisplay(streakDataResponse.next_streak_time || null);
+      setCurrentStreak(streakDataResponse.current_streak || 0);
+    } catch (err) {
+      console.error("Error fetching streak status:", err);
+    }
+  }, []);
+
   useEffect(() => {
     const fetchProfileAndStreak = async () => {
       const token = localStorage.getItem("accessToken");
@@ -704,54 +738,50 @@ const Dashboard = () => {
           });
         }
 
-        // Fetch streak status
-        const streakResponse = await fetch(`${BASE_URL}/streak/status`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-        if (!streakResponse.ok) throw new Error("Failed to fetch streak status");
-        const streakDataResponse = await streakResponse.json();
-
-        // Determine if the streak can be claimed based on next_streak_time
-        const canClaim = !streakDataResponse.next_streak_time || streakDataResponse.next_streak_time === "00:00:00";
-        setStreakData({
-          current_streak: streakDataResponse.current_streak || 0,
-          can_claim: canClaim,
-          countdown_time: streakDataResponse.next_streak_time || null,
-          last_action_date: streakDataResponse.last_action_date || null,
-        });
-        setCountdownDisplay(streakDataResponse.next_streak_time || null);
-        setCurrentStreak(streakDataResponse.current_streak || 0);
+        // Fetch streak status only
+        await fetchStreakStatus(token);
       } catch (err) {
         console.error("Error fetching profile or streak:", err);
         navigate("/splash");
       }
     };
     fetchProfileAndStreak();
-  }, [navigate]);
+  }, [navigate, fetchStreakStatus]);
 
   useEffect(() => {
-    if (streakData.countdown_time) {
-      const parseTimeToSeconds = (timeStr) => {
-        if (!timeStr || timeStr === "00:00:00") return 0;
-        // Handle format like "1 day, 0:22:37"
-        const regex = /(\d+)\s*day[s]?,?\s*(\d+):(\d+):(\d+)/;
-        const match = timeStr.match(regex);
-        if (match) {
-          const [, days, hours, minutes, seconds] = match.map(Number);
-          return days * 86400 + hours * 3600 + minutes * 60 + seconds;
-        }
-        // Fallback for HH:MM:SS format
-        const [hours, minutes, seconds] = timeStr.split(":").map(Number);
-        if (isNaN(hours) || isNaN(minutes) || isNaN(seconds)) return 0;
-        return hours * 3600 + minutes * 60 + seconds;
-      };
+    const parseTimeToSeconds = (timeStr) => {
+      if (!timeStr || timeStr === "00:00:00") return 0;
+      // Handle format like "1 day, 0:00:27"
+      const regex = /(\d+)\s*day[s]?,?\s*(\d+):(\d+):(\d+)/;
+      const match = timeStr.match(regex);
+      if (match) {
+        const [, days, hours, minutes, seconds] = match.map(Number);
+        return days * 86400 + hours * 3600 + minutes * 60 + seconds;
+      }
+      // Fallback for HH:MM:SS format
+      const [hours, minutes, seconds] = timeStr.split(":").map(Number);
+      if (isNaN(hours) || isNaN(minutes) || isNaN(seconds)) return 0;
+      return hours * 3600 + minutes * 60 + seconds;
+    };
 
-      let totalSeconds = parseTimeToSeconds(streakData.countdown_time);
-      if (totalSeconds <= 0) {
+    const calculateCountdown = () => {
+      const now = new Date();
+      const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      const secondsUntilMidnight = Math.floor((nextMidnight - now) / 1000);
+      if (secondsUntilMidnight <= 0) {
+        // Midnight passed, refresh streak status
+        fetchStreakStatus(localStorage.getItem("accessToken"));
+        return 0;
+      }
+      return secondsUntilMidnight;
+    };
+
+    if (streakData.countdown_time || streakData.can_claim) {
+      let totalSeconds = streakData.countdown_time
+        ? parseTimeToSeconds(streakData.countdown_time)
+        : calculateCountdown();
+
+      if (totalSeconds <= 0 && !streakData.countdown_time) {
         setStreakData((prev) => ({
           ...prev,
           can_claim: true,
@@ -771,13 +801,15 @@ const Dashboard = () => {
             countdown_time: null,
           }));
           setCountdownDisplay(null);
+          // Refresh streak status after reset
+          fetchStreakStatus(localStorage.getItem("accessToken"));
         } else {
           const days = Math.floor(totalSeconds / 86400);
           const hours = Math.floor((totalSeconds % 86400) / 3600);
           const minutes = Math.floor((totalSeconds % 3600) / 60);
           const seconds = totalSeconds % 60;
-          const newTime = days > 0 
-            ? `${days} day${days !== 1 ? 's' : ''}, ${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+          const newTime = days > 0
+            ? `${days} day${days !== 1 ? "s" : ""}, ${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
             : `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
           setCountdownDisplay(newTime);
           setStreakData((prev) => ({ ...prev, countdown_time: newTime }));
@@ -786,18 +818,17 @@ const Dashboard = () => {
 
       return () => clearInterval(timer);
     }
-  }, [streakData.countdown_time]);
+  }, [streakData.countdown_time, streakData.can_claim, fetchStreakStatus]);
 
   const handleClaimStreak = async () => {
-    if (!streakData.can_claim) {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      setClaimMessage("No access token found");
       setShowStreakOverlay(true);
       return;
     }
 
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) throw new Error("No access token found");
-
       const response = await fetch(`${BASE_URL}/streak/claim`, {
         method: "POST",
         headers: {
@@ -809,46 +840,42 @@ const Dashboard = () => {
 
       const claimData = await response.json();
       if (!response.ok) {
+        setClaimMessage(claimData.message || "Failed to claim streak");
         setShowStreakOverlay(true);
-        throw new Error(claimData.message || "Failed to claim streak");
+        await fetchStreakStatus(token);
+        return;
       }
 
-      // Update total taps with the reward amount
+      // Successful claim
       const rewardAmount = claimData.daily_reward_amount || 0;
       setTotalTaps((prev) => prev + rewardAmount);
       tapCountSinceLastUpdate.current += rewardAmount;
+      setClaimMessage(`Streak claimed! +${rewardAmount} coins`);
 
-      // Fetch updated streak status
-      const streakStatusResponse = await fetch(`${BASE_URL}/streak/status`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      if (!streakStatusResponse.ok) throw new Error("Failed to fetch streak status");
-      const newStreakData = await streakStatusResponse.json();
+      // Update streak data immediately
+      setStreakData((prev) => ({
+        ...prev,
+        current_streak: claimData.current_streak || prev.current_streak,
+        can_claim: false,
+        last_action_date: claimData.last_action_date || prev.last_action_date,
+      }));
+      setCurrentStreak(claimData.current_streak || 0);
 
-      const canClaim = !newStreakData.next_streak_time || newStreakData.next_streak_time === "00:00:00";
-      setStreakData({
-        current_streak: newStreakData.current_streak || 0,
-        can_claim: canClaim,
-        countdown_time: newStreakData.next_streak_time || null,
-        last_action_date: newStreakData.last_action_date || null,
-      });
-      setCountdownDisplay(newStreakData.next_streak_time || null);
-      setCurrentStreak(newStreakData.current_streak || 0);
+      // Fetch updated streak status to get next_streak_time
+      await fetchStreakStatus(token);
 
-      setShowStreakOverlay(false);
+      setShowStreakOverlay(true);
       updateBackend("streak");
     } catch (err) {
       console.error("Error claiming streak:", err);
+      setClaimMessage("Error claiming streak");
       setShowStreakOverlay(true);
     }
   };
 
   const handleCloseStreakOverlay = () => {
     setShowStreakOverlay(false);
+    setClaimMessage(null);
   };
 
   const updateBackend = useCallback((source = null) => {
@@ -858,10 +885,8 @@ const Dashboard = () => {
 
     const token = localStorage.getItem("accessToken");
 
-    // Use the provided source parameter if available, otherwise determine based on taps
     const tapSource = source || (tapsToSync > 0 ? "tap" : "auto_bot");
 
-    // Fixed query string: corrected 'current_power_limit' and proper encoding
     const url = `${BASE_URL}/update-coins?coins=${encodeURIComponent(tapsToSync)}&current_power_limit=${encodeURIComponent(electricBoostRef.current)}&last_active_time=${encodeURIComponent(isoString)}&auto_bot_active=${encodeURIComponent(true)}&source=${encodeURIComponent(tapSource)}`;
 
     fetch(url, {
@@ -1183,13 +1208,19 @@ const Dashboard = () => {
                 className="overlay-streak-icon"
               />
               <p className="overlay-text">Daily Streak: Day {streakData.current_streak}</p>
-              {countdownDisplay ? (
+              {claimMessage ? (
+                <p className="overlay-subtext">{claimMessage}</p>
+              ) : countdownDisplay ? (
                 <>
-                  <p className="overlay-subtext">Check again in</p>
+                  <p className="overlay-subtext">
+                    {streakData.can_claim ? "Claim window closes in" : "Next claim in"}
+                  </p>
                   <p className="overlay-time">{countdownDisplay}</p>
                 </>
-              ) : (
+              ) : streakData.can_claim ? (
                 <p className="overlay-subtext">Ready to claim your daily reward!</p>
+              ) : (
+                <p className="overlay-subtext">Waiting for next claim window...</p>
               )}
               <button
                 className={`overlay-cta ${streakData.can_claim ? "active" : "inactive"} clickable`}
