@@ -27,7 +27,7 @@
 }
 
 .clan-title {
-  font-size: 24px; /* Adjusted from 120px */
+  font-size: 24px;
   font-weight: bold;
   margin: 10px 0;
   margin-bottom: 48px;
@@ -36,7 +36,7 @@
 /* CTA Buttons Container */
 .clan-cta-buttons {
   display: flex;
-  justify-content: center; /* Center everything horizontally */
+  justify-content: center;
   align-items: center;
   margin-top: 0;
   margin-bottom: 0;
@@ -46,28 +46,28 @@
 .clan-cta-buttons.default .button-container {
   display: flex;
   flex-direction: column;
-  gap: 20px; /* Space between buttons */
-  align-items: center; /* Center the buttons within the container */
+  gap: 20px;
+  align-items: center;
 }
 
 .clan-cta-buttons.pending .pending-container {
   display: flex;
-  flex-direction: column; /* Stack vertically */
-  gap: 10px; /* Space between button and message */
-  align-items: center; /* Center items vertically */
-  width: 50%; /* Match the solo width */
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  width: 50%;
 }
 
 .clan-cta {
-    border: none;
-    border-radius: 25px;
-    padding: 10px 30px;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.2s ease-in-out;
-    white-space: nowrap; /* Prevent text wrapping */
-  }
+  border: none;
+  border-radius: 25px;
+  padding: 10px 30px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+  white-space: nowrap;
+}
 
 .clan-cta.active {
   background-color: #fff;
@@ -79,11 +79,28 @@
   color: #fff;
 }
 
-.pending-message {
+.pending-message,
+.disband-message {
   font-size: 14px;
   color: #f9b54c;
   margin: 0;
   text-align: center;
+}
+
+/* Exit Button */
+.exit-button {
+  display: flex;
+  align-items: center;
+  background-color: #414141;
+  border-radius: 8px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+.cta-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
 }
 
 /* Top Clans Section */
@@ -199,6 +216,174 @@
   font-size: 14px;
 }
 
+/* Overlay Styles (Copied from ClanDetailsScreen.css) */
+.overlay-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.overlay-container6 {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 400px;
+  z-index: 1001;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 15px;
+  padding: 10px;
+}
+
+.streak-overlay6 {
+  width: 100%;
+  background-color: #1d1d1d;
+  color: #fff;
+  padding: 20px;
+  border-radius: 15px;
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+.overlay-container8 {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 400px;
+  z-index: 1001;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 15px;
+  padding: 10px;
+}
+
+.streak-overlay8 {
+  width: 100%;
+  background-color: #1d1d1d;
+  color: #fff;
+  padding: 20px;
+  border-radius: 15px;
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.overlay-header6,
+.overlay-header8 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.overlay-title6,
+.overlay-title8 {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.overlay-cancel {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  position: absolute;
+  right: 0;
+}
+
+.overlay-divider {
+  width: 100%;
+  height: 1px;
+  background-color: #777777;
+  margin: 20px 0;
+}
+
+.overlay-content6,
+.overlay-content8 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.overlay-streak-icon1 {
+  width: 80px;
+  height: 80px;
+}
+
+.overlay-streak-icon2,
+.overlay-streak-icon3,
+.overlay-streak-icon4 {
+  width: 80px;
+  height: 80px;
+}
+
+.overlay-text {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.overlay-subtext {
+  font-size: 14px;
+  color: #c2bfbf;
+  text-align: center;
+}
+
+.overlay-cta-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.overlay-cta-button {
+  width: 100%;
+  padding: 12px;
+  background-color: #fff;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.overlay-cta-button.inactive {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.overlay-cta-button.active {
+  background-color: #fff;
+  color: #000;
+  cursor: pointer;
+}
+
+.clickable:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease-in-out;
+}
+
 /* Responsive Adjustments */
 @media (max-width: 600px) {
   .clan-screen { padding: 12px; }
@@ -208,11 +393,14 @@
   .clan-card2 { padding: 8px 12px; }
   .clan-card-icon { width: 36px; height: 36px; }
   .clan-cta-buttons.default .button-container {
-    flex-direction: row; /* Stack buttons on small screens */
+    flex-direction: row;
     gap: 24px;
   }
   .clan-cta-buttons.pending .pending-container {
-    width: 70%; /* Slightly wider for readability */
+    width: 70%;
+  }
+  .exit-button {
+    padding: 8px 16px;
   }
 }
 
