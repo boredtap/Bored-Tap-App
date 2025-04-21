@@ -85,16 +85,19 @@
   color: #f9b54c;
   margin: 0;
   text-align: center;
+  margin-bottom: 16px;
 }
 
 /* Exit Button */
-.exit-button {
+.exit-button1 {
   display: flex;
   align-items: center;
   background-color: #414141;
-  border-radius: 8px;
-  padding: 10px 20px;
+  border-radius: 25px;
+  padding: 10px 40px;
   cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
 }
 
 .cta-icon {

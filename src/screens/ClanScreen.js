@@ -486,8 +486,8 @@ const ClanScreen = () => {
               <p className="pending-message">Your clan is awaiting verification</p>
             </>
           ) : clanStatus === "disband" ? (
-            <div className="exit-button clickable" onClick={handleExitClick}>
-              <img src={`${process.env.PUBLIC_URL}/exit.png`} alt="Exit Icon" className="cta-icon" />
+            <div className="exit-button1 clickable" onClick={handleExitClick}>
+              {/* <img src={`${process.env.PUBLIC_URL}/exit.png`} alt="Exit Icon" className="cta-icon" /> */}
               <span>Exit</span>
             </div>
           ) : (
