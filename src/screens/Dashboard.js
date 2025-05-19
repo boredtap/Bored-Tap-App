@@ -544,7 +544,7 @@ import { throttle } from "lodash";
 import { BASE_URL } from "../utils/BaseVariables";
 
 // Recharge times (in ms) for different levels
-const RECHARGE_TIMES = [3000, 2500, 2000, 1500, 1000, 500]; // Level 0 through 5
+const RECHARGE_TIMES = [2000, 1500, 1200, 1000, 800, 500]; // Level 0 through 5
 
 const Dashboard = () => {
   const navigate = useNavigate();
