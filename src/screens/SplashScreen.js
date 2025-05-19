@@ -368,8 +368,8 @@ export default SplashScreen;
 //             WebApp: {
 //               initDataUnsafe: {
 //                 user: {
-//                   id: "138",
-//                   username: "ore38",
+//                   id: "150",
+//                   username: "ore50",
 //                   photo_url:
 //                     "https://t.me/i/userpic/320/w1rd6s7RjypJpbHZRzETgLACa4GaM0uhz88rMnregJs.svg",
 //                 },
@@ -382,8 +382,8 @@ export default SplashScreen;
 //         const webApp = window.Telegram.WebApp;
 //         const userData =
 //           webApp.initDataUnsafe?.user || {
-//             id: "138",
-//             username: "ore38",
+//             id: "150",
+//             username: "ore50",
 //             photo_url:
 //               "https://t.me/i/userpic/320/w1rd6s7RjypJpbHZRzETgLACa4GaM0uhz88rMnregJs.svg",
 //           };
